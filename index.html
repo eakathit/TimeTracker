@@ -372,18 +372,29 @@ auth.onAuthStateChanged(user => {
   }
 });
 
- const provider = new firebase.auth.OAuthProvider('oidc.LINE');
- loginButton.addEventListener('click', () => {
-  auth.signInWithPopup(provider)
-  .then(result => {
+// ... (ส่วนประกาศตัวแปร auth, loginButton) ...
 
-    // เมื่อ login สำเร็จ onAuthStateChanged จะทำงานเอง
-      console.log("Login สำเร็จ!");
-  })
-  .catch(error => {
-    console.error("Login Error: ", error);
-  });
- });
+// Event Listener สำหรับปุ่ม Login (ต้องมีแค่บล็อกนี้บล็อกเดียว)
+const provider = new firebase.auth.OAuthProvider('oidc.LINE');
+
+loginButton.addEventListener('click', () => {
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // Login สำเร็จ! onAuthStateChanged จะจัดการส่วนที่เหลือเอง
+            console.log("Login สำเร็จแล้ว!");
+            const user = result.user;
+            console.log("Display Name:", user.displayName);
+        })
+        .catch((error) => {
+            // Error จะถูกแสดงที่นี่
+            console.error("เกิดข้อผิดพลาดตอน Login:", error);
+            
+            // แจ้งเตือนผู้ใช้เกี่ยวกับ Popup Blocker
+            if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
+                alert('เบราว์เซอร์ของคุณอาจบล็อกหน้าต่าง Login กรุณาตรวจสอบและอนุญาต Popup สำหรับเว็บนี้ แล้วลองใหม่อีกครั้ง');
+            }
+        });
+});
 
  // logout
  function logout(){
