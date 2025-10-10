@@ -375,7 +375,7 @@ auth.onAuthStateChanged(user => {
 // ... (ส่วนประกาศตัวแปร auth, loginButton) ...
 
 // Event Listener สำหรับปุ่ม Login (ต้องมีแค่บล็อกนี้บล็อกเดียว)
-const provider = new firebase.auth.OAuthProvider('oidc.LINE');
+const provider = new firebase.auth.OAuthProvider('oidc.line');
 
 loginButton.addEventListener('click', () => {
     auth.signInWithPopup(provider)
@@ -403,33 +403,6 @@ loginButton.addEventListener('click', () => {
     console.log("ออกจากระบบสำเร็จ");
   })
  }
-
-// 3. เมื่อปุ่มถูกคลิกนหน้า Loginนหน้า Login
-loginButton.addEventListener('click', () => {
-    firebase
-        .auth()
-        .signInWithPopup(provider) // หรือ signInWithRedirect()
-        .then((result) => {
-            // Login สำเร็จ!
-            console.log("Login สำเร็จแล้ว!");
-
-            // คุณสามารถเข้าถึงข้อมูลผู้ใช้ได้จาก result.user
-            const user = result.user;
-            console.log("Display Name:", user.displayName);
-            console.log("Photo URL:", user.photoURL);
-            console.log("Email:", user.email);
-            console.log("Firebase UID:", user.uid); // ID ของผู้ใช้ในระบบ Firebase
-
-            // สามารถนำทางผู้ใช้ไปยังหน้าหลักของแอปได้เลย
-            // window.location.href = '/main-app.html';
-
-        })
-        .catch((error) => {
-            // เกิดข้อผิดพลาดตอน Login
-            console.error("เกิดข้อผิดพลาด:", error);
-        });
-});
-
 
     function showTab(tabName) {
         // --- 1. ซ่อนเนื้อหาทั้งหมด ---
