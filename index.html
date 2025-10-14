@@ -94,14 +94,14 @@
             <div id="check-in-out-page" class="page space-y-6">
                 <!-- Header -->
                 <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-gray-500">สวัสดีตอนเช้า</p>
-                        <h2 class="text-2xl font-bold">คุณสมชาย ใจดี</h2>
-                    </div>
-                    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                        <img src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
-                    </div>
-                </div>
+    <div>
+        <p class="text-gray-500">สวัสดีตอนเช้า</p>
+        <h2 id="user-display-name" class="text-2xl font-bold">คุณสมชาย ใจดี</h2>
+    </div>
+    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+        <img id="user-profile-pic" src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
+    </div>
+</div>
 
                 <!-- Clock & Check-in Button -->
                 <div class="card text-center">
@@ -346,94 +346,98 @@
     
     <script src="firebase-config.js"></script>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Initialize Firebase ---
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Initialize Firebase ---
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // --- UI Elements ---
-        const loginPage = document.getElementById('login-page');
-        const appContainer = document.getElementById('app-container');
-        const lineLoginBtn = document.getElementById('line-login-btn');
-        const mainContent = document.getElementById('main-content');
-        const pages = mainContent.querySelectorAll('.page');
-        const navItems = document.querySelectorAll('.nav-item');
-        
-        // --- Firebase Auth State Changed ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // --- ผู้ใช้ล็อกอินอยู่ ---
-                console.log("ผู้ใช้ล็อกอินแล้ว:", user.displayName);
-                
-                // 1. แสดงชื่อและรูปโปรไฟล์
-                const userDisplayName = document.getElementById('user-display-name');
-                const userProfilePic = document.getElementById('user-profile-pic');
+    // --- UI Elements ---
+    const loginPage = document.getElementById('login-page');
+    const appContainer = document.getElementById('app-container');
+    const lineLoginBtn = document.getElementById('line-login-btn');
+    const mainContent = document.getElementById('main-content');
+    const pages = mainContent.querySelectorAll('.page');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    // --- Firebase Auth State Changed ---
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // --- ผู้ใช้ล็อกอินอยู่ ---
+            console.log("ผู้ใช้ล็อกอินแล้ว:", user.displayName);
+
+            // 1. แสดงชื่อและรูปโปรไฟล์
+            const userDisplayName = document.getElementById('user-display-name');
+            const userProfilePic = document.getElementById('user-profile-pic');
+
+            // ตรวจสอบก่อนว่าหาเจอหรือไม่ เพื่อป้องกัน Error ในอนาคต
+            if (userDisplayName) {
                 userDisplayName.textContent = user.displayName || 'ผู้ใช้งาน';
+            }
+            if (userProfilePic) {
                 userProfilePic.src = user.photoURL || 'https://placehold.co/100x100/E2E8F0/475569?text=User';
-
-                // 2. สลับหน้าจอ
-                loginPage.style.display = 'none'; 
-                appContainer.style.display = 'block';
-                
-                // 3. **(จุดสำคัญ)** สั่งให้แสดงหน้า Check-in เป็นหน้าแรก
-                // และตั้งค่าให้เมนูด้านล่างตรงกัน
-                showPage('check-in-out-page');
-                document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
-
-            } else {
-                // --- ไม่มีผู้ใช้ล็อกอิน ---
-                console.log("ไม่มีผู้ใช้ล็อกอินอยู่");
-                appContainer.style.display = 'none';
-                loginPage.style.display = 'flex';
             }
-        });
 
-        // --- LINE Login Logic ---
-        const provider = new firebase.auth.OAuthProvider('oidc.line');
-        lineLoginBtn.addEventListener('click', () => {
-            auth.signInWithPopup(provider)
-                .catch(error => {
-                    console.error("Popup Error (this is often okay): ", error);
-                });
-        });
+            // 2. สลับหน้าจอ
+            loginPage.style.display = 'none'; 
+            appContainer.style.display = 'block';
 
-        // --- Page Navigation Function ---
-        function showPage(pageId) {
-            // ซ่อนทุกหน้าก่อน
-            pages.forEach(page => {
-                page.classList.remove('active');
-            });
-            // แสดงเฉพาะหน้าที่ต้องการ
-            const activePage = document.getElementById(pageId);
-            if (activePage) {
-                activePage.classList.add('active');
-            }
+            // 3. สั่งให้แสดงหน้า Check-in เป็นหน้าแรก
+            showPage('check-in-out-page');
+            // อัปเดตเมนูให้ active
+            document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
+
+        } else {
+            // --- ไม่มีผู้ใช้ล็อกอิน ---
+            console.log("ไม่มีผู้ใช้ล็อกอินอยู่");
+            appContainer.style.display = 'none';
+            loginPage.style.display = 'flex';
         }
-
-        // --- Event Listener สำหรับเมนูด้านล่าง ---
-        navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = item.dataset.page;
-                // อัปเดตสไตล์ของเมนู
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-                // สลับหน้าจอ
-                showPage(pageId);
-            });
-        });
-
-        // --- ส่วนอื่นๆ (นาฬิกา, Notification) ---
-        const timeElement = document.getElementById('current-time');
-        function updateClock() {
-            const now = new Date();
-            timeElement.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
     });
+
+    // --- LINE Login Logic ---
+    const provider = new firebase.auth.OAuthProvider('oidc.line');
+    lineLoginBtn.addEventListener('click', () => {
+        auth.signInWithPopup(provider)
+            .catch(error => {
+                console.error("Popup Error (this is often okay): ", error);
+            });
+    });
+
+    // --- Page Navigation Function ---
+    function showPage(pageId) {
+        pages.forEach(page => {
+            page.classList.remove('active');
+        });
+        const activePage = document.getElementById(pageId);
+        if (activePage) {
+            activePage.classList.add('active');
+        }
+    }
+
+    // --- Event Listener สำหรับเมนูด้านล่าง ---
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = item.dataset.page;
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            showPage(pageId);
+        });
+    });
+
+    // --- ส่วนอื่นๆ (นาฬิกา) ---
+    const timeElement = document.getElementById('current-time');
+    function updateClock() {
+        const now = new Date();
+        if (timeElement) {
+             timeElement.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+});
 </script>
 </body>
 </html>
