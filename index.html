@@ -400,7 +400,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoUploadInput = document.getElementById('photo-upload-input');
     const photoPreview = document.getElementById('photo-preview');
     const summaryCheckinTime = document.getElementById('summary-checkin-time');
-    // **(จุดที่แก้ไข)** ประกาศตัวแปรที่หายไป
+    // **(จุดที่แก้ไข)** เพิ่มตัวแปรที่หายไป
+    const summaryCheckoutTime = document.getElementById('summary-checkout-time');
+    const summaryWorkHours = document.getElementById('summary-work-hours');
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
@@ -503,7 +505,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (proceedCheckin) {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-                const now = new Date();
+
+                const now = new Date(); // ใช้ new Date() แค่สำหรับสร้าง ID เอกสาร
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 
                 let photoUrl = null;
@@ -518,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userId: currentUser.uid,
                     date: firebase.firestore.Timestamp.fromDate(now),
                     checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(now),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
                         accuracy: latestPosition.coords.accuracy,
                         workType: workType,
@@ -615,8 +618,87 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutBtn.classList.remove('hidden');
     }
 
-    checkoutBtn.addEventListener('click', () => {
-        alert("คุณกำลังจะลงเวลาออก (ฟังก์ชันนี้ยังไม่เสร็จสมบูรณ์)");
+    // --- (ส่วนที่เพิ่มเข้ามา) Check-out Logic ---
+    checkoutBtn.addEventListener('click', async () => {
+        if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
+        if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
+
+        const checkoutSpan = checkoutBtn.querySelector('span');
+        checkoutBtn.disabled = true;
+        if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
+
+        try {
+            const now = new Date(); 
+            const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+            const workRecordRef = db.collection('work_records').doc(docId);
+
+            let overtimeHours = 0; 
+            
+            const otThreshold = new Date();
+            otThreshold.setHours(18, 0, 0, 0);
+
+            // ตรวจสอบเงื่อนไขเวลา
+            if (now >= otThreshold) {
+                const wantsToLogOT = window.confirm("เวลาทำงานของคุณเกิน 18:00 น.\n\nคุณต้องการบันทึกเป็นชั่วโมงทำงานล่วงเวลา (OT) หรือไม่?");
+                
+                if (now >= otThreshold) {
+                const wantsToLogOT = window.confirm("เวลาทำงานของคุณเกิน 18:00 น.\n\nคุณต้องการบันทึกเป็นชั่วโมงทำงานล่วงเวลา (OT) หรือไม่?");
+                if (wantsToLogOT) {
+                    const otInput = prompt("กรุณาระบุจำนวนชั่วโมง OT (เช่น 1, 1.5, 2):", "1");
+                    const parsedOT = parseFloat(otInput);
+                    if (!isNaN(parsedOT) && parsedOT > 0) {
+                        overtimeHours = parsedOT; // อัปเดตค่าถ้าผู้ใช้กรอก
+                    } else {
+                        alert("ค่าที่ระบุไม่ถูกต้อง OT จะถูกบันทึกเป็น 0 ชั่วโมง");
+                    }
+                }
+            }
+                // ถ้าผู้ใช้กด Cancel (ไม่ต้องการทำ OT) ก็จะข้ามไปเลย overtimeHours จะยังเป็น 0
+            }
+
+            // เตรียมข้อมูลสำหรับอัปเดต
+            const checkOutData = {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
+            };
+            
+            // อัปเดตข้อมูลใน Firestore
+            await workRecordRef.update({
+                checkOut: checkOutData,
+                status: "completed",
+                overtime: { hours: overtimeHours }
+            });
+
+            alert("บันทึกเวลาออกงานสำเร็จ!");
+
+            // อัปเดต UI หลังจาก Check-out
+            checkoutBtn.style.backgroundColor = '#6B7280';
+            checkoutBtn.innerHTML = `
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span class="text-2xl font-semibold mt-2">Completed</span>
+            `;
+            
+            // อัปเดตสรุปการทำงาน
+            const workRecordDoc = await workRecordRef.get();
+            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+            const checkoutTime = now;
+            const workDurationMillis = checkoutTime - checkinTime;
+            const workHours = workDurationMillis / 1000 / 60 / 60; // แปลงเป็นชั่วโมง
+            
+            summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+            summaryCheckoutTime.classList.remove('text-gray-400');
+            summaryCheckoutTime.classList.add('text-red-500');
+            summaryWorkHours.textContent = `${workHours.toFixed(2)} ชั่วโมง`;
+            if (overtimeHours > 0) {
+                summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+            }
+
+        } catch (error) {
+            console.error("Check-out error:", error);
+            alert("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message);
+            checkoutBtn.disabled = false;
+            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+        }
     });
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
