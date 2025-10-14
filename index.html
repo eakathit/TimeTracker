@@ -8,8 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
+
     <style>
-        /* กำหนดค่าสีและฟอนต์หลัก */
+        /* CSS ของคุณ (ไม่ต้องแก้ไข) */
         :root {
             --bg-color: #F9FAFB;
             --card-bg: #FFFFFF;
@@ -25,7 +30,6 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
         }
-        /* สไตล์เพิ่มเติมสำหรับ Card และปุ่ม */
         .card {
             background-color: var(--card-bg);
             border-radius: 20px;
@@ -44,34 +48,16 @@
         .btn-primary:hover {
             background-color: var(--primary-hover);
         }
-        /* ซ่อนหน้าจอทั้งหมดไว้ก่อน */
-        .page {
-            display: none;
-        }
-        /* แสดงหน้าจอที่ active */
-        .page.active {
-            display: block;
-            animation: fadeIn 0.5s ease-in-out;
-        }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* สไตล์สำหรับ Bottom Nav */
-        .bottom-nav {
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
-        }
-        .nav-item.active svg {
-            color: var(--primary-color);
-        }
-        .nav-item.active span {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-        /* สไตล์สำหรับ Check-in button animation */
-        .checkin-btn-anim {
-            animation: pulse 2s infinite;
-        }
+        .bottom-nav { box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08); }
+        .nav-item.active svg { color: var(--primary-color); }
+        .nav-item.active span { color: var(--primary-color); font-weight: 600; }
+        .checkin-btn-anim { animation: pulse 2s infinite; }
         @keyframes pulse {
             0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
@@ -80,12 +66,16 @@
 </head>
 <body class="antialiased">
 
-    <!-- หน้า Login -->
     <div id="login-page" class="page active min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div class="w-full max-w-sm text-center">
             <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
             <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
             <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
+            
+            <button id="line-login-btn" class="bg-green-500 hover:bg-green-600 text-white w-full py-4 text-lg font-semibold rounded-xl transition-all">
+                เข้าสู่ระบบด้วย LINE
+            </button>
+            <p class="text-gray-400 text-sm my-4">หรือ</p>
             <div class="space-y-4">
                 <input type="text" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                 <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
@@ -353,103 +343,97 @@
     <div id="notification" class="fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white py-2 px-6 rounded-full shadow-lg text-sm transition-all duration-500 opacity-0 -translate-y-10">
         <p>บันทึกเวลาสำเร็จ!</p>
     </div>
+    
+    <script src="firebase-config.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginPage = document.getElementById('login-page');
-            const appContainer = document.getElementById('app-container');
-            const loginBtn = document.getElementById('login-btn');
-            const mainContent = document.getElementById('main-content');
-            const pages = mainContent.querySelectorAll('.page');
-            const navItems = document.querySelectorAll('.nav-item');
-            const notification = document.getElementById('notification');
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Initialize Firebase ---
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-            
-            // --- Real-time Clock ---
-            const timeElement = document.getElementById('current-time');
-            function updateClock() {
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                if (timeElement) {
-                    timeElement.textContent = timeString;
-                }
-            }
-            setInterval(updateClock, 1000);
-            updateClock();
+        // --- UI Elements ---
+        const loginPage = document.getElementById('login-page');
+        const appContainer = document.getElementById('app-container');
+        const lineLoginBtn = document.getElementById('line-login-btn');
+        const mainContent = document.getElementById('main-content');
+        const pages = mainContent.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // --- Firebase Auth State Changed ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // --- ผู้ใช้ล็อกอินอยู่ ---
+                console.log("ผู้ใช้ล็อกอินแล้ว:", user.displayName);
+                
+                // 1. แสดงชื่อและรูปโปรไฟล์
+                const userDisplayName = document.getElementById('user-display-name');
+                const userProfilePic = document.getElementById('user-profile-pic');
+                userDisplayName.textContent = user.displayName || 'ผู้ใช้งาน';
+                userProfilePic.src = user.photoURL || 'https://placehold.co/100x100/E2E8F0/475569?text=User';
 
-            // --- Page Navigation ---
-            function showPage(pageId) {
-                pages.forEach(page => {
-                    page.classList.remove('active');
-                });
-                const activePage = document.getElementById(pageId);
-                if (activePage) {
-                    activePage.classList.add('active');
-                }
-            }
-
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const pageId = item.dataset.page;
-                    
-                    // Update Nav Item active state
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    showPage(pageId);
-                });
-            });
-
-            // --- Login Logic ---
-            loginBtn.addEventListener('click', () => {
-                loginPage.style.display = 'none';
+                // 2. สลับหน้าจอ
+                loginPage.style.display = 'none'; 
                 appContainer.style.display = 'block';
-                showPage('check-in-out-page'); // Show check-in page after login
-            });
+                
+                // 3. **(จุดสำคัญ)** สั่งให้แสดงหน้า Check-in เป็นหน้าแรก
+                // และตั้งค่าให้เมนูด้านล่างตรงกัน
+                showPage('check-in-out-page');
+                document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
 
-            // --- Check-in Logic ---
-            const checkinBtn = document.getElementById('checkin-btn');
-            checkinBtn.addEventListener('click', () => {
-                showNotification();
-            });
-
-            function showNotification() {
-                notification.classList.remove('opacity-0', '-translate-y-10');
-                notification.classList.add('opacity-100', 'translate-y-0');
-                setTimeout(() => {
-                    notification.classList.remove('opacity-100', 'translate-y-0');
-                    notification.classList.add('opacity-0', '-translate-y-10');
-                }, 3000);
+            } else {
+                // --- ไม่มีผู้ใช้ล็อกอิน ---
+                console.log("ไม่มีผู้ใช้ล็อกอินอยู่");
+                appContainer.style.display = 'none';
+                loginPage.style.display = 'flex';
             }
-            
-            // --- GPS Location Simulation ---
-            const toggleLocationBtn = document.getElementById('toggle-location-btn');
-            const locationStatusDiv = document.getElementById('location-status');
-            const onsiteOptionDiv = document.getElementById('onsite-option');
-            let isInFactory = true;
-
-            toggleLocationBtn.addEventListener('click', () => {
-                isInFactory = !isInFactory;
-                updateLocationStatus();
-            });
-
-            function updateLocationStatus() {
-                if (isInFactory) {
-                    locationStatusDiv.classList.remove('hidden');
-                    onsiteOptionDiv.classList.add('hidden');
-                    toggleLocationBtn.textContent = 'จำลองสถานะ: นอกพื้นที่';
-                } else {
-                    locationStatusDiv.classList.add('hidden');
-                    onsiteOptionDiv.classList.remove('hidden');
-                    toggleLocationBtn.textContent = 'จำลองสถานะ: ในพื้นที่';
-                }
-            }
-
-            // --- Initial State ---
-            // On load, the login page is shown by default.
-            // If there was a session, you would check it here.
         });
-    </script>
+
+        // --- LINE Login Logic ---
+        const provider = new firebase.auth.OAuthProvider('oidc.line');
+        lineLoginBtn.addEventListener('click', () => {
+            auth.signInWithPopup(provider)
+                .catch(error => {
+                    console.error("Popup Error (this is often okay): ", error);
+                });
+        });
+
+        // --- Page Navigation Function ---
+        function showPage(pageId) {
+            // ซ่อนทุกหน้าก่อน
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            // แสดงเฉพาะหน้าที่ต้องการ
+            const activePage = document.getElementById(pageId);
+            if (activePage) {
+                activePage.classList.add('active');
+            }
+        }
+
+        // --- Event Listener สำหรับเมนูด้านล่าง ---
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = item.dataset.page;
+                // อัปเดตสไตล์ของเมนู
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                // สลับหน้าจอ
+                showPage(pageId);
+            });
+        });
+
+        // --- ส่วนอื่นๆ (นาฬิกา, Notification) ---
+        const timeElement = document.getElementById('current-time');
+        function updateClock() {
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    });
+</script>
 </body>
 </html>
