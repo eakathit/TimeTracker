@@ -139,10 +139,11 @@
                 <!-- Location Status & Map -->
                 <div class="card">
                     <h3 class="font-semibold mb-3">สถานะตำแหน่ง</h3>
-                    <div id="location-status" class="flex items-center p-3 rounded-xl bg-green-100 text-green-700">
-                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span class="font-medium">ในพื้นที่โรงงาน (รัศมี 200 เมตร)</span>
-                    </div>
+                    <div id="location-status" class="flex items-center p-3 rounded-xl bg-gray-100 text-gray-700">
+        <svg id="location-icon" class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            </svg>
+        <span id="location-text" class="font-medium">กำลังตรวจสอบตำแหน่ง...</span>
+    </div>
                     <!-- Onsite Option (hidden by default) -->
                     <div id="onsite-option" class="hidden mt-4 space-y-3">
                          <div class="flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700">
@@ -371,14 +372,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Initialize Firebase ---
+    // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    // --- Configuration ---
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
-    const ALLOWED_RADIUS_METERS = 200; // กำหนดรัศมีที่นี่ (200 เมตร)
+    const ALLOWED_RADIUS_METERS = 200;
 
     // --- UI Elements ---
     const loadingSpinner = document.getElementById('loading-spinner');
@@ -388,11 +387,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkinBtn = document.getElementById('checkin-btn');
     const checkoutBtn = document.getElementById('checkout-btn');
     const mainContent = document.getElementById('main-content');
+    const locationStatusDiv = document.getElementById('location-status');
+    const locationIcon = document.getElementById('location-icon');
+    const locationText = document.getElementById('location-text');
+    const pages = mainContent.querySelectorAll('.page');
+    const navItems = document.querySelectorAll('.nav-item');
+    const timeElement = document.getElementById('current-time');
 
     // --- App State ---
     let currentUser = null;
+    let watchId = null; // ID สำหรับ watchPosition
+    let latestPosition = null; // เก็บตำแหน่งล่าสุด
 
-    // --- Firebase Auth State Changed ---
+    // --- Firebase Auth State Changed (Controller หลัก) ---
     auth.onAuthStateChanged(async (user) => {
         loginPage.style.display = 'none';
         appContainer.style.display = 'none';
@@ -403,41 +410,79 @@ document.addEventListener('DOMContentLoaded', function() {
             const userDoc = await userDocRef.get();
 
             if (userDoc.exists) {
-                // --- กรณีผู้ใช้ล็อกอิน และมีข้อมูลในระบบ ---
                 const userData = userDoc.data();
                 const userDisplayName = document.getElementById('user-display-name');
                 const userProfilePic = document.getElementById('user-profile-pic');
                 if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
                 if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
 
-                // ตรวจสอบสถานะ Check-in/out ของวันนี้
+                startWatchingPosition(); // เริ่มติดตามตำแหน่ง
                 await checkUserWorkStatus();
-
-                // **(จุดที่แก้ไข)** สั่งแสดงหน้าแอปหลัก และหน้า Check-in
+                
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
                 document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
             } else {
-                // --- กรณีผู้ใช้ล็อกอิน แต่ไม่มีข้อมูลในระบบ ---
-                alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ กรุณาติดต่อผู้ดูแล");
+                alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
                 auth.signOut();
-                loginPage.style.display = 'flex';
             }
         } else {
-            // --- กรณีไม่มีผู้ใช้ล็อกอิน ---
+            stopWatchingPosition(); // หยุดติดตามตำแหน่งเมื่อ Logout
             currentUser = null;
             loginPage.style.display = 'flex';
         }
         loadingSpinner.style.display = 'none';
     });
 
-    // --- ฟังก์ชัน: ตรวจสอบสถานะการทำงานเมื่อโหลดหน้า ---
+    // --- GPS Tracking Functions ---
+    function startWatchingPosition() {
+        if (navigator.geolocation && watchId === null) {
+            const options = { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 };
+            watchId = navigator.geolocation.watchPosition(updateRealtimeLocationStatus, handleLocationError, options);
+        }
+    }
+
+    function stopWatchingPosition() {
+        if (navigator.geolocation && watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+    }
+
+    // --- UI Update Functions ---
+    function updateRealtimeLocationStatus(position) {
+        latestPosition = position; // อัปเดตตำแหน่งล่าสุดเก็บไว้
+        const distance = calculateDistance(
+            position.coords.latitude, position.coords.longitude,
+            FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude
+        );
+
+        if (distance <= ALLOWED_RADIUS_METERS) {
+            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-green-100 text-green-700";
+            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
+            locationText.textContent = `ในพื้นที่โรงงาน (รัศมี ${position.coords.accuracy.toFixed(0)} เมตร)`;
+        } else {
+            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
+            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
+            locationText.textContent = `นอกพื้นที่ (ระยะห่าง ${distance.toFixed(0)} ม.)`;
+        }
+    }
+    
+    function handleLocationError(error) {
+        let message = "ไม่สามารถเข้าถึงตำแหน่งได้";
+        if (error.code === 1) message = "ผู้ใช้ปฏิเสธการเข้าถึงตำแหน่ง";
+        if (error.code === 3) message = "หมดเวลาในการค้นหาตำแหน่ง";
+        locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-red-100 text-red-700";
+        locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>`;
+        locationText.textContent = message;
+        console.error("Location Error:", error);
+    }
+
     async function checkUserWorkStatus() {
         if (!currentUser) return;
         const today = new Date().toISOString().split('T')[0];
         const docId = `${currentUser.uid}_${today}`;
         const workRecordDoc = await db.collection('work_records').doc(docId).get();
-
         if (workRecordDoc.exists && workRecordDoc.data().status === 'checked_in') {
             updateUIToCheckedIn();
         } else {
@@ -445,61 +490,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- ฟังก์ชัน: จัดการ UI สำหรับสถานะ Check-in ---
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
         checkoutBtn.classList.add('hidden');
     }
 
-    // --- ฟังก์ชัน: จัดการ UI สำหรับสถานะ Checked-in (รอ Check-out) ---
     function updateUIToCheckedIn() {
         checkinBtn.classList.add('hidden');
         checkoutBtn.classList.remove('hidden');
     }
 
-    // --- Check-in Logic ---
+    // --- Event Listeners ---
     checkinBtn.addEventListener('click', async () => {
-        if (!currentUser) return alert("เกิดข้อผิดพลาด: ไม่พบข้อมูลผู้ใช้");
-        
+        if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
+        if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
+
         checkinBtn.disabled = true;
         const checkinSpan = checkinBtn.querySelector('span');
-        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
+        if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
         try {
-            // 1. ดึงตำแหน่ง GPS
-            const position = await getCurrentPosition();
-            const userLocation = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            };
-
-            // 2. คำนวณระยะห่างจากโรงงาน
             const distance = calculateDistance(
-                userLocation.latitude, userLocation.longitude,
+                latestPosition.coords.latitude, latestPosition.coords.longitude,
                 FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude
             );
-            console.log(`ระยะห่างจากโรงงาน: ${distance.toFixed(2)} เมตร`);
+            
+            let workType = "in_factory";
+            let proceedCheckin = true;
 
-            let workType = "in_factory"; // กำหนดค่าเริ่มต้น
-            let proceedCheckin = true; // กำหนดค่าเริ่มต้นว่าให้เช็กอินได้
-
-            // 3. ตรวจสอบเงื่อนไขระยะห่าง
             if (distance > ALLOWED_RADIUS_METERS) {
-                // ถ้าอยู่นอกรัศมี ให้แสดงหน้าต่างยืนยัน
-                proceedCheckin = window.confirm(
-                    `คุณอยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} เมตร)\n\n` +
-                    `คุณต้องการลงเวลาเป็น "ทำงาน On-site" หรือไม่?`
-                );
-                
-                if (proceedCheckin) {
-                    workType = "on_site"; // ถ้าผู้ใช้ยืนยัน ให้เปลี่ยนประเภทเป็น On-site
-                }
+                proceedCheckin = window.confirm(`คุณอยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.)\n\nต้องการลงเวลาเป็น "ทำงาน On-site" หรือไม่?`);
+                if (proceedCheckin) workType = "on_site";
             }
 
-            // 4. ดำเนินการเช็กอิน (ถ้าผู้ใช้ไม่กดยกเลิก)
             if (proceedCheckin) {
-                if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-
                 const now = new Date();
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 const workRecord = {
@@ -507,71 +531,69 @@ document.addEventListener('DOMContentLoaded', function() {
                     date: firebase.firestore.Timestamp.fromDate(now),
                     checkIn: {
                         timestamp: firebase.firestore.Timestamp.fromDate(now),
-                        location: new firebase.firestore.GeoPoint(userLocation.latitude, userLocation.longitude),
-                        workType: workType // ใช้ workType ที่ได้จากเงื่อนไข
+                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+                        accuracy: latestPosition.coords.accuracy,
+                        workType: workType
                     },
-                    checkOut: null,
-                    status: "checked_in"
+                    checkOut: null, status: "checked_in"
                 };
-
                 await db.collection('work_records').doc(docId).set(workRecord);
                 alert("บันทึกเวลาเข้างานสำเร็จ!");
                 updateUIToCheckedIn();
             } else {
-                // ถ้าผู้ใช้กดยกเลิกในหน้าต่าง confirm
                 alert("การลงเวลาถูกยกเลิก");
             }
-
         } catch (error) {
             console.error("Check-in error:", error);
-            alert("เกิดข้อผิดพลาดในการบันทึกเวลา: " + error.message);
+            alert("เกิดข้อผิดพลาด: " + error.message);
         } finally {
-            // คืนค่าปุ่มให้เป็นเหมือนเดิม ไม่ว่าจะสำเร็จหรือล้มเหลว
             checkinBtn.disabled = false;
             if (checkinSpan) checkinSpan.textContent = "Check In";
         }
     });
 
-    // --- ฟังก์ชันใหม่: คำนวณระยะห่าง (Haversine formula) ---
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; // รัศมีของโลกในหน่วยเมตร
-        const φ1 = lat1 * Math.PI / 180;
-        const φ2 = lat2 * Math.PI / 180;
-        const Δφ = (lat2 - lat1) * Math.PI / 180;
-        const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c; // ระยะทางในหน่วยเมตร
-    }
-
-    
-    // --- Check-out Logic (Placeholder) ---
     checkoutBtn.addEventListener('click', () => {
         alert("คุณกำลังจะลงเวลาออก (ฟังก์ชันนี้ยังไม่เสร็จสมบูรณ์)");
     });
 
-    // --- Function to get GPS Location ---
-    function getCurrentPosition() {
-        return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) return reject(new Error("เบราว์เซอร์ไม่รองรับ Geolocation"));
-            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-        });
+    const provider = new firebase.auth.OAuthProvider('oidc.line');
+    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
+
+    // --- Helper Functions ---
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
-    // --- LINE Login Logic, Page Navigation, Clock ---
-    const provider = new firebase.auth.OAuthProvider('oidc.line');
-    lineLoginBtn.addEventListener('click', () => auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)));
-    const pages = mainContent.querySelectorAll('.page');
-    const navItems = document.querySelectorAll('.nav-item');
-    const timeElement = document.getElementById('current-time');
-    function showPage(pageId){pages.forEach(p=>p.classList.remove('active'));const ap=document.getElementById(pageId);if(ap)ap.classList.add('active')}
-    navItems.forEach(item=>{item.addEventListener('click',e=>{e.preventDefault();const pId=item.dataset.page;navItems.forEach(n=>n.classList.remove('active'));item.classList.add('active');showPage(pId)})});
-    function updateClock(){if(timeElement){const n=new Date();timeElement.textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}}
-    setInterval(updateClock,1000);updateClock();
+    function showPage(pageId) {
+        pages.forEach(p => p.classList.remove('active'));
+        const activePage = document.getElementById(pageId);
+        if (activePage) activePage.classList.add('active');
+    }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', e => {
+            e.preventDefault();
+            const pageId = item.dataset.page;
+            navItems.forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            showPage(pageId);
+        });
+    });
+
+    function updateClock() {
+        if (timeElement) {
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 });
 </script>
 </body>
