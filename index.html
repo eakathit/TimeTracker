@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
 
     <style>
         /* CSS ของคุณ (ไม่ต้องแก้ไข) */
@@ -109,84 +110,84 @@
 
             <!-- หน้า Check-in / Check-out-->
             <div id="check-in-out-page" class="page space-y-6">
-                <!-- Header -->
-                <div class="flex justify-between items-center">
-    <div>
-        <p class="text-gray-500">ยินดีต้อนรับ</p>
-        <h2 id="user-display-name" class="text-2xl font-bold"></h2>
-    </div>
-    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-        <img id="user-profile-pic" src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
-    </div>
-</div>
-
-                <!-- Clock & Check-in Button -->
-                <div class="card text-center">
-    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
-    <p id="current-time" class="text-5xl font-bold my-4">08:30:15</p>
     
-    <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        <span class="text-2xl font-semibold mt-2">Check In</span>
-    </button>
-
-    <button id="checkout-btn" class="hidden w-48 h-48 bg-red-500 text-white checkout-btn-anim rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-red-600 transition-all duration-300">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        <span class="text-2xl font-semibold mt-2">Check Out</span>
-    </button>
-</div>
-
-                <!-- Location Status & Map -->
-                <div class="card">
-                    <h3 class="font-semibold mb-3">สถานะตำแหน่ง</h3>
-                    <div id="location-status" class="flex items-center p-3 rounded-xl bg-gray-100 text-gray-700">
-        <svg id="location-icon" class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            </svg>
-        <span id="location-text" class="font-medium">กำลังตรวจสอบตำแหน่ง...</span>
+    <div class="flex justify-between items-center">
+        <div>
+            <p class="text-gray-500">ยินดีต้อนรับ</p>
+            <h2 id="user-display-name" class="text-2xl font-bold"></h2>
+        </div>
+        <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+            <img id="user-profile-pic" src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
+        </div>
     </div>
-                    <!-- Onsite Option (hidden by default) -->
-                    <div id="onsite-option" class="hidden mt-4 space-y-3">
-                         <div class="flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700">
-                             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                             <span class="font-medium">นอกพื้นที่โรงงาน</span>
-                        </div>
-                        <select class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                            <option>On-site Customer</option>
-                            <option>Work from Home</option>
-                            <option>อื่นๆ</option>
-                        </select>
-                        <input type="text" placeholder="กรอกรายละเอียดสถานที่..." class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                    </div>
 
-                    <!-- Map -->
-                    <div class="mt-4 h-40 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
-                        <p>[ส่วนแสดงแผนที่ GPS]</p>
-                        <!-- In a real app, this would be a map library like Leaflet or Google Maps -->
-                    </div>
-                     <div class="text-center mt-2">
-                        <button id="toggle-location-btn" class="text-sm text-sky-500">จำลองสถานะ: นอกพื้นที่</button>
-                    </div>
-                </div>
+    <div class="card text-center">
+        <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
+        <p id="current-time" class="text-5xl font-bold my-4"></p>
+        
+        <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="text-2xl font-semibold mt-2">Check In</span>
+        </button>
 
-                <!-- Today's Summary -->
-                <div class="card">
-                    <h3 class="font-semibold mb-3">สรุปการทำงานวันนี้</h3>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Check-in:</span>
-                            <span class="font-medium text-green-600">08:25 น.</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Check-out:</span>
-                            <span class="font-medium text-gray-400">-</span>
-                        </div>
-                         <div class="flex justify-between">
-                            <span class="text-gray-500">ชั่วโมงทำงาน:</span>
-                            <span class="font-medium text-gray-400">-</span>
-                        </div>
-                    </div>
-                </div>
+        <button id="checkout-btn" class="hidden w-48 h-48 bg-red-500 text-white checkout-btn-anim rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-red-600 transition-all duration-300">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            <span class="text-2xl font-semibold mt-2">Check Out</span>
+        </button>
+    </div>
+
+    <div class="card space-y-4">
+        <div>
+            <h3 class="font-semibold mb-3">ประเภทการทำงาน</h3>
+            <div id="work-type-selector" class="flex bg-gray-100 rounded-xl p-1">
+                <button data-work-type="in_factory" class="work-type-btn flex-1 p-2 rounded-lg bg-sky-500 text-white shadow">ในโรงงาน</button>
+                <button data-work-type="on_site" class="work-type-btn flex-1 p-2 rounded-lg text-gray-600">On-site</button>
             </div>
+        </div>
+        
+        <div id="onsite-details-form" class="hidden pt-4 border-t border-gray-100 space-y-4">
+            <input id="onsite-location-input" type="text" placeholder="ระบุชื่อลูกค้า หรือสถานที่..." class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">แนบรูปภาพเพื่อยืนยัน</label>
+                <div class="flex items-center space-x-4">
+                    <input type="file" id="photo-upload-input" class="hidden" accept="image/*" capture="user">
+                    <button id="take-photo-btn" class="w-full flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:bg-gray-50">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>ถ่ายรูป</span>
+                    </button>
+                </div>
+                <img id="photo-preview" src="" class="hidden mt-4 rounded-xl max-h-40 mx-auto"/>
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100">
+             <h3 class="font-semibold mb-3">สถานะตำแหน่งปัจจุบัน</h3>
+             <div id="location-status" class="flex items-center p-3 rounded-xl bg-gray-100 text-gray-700">
+                <svg id="location-icon" class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+                <span id="location-text" class="font-medium">กำลังตรวจสอบตำแหน่ง...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="font-semibold mb-3">สรุปการทำงานวันนี้</h3>
+        <div id="summary-card-content" class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-500">Check-in:</span>
+                <span id="summary-checkin-time" class="font-medium text-gray-400">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Check-out:</span>
+                <span id="summary-checkout-time" class="font-medium text-gray-400">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">ชั่วโมงทำงาน:</span>
+                <span id="summary-work-hours" class="font-medium text-gray-400">-</span>
+            </div>
+        </div>
+    </div>
+
+</div>
 
             <!--หน้า Daily Report -->
             <div id="report-page" class="page space-y-6">
@@ -299,7 +300,7 @@
                 </div>
             </div>
 
-            <!-- =========== 5. หน้า Dashboard (พนักงาน) & Profile =========== -->
+            <!-- 5. หน้า Dashboard (พนักงาน) & Profile -->
             <div id="profile-page" class="page space-y-6">
                 <!-- Profile Header -->
                 <div class="card text-center">
@@ -342,7 +343,7 @@
 
         </main>
         
-        <!-- =========== Floating Bottom Menu =========== -->
+        <!--  Floating Bottom Menu  -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white h-20 flex justify-around items-center border-t border-gray-200 bottom-nav">
             <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
                 <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -376,6 +377,8 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    const storage = firebase.storage(); 
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
     const ALLOWED_RADIUS_METERS = 200;
 
@@ -390,16 +393,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationStatusDiv = document.getElementById('location-status');
     const locationIcon = document.getElementById('location-icon');
     const locationText = document.getElementById('location-text');
+    const workTypeButtons = document.querySelectorAll('.work-type-btn');
+    const onsiteDetailsForm = document.getElementById('onsite-details-form');
+    const onsiteLocationInput = document.getElementById('onsite-location-input');
+    const takePhotoBtn = document.getElementById('take-photo-btn');
+    const photoUploadInput = document.getElementById('photo-upload-input');
+    const photoPreview = document.getElementById('photo-preview');
+    const summaryCheckinTime = document.getElementById('summary-checkin-time');
+    // **(จุดที่แก้ไข)** ประกาศตัวแปรที่หายไป
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
 
     // --- App State ---
     let currentUser = null;
-    let watchId = null; // ID สำหรับ watchPosition
-    let latestPosition = null; // เก็บตำแหน่งล่าสุด
+    let watchId = null;
+    let latestPosition = null;
+    let selectedWorkType = 'in_factory';
+    let photoFile = null;
 
-    // --- Firebase Auth State Changed (Controller หลัก) ---
+    // --- Firebase Auth State Changed ---
     auth.onAuthStateChanged(async (user) => {
         loginPage.style.display = 'none';
         appContainer.style.display = 'none';
@@ -416,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
                 if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
 
-                startWatchingPosition(); // เริ่มติดตามตำแหน่ง
+                startWatchingPosition();
                 await checkUserWorkStatus();
                 
                 appContainer.style.display = 'block';
@@ -425,16 +438,119 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
                 auth.signOut();
+                loginPage.style.display = 'flex';
             }
         } else {
-            stopWatchingPosition(); // หยุดติดตามตำแหน่งเมื่อ Logout
+            stopWatchingPosition();
             currentUser = null;
             loginPage.style.display = 'flex';
         }
         loadingSpinner.style.display = 'none';
     });
+    
+    // --- Event Listeners for New UI ---
+    workTypeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            workTypeButtons.forEach(btn => {
+                btn.classList.remove('bg-sky-500', 'text-white', 'shadow');
+                btn.classList.add('text-gray-600');
+            });
+            button.classList.add('bg-sky-500', 'text-white', 'shadow');
+            selectedWorkType = button.dataset.workType;
+            onsiteDetailsForm.classList.toggle('hidden', selectedWorkType !== 'on_site');
+        });
+    });
 
-    // --- GPS Tracking Functions ---
+    takePhotoBtn.addEventListener('click', () => {
+        photoUploadInput.click();
+    });
+
+    photoUploadInput.addEventListener('change', (event) => {
+        photoFile = event.target.files[0];
+        if (photoFile) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                photoPreview.src = e.target.result;
+                photoPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(photoFile);
+        }
+    });
+
+    // --- Check-in Logic ---
+    checkinBtn.addEventListener('click', async () => {
+        if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
+        if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
+
+        if (selectedWorkType === 'on_site') {
+            if (!onsiteLocationInput.value.trim()) return alert("กรุณาระบุสถานที่ On-site");
+            if (!photoFile) return alert("กรุณาแนบรูปภาพเพื่อยืนยัน");
+        }
+
+        const checkinSpan = checkinBtn.querySelector('span');
+        checkinBtn.disabled = true;
+        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
+
+        try {
+            const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+            let workType = selectedWorkType;
+            let proceedCheckin = true;
+
+            if (workType === 'in_factory' && distance > ALLOWED_RADIUS_METERS) {
+                proceedCheckin = window.confirm(`คุณอยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.)\n\nต้องการลงเวลาเป็น "ทำงาน On-site" หรือไม่?`);
+                if (proceedCheckin) workType = 'on_site';
+            }
+
+            if (proceedCheckin) {
+                if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
+                const now = new Date();
+                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+                
+                let photoUrl = null;
+                if (workType === 'on_site' && photoFile) {
+                    if (checkinSpan) checkinSpan.textContent = "กำลังอัปโหลดรูป...";
+                    const filePath = `checkin-photos/${currentUser.uid}/${docId}.jpg`;
+                    const fileSnapshot = await storage.ref(filePath).put(photoFile);
+                    photoUrl = await fileSnapshot.ref.getDownloadURL();
+                }
+
+                const workRecord = {
+                    userId: currentUser.uid,
+                    date: firebase.firestore.Timestamp.fromDate(now),
+                    checkIn: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(now),
+                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+                        accuracy: latestPosition.coords.accuracy,
+                        workType: workType,
+                        onSiteDetails: workType === 'on_site' ? onsiteLocationInput.value.trim() : null,
+                        photoUrl: photoUrl
+                    },
+                    status: "checked_in"
+                };
+
+                await db.collection('work_records').doc(docId).set(workRecord);
+                alert("บันทึกเวลาเข้างานสำเร็จ!");
+                updateUIToCheckedIn();
+                summaryCheckinTime.textContent = now.toLocaleTimeString('th-TH');
+                summaryCheckinTime.classList.remove('text-gray-400');
+                summaryCheckinTime.classList.add('text-green-600');
+            } else {
+                alert("การลงเวลาถูกยกเลิก");
+            }
+
+        } catch (error) {
+            console.error("Check-in error:", error);
+            alert("เกิดข้อผิดพลาด: " + error.message);
+        } finally {
+            checkinBtn.disabled = false;
+            if (checkinSpan) checkinSpan.textContent = "Check In";
+        }
+    });
+
+
+    // --- Helper & UI Functions ---
+    // (ฟังก์ชันส่วนที่เหลือทั้งหมด)
+    
     function startWatchingPosition() {
         if (navigator.geolocation && watchId === null) {
             const options = { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 };
@@ -449,14 +565,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- UI Update Functions ---
     function updateRealtimeLocationStatus(position) {
-        latestPosition = position; // อัปเดตตำแหน่งล่าสุดเก็บไว้
-        const distance = calculateDistance(
-            position.coords.latitude, position.coords.longitude,
-            FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude
-        );
-
+        latestPosition = position;
+        const distance = calculateDistance(position.coords.latitude, position.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
         if (distance <= ALLOWED_RADIUS_METERS) {
             locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-green-100 text-green-700";
             locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
@@ -485,6 +596,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const workRecordDoc = await db.collection('work_records').doc(docId).get();
         if (workRecordDoc.exists && workRecordDoc.data().status === 'checked_in') {
             updateUIToCheckedIn();
+            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
+            summaryCheckinTime.classList.remove('text-gray-400');
+            summaryCheckinTime.classList.add('text-green-600');
         } else {
             updateUIToCheckIn();
         }
@@ -500,58 +615,6 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutBtn.classList.remove('hidden');
     }
 
-    // --- Event Listeners ---
-    checkinBtn.addEventListener('click', async () => {
-        if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
-        if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
-
-        checkinBtn.disabled = true;
-        const checkinSpan = checkinBtn.querySelector('span');
-        if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-
-        try {
-            const distance = calculateDistance(
-                latestPosition.coords.latitude, latestPosition.coords.longitude,
-                FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude
-            );
-            
-            let workType = "in_factory";
-            let proceedCheckin = true;
-
-            if (distance > ALLOWED_RADIUS_METERS) {
-                proceedCheckin = window.confirm(`คุณอยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.)\n\nต้องการลงเวลาเป็น "ทำงาน On-site" หรือไม่?`);
-                if (proceedCheckin) workType = "on_site";
-            }
-
-            if (proceedCheckin) {
-                const now = new Date();
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-                const workRecord = {
-                    userId: currentUser.uid,
-                    date: firebase.firestore.Timestamp.fromDate(now),
-                    checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(now),
-                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-                        accuracy: latestPosition.coords.accuracy,
-                        workType: workType
-                    },
-                    checkOut: null, status: "checked_in"
-                };
-                await db.collection('work_records').doc(docId).set(workRecord);
-                alert("บันทึกเวลาเข้างานสำเร็จ!");
-                updateUIToCheckedIn();
-            } else {
-                alert("การลงเวลาถูกยกเลิก");
-            }
-        } catch (error) {
-            console.error("Check-in error:", error);
-            alert("เกิดข้อผิดพลาด: " + error.message);
-        } finally {
-            checkinBtn.disabled = false;
-            if (checkinSpan) checkinSpan.textContent = "Check In";
-        }
-    });
-
     checkoutBtn.addEventListener('click', () => {
         alert("คุณกำลังจะลงเวลาออก (ฟังก์ชันนี้ยังไม่เสร็จสมบูรณ์)");
     });
@@ -559,7 +622,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const provider = new firebase.auth.OAuthProvider('oidc.line');
     lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
 
-    // --- Helper Functions ---
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3;
         const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
