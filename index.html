@@ -112,8 +112,8 @@
                 <!-- Header -->
                 <div class="flex justify-between items-center">
     <div>
-        <p class="text-gray-500">สวัสดีตอนเช้า</p>
-        <h2 id="user-display-name" class="text-2xl font-bold">คุณสมชาย ใจดี</h2>
+        <p class="text-gray-500">ยินดีต้อนรับ</p>
+        <h2 id="user-display-name" class="text-2xl font-bold"></h2>
     </div>
     <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
         <img id="user-profile-pic" src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
@@ -376,6 +376,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // --- Configuration ---
+    const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
+    const ALLOWED_RADIUS_METERS = 200; // กำหนดรัศมีที่นี่ (200 เมตร)
+
     // --- UI Elements ---
     const loadingSpinner = document.getElementById('loading-spinner');
     const loginPage = document.getElementById('login-page');
@@ -456,33 +460,95 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("เกิดข้อผิดพลาด: ไม่พบข้อมูลผู้ใช้");
+        
         checkinBtn.disabled = true;
+        const checkinSpan = checkinBtn.querySelector('span');
+        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
 
         try {
+            // 1. ดึงตำแหน่ง GPS
             const position = await getCurrentPosition();
-            const now = new Date();
-            const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-            const workRecord = {
-                userId: currentUser.uid,
-                date: firebase.firestore.Timestamp.fromDate(now),
-                checkIn: {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(position.coords.latitude, position.coords.longitude),
-                    workType: "in_factory"
-                },
-                checkOut: null, status: "checked_in"
+            const userLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
             };
-            await db.collection('work_records').doc(docId).set(workRecord);
-            alert("บันทึกเวลาเข้างานสำเร็จ!");
-            updateUIToCheckedIn();
+
+            // 2. คำนวณระยะห่างจากโรงงาน
+            const distance = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude
+            );
+            console.log(`ระยะห่างจากโรงงาน: ${distance.toFixed(2)} เมตร`);
+
+            let workType = "in_factory"; // กำหนดค่าเริ่มต้น
+            let proceedCheckin = true; // กำหนดค่าเริ่มต้นว่าให้เช็กอินได้
+
+            // 3. ตรวจสอบเงื่อนไขระยะห่าง
+            if (distance > ALLOWED_RADIUS_METERS) {
+                // ถ้าอยู่นอกรัศมี ให้แสดงหน้าต่างยืนยัน
+                proceedCheckin = window.confirm(
+                    `คุณอยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} เมตร)\n\n` +
+                    `คุณต้องการลงเวลาเป็น "ทำงาน On-site" หรือไม่?`
+                );
+                
+                if (proceedCheckin) {
+                    workType = "on_site"; // ถ้าผู้ใช้ยืนยัน ให้เปลี่ยนประเภทเป็น On-site
+                }
+            }
+
+            // 4. ดำเนินการเช็กอิน (ถ้าผู้ใช้ไม่กดยกเลิก)
+            if (proceedCheckin) {
+                if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
+
+                const now = new Date();
+                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+                const workRecord = {
+                    userId: currentUser.uid,
+                    date: firebase.firestore.Timestamp.fromDate(now),
+                    checkIn: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(now),
+                        location: new firebase.firestore.GeoPoint(userLocation.latitude, userLocation.longitude),
+                        workType: workType // ใช้ workType ที่ได้จากเงื่อนไข
+                    },
+                    checkOut: null,
+                    status: "checked_in"
+                };
+
+                await db.collection('work_records').doc(docId).set(workRecord);
+                alert("บันทึกเวลาเข้างานสำเร็จ!");
+                updateUIToCheckedIn();
+            } else {
+                // ถ้าผู้ใช้กดยกเลิกในหน้าต่าง confirm
+                alert("การลงเวลาถูกยกเลิก");
+            }
+
         } catch (error) {
             console.error("Check-in error:", error);
             alert("เกิดข้อผิดพลาดในการบันทึกเวลา: " + error.message);
         } finally {
+            // คืนค่าปุ่มให้เป็นเหมือนเดิม ไม่ว่าจะสำเร็จหรือล้มเหลว
             checkinBtn.disabled = false;
+            if (checkinSpan) checkinSpan.textContent = "Check In";
         }
     });
 
+    // --- ฟังก์ชันใหม่: คำนวณระยะห่าง (Haversine formula) ---
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // รัศมีของโลกในหน่วยเมตร
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // ระยะทางในหน่วยเมตร
+    }
+
+    
     // --- Check-out Logic (Placeholder) ---
     checkoutBtn.addEventListener('click', () => {
         alert("คุณกำลังจะลงเวลาออก (ฟังก์ชันนี้ยังไม่เสร็จสมบูรณ์)");
