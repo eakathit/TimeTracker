@@ -62,6 +62,15 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
         }
+
+        .checkout-btn-anim {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -113,13 +122,19 @@
 
                 <!-- Clock & Check-in Button -->
                 <div class="card text-center">
-                    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
-                    <p id="current-time" class="text-5xl font-bold my-4">08:30:15</p>
-                    <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
-                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        <span class="text-2xl font-semibold mt-2">Check In</span>
-                    </button>
-                </div>
+    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
+    <p id="current-time" class="text-5xl font-bold my-4">08:30:15</p>
+    
+    <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <span class="text-2xl font-semibold mt-2">Check In</span>
+    </button>
+
+    <button id="checkout-btn" class="hidden w-48 h-48 bg-red-500 text-white checkout-btn-anim rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-red-600 transition-all duration-300">
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <span class="text-2xl font-semibold mt-2">Check Out</span>
+    </button>
+</div>
 
                 <!-- Location Status & Map -->
                 <div class="card">
@@ -367,7 +382,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const appContainer = document.getElementById('app-container');
     const lineLoginBtn = document.getElementById('line-login-btn');
     const checkinBtn = document.getElementById('checkin-btn');
-    const mainContent = document.getElementById('main-content'); // **<< เพิ่มบรรทัดนี้กลับเข้ามา**
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const mainContent = document.getElementById('main-content');
 
     // --- App State ---
     let currentUser = null;
@@ -376,135 +392,120 @@ document.addEventListener('DOMContentLoaded', function() {
     auth.onAuthStateChanged(async (user) => {
         loginPage.style.display = 'none';
         appContainer.style.display = 'none';
-        
+
         if (user) {
             currentUser = user;
             const userDocRef = db.collection('users').doc(user.uid);
             const userDoc = await userDocRef.get();
 
             if (userDoc.exists) {
+                // --- กรณีผู้ใช้ล็อกอิน และมีข้อมูลในระบบ ---
                 const userData = userDoc.data();
                 const userDisplayName = document.getElementById('user-display-name');
                 const userProfilePic = document.getElementById('user-profile-pic');
                 if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
                 if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
-                
+
+                // ตรวจสอบสถานะ Check-in/out ของวันนี้
+                await checkUserWorkStatus();
+
+                // **(จุดที่แก้ไข)** สั่งแสดงหน้าแอปหลัก และหน้า Check-in
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
                 document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
             } else {
+                // --- กรณีผู้ใช้ล็อกอิน แต่ไม่มีข้อมูลในระบบ ---
                 alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ กรุณาติดต่อผู้ดูแล");
                 auth.signOut();
                 loginPage.style.display = 'flex';
             }
         } else {
+            // --- กรณีไม่มีผู้ใช้ล็อกอิน ---
             currentUser = null;
             loginPage.style.display = 'flex';
         }
         loadingSpinner.style.display = 'none';
     });
 
+    // --- ฟังก์ชัน: ตรวจสอบสถานะการทำงานเมื่อโหลดหน้า ---
+    async function checkUserWorkStatus() {
+        if (!currentUser) return;
+        const today = new Date().toISOString().split('T')[0];
+        const docId = `${currentUser.uid}_${today}`;
+        const workRecordDoc = await db.collection('work_records').doc(docId).get();
+
+        if (workRecordDoc.exists && workRecordDoc.data().status === 'checked_in') {
+            updateUIToCheckedIn();
+        } else {
+            updateUIToCheckIn();
+        }
+    }
+
+    // --- ฟังก์ชัน: จัดการ UI สำหรับสถานะ Check-in ---
+    function updateUIToCheckIn() {
+        checkinBtn.classList.remove('hidden');
+        checkoutBtn.classList.add('hidden');
+    }
+
+    // --- ฟังก์ชัน: จัดการ UI สำหรับสถานะ Checked-in (รอ Check-out) ---
+    function updateUIToCheckedIn() {
+        checkinBtn.classList.add('hidden');
+        checkoutBtn.classList.remove('hidden');
+    }
+
     // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
-        if (!currentUser) {
-            alert("เกิดข้อผิดพลาด: ไม่พบข้อมูลผู้ใช้");
-            return;
-        }
-
+        if (!currentUser) return alert("เกิดข้อผิดพลาด: ไม่พบข้อมูลผู้ใช้");
         checkinBtn.disabled = true;
-        const checkinSpan = checkinBtn.querySelector('span');
-        if(checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
         try {
             const position = await getCurrentPosition();
-            const location = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            };
-
             const now = new Date();
-            const today = now.toISOString().split('T')[0];
-            const docId = `${currentUser.uid}_${today}`;
-
+            const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
             const workRecord = {
                 userId: currentUser.uid,
                 date: firebase.firestore.Timestamp.fromDate(now),
                 checkIn: {
                     timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(location.latitude, location.longitude),
+                    location: new firebase.firestore.GeoPoint(position.coords.latitude, position.coords.longitude),
                     workType: "in_factory"
                 },
-                checkOut: null,
-                dailyReport: null,
-                overtime: null,
-                status: "checked_in"
+                checkOut: null, status: "checked_in"
             };
-
             await db.collection('work_records').doc(docId).set(workRecord);
-
             alert("บันทึกเวลาเข้างานสำเร็จ!");
-            checkinBtn.style.backgroundColor = '#6B7280';
-            checkinBtn.innerHTML = `
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-2xl font-semibold mt-2">Checked In</span>
-            `;
-
+            updateUIToCheckedIn();
         } catch (error) {
             console.error("Check-in error:", error);
             alert("เกิดข้อผิดพลาดในการบันทึกเวลา: " + error.message);
+        } finally {
             checkinBtn.disabled = false;
-            if(checkinSpan) checkinSpan.textContent = "Check In";
         }
+    });
+
+    // --- Check-out Logic (Placeholder) ---
+    checkoutBtn.addEventListener('click', () => {
+        alert("คุณกำลังจะลงเวลาออก (ฟังก์ชันนี้ยังไม่เสร็จสมบูรณ์)");
     });
 
     // --- Function to get GPS Location ---
     function getCurrentPosition() {
         return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error("เบราว์เซอร์ของคุณไม่รองรับ Geolocation"));
-            } else {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true, // ขอความแม่นยำสูง
-                    timeout: 10000, // รอไม่เกิน 10 วินาที
-                    maximumAge: 0 // ไม่ใช้ค่าตำแหน่งเก่าที่แคชไว้
-                });
-            }
+            if (!navigator.geolocation) return reject(new Error("เบราว์เซอร์ไม่รองรับ Geolocation"));
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
         });
     }
 
-    // --- LINE Login Logic ---
+    // --- LINE Login Logic, Page Navigation, Clock ---
     const provider = new firebase.auth.OAuthProvider('oidc.line');
-    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
-
-    // --- Page Navigation and Clock ---
+    lineLoginBtn.addEventListener('click', () => auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)));
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
-    
-    function showPage(pageId) {
-        pages.forEach(page => page.classList.remove('active'));
-        const activePage = document.getElementById(pageId);
-        if (activePage) activePage.classList.add('active');
-    }
-
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const pageId = item.dataset.page;
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-            showPage(pageId);
-        });
-    });
-
-    function updateClock() {
-        if (timeElement) {
-             const now = new Date();
-             timeElement.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    function showPage(pageId){pages.forEach(p=>p.classList.remove('active'));const ap=document.getElementById(pageId);if(ap)ap.classList.add('active')}
+    navItems.forEach(item=>{item.addEventListener('click',e=>{e.preventDefault();const pId=item.dataset.page;navItems.forEach(n=>n.classList.remove('active'));item.classList.add('active');showPage(pId)})});
+    function updateClock(){if(timeElement){const n=new Date();timeElement.textContent=n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}}
+    setInterval(updateClock,1000);updateClock();
 });
 </script>
 </body>
