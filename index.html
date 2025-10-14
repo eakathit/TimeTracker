@@ -1,430 +1,455 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ลงเวลา</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-
-    body {
-      font-family: 'Kanit', sans-serif;
-    }
-
-    .gradient-bg {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .card-shadow {
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-    }
-
-    .status-in-factory {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
-
-    .status-onsite {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบลงเวลาพนักงาน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* กำหนดค่าสีและฟอนต์หลัก */
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --primary-color: #38BDF8; /* Light Blue */
+            --primary-hover: #0EA5E9;
+            --secondary-color: #34D399; /* Mint Green */
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+        }
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+        /* สไตล์เพิ่มเติมสำหรับ Card และปุ่ม */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        /* ซ่อนหน้าจอทั้งหมดไว้ก่อน */
+        .page {
+            display: none;
+        }
+        /* แสดงหน้าจอที่ active */
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* สไตล์สำหรับ Bottom Nav */
+        .bottom-nav {
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+        }
+        .nav-item.active svg {
+            color: var(--primary-color);
+        }
+        .nav-item.active span {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        /* สไตล์สำหรับ Check-in button animation */
+        .checkin-btn-anim {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+        }
+    </style>
 </head>
-<body>
-     <!-- login page -->
-  <div id="loginContainer" class="text-center p-10">
-    <h1 class="text-2xl font-bold mb-4">ยินดีต้อนรับสู่ระบบลงเวลา</h1>
-    <p class="mb-6">กรุณาลงชื่อเข้าใช้เพื่อเริ่มต้นใช้งาน</p>
-    <button id="loginButton" class="bg-green-500 text-white font-bold py-2 px-4 rounded">
-        ลงชื่อเข้าใช้ด้วย LINE
-    </button>
-</div>
+<body class="antialiased">
 
-  <!-- Main App -->
-    <div id="mainApp" class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-2 mt-6">
-            <!-- Tab Navigation -->
-      <div class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden">
-        <div class="flex">
-          <button onclick="showTab('checkin')" id="tab-checkin" class="flex-1 py-4 px-6 text-center font-medium bg-blue-600 text-white">
-                        <i data-feather="clock" class="w-5 h-5 inline mr-2"></i>
-                        เช็คอิน/เช็คเอาท์
-                    </button>
-          <button onclick="showTab('report')" id="tab-report" class="flex-1 py-4 px-6 text-center font-medium text-gray-600 hover:bg-gray-50">
-                        <i data-feather="file-text" class="w-5 h-5 inline mr-2"></i>
-                        รายงานประจำวัน
-                    </button>
-          <button onclick="showTab('dashboard')" id="tab-dashboard" class="flex-1 py-4 px-6 text-center font-medium text-gray-600 hover:bg-gray-50">
-                        <i data-feather="bar-chart-2" class="w-5 h-5 inline mr-2"></i>
-                        Dashboard
-                    </button>
+    <!-- หน้า Login -->
+    <div id="login-page" class="page active min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+        <div class="w-full max-w-sm text-center">
+            <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
+            <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
+            <div class="space-y-4">
+                <input type="text" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            </div>
+            <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
         </div>
-      </div>
-      <!-- Check-in/Check-out Tab -->
-      <div id="content-checkin" class="tab-content">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Time & Status Card -->
-          <div class="bg-white rounded-2xl card-shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">เวลาปัจจุบัน</h3>
-            <div class="text-center">
-              <div class="text-4xl font-bold text-gray-900 mb-2" id="currentTime">19:00</div>
-              <div class="text-lg text-gray-600 mb-6" id="currentDate">วันพฤหัสบดีที่ 9 ตุลาคม 2568</div>
-              <!-- Location Status -->
-              <div class="mb-6">
-                <div id="locationStatus"
-                  class="inline-flex items-center px-4 py-2 rounded-full text-white font-medium status-in-factory">
-                  <i data-feather="map-pin" class="w-4 h-4 mr-2"></i>
-                  อยู่ในโรงงาน
-                </div>
-              </div>
-              <!-- Check-in/out Buttons -->
-              <div class="space-y-4">
-                <button onclick="checkIn()" id="checkInBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-xl font-medium text-lg transition-all duration-200 hover:shadow-lg">
-                                    <i data-feather="log-in" class="w-6 h-6 inline mr-2"></i>
-                                    เช็คอิน
-                                </button>
-                <button onclick="checkOut()" id="checkOutBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-xl font-medium text-lg transition-all duration-200 hover:shadow-lg" disabled>
-                                    <i data-feather="log-out" class="w-6 h-6 inline mr-2"></i>
-                                    เช็คเอาท์
-                                </button>
-
-              </div>
-            </div>
-          </div>
-          <!-- GPS Status แบบใหม่ -->
-          <div class="bg-white rounded-2xl card-shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">ข้อมูลสถานที่</h3>
-            <div class="mb-6" id="gpsCard">
-              <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
-                <div class="flex items-center">
-                  <i id="gpsIcon" data-feather="navigation" class="w-5 h-5 text-green-600 mr-3"></i>
-                  <span id="gpsMessage" class="text-green-800 font-medium">GPS เชื่อมต่อแล้ว</span>
-                </div>
-                <span id="gpsDistance" class="text-green-600 text-sm">--</span>
-              </div>
-            </div>
-            <!-- Onsite Form -->
-            <div id="onsiteForm" class="hidden">
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">สถานที่</label>
-                  <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="ระบุสถานที่ทำงาน">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-                  <textarea class="mb-2 w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 h-24" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Toggle Onsite -->
-            <button onclick="toggleOnsite()" id="onsiteToggle" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-200">
-                            <i data-feather="map" class="w-5 h-5 inline mr-2"></i>
-                            ทำงาน Onsite
-                        </button>
-          </div>
-        </div>
-
-        <!-- Today's Records -->
-        <div class="mt-6 bg-white rounded-2xl card-shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">บันทึกวันนี้</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-200">
-                  <th class="text-left py-3 px-4 font-medium text-gray-700">เวลา</th>
-                  <th class="text-left py-3 px-4 font-medium text-gray-700">ประเภท</th>
-                  <th class="text-left py-3 px-4 font-medium text-gray-700">สถานที่</th>
-                  <th class="text-left py-3 px-4 font-medium text-gray-700">สถานะ</th>
-                </tr>
-              </thead>
-              <tbody id="todayRecords">
-              </tbody>
-
-              </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Daily Report Tab -->
-      <div id="content-report" class="tab-content hidden">
-        <div class="bg-white rounded-2xl card-shadow p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-6">รายงานประจำวัน</h3>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Morning Plan -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-3">
-                                <i data-feather="sunrise" class="w-4 h-4 inline mr-2"></i>
-                                แผนงานตอนเข้า (Check-in)
-                            </label>
-              <textarea id="morningPlan" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 h-40" placeholder="ระบุแผนงานที่จะทำในวันนี้..."></textarea>
-            </div>
-
-            <!-- Evening Summary -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-3">
-                                <i data-feather="sunset" class="w-4 h-4 inline mr-2"></i>
-                                สรุปงานตอนออก (Check-out)
-                            </label>
-              <textarea id="eveningSummary" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 h-40" placeholder="สรุปงานที่ทำเสร็จในวันนี้..."></textarea>
-            </div>
-          </div>
-
-          <div class="mt-6 flex justify-end space-x-4">
-            <button onclick="saveDraft()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200">
-                            บันทึกแบบร่าง
-                        </button>
-            <button onclick="submitReport()" class="px-6 py-3 btn-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-200">
-                            ส่งรายงาน
-                        </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Dashboard Tab -->
-      <div id="content-dashboard" class="tab-content hidden">
-        <!-- Filters -->
-        <div class="bg-white rounded-2xl card-shadow p-6 mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">ตัวกรอง</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
-              <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">พนักงาน</label>
-              <select class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
-                                <option>ทั้งหมด</option>
-                                <option>กิตติภพ นนทะไชย</option>
-                                <option>เอกอาทิตย์ เหขุนทด</option>
-                                <option>ศุภกร ทองทา</option>
-                            </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">แผนก</label>
-              <select class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
-                                <option>ทั้งหมด</option>
-                                <option>ผลิต</option>
-                                <option>คุณภาพ</option>
-                                <option>บำรุงรักษา</option>
-                            </select>
-            </div>
-            <div class="flex items-end">
-              <button onclick="applyFilter()" class="w-full btn-primary text-white py-2 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200">
-                                ค้นหา
-                            </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Export Buttons -->
-        <div class="flex justify-end space-x-4 mb-6">
-          <button onclick="exportExcel()" class="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all duration-200">
-                        <i data-feather="download" class="w-4 h-4 mr-2"></i>
-                        Export Excel
-                    </button>
-          <button onclick="exportPDF()" class="flex items-center px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-all duration-200">
-                        <i data-feather="file-text" class="w-4 h-4 mr-2"></i>
-                        Export PDF
-                    </button>
-        </div>
-
-        <!-- Data Table -->
-        <div class="bg-white rounded-2xl card-shadow overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">วันที่</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">ชื่อ-นามสกุล</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">เวลาเข้า</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">เวลาออก</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">สถานที่</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">รายงาน</th>
-                  <th class="text-left py-4 px-6 font-medium text-gray-700">สถานะ</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                  <td class="py-4 px-6 text-gray-900">15/01/2567</td>
-                  <td class="py-4 px-6 text-gray-900">เอกอาทิตย์ เหขุนทด</td>
-                  <td class="py-4 px-6 text-gray-600">08:30:15</td>
-                  <td class="py-4 px-6 text-gray-600">17:45:22</td>
-                  <td class="py-4 px-6 text-gray-600">โรงงาน</td>
-                  <td class="py-4 px-6">
-                    <button onclick="viewReport()" class="text-blue-600 hover:text-blue-800 text-sm">ดูรายงาน</button>
-                  </td>
-                  <td class="py-4 px-6">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            ปกติ
-                                        </span>
-                  </td>
-                </tr>
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                  <td class="py-4 px-6 text-gray-900">15/01/2567</td>
-                  <td class="py-4 px-6 text-gray-900">ศุภกร ทองทา</td>
-                  <td class="py-4 px-6 text-gray-600">08:45:30</td>
-                  <td class="py-4 px-6 text-gray-600">18:00:15</td>
-                  <td class="py-4 px-6 text-gray-600">ลูกค้า ABC</td>
-                  <td class="py-4 px-6">
-                    <button onclick="viewReport()" class="text-blue-600 hover:text-blue-800 text-sm">ดูรายงาน</button>
-                  </td>
-                  <td class="py-4 px-6">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                            Onsite
-                                        </span>
-                  </td>
-                </tr>
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                  <td class="py-4 px-6 text-gray-900">15/01/2567</td>
-                  <td class="py-4 px-6 text-gray-900">กิตติภพ นนทะไชย</td>
-                  <td class="py-4 px-6 text-gray-600">09:15:45</td>
-                  <td class="py-4 px-6 text-gray-600">-</td>
-                  <td class="py-4 px-6 text-gray-600">โรงงาน</td>
-                  <td class="py-4 px-6">
-                    <span class="text-gray-400 text-sm">ยังไม่ส่ง</span>
-                  </td>
-                  <td class="py-4 px-6">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            สาย
-                                        </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
 
-  <script src="firebase-config.js"></script>
-  <script>
+    <!-- Main App Container (หลัง Login)-->
+    <div id="app-container" class="hidden pb-24">
+        
+        <!-- Main Content Area -->
+        <main id="main-content" class="p-4 md:p-6">
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+            <!-- หน้า Check-in / Check-out-->
+            <div id="check-in-out-page" class="page space-y-6">
+                <!-- Header -->
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-500">สวัสดีตอนเช้า</p>
+                        <h2 class="text-2xl font-bold">คุณสมชาย ใจดี</h2>
+                    </div>
+                    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                        <img src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
+                    </div>
+                </div>
 
-const auth = firebase.auth();
-const loginContainer = document.getElementById('loginContainer');
-const mainApp = document.getElementById('mainApp');
-const loginButton = document.getElementById('loginButton');
-const currentUserElement = document.getElementById('currentUser');
+                <!-- Clock & Check-in Button -->
+                <div class="card text-center">
+                    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
+                    <p id="current-time" class="text-5xl font-bold my-4">08:30:15</p>
+                    <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="text-2xl font-semibold mt-2">Check In</span>
+                    </button>
+                </div>
 
-//  ยามรักษาความปลอดภัยเรา
-auth.onAuthStateChanged(user => {
-  if (user){
-    // --- กรณีที่ มีคน Login อยู่แล้ว (user ไม่ใช่ null) ---
-        console.log("ผู้ใช้ Login อยู่แล้ว:", user.displayName);
+                <!-- Location Status & Map -->
+                <div class="card">
+                    <h3 class="font-semibold mb-3">สถานะตำแหน่ง</h3>
+                    <div id="location-status" class="flex items-center p-3 rounded-xl bg-green-100 text-green-700">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="font-medium">ในพื้นที่โรงงาน (รัศมี 200 เมตร)</span>
+                    </div>
+                    <!-- Onsite Option (hidden by default) -->
+                    <div id="onsite-option" class="hidden mt-4 space-y-3">
+                         <div class="flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700">
+                             <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                             <span class="font-medium">นอกพื้นที่โรงงาน</span>
+                        </div>
+                        <select class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <option>On-site Customer</option>
+                            <option>Work from Home</option>
+                            <option>อื่นๆ</option>
+                        </select>
+                        <input type="text" placeholder="กรอกรายละเอียดสถานที่..." class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    </div>
 
-      // 2. ซ่อนหน้า login เเสดงเเอปหลัก
-      loginContainer.style.display = 'none';
-      mainApp.style.display = 'block';
+                    <!-- Map -->
+                    <div class="mt-4 h-40 bg-gray-200 rounded-xl flex items-center justify-center text-gray-500">
+                        <p>[ส่วนแสดงแผนที่ GPS]</p>
+                        <!-- In a real app, this would be a map library like Leaflet or Google Maps -->
+                    </div>
+                     <div class="text-center mt-2">
+                        <button id="toggle-location-btn" class="text-sm text-sky-500">จำลองสถานะ: นอกพื้นที่</button>
+                    </div>
+                </div>
 
-      // 3. (สำคัญ) สามารถเรียกใช้ฟังก์ชันอื่นๆ ที่ต้องใช้ข้อมูล user ได้จากตรงนี้
-        // เช่น showMyHistory(user);
-  } else {
+                <!-- Today's Summary -->
+                <div class="card">
+                    <h3 class="font-semibold mb-3">สรุปการทำงานวันนี้</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Check-in:</span>
+                            <span class="font-medium text-green-600">08:25 น.</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Check-out:</span>
+                            <span class="font-medium text-gray-400">-</span>
+                        </div>
+                         <div class="flex justify-between">
+                            <span class="text-gray-500">ชั่วโมงทำงาน:</span>
+                            <span class="font-medium text-gray-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      // กรณี ไม่มีคน login อยู่ (user เป็น null)
-      console.log("ไม่มีผู้ใช้งาน Login")
-
-      // 1. ซ่อนเเอปหลัก เเละเเสดงหน้า login
-      mainApp.style.display = 'none';
-      loginContainer.style.display = 'block';
-  }
-});
-
-// ... (ส่วนประกาศตัวแปร auth, loginButton) ...
-
-// Event Listener สำหรับปุ่ม Login (ต้องมีแค่บล็อกนี้บล็อกเดียว)
-const provider = new firebase.auth.OAuthProvider('oidc.line');
-
-loginButton.addEventListener('click', () => {
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            // Login สำเร็จ! onAuthStateChanged จะจัดการส่วนที่เหลือเอง
-            console.log("Login สำเร็จแล้ว!");
-            const user = result.user;
-            console.log("Display Name:", user.displayName);
-        })
-        .catch((error) => {
-            // Error จะถูกแสดงที่นี่
-            console.error("เกิดข้อผิดพลาดตอน Login:", error);
+            <!--หน้า Daily Report -->
+            <div id="report-page" class="page space-y-6">
+                <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
+                <div class="card space-y-4">
+                    <h3 class="font-semibold">กรอกข้อมูลรายงาน</h3>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
+                        <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <option>งานเอกสาร</option>
+                            <option>ประชุม</option>
+                            <option>ดูแลเครื่องจักร</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">โครงการ</label>
+                         <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <option>Project A</option>
+                            <option>Project B</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">ชั่วโมงทำงาน (OT)</label>
+                         <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <option>ไม่มี OT</option>
+                            <option>1 ชั่วโมง</option>
+                            <option>2 ชั่วโมง</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium text-gray-600">รายละเอียดงาน</label>
+                        <textarea rows="3" placeholder="อธิบายงานที่ทำ..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none"></textarea>
+                    </div>
+                    <button class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="font-semibold text-lg">รายงานที่เคยส่ง</h3>
+                    <!-- Report Card Item -->
+                    <div class="card !p-4 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold">10 ตุลาคม 2568</p>
+                            <p class="text-sm text-gray-500">Project A - ดูแลเครื่องจักร</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                    <div class="card !p-4 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold">09 ตุลาคม 2568</p>
+                            <p class="text-sm text-gray-500">Project B - ประชุมทีม</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </div>
+            </div>
             
-            // แจ้งเตือนผู้ใช้เกี่ยวกับ Popup Blocker
-            if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-                alert('เบราว์เซอร์ของคุณอาจบล็อกหน้าต่าง Login กรุณาตรวจสอบและอนุญาต Popup สำหรับเว็บนี้ แล้วลองใหม่อีกครั้ง');
+            <!-- =========== 4. หน้า Dashboard (Admin) =========== -->
+            <div id="admin-dashboard-page" class="page space-y-6">
+                 <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Dashboard (Admin)</h2>
+                    <button class="bg-gray-200 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </button>
+                </div>
+                <!-- Filters -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <input type="date" value="2025-10-10" class="w-full p-2 border border-gray-300 rounded-xl text-sm">
+                    <input type="text" placeholder="ค้นหาชื่อ..." class="w-full p-2 border border-gray-300 rounded-xl text-sm">
+                    <select class="w-full p-2 border border-gray-300 rounded-xl text-sm">
+                        <option>ทุกแผนก</option>
+                        <option>ฝ่ายผลิต</option>
+                        <option>ฝ่ายบุคคล</option>
+                    </select>
+                </div>
+
+                <!-- Data Table / Cards for Mobile -->
+                <div class="space-y-3">
+                    <!-- Item 1 -->
+                    <div class="card !p-4 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">สมชาย ใจดี</p>
+                                <p class="text-xs text-gray-500">ฝ่ายผลิต</p>
+                            </div>
+                            <span class="text-xs text-gray-500">10/10/2568</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pt-2 border-t border-gray-100">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:25</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">17:31</span></div>
+                            <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">ในโรงงาน</span></div>
+                            <div class="col-span-2"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ดูแลเครื่องจักร</span></div>
+                        </div>
+                    </div>
+                     <!-- Item 2 -->
+                    <div class="card !p-4 space-y-2">
+                         <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold">สมหญิง จริงใจ</p>
+                                <p class="text-xs text-gray-500">ฝ่ายบุคคล</p>
+                            </div>
+                            <span class="text-xs text-gray-500">10/10/2568</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pt-2 border-t border-gray-100">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:50</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">18:05</span></div>
+                            <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">Onsite - ABC Corp</span></div>
+                             <div class="col-span-2"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ประชุมลูกค้า</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========== 5. หน้า Dashboard (พนักงาน) & Profile =========== -->
+            <div id="profile-page" class="page space-y-6">
+                <!-- Profile Header -->
+                <div class="card text-center">
+                    <img src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
+                    <h2 class="text-xl font-bold mt-4">คุณสมชาย ใจดี</h2>
+                    <p class="text-gray-500">ฝ่ายผลิต</p>
+                    <div class="mt-4 p-4 bg-gray-100 rounded-xl inline-block">
+                        <p class="text-xs text-gray-500">[QR Code สำหรับสแกน]</p>
+                    </div>
+                </div>
+                
+                <!-- History -->
+                <div class="space-y-4">
+                    <h3 class="font-semibold text-lg">ประวัติการทำงานของฉัน</h3>
+                    <!-- History Item 1 -->
+                    <div class="card !p-4">
+                        <p class="font-semibold mb-2">10 ตุลาคม 2568</p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:25</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">17:31</span></div>
+                             <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">ในโรงงาน</span></div>
+                             <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ดูแลเครื่องจักร</span></div>
+                        </div>
+                    </div>
+                    <!-- History Item 2 -->
+                    <div class="card !p-4">
+                        <p class="font-semibold mb-2">09 ตุลาคม 2568</p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:15</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">18:30 (OT 1 ชม.)</span></div>
+                             <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">ในโรงงาน</span></div>
+                             <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ประชุมทีม</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                 <button class="w-full text-center py-3 bg-red-50 text-red-500 rounded-xl font-semibold">ออกจากระบบ</button>
+            </div>
+
+
+        </main>
+        
+        <!-- =========== Floating Bottom Menu =========== -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white h-20 flex justify-around items-center border-t border-gray-200 bottom-nav">
+            <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs">ลงเวลา</span>
+            </a>
+             <a href="#" class="nav-item text-center text-gray-500" data-page="report-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-xs">รายงาน</span>
+            </a>
+            <a href="#" class="nav-item text-center text-gray-500" data-page="admin-dashboard-page">
+                 <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-xs">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item text-center text-gray-500" data-page="profile-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="text-xs">โปรไฟล์</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- =========== Notification Banner =========== -->
+    <div id="notification" class="fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white py-2 px-6 rounded-full shadow-lg text-sm transition-all duration-500 opacity-0 -translate-y-10">
+        <p>บันทึกเวลาสำเร็จ!</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginPage = document.getElementById('login-page');
+            const appContainer = document.getElementById('app-container');
+            const loginBtn = document.getElementById('login-btn');
+            const mainContent = document.getElementById('main-content');
+            const pages = mainContent.querySelectorAll('.page');
+            const navItems = document.querySelectorAll('.nav-item');
+            const notification = document.getElementById('notification');
+
+            
+            // --- Real-time Clock ---
+            const timeElement = document.getElementById('current-time');
+            function updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                }
             }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // --- Page Navigation ---
+            function showPage(pageId) {
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+                const activePage = document.getElementById(pageId);
+                if (activePage) {
+                    activePage.classList.add('active');
+                }
+            }
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = item.dataset.page;
+                    
+                    // Update Nav Item active state
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    showPage(pageId);
+                });
+            });
+
+            // --- Login Logic ---
+            loginBtn.addEventListener('click', () => {
+                loginPage.style.display = 'none';
+                appContainer.style.display = 'block';
+                showPage('check-in-out-page'); // Show check-in page after login
+            });
+
+            // --- Check-in Logic ---
+            const checkinBtn = document.getElementById('checkin-btn');
+            checkinBtn.addEventListener('click', () => {
+                showNotification();
+            });
+
+            function showNotification() {
+                notification.classList.remove('opacity-0', '-translate-y-10');
+                notification.classList.add('opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    notification.classList.remove('opacity-100', 'translate-y-0');
+                    notification.classList.add('opacity-0', '-translate-y-10');
+                }, 3000);
+            }
+            
+            // --- GPS Location Simulation ---
+            const toggleLocationBtn = document.getElementById('toggle-location-btn');
+            const locationStatusDiv = document.getElementById('location-status');
+            const onsiteOptionDiv = document.getElementById('onsite-option');
+            let isInFactory = true;
+
+            toggleLocationBtn.addEventListener('click', () => {
+                isInFactory = !isInFactory;
+                updateLocationStatus();
+            });
+
+            function updateLocationStatus() {
+                if (isInFactory) {
+                    locationStatusDiv.classList.remove('hidden');
+                    onsiteOptionDiv.classList.add('hidden');
+                    toggleLocationBtn.textContent = 'จำลองสถานะ: นอกพื้นที่';
+                } else {
+                    locationStatusDiv.classList.add('hidden');
+                    onsiteOptionDiv.classList.remove('hidden');
+                    toggleLocationBtn.textContent = 'จำลองสถานะ: ในพื้นที่';
+                }
+            }
+
+            // --- Initial State ---
+            // On load, the login page is shown by default.
+            // If there was a session, you would check it here.
         });
-});
-
- // logout
- function logout(){
-  auth.signOut().then(() => {
-    // เมื่อ logout สำเร็จ onAuthStateChanged จะทำงานเอง
-    console.log("ออกจากระบบสำเร็จ");
-  })
- }
-
-    function showTab(tabName) {
-        // --- 1. ซ่อนเนื้อหาทั้งหมด ---
-        const contents = document.querySelectorAll('.tab-content');
-        contents.forEach(content => {
-            content.style.display = 'none';
-        });
-
-        // --- 2. แสดงเฉพาะเนื้อหาที่เลือก ---
-        const activeContent = document.getElementById('content-' + tabName);
-        if (activeContent) {
-            activeContent.style.display = 'block';
-        }
-
-        // --- 3. รีเซ็ตสไตล์ปุ่มทั้งหมด ---
-        const tabs = document.querySelectorAll('.flex > button');
-        tabs.forEach(tab => {
-            tab.classList.remove('bg-blue-600', 'text-white');
-            tab.classList.add('text-gray-600', 'hover:bg-gray-50');
-        });
-
-        // --- 4. เพิ่มสไตล์ให้ปุ่มที่ถูกเลือก ---
-        const activeTab = document.getElementById('tab-' + tabName);
-        if (activeTab) {
-            activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50');
-            activeTab.classList.add('bg-blue-600', 'text-white');
-        }
-    }
-
-    // --- ทำให้หน้า 'checkin' เป็นหน้าเริ่มต้นเมื่อโหลดเว็บ ---
-    document.addEventListener('DOMContentLoaded', () => {
-        showTab('checkin');
-    });
-
-    // โหลดรายการบันทึกเวลา
-    async function loadLogs() {
-      const snapshot = await db.collection("timeLogs").orderBy("timestamp", "desc").get();
-      logList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const log = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${log.name} — ${log.timestamp.toDate().toLocaleString()}`;
-        logList.appendChild(li);
-      });
-    }
-
-  </script>
+    </script>
 </body>
 </html>
