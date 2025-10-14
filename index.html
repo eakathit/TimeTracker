@@ -52,24 +52,6 @@
     </button>
 </div>
 
-  <!-- Navigation -->
-  <nav id="mainNav" class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <h1 class="text-xl font-bold text-gray-900">ระบบลงเวลา</h1>
-          </div>
-        </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-600" id="currentUser">พนักงาน: เอกอาทิตย์ เหขุนทด </span>
-          <button onclick="logout()" class="text-sm text-blue-600 hover:text-blue-800">ออกจากระบบ</button>
-          <!--ลองนำออกสักครู่ -->
-        </div>
-      </div>
-    </div>
-  </nav>
-
   <!-- Main App -->
     <div id="mainApp" class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-2 mt-6">
             <!-- Tab Navigation -->
@@ -116,7 +98,6 @@
                                     <i data-feather="log-out" class="w-6 h-6 inline mr-2"></i>
                                     เช็คเอาท์
                                 </button>
-                                <button id="loginButton">ลงชื่อเข้าใช้ด้วย LINE</button>
 
               </div>
             </div>
@@ -340,7 +321,6 @@
 
 const auth = firebase.auth();
 const loginContainer = document.getElementById('loginContainer');
-const mainNav = document.getElementById('mainNav');
 const mainApp = document.getElementById('mainApp');
 const loginButton = document.getElementById('loginButton');
 const currentUserElement = document.getElementById('currentUser');
@@ -350,9 +330,6 @@ auth.onAuthStateChanged(user => {
   if (user){
     // --- กรณีที่ มีคน Login อยู่แล้ว (user ไม่ใช่ null) ---
         console.log("ผู้ใช้ Login อยู่แล้ว:", user.displayName);
-
-      // 1. เเสดงผู้ใช้งาน
-      currentUserElement.textContent = `พนักงาน: ${user.displayName}`;
 
       // 2. ซ่อนหน้า login เเสดงเเอปหลัก
       loginContainer.style.display = 'none';
@@ -367,7 +344,6 @@ auth.onAuthStateChanged(user => {
 
       // 1. ซ่อนเเอปหลัก เเละเเสดงหน้า login
       mainApp.style.display = 'none';
-      mainNav.style.display = 'none';
       loginContainer.style.display = 'block';
   }
 });
