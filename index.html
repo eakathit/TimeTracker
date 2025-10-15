@@ -195,31 +195,50 @@
                 <div class="card space-y-4">
                     <h3 class="font-semibold">กรอกข้อมูลรายงาน</h3>
                     <div>
-                        <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
-                        <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                            <option>DESIGN MC</option>
-                            <option>DESIGN EE</option>
-                            <option>ASSEMBLY</option>
-                            <option>WIRING</option>
-                            <option>PROGRAM</option>
-                            <option>AIR PIPING</option>
-                            <option>MEETING</option>
-                            <option>VISIT CUSTOMER</option>
-                            <option>TEST RUN</option>
-                            <option>INSTALLATION</option>
-                            <option>OUTGOING</option>
-                            <option>DELIVERY MC</option>
-                            <option>HR</option>
-                            <option>ACCOUNT</option>
-                            <option>FOLLOW PROJECT</option>
-                            <option>PLANNING</option>
-                        </select>
-                    </div>
-                    <div>
+    <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
+    <div id="work-type-dropdown" class="relative mt-1">
+        
+        <button id="work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            <span id="work-type-selected-text" class="text-gray-500">เลือกประเภทงาน...</span>
+            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+
+        <div id="work-type-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+            <div class="p-2 border-b border-gray-100">
+                <input id="work-type-search" type="text" placeholder="ค้นหาประเภทงาน..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+            </div>
+            
+            <div id="work-type-options" class="max-h-60 overflow-y-auto p-1">
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DESIGN MC</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DESIGN EE</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ASSEMBLY</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">WIRING</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">PROGRAM</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">AIR PIPING</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">MEETING</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">VISIT CUSTOMER</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">TEST RUN</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">INSTALLATION</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">OUTGOING</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DELIVERY MC</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">HR</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ACCOUNT</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">FOLLOW PROJECT</div>
+                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">PLANNING</div>
+                </div>
+        </div>
+    </div>
+</div>
+
+                        <div>
                         <label class="text-sm font-medium text-gray-600">โครงการ</label>
                          <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                            <option>Project A</option>
-                            <option>Project B</option>
+                            <option>1554</option>
+                            <option>2303</option>
+                            <option>6648</option>
+                            <option>FAC</option>
                         </select>
                     </div>
                     <div>
@@ -419,6 +438,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
+    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown ---
+    const workTypeDropdown = document.getElementById('work-type-dropdown');
+    const workTypeBtn = document.getElementById('work-type-btn');
+    const workTypePanel = document.getElementById('work-type-panel');
+    const workTypeSearch = document.getElementById('work-type-search');
+    const workTypeOptions = document.querySelectorAll('.work-type-option');
+    const workTypeSelectedText = document.getElementById('work-type-selected-text');
 
     // --- App State ---
     let currentUser = null;
@@ -491,6 +517,40 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.readAsDataURL(photoFile);
         }
     });
+
+    // 1. เปิด/ปิด Dropdown เมื่อกดปุ่ม
+    workTypeBtn.addEventListener('click', () => {
+        workTypePanel.classList.toggle('hidden');
+    });
+
+    // 2. เลือก Option
+    workTypeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            workTypeSelectedText.textContent = option.textContent;
+            workTypeSelectedText.classList.remove('text-gray-500'); // ทำให้ตัวหนังสือเข้มขึ้น
+            workTypePanel.classList.add('hidden'); // ปิด Panel หลังเลือก
+        });
+    });
+
+    // 3. ค้นหา/Filter
+    workTypeSearch.addEventListener('input', () => {
+        const filter = workTypeSearch.value.toLowerCase();
+        workTypeOptions.forEach(option => {
+            if (option.textContent.toLowerCase().includes(filter)) {
+                option.style.display = ''; // แสดง
+            } else {
+                option.style.display = 'none'; // ซ่อน
+            }
+        });
+    });
+    
+    // 4. ปิด Dropdown เมื่อคลิกข้างนอก
+    document.addEventListener('click', (event) => {
+        if (!workTypeDropdown.contains(event.target)) {
+            workTypePanel.classList.add('hidden');
+        }
+    });
+
 
     // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
