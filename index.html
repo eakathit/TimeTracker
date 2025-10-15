@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (proceedCheckin) {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
-                const now = new Date(); // ใช้ new Date() แค่สำหรับสร้าง ID เอกสาร
+                const now = new Date('2025-10-15T08:30:00'); // ใช้ new Date() แค่สำหรับสร้าง ID เอกสาร ('2025-10-15T19:30:00') อันเดิมเป็น ();
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 
                 let photoUrl = null;
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     userId: currentUser.uid,
                     date: firebase.firestore.Timestamp.fromDate(now),
                     checkIn: {
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        timestamp: firebase.firestore.Timestamp.fromDate(now),
                         location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
                         accuracy: latestPosition.coords.accuracy,
                         workType: workType,
@@ -536,7 +536,7 @@ await db.collection('work_records').doc(docId).set(workRecord);
 alert("บันทึกเวลาเข้างานสำเร็จ!");
 updateUIToCheckedIn();
 
-// --- (ส่วนที่แก้ไข) ---
+
 // ดึงข้อมูลที่เพิ่งบันทึกจาก Server กลับมา
 const savedRecord = await db.collection('work_records').doc(docId).get();
 if (savedRecord.exists) {
@@ -561,8 +561,6 @@ if (savedRecord.exists) {
         }
     });
 
-
-    // --- Helper & UI Functions ---
     // (ฟังก์ชันส่วนที่เหลือทั้งหมด)
     
     function startWatchingPosition() {
@@ -672,45 +670,43 @@ if (savedRecord.exists) {
         if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
         try {
-            const now = new Date(); 
+            const now = new Date('2025-10-15T19:30:00')  // ('2025-10-15T19:30:00'); เเก้ไขเาลาออกงาน
             const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
             const workRecordRef = db.collection('work_records').doc(docId);
 
-            let overtimeHours = 0; 
+            // --- (โค้ดใหม่) คำนวณ OT อัตโนมัติ ---
+            let overtimeHours = 0;
             
-            const otThreshold = new Date();
+            // สร้างเวลา 18:00 น. ของวันปัจจุบันเพื่อใช้เป็นเกณฑ์
+            const otThreshold = new Date(now); 
             otThreshold.setHours(18, 0, 0, 0);
 
-            // ตรวจสอบเงื่อนไขเวลา
-            if (now >= otThreshold) {
-                const wantsToLogOT = window.confirm("เวลาทำงานของคุณเกิน 18:00 น.\n\nคุณต้องการบันทึกเป็นชั่วโมงทำงานล่วงเวลา (OT) หรือไม่?");
+            // ตรวจสอบว่าเวลาปัจจุบันเลยเกณฑ์ OT หรือยัง
+            if (now > otThreshold) {
+                // 1. คำนวณหาผลต่างของเวลาเป็นหน่วยมิลลิวินาที
+                const otMillis = now - otThreshold;
                 
-                if (now >= otThreshold) {
-                const wantsToLogOT = window.confirm("เวลาทำงานของคุณเกิน 18:00 น.\n\nคุณต้องการบันทึกเป็นชั่วโมงทำงานล่วงเวลา (OT) หรือไม่?");
-                if (wantsToLogOT) {
-                    const otInput = prompt("กรุณาระบุจำนวนชั่วโมง OT (เช่น 1, 1.5, 2):", "1");
-                    const parsedOT = parseFloat(otInput);
-                    if (!isNaN(parsedOT) && parsedOT > 0) {
-                        overtimeHours = parsedOT; // อัปเดตค่าถ้าผู้ใช้กรอก
-                    } else {
-                        alert("ค่าที่ระบุไม่ถูกต้อง OT จะถูกบันทึกเป็น 0 ชั่วโมง");
-                    }
-                }
+                // 2. แปลงจากมิลลิวินาทีให้เป็นหน่วยชั่วโมง (ทศนิยม)
+                const otInHours = otMillis / (1000 * 60 * 60);
+                
+                // 3. ปัดเศษลงให้เป็นหน่วยละ 0.5 ชั่วโมง
+                // เช่น 0.98 (59 นาที) จะกลายเป็น 0.5
+                // และ 1.0 (60 นาที) จะกลายเป็น 1.0
+                overtimeHours = Math.floor(otInHours * 2) / 2;
             }
-                // ถ้าผู้ใช้กด Cancel (ไม่ต้องการทำ OT) ก็จะข้ามไปเลย overtimeHours จะยังเป็น 0
-            }
+            // --- จบส่วนโค้ดใหม่ ---
 
-            // เตรียมข้อมูลสำหรับอัปเดต
+            // เตรียมข้อมูลสำหรับอัปเดต (โค้ดส่วนนี้เหมือนเดิม)
             const checkOutData = {
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                timestamp: firebase.firestore.Timestamp.fromDate(now),
                 location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
             };
             
-            // อัปเดตข้อมูลใน Firestore
+            // อัปเดตข้อมูลใน Firestore (โค้ดส่วนนี้เหมือนเดิม)
             await workRecordRef.update({
                 checkOut: checkOutData,
                 status: "completed",
-                overtime: { hours: overtimeHours }
+                overtime: { hours: overtimeHours } // <--- ค่า OT ที่คำนวณใหม่จะถูกใช้ที่นี่
             });
 
             alert("บันทึกเวลาออกงานสำเร็จ!");
@@ -732,18 +728,22 @@ const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
 // ใช้เวลา checkout จาก Server ที่บันทึกสำเร็จแล้ว
 const serverCheckoutTime = workRecordDoc.data().checkOut.timestamp.toDate(); 
 
-const workDurationMillis = serverCheckoutTime - checkinTime; // คำนวณจากเวลา Server
-const workHours = workDurationMillis / 1000 / 60 / 60;
+const workDurationMillis = serverCheckoutTime - checkinTime;
+const totalWorkHours = workDurationMillis / (1000 * 60 * 60); // ชั่วโมงทำงานทั้งหมด (รวม OT)
 
-// แสดงผลด้วยเวลาจาก Server
+// --- (ส่วนที่แก้ไข) คำนวณชั่วโมงทำงานปกติ ---
+// หักลบ OT ออกจากชั่วโมงทำงานทั้งหมด
+const regularWorkHours = totalWorkHours - overtimeHours;
+
 summaryCheckoutTime.textContent = serverCheckoutTime.toLocaleTimeString('th-TH');
-//...
-            summaryCheckoutTime.classList.remove('text-gray-400');
-            summaryCheckoutTime.classList.add('text-red-500');
-            summaryWorkHours.textContent = `${workHours.toFixed(2)} ชั่วโมง`;
-            if (overtimeHours > 0) {
-                summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-            }
+summaryCheckoutTime.classList.remove('text-gray-400');
+summaryCheckoutTime.classList.add('text-red-500');
+
+// --- แสดงผลรูปแบบใหม่ ---
+summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+if (overtimeHours > 0) {
+    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+}
 
         } catch (error) {
             console.error("Check-out error:", error);
