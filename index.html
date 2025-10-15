@@ -306,7 +306,6 @@
                 
                 <div class="space-y-4">
     <h3 class="font-semibold text-lg">รายงานที่เคยส่ง</h3>
-    
     <div id="sent-reports-list" class="space-y-3">
         </div>
     </div>
@@ -504,60 +503,74 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
     let photoFile = null;
 
     // --- Firebase Auth State Changed ---
-    auth.onAuthStateChanged(async (user) => {
-        loginPage.style.display = 'none';
-        appContainer.style.display = 'none';
+    // --- Firebase Auth State Changed ---
+    // --- Firebase Auth State Changed (เวอร์ชันแก้ไขสมบูรณ์) ---
+auth.onAuthStateChanged(async (user) => {
+    loginPage.style.display = 'none';
+    appContainer.style.display = 'none';
 
-        if (user) {
-            currentUser = user;
-            const userDocRef = db.collection('users').doc(user.uid);
-            const userDoc = await userDocRef.get();
+    if (user) {
+        currentUser = user;
+        const userDocRef = db.collection('users').doc(user.uid);
+        let userDoc = await userDocRef.get();
+        let userData;
 
-            if (userDoc.exists) {
-                const userData = userDoc.data();
+        // --- จุดสำคัญ: ตรวจสอบว่าผู้ใช้มีข้อมูลในระบบหรือไม่ ---
+        if (!userDoc.exists) {
+            // ถ้าไม่เจอข้อมูล ให้สร้างโปรไฟล์ใหม่ให้เลย
+            console.log("User profile not found, creating a new one...");
+            const newUserProfile = {
+                fullName: user.displayName || "New User", // ดึงชื่อจาก LINE หรือใช้ชื่อเริ่มต้น
+                department: "ยังไม่มีข้อมูลแผนก", // ค่าเริ่มต้น
+                profileImageUrl: user.photoURL || "https://placehold.co/100x100/E2E8F0/475569?text=User" // ดึงรูปโปรไฟล์จาก LINE
+            };
+            // บันทึกข้อมูลใหม่ลง Firestore
+            await userDocRef.set(newUserProfile);
+            // ดึงข้อมูลที่เพิ่งสร้างอีกครั้ง
+            userDoc = await userDocRef.get();
+        }
+        
+        userData = userDoc.data();
 
-                // อัปเดตข้อมูลที่ Header (อันนี้มีอยู่แล้ว)
+        // ใช้ try...finally เพื่อรับประกันว่าแอปจะแสดงผลเสมอ
+        try {
+            // อัปเดตข้อมูลที่ Header
             const userDisplayName = document.getElementById('user-display-name');
             const userProfilePic = document.getElementById('user-profile-pic');
             if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
-            if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
+            if (userProfilePic) userProfilePic.src = userData.profileImageUrl; // ใช้ URL จาก DB
 
             // อัปเดตข้อมูลในหน้า Profile
             const profilePagePic = document.getElementById('profile-page-pic');
             const profilePageName = document.getElementById('profile-page-name');
             const profilePageDepartment = document.getElementById('profile-page-department');
 
-            if (profilePagePic) profilePagePic.src = user.photoURL || userData.profileImageUrl;
+            if (profilePagePic) profilePagePic.src = userData.profileImageUrl;
             if (profilePageName) profilePageName.textContent = userData.fullName || 'ผู้ใช้งาน';
             if (profilePageDepartment) profilePageDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
-            // --- (จบส่วนที่เพิ่มเข้ามา) ---
 
+            // เริ่มการทำงานส่วนอื่นๆ
             startWatchingPosition();
+            await checkUserWorkStatus();
+            await loadDailyReports();
 
-            // ย้าย try...catch มาครอบทั้ง checkUserWorkStatus และ loadDailyReports
-            try {
-                await checkUserWorkStatus();
-                await loadDailyReports();
-            } catch (error) {
-                console.error("Error during initial data load, but continuing app display.", error);
-                // ไม่ต้องทำอะไร ปล่อยให้แอปทำงานต่อไป
-            }
-
+        } catch (error) {
+            console.error("An error occurred during user setup:", error);
+        } finally {
+            // ส่วนนี้จะทำงานเสมอ เพื่อแสดงผลแอป
             appContainer.style.display = 'block';
             showPage('check-in-out-page');
-                document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
-            } else {
-                alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
-                auth.signOut();
-                loginPage.style.display = 'flex';
-            }
-        } else {
-            stopWatchingPosition();
-            currentUser = null;
-            loginPage.style.display = 'flex';
+            document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
         }
-        loadingSpinner.style.display = 'none';
-    });
+
+    } else {
+        stopWatchingPosition();
+        currentUser = null;
+        loginPage.style.display = 'flex';
+    }
+    loadingSpinner.style.display = 'none';
+});
+    
         saveReportBtn.addEventListener('click', async () => {
         // 1. ตรวจสอบว่า Login หรือยัง
         if (!currentUser) {
