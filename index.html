@@ -141,7 +141,7 @@
         </button>
 
         <button id="checkout-btn" class="hidden w-48 h-48 bg-red-500 text-white checkout-btn-anim rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-red-600 transition-all duration-300">
-            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+<svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             <span class="text-2xl font-semibold mt-2">Check Out</span>
         </button>
     </div>
@@ -305,25 +305,11 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <h3 class="font-semibold text-lg">รายงานที่เคยส่ง</h3>
-                    <!-- Report Card Item -->
-                    <div class="card !p-4 flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold">10 ตุลาคม 2568</p>
-                            <p class="text-sm text-gray-500">Project A - ดูแลเครื่องจักร</p>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                    <div class="card !p-4 flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold">09 ตุลาคม 2568</p>
-                            <p class="text-sm text-gray-500">Project B - ประชุมทีม</p>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </div>
-            </div>
-            
+    <h3 class="font-semibold text-lg">รายงานที่เคยส่ง</h3>
+    
+    <div id="sent-reports-list" class="space-y-3">
+        </div>
+    </div>
             <!-- =========== 4. หน้า Dashboard (Admin) =========== -->
             <div id="admin-dashboard-page" class="page space-y-6">
                  <div class="flex justify-between items-center">
@@ -546,9 +532,16 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
             if (profilePageDepartment) profilePageDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
             // --- (จบส่วนที่เพิ่มเข้ามา) ---
 
-
             startWatchingPosition();
-            await checkUserWorkStatus();
+
+            // ย้าย try...catch มาครอบทั้ง checkUserWorkStatus และ loadDailyReports
+            try {
+                await checkUserWorkStatus();
+                await loadDailyReports();
+            } catch (error) {
+                console.error("Error during initial data load, but continuing app display.", error);
+                // ไม่ต้องทำอะไร ปล่อยให้แอปทำงานต่อไป
+            }
 
             appContainer.style.display = 'block';
             showPage('check-in-out-page');
@@ -629,6 +622,7 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
         } finally {
             saveReportBtn.disabled = false;
             saveReportBtn.textContent = 'บันทึกข้อมูล';
+            loadDailyReports();
         }
     });
 
@@ -862,6 +856,60 @@ if (savedRecord.exists) {
         locationText.textContent = message;
         console.error("Location Error:", error);
     }
+
+    async function loadDailyReports() {
+    if (!currentUser) return;
+
+    const reportList = document.getElementById('sent-reports-list');
+    reportList.innerHTML = ''; // ล้างข้อมูลเก่าทุกครั้งที่โหลด
+
+    // กำหนดช่วงเวลาสำหรับวันนี้ (ตั้งแต่เที่ยงคืนถึงก่อนเที่ยงคืน)
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
+    try {
+        const reportsRef = db.collection('daily_reports');
+        const querySnapshot = await reportsRef
+            .where('userId', '==', currentUser.uid)
+            .where('createdAt', '>=', startOfToday)
+            .where('createdAt', '<', endOfToday)
+            .orderBy('createdAt', 'desc') // เรียงจากล่าสุดไปเก่าสุด
+            .get();
+
+        if (querySnapshot.empty) {
+            reportList.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">ยังไม่มีรายงานสำหรับวันนี้</p>`;
+            return;
+        }
+
+        querySnapshot.forEach(doc => {
+            const report = doc.data();
+            const reportDate = report.createdAt.toDate();
+            // จัดรูปแบบวันที่ให้สวยงาม
+            const formattedDate = reportDate.toLocaleDateString('th-TH', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // สร้าง HTML card สำหรับแต่ละรายการ
+            const reportCardHTML = `
+                <div class="card !p-4 flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold">${formattedDate}</p>
+                        <p class="text-sm text-gray-500">Project No. ${report.project} - ${report.workType}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+            `;
+            reportList.innerHTML += reportCardHTML;
+        });
+
+    } catch (error) {
+        console.error("Error loading daily reports:", error);
+        reportList.innerHTML = `<p class="text-sm text-red-500 text-center py-4">ไม่สามารถโหลดข้อมูลได้</p>`;
+    }
+}
 
     async function checkUserWorkStatus() {
     if (!currentUser) return;
