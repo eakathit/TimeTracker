@@ -283,11 +283,11 @@
     <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
         <div>
             <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
-            <input type="time" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+            <input type="time" id="custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
         </div>
         <div>
             <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
-            <input type="time" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+            <input type="time" id="custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
         </div>
     </div>
 </div>
@@ -500,8 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const durationSelectedText = document.getElementById('duration-selected-text');
     // ช่องกำหนดเวลาเอง
     const customTimeInputs = document.getElementById('custom-time-inputs');
-    const customTimeStartInput = document.querySelector('#custom-time-inputs input[type="time"]:first-child');
-    const customTimeEndInput = document.querySelector('#custom-time-inputs input[type="time"]:last-child');
+    const customTimeStartInput = document.getElementById('custom-time-start-input');
+const customTimeEndInput = document.getElementById('custom-time-end-input');
 
     // --- App State ---
     let currentUser = null;
