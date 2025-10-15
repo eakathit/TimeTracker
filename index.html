@@ -291,7 +291,7 @@
         </div>
     </div>
 </div>
-                    <button class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
+                    <button id="save-report-btn" class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
                 </div>
                 
                 <div class="space-y-4">
@@ -470,33 +470,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoUploadInput = document.getElementById('photo-upload-input');
     const photoPreview = document.getElementById('photo-preview');
     const summaryCheckinTime = document.getElementById('summary-checkin-time');
-    // **(จุดที่แก้ไข)** เพิ่มตัวแปรที่หายไป
     const summaryCheckoutTime = document.getElementById('summary-checkout-time');
     const summaryWorkHours = document.getElementById('summary-work-hours');
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
-    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown ---
+
+    // --- (ส่วนที่แก้ไข) UI Elements for Report Page ---
+    const saveReportBtn = document.getElementById('save-report-btn');
+    // Dropdown ประเภทงาน
     const workTypeDropdown = document.getElementById('work-type-dropdown');
     const workTypeBtn = document.getElementById('work-type-btn');
     const workTypePanel = document.getElementById('work-type-panel');
     const workTypeSearch = document.getElementById('work-type-search');
     const workTypeOptions = document.querySelectorAll('.work-type-option');
     const workTypeSelectedText = document.getElementById('work-type-selected-text');
-    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown "โครงการ" ---
+    // Dropdown โครงการ
     const projectDropdown = document.getElementById('project-dropdown');
     const projectBtn = document.getElementById('project-btn');
     const projectPanel = document.getElementById('project-panel');
     const projectSearch = document.getElementById('project-search');
     const projectOptions = document.querySelectorAll('.project-option');
     const projectSelectedText = document.getElementById('project-selected-text');
-    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown "ระยะเวลาทำงาน" ---
+    // Dropdown ระยะเวลา
     const durationDropdown = document.getElementById('duration-dropdown');
     const durationBtn = document.getElementById('duration-btn');
     const durationPanel = document.getElementById('duration-panel');
     const durationOptions = document.querySelectorAll('.duration-option');
     const durationSelectedText = document.getElementById('duration-selected-text');
+    // ช่องกำหนดเวลาเอง
     const customTimeInputs = document.getElementById('custom-time-inputs');
+    const customTimeStartInput = document.querySelector('#custom-time-inputs input[type="time"]:first-child');
+    const customTimeEndInput = document.querySelector('#custom-time-inputs input[type="time"]:last-child');
 
     // --- App State ---
     let currentUser = null;
@@ -540,7 +545,73 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadingSpinner.style.display = 'none';
     });
-    
+        saveReportBtn.addEventListener('click', async () => {
+        // 1. ตรวจสอบว่า Login หรือยัง
+        if (!currentUser) {
+            return alert("กรุณาเข้าสู่ระบบก่อนบันทึกรายงาน");
+        }
+
+        // 2. รวบรวมข้อมูลจากฟอร์ม
+        const workType = workTypeSelectedText.textContent;
+        const project = projectSelectedText.textContent;
+        const duration = durationSelectedText.textContent;
+        let timeRange = duration;
+
+        // 3. ตรวจสอบข้อมูลเบื้องต้น
+        if (workType.includes('เลือกประเภทงาน...')) {
+            return alert("กรุณาเลือกประเภทงาน");
+        }
+        if (project.includes('เลือกโครงการ...')) {
+            return alert("กรุณาเลือกโครงการ");
+        }
+        if (duration.includes('เลือกระยะเวลา...')) {
+            return alert("กรุณาเลือกระยะเวลาการทำงาน");
+        }
+
+        // 4. จัดการข้อมูลเวลาที่กำหนดเอง
+        if (duration === 'กำหนดเวลา') {
+            const startTime = customTimeStartInput.value;
+            const endTime = customTimeEndInput.value;
+            if (!startTime || !endTime) {
+                return alert("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด");
+            }
+            timeRange = `${startTime} - ${endTime}`;
+        }
+        
+        // 5. เตรียมข้อมูลที่จะบันทึก
+        const reportData = {
+            userId: currentUser.uid,
+            userName: document.getElementById('user-display-name').textContent,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            workType: workType,
+            project: project,
+            duration: timeRange
+        };
+
+        // 6. บันทึกข้อมูลลง Firestore
+        saveReportBtn.disabled = true;
+        saveReportBtn.textContent = 'กำลังบันทึก...';
+        
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const reportDocId = `${currentUser.uid}_${today}`; // ID เอกสารสำหรับ 1 user ต่อ 1 วัน
+
+            // ใช้ .set() เพื่อให้บันทึกทับได้ถ้ามีการแก้ไขในวันเดียวกัน
+            await db.collection('daily_reports').doc(reportDocId).set(reportData, { merge: true });
+
+            alert('บันทึกรายงานสำเร็จ!');
+            resetReportForm();
+            // อาจจะเพิ่มโค้ดล้างฟอร์มตรงนี้ถ้าต้องการ
+            
+        } catch (error) {
+            console.error("Error saving report: ", error);
+            alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+        } finally {
+            saveReportBtn.disabled = false;
+            saveReportBtn.textContent = 'บันทึกข้อมูล';
+        }
+    });
+
     // --- Event Listeners for New UI ---
     workTypeButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -795,16 +866,23 @@ if (savedRecord.exists) {
             
             // อัปเดตข้อมูลสรุปผล
             const checkoutTime = data.checkOut.timestamp.toDate();
-            const workDurationMillis = checkoutTime - checkinTime;
-            const workHours = workDurationMillis / 1000 / 60 / 60;
+const workDurationMillis = checkoutTime - checkinTime;
+const totalWorkHours = workDurationMillis / 1000 / 60 / 60; // ชั่วโมงทำงานทั้งหมด (รวม OT)
 
-            summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
-            summaryCheckoutTime.classList.remove('text-gray-400');
-            summaryCheckoutTime.classList.add('text-red-500');
-            summaryWorkHours.textContent = `${workHours.toFixed(2)} ชั่วโมง`;
-            if (data.overtime && data.overtime.hours > 0) {
-                summaryWorkHours.textContent += ` (OT ${data.overtime.hours} ชม.)`;
-            }
+// --- (ส่วนที่แก้ไข) ---
+const overtimeHours = (data.overtime && data.overtime.hours) ? data.overtime.hours : 0;
+// หักลบ OT ออกจากชั่วโมงทำงานทั้งหมด เพื่อหาชั่วโมงทำงานปกติ
+const regularWorkHours = totalWorkHours - overtimeHours; 
+
+summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+summaryCheckoutTime.classList.remove('text-gray-400');
+summaryCheckoutTime.classList.add('text-red-500');
+
+// --- แสดงผลรูปแบบใหม่ที่ถูกต้อง ---
+summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+if (overtimeHours > 0) {
+    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+}
         }
     } else {
         updateUIToCheckIn();
@@ -953,6 +1031,26 @@ if (overtimeHours > 0) {
         });
     });
 
+    // รีเซ็ต form
+    // --- (โค้ดใหม่) ฟังก์ชันสำหรับรีเซ็ตฟอร์มรายงาน ---
+    function resetReportForm() {
+        // รีเซ็ต Dropdown ประเภทงาน
+        workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
+        workTypeSelectedText.classList.add('text-gray-500');
+
+        // รีเซ็ต Dropdown โครงการ
+        projectSelectedText.textContent = 'เลือกโครงการ...';
+        projectSelectedText.classList.add('text-gray-500');
+
+        // รีเซ็ต Dropdown ระยะเวลาทำงาน
+        durationSelectedText.textContent = 'เลือกระยะเวลา...';
+        durationSelectedText.classList.add('text-gray-500');
+
+        // ซ่อนและล้างค่าช่องกำหนดเวลา
+        customTimeInputs.classList.add('hidden');
+        customTimeStartInput.value = '';
+        customTimeEndInput.value = '';
+    }
     function updateClock() {
         if (timeElement) {
             const now = new Date();
@@ -962,6 +1060,8 @@ if (overtimeHours > 0) {
     setInterval(updateClock, 1000);
     updateClock();
 });
+
+
 </script>
 </body>
 </html>
