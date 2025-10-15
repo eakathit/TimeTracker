@@ -233,24 +233,64 @@
 </div>
 
                         <div>
-                        <label class="text-sm font-medium text-gray-600">โครงการ</label>
-                        <p>Project No. : หากทำงานอื่นที่ไม่ใช้งาน Project ให้ใส่ FAC งานที่ยังไม่ได้เลข, งานทำราคา, ประชุมงานใหม่, ใส่ชื่อลูกค้า เลขโปรเจ็คให้ลงเลข 4 ตัว เช่น H1-0554 = 1554, SI2303 = 2303, F-6648 = 6648</p>
-                         <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                            <option>1554</option>
-                            <option>2303</option>
-                            <option>6648</option>
-                            <option>FAC</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600">ระยะเวลาการทำงาน</label>
-                         <select class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                            <option>ทั้งวัน (08.30 - 17.30)</option>
-                            <option>ครึ่งวัน (08.30 - 12.00)</option>
-                            <option>ครึ่งวันบ่าย (08.30 - 17.30)</option>
-                            <option>กำหนดเวลา</option>
-                        </select>
-                    </div>
+    <label class="text-sm font-medium text-gray-600">โครงการ</label>
+    
+    <div class="mt-2 p-3 bg-violet-50 border border-violet-200 rounded-lg text-sm text-violet-800 flex items-start space-x-3">
+        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+        <div>
+            <b>Project No. :</b> หากทำงานที่ไม่ใช่งาน Project ให้ใส่ <b>FAC</b><br>
+            <i>(ตัวอย่างเลขโปรเจ็ค: H1-0554 → 1554, SI2303 → 2303)</i>
+        </div>
+    </div>
+
+    <div id="project-dropdown" class="relative mt-2">
+        <button id="project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            <span id="project-selected-text" class="text-gray-500">เลือกโครงการ...</span>
+            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+        </button>
+        <div id="project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+            <div class="p-2 border-b border-gray-100">
+                <input id="project-search" type="text" placeholder="ค้นหาโครงการ..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+            </div>
+            <div id="project-options" class="max-h-60 overflow-y-auto p-1">
+                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">1554</div>
+                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">2303</div>
+                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">6648</div>
+                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">FAC</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <label class="text-sm font-medium text-gray-600">ระยะเวลาการทำงาน</label>
+    
+    <div id="duration-dropdown" class="relative mt-1">
+        <button id="duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            <span id="duration-selected-text" class="text-gray-500">เลือกระยะเวลา...</span>
+            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+        </button>
+        <div id="duration-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+            <div id="duration-options" class="p-1">
+                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ทั้งวัน (08:30 - 17:30)</div>
+                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันเช้า (08:30 - 12:00)</div>
+                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันบ่าย (13:00 - 17:30)</div>
+                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">กำหนดเวลา</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
+        <div>
+            <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+            <input type="time" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+        </div>
+        <div>
+            <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+            <input type="time" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+        </div>
+    </div>
+</div>
                     <button class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
                 </div>
                 
@@ -443,6 +483,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const workTypeSearch = document.getElementById('work-type-search');
     const workTypeOptions = document.querySelectorAll('.work-type-option');
     const workTypeSelectedText = document.getElementById('work-type-selected-text');
+    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown "โครงการ" ---
+    const projectDropdown = document.getElementById('project-dropdown');
+    const projectBtn = document.getElementById('project-btn');
+    const projectPanel = document.getElementById('project-panel');
+    const projectSearch = document.getElementById('project-search');
+    const projectOptions = document.querySelectorAll('.project-option');
+    const projectSelectedText = document.getElementById('project-selected-text');
+    // --- (โค้ดใหม่) Logic สำหรับ Custom Dropdown "ระยะเวลาทำงาน" ---
+    const durationDropdown = document.getElementById('duration-dropdown');
+    const durationBtn = document.getElementById('duration-btn');
+    const durationPanel = document.getElementById('duration-panel');
+    const durationOptions = document.querySelectorAll('.duration-option');
+    const durationSelectedText = document.getElementById('duration-selected-text');
+    const customTimeInputs = document.getElementById('custom-time-inputs');
 
     // --- App State ---
     let currentUser = null;
@@ -548,8 +602,54 @@ document.addEventListener('DOMContentLoaded', function() {
             workTypePanel.classList.add('hidden');
         }
     });
+    
+    // dropdown โครงการ
+    projectBtn.addEventListener('click', () => projectPanel.classList.toggle('hidden'));
 
+    projectOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            projectSelectedText.textContent = option.textContent;
+            projectSelectedText.classList.remove('text-gray-500');
+            projectPanel.classList.add('hidden');
+        });
+    });
 
+    projectSearch.addEventListener('input', () => {
+        const filter = projectSearch.value.toLowerCase();
+        projectOptions.forEach(option => {
+            option.style.display = option.textContent.toLowerCase().includes(filter) ? '' : 'none';
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!projectDropdown.contains(event.target)) {
+            projectPanel.classList.add('hidden');
+        }
+    });
+    
+    // ระยะเวลาการทำงาน
+    durationBtn.addEventListener('click', () => durationPanel.classList.toggle('hidden'));
+
+    durationOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            durationSelectedText.textContent = option.textContent;
+            durationSelectedText.classList.remove('text-gray-500');
+            durationPanel.classList.add('hidden');
+
+            // --- ส่วนสำคัญ: แสดง/ซ่อน ช่องกรอกเวลา ---
+            if (option.textContent === 'กำหนดเวลา') {
+                customTimeInputs.classList.remove('hidden');
+            } else {
+                customTimeInputs.classList.add('hidden');
+            }
+        });
+    });
+    
+    document.addEventListener('click', (event) => {
+        if (!durationDropdown.contains(event.target)) {
+            durationPanel.classList.add('hidden');
+        }
+    });
     // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
