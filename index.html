@@ -531,12 +531,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: "checked_in"
                 };
 
-                await db.collection('work_records').doc(docId).set(workRecord);
-                alert("บันทึกเวลาเข้างานสำเร็จ!");
-                updateUIToCheckedIn();
-                summaryCheckinTime.textContent = now.toLocaleTimeString('th-TH');
-                summaryCheckinTime.classList.remove('text-gray-400');
-                summaryCheckinTime.classList.add('text-green-600');
+                // ... (ส่วนบนของ checkinBtn.addEventListener)
+await db.collection('work_records').doc(docId).set(workRecord);
+alert("บันทึกเวลาเข้างานสำเร็จ!");
+updateUIToCheckedIn();
+
+// --- (ส่วนที่แก้ไข) ---
+// ดึงข้อมูลที่เพิ่งบันทึกจาก Server กลับมา
+const savedRecord = await db.collection('work_records').doc(docId).get();
+if (savedRecord.exists) {
+    // แปลงเวลาจาก Server เป็น Object ของ Date
+    const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
+    // นำเวลาจาก Server มาแสดงผล
+    summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
+    summaryCheckinTime.classList.remove('text-gray-400');
+    summaryCheckinTime.classList.add('text-green-600');
+}
+//...
             } else {
                 alert("การลงเวลาถูกยกเลิก");
             }
@@ -593,20 +604,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function checkUserWorkStatus() {
-        if (!currentUser) return;
-        const today = new Date().toISOString().split('T')[0];
-        const docId = `${currentUser.uid}_${today}`;
-        const workRecordDoc = await db.collection('work_records').doc(docId).get();
-        if (workRecordDoc.exists && workRecordDoc.data().status === 'checked_in') {
+    if (!currentUser) return;
+    const today = new Date().toISOString().split('T')[0];
+    const docId = `${currentUser.uid}_${today}`;
+    const workRecordDoc = await db.collection('work_records').doc(docId).get();
+
+    if (workRecordDoc.exists) {
+        const data = workRecordDoc.data();
+        const checkinTime = data.checkIn.timestamp.toDate();
+        
+        // อัปเดตเวลา Check-in
+        summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
+        summaryCheckinTime.classList.remove('text-gray-400');
+        summaryCheckinTime.classList.add('text-green-600');
+
+        if (data.status === 'checked_in') {
             updateUIToCheckedIn();
-            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
-            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
-            summaryCheckinTime.classList.remove('text-gray-400');
-            summaryCheckinTime.classList.add('text-green-600');
-        } else {
-            updateUIToCheckIn();
+        } else if (data.status === 'completed') {
+            // เรียกใช้ฟังก์ชันใหม่เพื่อแสดงผลว่า "เสร็จสิ้น"
+            updateUIToCompleted(); 
+            
+            // อัปเดตข้อมูลสรุปผล
+            const checkoutTime = data.checkOut.timestamp.toDate();
+            const workDurationMillis = checkoutTime - checkinTime;
+            const workHours = workDurationMillis / 1000 / 60 / 60;
+
+            summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+            summaryCheckoutTime.classList.remove('text-gray-400');
+            summaryCheckoutTime.classList.add('text-red-500');
+            summaryWorkHours.textContent = `${workHours.toFixed(2)} ชั่วโมง`;
+            if (data.overtime && data.overtime.hours > 0) {
+                summaryWorkHours.textContent += ` (OT ${data.overtime.hours} ชม.)`;
+            }
         }
+    } else {
+        updateUIToCheckIn();
     }
+}
 
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
@@ -618,6 +652,16 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutBtn.classList.remove('hidden');
     }
 
+    function updateUIToCompleted() {
+    checkinBtn.classList.add('hidden');
+    checkoutBtn.classList.remove('hidden');
+    checkoutBtn.disabled = true; // ป้องกันการกดซ้ำ
+    checkoutBtn.style.backgroundColor = '#6B7280'; // สีเทา
+    checkoutBtn.innerHTML = `
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span class="text-2xl font-semibold mt-2">Completed</span>
+    `;
+}
     // --- (ส่วนที่เพิ่มเข้ามา) Check-out Logic ---
     checkoutBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
@@ -679,13 +723,21 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             
             // อัปเดตสรุปการทำงาน
-            const workRecordDoc = await workRecordRef.get();
-            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
-            const checkoutTime = now;
-            const workDurationMillis = checkoutTime - checkinTime;
-            const workHours = workDurationMillis / 1000 / 60 / 60; // แปลงเป็นชั่วโมง
-            
-            summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+            // ... (ส่วนบนของ checkoutBtn.addEventListener)
+// อัปเดตสรุปการทำงาน
+const workRecordDoc = await workRecordRef.get();
+const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+
+// --- (ส่วนที่แก้ไข) ---
+// ใช้เวลา checkout จาก Server ที่บันทึกสำเร็จแล้ว
+const serverCheckoutTime = workRecordDoc.data().checkOut.timestamp.toDate(); 
+
+const workDurationMillis = serverCheckoutTime - checkinTime; // คำนวณจากเวลา Server
+const workHours = workDurationMillis / 1000 / 60 / 60;
+
+// แสดงผลด้วยเวลาจาก Server
+summaryCheckoutTime.textContent = serverCheckoutTime.toLocaleTimeString('th-TH');
+//...
             summaryCheckoutTime.classList.remove('text-gray-400');
             summaryCheckoutTime.classList.add('text-red-500');
             summaryWorkHours.textContent = `${workHours.toFixed(2)} ชั่วโมง`;
