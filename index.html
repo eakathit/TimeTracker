@@ -84,7 +84,6 @@
 </head>
 <body class="antialiased">
 
-    <!-- หน้า loading รอ login -->
     <div id="loading-spinner" class="min-h-screen flex items-center justify-center bg-gray-50">
         <svg class="animate-spin h-10 w-10 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -110,13 +109,10 @@
         </div>
     </div>
 
-    <!-- Main App Container (หลัง Login)-->
     <div id="app-container" class="hidden pb-24">
         
-        <!-- Main Content Area -->
         <main id="main-content" class="p-4 md:p-6">
 
-            <!-- หน้า Check-in / Check-out-->
             <div id="check-in-out-page" class="page space-y-6">
     
     <div class="flex justify-between items-center">
@@ -197,7 +193,6 @@
 
 </div>
 
-            <!--หน้า Daily Report -->
             <div id="report-page" class="page space-y-6">
                 <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
                 <div class="card space-y-4">
@@ -303,26 +298,13 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <h3 class="font-semibold text-lg">รายงานที่เคยส่ง</h3>
-                    <!-- Report Card Item -->
-                    <div class="card !p-4 flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold">10 ตุลาคม 2568</p>
-                            <p class="text-sm text-gray-500">Project A - ดูแลเครื่องจักร</p>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                    <div class="card !p-4 flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold">09 ตุลาคม 2568</p>
-                            <p class="text-sm text-gray-500">Project B - ประชุมทีม</p>
-                        </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <h3 class="font-semibold text-lg">รายงานที่ส่งวันนี้</h3>
+                    <div id="sent-reports-container" class="space-y-3">
+                        <p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่มีรายงานที่ส่งวันนี้</p>
                     </div>
                 </div>
-            </div>
+                </div>
             
-            <!-- =========== 4. หน้า Dashboard (Admin) =========== -->
             <div id="admin-dashboard-page" class="page space-y-6">
                  <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold">Dashboard (Admin)</h2>
@@ -330,7 +312,6 @@
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </button>
                 </div>
-                <!-- Filters -->
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <input type="date" value="2025-10-10" class="w-full p-2 border border-gray-300 rounded-xl text-sm">
                     <input type="text" placeholder="ค้นหาชื่อ..." class="w-full p-2 border border-gray-300 rounded-xl text-sm">
@@ -341,9 +322,7 @@
                     </select>
                 </div>
 
-                <!-- Data Table / Cards for Mobile -->
                 <div class="space-y-3">
-                    <!-- Item 1 -->
                     <div class="card !p-4 space-y-2">
                         <div class="flex justify-between items-start">
                             <div>
@@ -359,8 +338,7 @@
                             <div class="col-span-2"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ดูแลเครื่องจักร</span></div>
                         </div>
                     </div>
-                     <!-- Item 2 -->
-                    <div class="card !p-4 space-y-2">
+                     <div class="card !p-4 space-y-2">
                          <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-bold">สมหญิง จริงใจ</p>
@@ -378,9 +356,7 @@
                 </div>
             </div>
 
-            <!-- 5. หน้า Dashboard (พนักงาน) & Profile -->
             <div id="profile-page" class="page space-y-6">
-                <!-- Profile Header -->
                 <div class="card text-center">
                     <img src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
                     <h2 class="text-xl font-bold mt-4">คุณสมชาย ใจดี</h2>
@@ -390,10 +366,8 @@
                     </div>
                 </div>
                 
-                <!-- History -->
                 <div class="space-y-4">
                     <h3 class="font-semibold text-lg">ประวัติการทำงานของฉัน</h3>
-                    <!-- History Item 1 -->
                     <div class="card !p-4">
                         <p class="font-semibold mb-2">10 ตุลาคม 2568</p>
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
@@ -403,7 +377,6 @@
                              <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ดูแลเครื่องจักร</span></div>
                         </div>
                     </div>
-                    <!-- History Item 2 -->
                     <div class="card !p-4">
                         <p class="font-semibold mb-2">09 ตุลาคม 2568</p>
                         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
@@ -421,7 +394,6 @@
 
         </main>
         
-        <!--  Floating Bottom Menu  -->
         <nav class="fixed bottom-0 left-0 right-0 bg-white h-20 flex justify-around items-center border-t border-gray-200 bottom-nav">
             <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
                 <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -442,7 +414,6 @@
         </nav>
     </div>
 
-    <!-- =========== Notification Banner =========== -->
     <div id="notification" class="fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white py-2 px-6 rounded-full shadow-lg text-sm transition-all duration-500 opacity-0 -translate-y-10">
         <p>บันทึกเวลาสำเร็จ!</p>
     </div>
@@ -484,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
 
-    // --- (ส่วนที่แก้ไข) UI Elements for Report Page ---
+    // --- UI Elements for Report Page ---
     const saveReportBtn = document.getElementById('save-report-btn');
     // Dropdown ประเภทงาน
     const workTypeDropdown = document.getElementById('work-type-dropdown');
@@ -509,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ช่องกำหนดเวลาเอง
     const customTimeInputs = document.getElementById('custom-time-inputs');
     const customTimeStartInput = document.getElementById('custom-time-start-input');
-const customTimeEndInput = document.getElementById('custom-time-end-input');
+    const customTimeEndInput = document.getElementById('custom-time-end-input');
 
     // --- App State ---
     let currentUser = null;
@@ -609,7 +580,7 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
 
             alert('บันทึกรายงานสำเร็จ!');
             resetReportForm();
-            // อาจจะเพิ่มโค้ดล้างฟอร์มตรงนี้ถ้าต้องการ
+            loadSentReports(); // <-- (ส่วนที่แก้ไข) เรียกฟังก์ชันเพื่อโหลดข้อมูลใหม่
             
         } catch (error) {
             console.error("Error saving report: ", error);
@@ -715,7 +686,6 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
             durationSelectedText.classList.remove('text-gray-500');
             durationPanel.classList.add('hidden');
 
-            // --- ส่วนสำคัญ: แสดง/ซ่อน ช่องกรอกเวลา ---
             if (option.textContent === 'กำหนดเวลา') {
                 customTimeInputs.classList.remove('hidden');
             } else {
@@ -756,7 +726,7 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
             if (proceedCheckin) {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
-                const now = new Date('2025-10-15T08:30:00'); // ใช้ new Date() แค่สำหรับสร้าง ID เอกสาร ('2025-10-15T19:30:00') อันเดิมเป็น ();
+                const now = new Date('2025-10-15T08:30:00');
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 
                 let photoUrl = null;
@@ -780,24 +750,18 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
                     },
                     status: "checked_in"
                 };
+                
+                await db.collection('work_records').doc(docId).set(workRecord);
+                alert("บันทึกเวลาเข้างานสำเร็จ!");
+                updateUIToCheckedIn();
 
-                // ... (ส่วนบนของ checkinBtn.addEventListener)
-await db.collection('work_records').doc(docId).set(workRecord);
-alert("บันทึกเวลาเข้างานสำเร็จ!");
-updateUIToCheckedIn();
-
-
-// ดึงข้อมูลที่เพิ่งบันทึกจาก Server กลับมา
-const savedRecord = await db.collection('work_records').doc(docId).get();
-if (savedRecord.exists) {
-    // แปลงเวลาจาก Server เป็น Object ของ Date
-    const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
-    // นำเวลาจาก Server มาแสดงผล
-    summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
-    summaryCheckinTime.classList.remove('text-gray-400');
-    summaryCheckinTime.classList.add('text-green-600');
-}
-//...
+                const savedRecord = await db.collection('work_records').doc(docId).get();
+                if (savedRecord.exists) {
+                    const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
+                    summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
+                    summaryCheckinTime.classList.remove('text-gray-400');
+                    summaryCheckinTime.classList.add('text-green-600');
+                }
             } else {
                 alert("การลงเวลาถูกยกเลิก");
             }
@@ -810,8 +774,6 @@ if (savedRecord.exists) {
             if (checkinSpan) checkinSpan.textContent = "Check In";
         }
     });
-
-    // (ฟังก์ชันส่วนที่เหลือทั้งหมด)
     
     function startWatchingPosition() {
         if (navigator.geolocation && watchId === null) {
@@ -852,50 +814,43 @@ if (savedRecord.exists) {
     }
 
     async function checkUserWorkStatus() {
-    if (!currentUser) return;
-    const today = new Date().toISOString().split('T')[0];
-    const docId = `${currentUser.uid}_${today}`;
-    const workRecordDoc = await db.collection('work_records').doc(docId).get();
+        if (!currentUser) return;
+        const today = new Date().toISOString().split('T')[0];
+        const docId = `${currentUser.uid}_${today}`;
+        const workRecordDoc = await db.collection('work_records').doc(docId).get();
 
-    if (workRecordDoc.exists) {
-        const data = workRecordDoc.data();
-        const checkinTime = data.checkIn.timestamp.toDate();
-        
-        // อัปเดตเวลา Check-in
-        summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
-        summaryCheckinTime.classList.remove('text-gray-400');
-        summaryCheckinTime.classList.add('text-green-600');
-
-        if (data.status === 'checked_in') {
-            updateUIToCheckedIn();
-        } else if (data.status === 'completed') {
-            // เรียกใช้ฟังก์ชันใหม่เพื่อแสดงผลว่า "เสร็จสิ้น"
-            updateUIToCompleted(); 
+        if (workRecordDoc.exists) {
+            const data = workRecordDoc.data();
+            const checkinTime = data.checkIn.timestamp.toDate();
             
-            // อัปเดตข้อมูลสรุปผล
-            const checkoutTime = data.checkOut.timestamp.toDate();
-const workDurationMillis = checkoutTime - checkinTime;
-const totalWorkHours = workDurationMillis / 1000 / 60 / 60; // ชั่วโมงทำงานทั้งหมด (รวม OT)
+            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
+            summaryCheckinTime.classList.remove('text-gray-400');
+            summaryCheckinTime.classList.add('text-green-600');
 
-// --- (ส่วนที่แก้ไข) ---
-const overtimeHours = (data.overtime && data.overtime.hours) ? data.overtime.hours : 0;
-// หักลบ OT ออกจากชั่วโมงทำงานทั้งหมด เพื่อหาชั่วโมงทำงานปกติ
-const regularWorkHours = totalWorkHours - overtimeHours; 
+            if (data.status === 'checked_in') {
+                updateUIToCheckedIn();
+            } else if (data.status === 'completed') {
+                updateUIToCompleted(); 
+                
+                const checkoutTime = data.checkOut.timestamp.toDate();
+                const workDurationMillis = checkoutTime - checkinTime;
+                const totalWorkHours = workDurationMillis / 1000 / 60 / 60;
+                const overtimeHours = (data.overtime && data.overtime.hours) ? data.overtime.hours : 0;
+                const regularWorkHours = totalWorkHours - overtimeHours; 
 
-summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
-summaryCheckoutTime.classList.remove('text-gray-400');
-summaryCheckoutTime.classList.add('text-red-500');
+                summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+                summaryCheckoutTime.classList.remove('text-gray-400');
+                summaryCheckoutTime.classList.add('text-red-500');
 
-// --- แสดงผลรูปแบบใหม่ที่ถูกต้อง ---
-summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-if (overtimeHours > 0) {
-    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-}
+                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+                if (overtimeHours > 0) {
+                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+                }
+            }
+        } else {
+            updateUIToCheckIn();
         }
-    } else {
-        updateUIToCheckIn();
     }
-}
 
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
@@ -908,22 +863,17 @@ if (overtimeHours > 0) {
     }
 
     function updateUIToCompleted() {
-    checkinBtn.classList.add('hidden');
-    checkoutBtn.classList.remove('hidden');
-    checkoutBtn.disabled = true; // ป้องกันการกดซ้ำ
+        checkinBtn.classList.add('hidden');
+        checkoutBtn.classList.remove('hidden');
+        checkoutBtn.disabled = true;
+        checkoutBtn.classList.remove('checkout-btn-anim', 'bg-red-500', 'hover:bg-red-600');
+        checkoutBtn.classList.add('bg-green-500', 'completed-btn-anim');
+        checkoutBtn.innerHTML = `
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-2xl font-semibold mt-2">Completed</span>
+        `;
+    }
 
-    // --- (ส่วนที่ต้องแก้ไข) ---
-    // เปลี่ยนจากสีเทาเป็นสีเขียว และเพิ่ม class animation
-    checkoutBtn.classList.remove('checkout-btn-anim', 'bg-red-500', 'hover:bg-red-600'); // ลบคลาสเก่าออก
-    checkoutBtn.classList.add('bg-green-500', 'completed-btn-anim'); // เพิ่มคลาสใหม่
-    // --- (จบส่วนที่แก้ไข) ---
-
-    checkoutBtn.innerHTML = `
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span class="text-2xl font-semibold mt-2">Completed</span>
-    `;
-}
-    // --- (ส่วนที่เพิ่มเข้ามา) Check-out Logic ---
     checkoutBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
         if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
@@ -933,83 +883,48 @@ if (overtimeHours > 0) {
         if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
         try {
-            const now = new Date('2025-10-15T19:30:00')  // ('2025-10-15T19:30:00'); เเก้ไขเาลาออกงาน
+            const now = new Date('2025-10-15T19:30:00');
             const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
             const workRecordRef = db.collection('work_records').doc(docId);
 
-            // --- (โค้ดใหม่) คำนวณ OT อัตโนมัติ ---
             let overtimeHours = 0;
-            
-            // สร้างเวลา 18:00 น. ของวันปัจจุบันเพื่อใช้เป็นเกณฑ์
             const otThreshold = new Date(now); 
             otThreshold.setHours(18, 0, 0, 0);
 
-            // ตรวจสอบว่าเวลาปัจจุบันเลยเกณฑ์ OT หรือยัง
             if (now > otThreshold) {
-                // 1. คำนวณหาผลต่างของเวลาเป็นหน่วยมิลลิวินาที
                 const otMillis = now - otThreshold;
-                
-                // 2. แปลงจากมิลลิวินาทีให้เป็นหน่วยชั่วโมง (ทศนิยม)
                 const otInHours = otMillis / (1000 * 60 * 60);
-                
-                // 3. ปัดเศษลงให้เป็นหน่วยละ 0.5 ชั่วโมง
-                // เช่น 0.98 (59 นาที) จะกลายเป็น 0.5
-                // และ 1.0 (60 นาที) จะกลายเป็น 1.0
                 overtimeHours = Math.floor(otInHours * 2) / 2;
             }
-            // --- จบส่วนโค้ดใหม่ ---
 
-            // เตรียมข้อมูลสำหรับอัปเดต (โค้ดส่วนนี้เหมือนเดิม)
             const checkOutData = {
                 timestamp: firebase.firestore.Timestamp.fromDate(now),
                 location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
             };
             
-            // อัปเดตข้อมูลใน Firestore (โค้ดส่วนนี้เหมือนเดิม)
             await workRecordRef.update({
                 checkOut: checkOutData,
                 status: "completed",
-                overtime: { hours: overtimeHours } // <--- ค่า OT ที่คำนวณใหม่จะถูกใช้ที่นี่
+                overtime: { hours: overtimeHours }
             });
 
             alert("บันทึกเวลาออกงานสำเร็จ!");
-
-            // อัปเดต UI หลังจาก Check-out
-            checkoutBtn.classList.remove('checkout-btn-anim', 'bg-red-500', 'hover:bg-red-600');
-    checkoutBtn.classList.add('bg-green-500', 'completed-btn-anim');
-    // --- (จบส่วนที่แก้ไข) ---
-
-    checkoutBtn.innerHTML = `
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span class="text-2xl font-semibold mt-2">Completed</span>
-    `;
+            updateUIToCompleted();
             
-            // อัปเดตสรุปการทำงาน
-            // ... (ส่วนบนของ checkoutBtn.addEventListener)
-// อัปเดตสรุปการทำงาน
-const workRecordDoc = await workRecordRef.get();
-const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+            const workRecordDoc = await workRecordRef.get();
+            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+            const serverCheckoutTime = workRecordDoc.data().checkOut.timestamp.toDate(); 
+            const workDurationMillis = serverCheckoutTime - checkinTime;
+            const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
+            const regularWorkHours = totalWorkHours - overtimeHours;
 
-// --- (ส่วนที่แก้ไข) ---
-// ใช้เวลา checkout จาก Server ที่บันทึกสำเร็จแล้ว
-const serverCheckoutTime = workRecordDoc.data().checkOut.timestamp.toDate(); 
-
-const workDurationMillis = serverCheckoutTime - checkinTime;
-const totalWorkHours = workDurationMillis / (1000 * 60 * 60); // ชั่วโมงทำงานทั้งหมด (รวม OT)
-
-// --- (ส่วนที่แก้ไข) คำนวณชั่วโมงทำงานปกติ ---
-// หักลบ OT ออกจากชั่วโมงทำงานทั้งหมด
-const regularWorkHours = totalWorkHours - overtimeHours;
-
-summaryCheckoutTime.textContent = serverCheckoutTime.toLocaleTimeString('th-TH');
-summaryCheckoutTime.classList.remove('text-gray-400');
-summaryCheckoutTime.classList.add('text-red-500');
-
-// --- แสดงผลรูปแบบใหม่ ---
-summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-if (overtimeHours > 0) {
-    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-}
+            summaryCheckoutTime.textContent = serverCheckoutTime.toLocaleTimeString('th-TH');
+            summaryCheckoutTime.classList.remove('text-gray-400');
+            summaryCheckoutTime.classList.add('text-red-500');
+            summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+            if (overtimeHours > 0) {
+                summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+            }
 
         } catch (error) {
             console.error("Check-out error:", error);
@@ -1045,29 +960,69 @@ if (overtimeHours > 0) {
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
             showPage(pageId);
+            // --- (ส่วนที่แก้ไข) ---
+            if (pageId === 'report-page') {
+                loadSentReports(); // เรียกฟังก์ชันโหลดรายงานเมื่อเปิดหน้ารายงาน
+            }
         });
     });
-
-    // รีเซ็ต form
-    // --- (โค้ดใหม่) ฟังก์ชันสำหรับรีเซ็ตฟอร์มรายงาน ---
+    
     function resetReportForm() {
-        // รีเซ็ต Dropdown ประเภทงาน
         workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
         workTypeSelectedText.classList.add('text-gray-500');
-
-        // รีเซ็ต Dropdown โครงการ
         projectSelectedText.textContent = 'เลือกโครงการ...';
         projectSelectedText.classList.add('text-gray-500');
-
-        // รีเซ็ต Dropdown ระยะเวลาทำงาน
         durationSelectedText.textContent = 'เลือกระยะเวลา...';
         durationSelectedText.classList.add('text-gray-500');
-
-        // ซ่อนและล้างค่าช่องกำหนดเวลา
         customTimeInputs.classList.add('hidden');
         customTimeStartInput.value = '';
         customTimeEndInput.value = '';
     }
+
+    // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดรายงานที่เคยส่ง ---
+    // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดรายงานที่เคยส่ง ---
+    async function loadSentReports() {
+        if (!currentUser) return;
+
+        const container = document.getElementById('sent-reports-container');
+        if (!container) {
+            console.error("Report container not found.");
+            return;
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const reportDocId = `${currentUser.uid}_${today}`;
+        
+        try {
+            const reportDoc = await db.collection('daily_reports').doc(reportDocId).get();
+
+            if (reportDoc.exists) {
+                const data = reportDoc.data();
+                const reportDate = data.createdAt.toDate();
+                const formattedDate = reportDate.toLocaleDateString('th-TH', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+
+                const reportCardHTML = `
+                    <div class="card !p-4 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold">${formattedDate}</p>
+                            <p class="text-sm text-gray-500">โครงการ: ${data.project} - ${data.workType}</p>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                `;
+                container.innerHTML = reportCardHTML;
+            } else {
+                // ถ้าไม่มีรายงาน, ให้ใส่ข้อความเริ่มต้นกลับเข้าไป
+                container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่มีรายงานที่ส่งวันนี้</p>`;
+            }
+        } catch (error) {
+            console.error("Error loading sent reports:", error);
+            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
+        }
+    }
+
     function updateClock() {
         if (timeElement) {
             const now = new Date();
@@ -1077,8 +1032,6 @@ if (overtimeHours > 0) {
     setInterval(updateClock, 1000);
     updateClock();
 });
-
-
 </script>
 </body>
 </html>
