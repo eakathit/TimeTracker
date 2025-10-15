@@ -71,6 +71,16 @@
         @keyframes pulse-red {
             0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+
+        }
+
+        .completed-btn-anim {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
         }
     </style>
 </head>
@@ -374,12 +384,9 @@
             <div id="profile-page" class="page space-y-6">
                 <!-- Profile Header -->
                 <div class="card text-center">
-                    <img src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
-                    <h2 class="text-xl font-bold mt-4">คุณสมชาย ใจดี</h2>
-                    <p class="text-gray-500">ฝ่ายผลิต</p>
-                    <div class="mt-4 p-4 bg-gray-100 rounded-xl inline-block">
-                        <p class="text-xs text-gray-500">[QR Code สำหรับสแกน]</p>
-                    </div>
+                    <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
+                    <h2 id="profile-page-name" class="text-xl font-bold mt-4">คุณสมชาย ใจดี</h2>
+                    <p id="profile-page-department" class="text-gray-500">ฝ่ายผลิต</p>
                 </div>
                 
                 <!-- History -->
@@ -522,16 +529,29 @@ const customTimeEndInput = document.getElementById('custom-time-end-input');
 
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                const userDisplayName = document.getElementById('user-display-name');
-                const userProfilePic = document.getElementById('user-profile-pic');
-                if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
-                if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
 
-                startWatchingPosition();
-                await checkUserWorkStatus();
-                
-                appContainer.style.display = 'block';
-                showPage('check-in-out-page');
+                // อัปเดตข้อมูลที่ Header (อันนี้มีอยู่แล้ว)
+            const userDisplayName = document.getElementById('user-display-name');
+            const userProfilePic = document.getElementById('user-profile-pic');
+            if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
+            if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
+
+            // อัปเดตข้อมูลในหน้า Profile
+            const profilePagePic = document.getElementById('profile-page-pic');
+            const profilePageName = document.getElementById('profile-page-name');
+            const profilePageDepartment = document.getElementById('profile-page-department');
+
+            if (profilePagePic) profilePagePic.src = user.photoURL || userData.profileImageUrl;
+            if (profilePageName) profilePageName.textContent = userData.fullName || 'ผู้ใช้งาน';
+            if (profilePageDepartment) profilePageDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
+            // --- (จบส่วนที่เพิ่มเข้ามา) ---
+
+
+            startWatchingPosition();
+            await checkUserWorkStatus();
+
+            appContainer.style.display = 'block';
+            showPage('check-in-out-page');
                 document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
             } else {
                 alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
@@ -899,16 +919,25 @@ if (overtimeHours > 0) {
         checkoutBtn.classList.remove('hidden');
     }
 
-    function updateUIToCompleted() {
+    // ... (ในส่วนของ <script>) ...
+
+function updateUIToCompleted() {
     checkinBtn.classList.add('hidden');
     checkoutBtn.classList.remove('hidden');
     checkoutBtn.disabled = true; // ป้องกันการกดซ้ำ
-    checkoutBtn.style.backgroundColor = '#6B7280'; // สีเทา
+
+    // --- (ส่วนที่ต้องแก้ไข) ---
+    // เปลี่ยนจากสีเทาเป็นสีเขียว และเพิ่ม class animation
+    checkoutBtn.classList.remove('checkout-btn-anim', 'bg-red-500', 'hover:bg-red-600'); // ลบคลาสเก่าออก
+    checkoutBtn.classList.add('bg-green-500', 'completed-btn-anim'); // เพิ่มคลาสใหม่
+    // --- (จบส่วนที่แก้ไข) ---
+
     checkoutBtn.innerHTML = `
         <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         <span class="text-2xl font-semibold mt-2">Completed</span>
     `;
 }
+
     // --- (ส่วนที่เพิ่มเข้ามา) Check-out Logic ---
     checkoutBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
@@ -961,11 +990,14 @@ if (overtimeHours > 0) {
             alert("บันทึกเวลาออกงานสำเร็จ!");
 
             // อัปเดต UI หลังจาก Check-out
-            checkoutBtn.style.backgroundColor = '#6B7280';
-            checkoutBtn.innerHTML = `
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <span class="text-2xl font-semibold mt-2">Completed</span>
-            `;
+            checkoutBtn.classList.remove('checkout-btn-anim', 'bg-red-500', 'hover:bg-red-600');
+    checkoutBtn.classList.add('bg-green-500', 'completed-btn-anim');
+    // --- (จบส่วนที่แก้ไข) ---
+
+    checkoutBtn.innerHTML = `
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span class="text-2xl font-semibold mt-2">Completed</span>
+    `;
             
             // อัปเดตสรุปการทำงาน
             // ... (ส่วนบนของ checkoutBtn.addEventListener)
