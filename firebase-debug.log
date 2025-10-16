@@ -1,0 +1,47 @@
+[debug] [2025-10-16T01:41:06.892Z] ----------------------------------------------------------------------
+[debug] [2025-10-16T01:41:06.895Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\acer\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js serve
+[debug] [2025-10-16T01:41:06.896Z] CLI Version:   14.19.1
+[debug] [2025-10-16T01:41:06.896Z] Platform:      win32
+[debug] [2025-10-16T01:41:06.896Z] Node Version:  v22.20.0
+[debug] [2025-10-16T01:41:06.896Z] Time:          Thu Oct 16 2025 08:41:06 GMT+0700 (เวลาอินโดจีน)
+[debug] [2025-10-16T01:41:06.896Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-16T01:41:07.122Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-16T01:41:07.122Z] > authorizing via signed-in user (eakarthitx@gmail.com)
+[debug] [2025-10-16T01:41:07.122Z] [iam] checking project timetracker-f1e11 for permissions ["firebase.projects.get"]
+[debug] [2025-10-16T01:41:07.124Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:07.124Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:07.125Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions [none]
+[debug] [2025-10-16T01:41:07.125Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions x-goog-quota-user=projects/timetracker-f1e11
+[debug] [2025-10-16T01:41:07.125Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-16T01:41:08.358Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions 200
+[debug] [2025-10-16T01:41:08.358Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-16T01:41:08.360Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:08.360Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:08.360Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-16T01:41:08.657Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 200
+[debug] [2025-10-16T01:41:08.657Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 {"projectNumber":"470557940763","projectId":"timetracker-f1e11","lifecycleState":"ACTIVE","name":"TimeTracker","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-10-09T07:43:45.558454Z"}
+[info] 
+[info] === Serving from 'C:\Users\acer\TimeTracker'...
+[info] 
+[debug] [2025-10-16T01:41:08.660Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:08.660Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:08.660Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 
+[debug] [2025-10-16T01:41:09.538Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 200
+[debug] [2025-10-16T01:41:09.538Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites {"sites":[{"name":"projects/timetracker-f1e11/sites/timetracker-f1e11","defaultUrl":"https://timetracker-f1e11.web.app","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","type":"DEFAULT_SITE"}]}
+[debug] [2025-10-16T01:41:09.539Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:09.539Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:09.539Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config [none]
+[debug] [2025-10-16T01:41:10.203Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config 200
+[debug] [2025-10-16T01:41:10.203Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config {"projectId":"timetracker-f1e11","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","storageBucket":"timetracker-f1e11.firebasestorage.app","apiKey":"AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc","authDomain":"timetracker-f1e11.firebaseapp.com","messagingSenderId":"470557940763","measurementId":"G-C83H28RLSY","projectNumber":"470557940763","version":"2"}
+[debug] [2025-10-16T01:41:10.213Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:10.213Z] Checked if tokens are valid: true, expires at: 1760582444903
+[debug] [2025-10-16T01:41:10.214Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-16T01:41:10.541Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 200
+[debug] [2025-10-16T01:41:10.541Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 {"projectId":"timetracker-f1e11","projectNumber":"470557940763","displayName":"TimeTracker","name":"projects/timetracker-f1e11","resources":{"hostingSite":"timetracker-f1e11"},"state":"ACTIVE","etag":"1_d7c410bf-0446-4326-a973-5ad1a8cb84d9"}
+[info] i  hosting[timetracker-f1e11]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
+[info] +  hosting[timetracker-f1e11]: Local server: http://localhost:5000 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5000\u001b[22m\u001b[24m"}}
+[info] i  hosting: ::1 - - [16/Oct/2025:01:41:14 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:01:41:14 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [16/Oct/2025:01:41:14 +0000] "GET /firebase-config.js HTTP/1.1" 200 368 "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:01:41:14 +0000] \"GET /firebase-config.js HTTP/1.1\" 200 368 \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [16/Oct/2025:01:41:15 +0000] "GET /favicon.ico HTTP/1.1" 200 - "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:01:41:15 +0000] \"GET /favicon.ico HTTP/1.1\" 200 - \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [16/Oct/2025:01:41:40 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:01:41:40 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
