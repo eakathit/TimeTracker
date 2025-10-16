@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
@@ -93,19 +94,21 @@
 
     <div id="login-page" class="page min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div class="w-full max-w-sm text-center">
-            <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
-            <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
+            <svg class="w-24 h-24 mx-auto text-sky-500 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+            </svg>
             
-            <button id="line-login-btn" class="bg-green-500 hover:bg-green-600 text-white w-full py-4 text-lg font-semibold rounded-xl transition-all">
+            <h1 class="text-3xl font-bold text-gray-800">TimeTracker</h1>
+            <p class="text-gray-500 mt-2 mb-12">ระบบบันทึกเวลาทำงาน</p>
+            
+            <button id="line-login-btn" class="w-full flex items-center justify-center bg-green-500 hover:bg-green-600 text-white py-4 text-lg font-bold rounded-xl transition-transform transform hover:scale-105 shadow-lg">
+                <i class="fa-brands fa-line text-3xl mr-3"></i>
                 เข้าสู่ระบบด้วย LINE
             </button>
-            <p class="text-gray-400 text-sm my-4">หรือ</p>
-            <div class="space-y-4">
-                <input type="text" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-            </div>
-            <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
+            
+            <p class="text-gray-400 text-xs mt-10">กรุณาเข้าสู่ระบบผ่านแอปพลิเคชัน LINE<br>เพื่อเริ่มต้นการใช้งาน</p>
         </div>
     </div>
 
@@ -361,34 +364,16 @@
         <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
         <h2 id="profile-page-name" class="text-xl font-bold mt-4"></h2>
         <p id="profile-page-department" class="text-gray-500"></p>
-        <div class="mt-4 p-4 bg-gray-100 rounded-xl inline-block">
-            <p class="text-xs text-gray-500">[QR Code สำหรับสแกน]</p>
-                    </div>
+
                 </div>
                 
                 <div class="space-y-4">
-                    <h3 class="font-semibold text-lg">ประวัติการทำงานของฉัน</h3>
-                    <div class="card !p-4">
-                        <p class="font-semibold mb-2">10 ตุลาคม 2568</p>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:25</span></div>
-                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">17:31</span></div>
-                             <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">ในโรงงาน</span></div>
-                             <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ดูแลเครื่องจักร</span></div>
+                    <h3 class="font-semibold text-lg">ประวัติการทำงาน 7 วันล่าสุด</h3>
+                    <div id="work-history-container" class="space-y-3">
                         </div>
-                    </div>
-                    <div class="card !p-4">
-                        <p class="font-semibold mb-2">09 ตุลาคม 2568</p>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">08:15</span></div>
-                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">18:30 (OT 1 ชม.)</span></div>
-                             <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">ในโรงงาน</span></div>
-                             <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">ประชุมทีม</span></div>
-                        </div>
-                    </div>
                 </div>
 
-                 <button class="w-full text-center py-3 bg-red-50 text-red-500 rounded-xl font-semibold">ออกจากระบบ</button>
+                 <button id="logout-btn" class="w-full text-center py-3 bg-red-50 text-red-500 rounded-xl font-semibold">ออกจากระบบ</button>
             </div>
 
 
@@ -427,6 +412,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => {
+        // ... โค้ดที่เพิ่มเข้าไป ...
+      }).catch((error) => {
+        // ...
+      });
+      
     const storage = firebase.storage(); 
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
     const ALLOWED_RADIUS_METERS = 200;
@@ -454,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pages = mainContent.querySelectorAll('.page');
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
+    const logoutBtn = document.getElementById('logout-btn');
 
     // --- UI Elements for Report Page ---
     const saveReportBtn = document.getElementById('save-report-btn');
@@ -481,6 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const customTimeInputs = document.getElementById('custom-time-inputs');
     const customTimeStartInput = document.getElementById('custom-time-start-input');
     const customTimeEndInput = document.getElementById('custom-time-end-input');
+    
 
     // --- App State ---
     let currentUser = null;
@@ -591,6 +585,18 @@ document.addEventListener('DOMContentLoaded', function() {
             saveReportBtn.textContent = 'บันทึกข้อมูล';
         }
     });
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            // ถามเพื่อยืนยันก่อนออกจากระบบ
+            if (confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+                firebase.auth().signOut().catch((error) => {
+                    console.error("Sign out error:", error);
+                    alert("เกิดข้อผิดพลาดในการออกจากระบบ");
+                });
+            }
+        });
+    }
 
     // --- Event Listeners for New UI ---
     workTypeButtons.forEach(button => {
@@ -936,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
-    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
+    lineLoginBtn.addEventListener('click', () => { auth.signInWithRedirect(provider); });
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3;
@@ -974,6 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         updateProfilePage(doc.data());
                     }
                 });
+                loadWorkHistory();
             }
         });
     });
@@ -1006,6 +1013,92 @@ document.addEventListener('DOMContentLoaded', function() {
         if (profileDepartment) {
             // สมมติว่าใน Firestore มี field ชื่อ 'department'
             profileDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
+        }
+    }
+
+    // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดประวัติการทำงาน ---
+    // --- (โค้ดแก้ไข) ฟังก์ชันสำหรับโหลดประวัติการทำงาน ---
+    async function loadWorkHistory() {
+        if (!currentUser) return;
+
+        const container = document.getElementById('work-history-container');
+        if (!container) return;
+
+        container.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติ...</p>';
+
+        try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const historyQuery = db.collection('work_records')
+                .where('userId', '==', currentUser.uid)
+                .where('date', '>=', sevenDaysAgo)
+                .orderBy('date', 'desc');
+
+            const querySnapshot = await historyQuery.get();
+            
+            if (querySnapshot.empty) {
+                container.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">ไม่มีข้อมูลประวัติการทำงานใน 7 วันล่าสุด</p>';
+                return;
+            }
+
+            let historyHtml = '';
+            // ใช้ for...of loop เพื่อให้รองรับ await ภายใน loop ได้
+            for (const doc of querySnapshot.docs) {
+                const data = doc.data();
+                const recordDate = data.date.toDate();
+                
+                const formattedDate = recordDate.toLocaleDateString('th-TH', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+
+                const checkinTime = data.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                
+                // --- (ส่วนที่แก้ไข 1) จัดการแสดงผลเวลาออกและ OT ---
+                let checkoutDisplayText = '-';
+                if (data.checkOut) {
+                    checkoutDisplayText = data.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    const overtimeHours = (data.overtime && data.overtime.hours) ? data.overtime.hours : 0;
+                    if (overtimeHours > 0) {
+                        checkoutDisplayText += ` (OT ${overtimeHours} ชม.)`;
+                    }
+                }
+                
+                let location = 'ในโรงงาน';
+                if (data.checkIn.workType === 'on_site') {
+                    location = `On-site: ${data.checkIn.onSiteDetails}`;
+                }
+
+                // --- (ส่วนที่แก้ไข 2) ดึงข้อมูลรายงานมาแสดง ---
+                let reportText = 'ยังไม่ได้บันทึก';
+                const yyyy = recordDate.getFullYear();
+                const mm = String(recordDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(recordDate.getDate()).padStart(2, '0');
+                const reportDocId = `${currentUser.uid}_${yyyy}-${mm}-${dd}`;
+                
+                const reportDoc = await db.collection('daily_reports').doc(reportDocId).get();
+                if (reportDoc.exists) {
+                    reportText = reportDoc.data().workType || 'N/A';
+                }
+
+                historyHtml += `
+                    <div class="card !p-4">
+                        <p class="font-semibold mb-2">${formattedDate}</p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-medium text-green-600">${checkinTime}</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-medium text-red-500">${checkoutDisplayText}</span></div>
+                            <div class="col-span-2"><span class="text-gray-500">สถานที่:</span> <span class="font-medium">${location}</span></div>
+                             <div class="col-span-2 pt-2 border-t border-gray-100 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium">${reportText}</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = historyHtml;
+
+        } catch (error) {
+            console.error("Error loading work history:", error);
+            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดประวัติ</p>';
         }
     }
 
