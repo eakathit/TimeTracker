@@ -381,7 +381,7 @@
                 </select>
         </div>
     </div>
-    <div id="project-summary-results" class="mt-4 pt-4 border-t border-gray-200">
+    <div id="project-summary-results" class="mt-4 pt-4 border-t border-gray-200 max-h-96 overflow-y-auto">
          <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>
     </div>
 </div>
@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let latestPosition = null;
     let selectedWorkType = 'in_factory';
     let photoFile = null;
-    let controlsInitialized = false; // **เพิ่มตัวแปรสำหรับเช็คว่าติดตั้ง Controls
+    let controlsInitialized = false;
 
     // --- Firebase Auth State Changed ---
     auth.onAuthStateChanged(async (user) => {
@@ -550,7 +550,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 startWatchingPosition();
                 await checkUserWorkStatus();
                 
-                // --- (แก้ไข) ให้เหลือแค่ 2 บรรทัดนี้ ---
                 initializeControls(); 
                 await populateDropdownOptions(); 
 
@@ -571,19 +570,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-        saveReportBtn.addEventListener('click', async () => {
-        // 1. ตรวจสอบว่า Login หรือยัง
+    saveReportBtn.addEventListener('click', async () => {
         if (!currentUser) {
             return alert("กรุณาเข้าสู่ระบบก่อนบันทึกรายงาน");
         }
 
-        // 2. รวบรวมข้อมูลจากฟอร์ม
         const workType = workTypeSelectedText.textContent;
         const project = projectSelectedText.textContent;
         const duration = durationSelectedText.textContent;
         let timeRange = duration;
 
-        // 3. ตรวจสอบข้อมูลเบื้องต้น
         if (workType.includes('เลือกประเภทงาน...')) {
             return alert("กรุณาเลือกประเภทงาน");
         }
@@ -594,7 +590,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return alert("กรุณาเลือกระยะเวลาการทำงาน");
         }
 
-        // 4. จัดการข้อมูลเวลาที่กำหนดเอง
         if (duration === 'กำหนดเวลา') {
             const startTime = customTimeStartInput.value;
             const endTime = customTimeEndInput.value;
@@ -604,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
             timeRange = `${startTime} - ${endTime}`;
         }
         
-        // 5. เตรียมข้อมูลที่จะบันทึก
         const reportData = {
             userId: currentUser.uid,
             userName: document.getElementById('user-display-name').textContent,
@@ -614,20 +608,17 @@ document.addEventListener('DOMContentLoaded', function() {
             duration: timeRange
         };
 
-        // 6. บันทึกข้อมูลลง Firestore
         saveReportBtn.disabled = true;
         saveReportBtn.textContent = 'กำลังบันทึก...';
         
         try {
             const today = new Date().toISOString().split('T')[0];
-            const reportDocId = `${currentUser.uid}_${today}`; // ID เอกสารสำหรับ 1 user ต่อ 1 วัน
-
-            // ใช้ .set() เพื่อให้บันทึกทับได้ถ้ามีการแก้ไขในวันเดียวกัน
+            const reportDocId = `${currentUser.uid}_${today}`;
             await db.collection('daily_reports').doc(reportDocId).set(reportData, { merge: true });
 
             alert('บันทึกรายงานสำเร็จ!');
             resetReportForm();
-            loadSentReports(); // <-- (ส่วนที่แก้ไข) เรียกฟังก์ชันเพื่อโหลดข้อมูลใหม่
+            loadSentReports();
             
         } catch (error) {
             console.error("Error saving report: ", error);
@@ -638,7 +629,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- Event Listeners for New UI ---
     workTypeButtons.forEach(button => {
         button.addEventListener('click', () => {
             workTypeButtons.forEach(btn => {
@@ -667,7 +657,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
     const populateDropdownOptions = async () => {
         const db = firebase.firestore();
         const configs = [
@@ -687,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const panel = optionsContainer.closest('.absolute');
                 const selectedText = panel.previousElementSibling.querySelector('span');
                 
-                optionsContainer.innerHTML = ''; // เคลียร์ของเก่า
+                optionsContainer.innerHTML = '';
 
                 items.forEach(name => {
                     const optionDiv = document.createElement('div');
@@ -707,13 +696,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ฟังก์ชันนี้จะ "ติดตั้ง" การควบคุมทั้งหมดแค่ "ครั้งเดียว"
     const initializeControls = () => {
-        if (controlsInitialized) return; // ถ้าติดตั้งแล้ว ไม่ต้องทำซ้ำ
+        if (controlsInitialized) return;
         
         const db = firebase.firestore();
         
-        // --- 1. ติดตั้ง Dropdown Controls ---
         const dropdownConfigs = [
             { panelId: 'work-type-panel', selectBtnId: 'work-type-btn', searchId: 'work-type-search' },
             { panelId: 'project-panel', selectBtnId: 'project-btn', searchId: 'project-search' },
@@ -731,26 +718,20 @@ document.addEventListener('DOMContentLoaded', function() {
             selectBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 
-                // --- START: CODE EDITED ---
                 const isCurrentlyHidden = panel.classList.contains('hidden');
-
-                // ปิด Dropdown อื่นๆ ทั้งหมดก่อน
                 dropdownConfigs.forEach(otherConf => {
                     if (otherConf.panelId !== config.panelId) {
                         document.getElementById(otherConf.panelId)?.classList.add('hidden');
                     }
                 });
 
-                // สลับการแสดงผล (เปิด/ปิด) ของ Dropdown ที่คลิก
                 if (isCurrentlyHidden) {
                     panel.classList.remove('hidden');
                 } else {
                     panel.classList.add('hidden');
                 }
-                // --- END: CODE EDITED ---
             });
             
-            // FIX: หยุดไม่ให้คลิกใน Panel (เช่นช่องค้นหา) แล้ว Dropdown ปิด
             panel.addEventListener('click', (e) => e.stopPropagation());
 
             if (config.searchId) {
@@ -773,7 +754,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // --- 2. ติดตั้ง Admin Controls ---
         const setupAdminAction = (btnId, valueSourceId, docId, action) => {
             document.getElementById(btnId).addEventListener('click', async () => {
                 const isDelete = action === 'delete';
@@ -807,7 +787,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupAdminAction('add-project-btn', 'add-project-input', 'projects', 'add');
         setupAdminAction('delete-project-btn', 'delete-project-selected-text', 'projects', 'delete');
 
-        // --- 3. ติดตั้ง Controls อื่นๆ ---
         document.getElementById('duration-options').addEventListener('click', (e) => {
             if (e.target && e.target.classList.contains('duration-option')) {
                 const selectedValue = e.target.textContent;
@@ -818,110 +797,101 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // --- 4. เรียกใช้ฟังก์ชันสรุปข้อมูลรายโครงการ ---
-        initializeProjectSummary();
-        
-        controlsInitialized = true;
-    };
+        // --- (โค้ดสำหรับจัดการสรุปข้อมูลรายโครงการ จะอยู่ในนี้) ---
+        const initializeProjectSummary = () => {
+            const db = firebase.firestore();
+            const projectSelect = document.getElementById('project-summary-select');
+            const monthInput = document.getElementById('project-summary-month');
+            const resultsContainer = document.getElementById('project-summary-results');
+            const exportBtn = document.getElementById('export-project-summary-btn');
 
-    // --- (อัปเดต) ฟังก์ชันสำหรับจัดการสรุปข้อมูลรายโครงการ ---
-    const initializeProjectSummary = () => {
-        const db = firebase.firestore();
-        const projectSelect = document.getElementById('project-summary-select');
-        const monthInput = document.getElementById('project-summary-month'); // <-- เปลี่ยนจาก dateInput
-        const resultsContainer = document.getElementById('project-summary-results');
-        const exportBtn = document.getElementById('export-project-summary-btn');
+            // --- ฟังก์ชันสำหรับ Export ข้อมูลเป็น Excel (ยังใช้ข้อมูลจริง) ---
+            const exportProjectSummaryToExcel = async () => {
+                const selectedProject = projectSelect.value;
+                const selectedMonth = monthInput.value;
 
-        // --- ฟังก์ชันสำหรับ Export ข้อมูลเป็น Excel ---
-        const exportProjectSummaryToExcel = async () => {
-            const selectedProject = projectSelect.value;
-            const selectedMonth = monthInput.value; // <-- เปลี่ยนมาใช้ monthInput
-
-            if (!selectedProject || !selectedMonth) {
-                alert('กรุณาเลือกเดือนและโครงการก่อน Export');
-                return;
-            }
-            
-            // --- Logic การคำนวณวันแรกและวันสุดท้ายของเดือน ---
-            const [year, month] = selectedMonth.split('-').map(Number);
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-            try {
-                const querySnapshot = await db.collection('daily_reports')
-                                              .where('project', '==', selectedProject)
-                                              .where('createdAt', '>=', startDate)
-                                              .where('createdAt', '<=', endDate)
-                                              .orderBy('createdAt', 'asc') // เรียงตามวันที่
-                                              .get();
-                
-                if (querySnapshot.empty) {
-                    alert('ไม่พบข้อมูลสำหรับ Export');
+                if (!selectedProject || !selectedMonth) {
+                    alert('กรุณาเลือกเดือนและโครงการก่อน Export');
                     return;
                 }
-
-                const dataForExcel = [
-                    ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "ระยะเวลา"]
-                ];
                 
-                querySnapshot.forEach(doc => {
-                    const report = doc.data();
-                    const reportDate = report.createdAt.toDate().toLocaleDateString('th-TH', {
-                        year: 'numeric', month: 'long', day: 'numeric'
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+                try {
+                    const querySnapshot = await db.collection('daily_reports')
+                                                  .where('project', '==', selectedProject)
+                                                  .where('createdAt', '>=', startDate)
+                                                  .where('createdAt', '<=', endDate)
+                                                  .orderBy('createdAt', 'asc')
+                                                  .get();
+                    
+                    if (querySnapshot.empty) {
+                        alert('ไม่พบข้อมูลจริงสำหรับ Export (โหมดทดสอบจะแสดงข้อมูลจำลองเท่านั้น)');
+                        return;
+                    }
+
+                    const dataForExcel = [
+                        ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "ระยะเวลา"]
+                    ];
+                    
+                    querySnapshot.forEach(doc => {
+                        const report = doc.data();
+                        const reportDate = report.createdAt.toDate().toLocaleDateString('th-TH', {
+                            year: 'numeric', month: 'long', day: 'numeric'
+                        });
+                        dataForExcel.push([
+                            reportDate,
+                            report.userName,
+                            report.workType,
+                            report.duration
+                        ]);
                     });
-                    dataForExcel.push([
-                        reportDate,
-                        report.userName,
-                        report.workType,
-                        report.duration
-                    ]);
-                });
 
-                const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'สรุปโครงการ');
+                    const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'สรุปโครงการ');
+                    XLSX.writeFile(wb, `สรุปโครงการ_${selectedProject}_${selectedMonth}.xlsx`);
 
-                // --- ปรับปรุงชื่อไฟล์ ---
-                XLSX.writeFile(wb, `สรุปโครงการ_${selectedProject}_${selectedMonth}.xlsx`);
-
-            } catch (error) {
-                console.error("Error exporting to Excel:", error);
-                alert("เกิดข้อผิดพลาดระหว่างการ Export ข้อมูล");
-            }
-        };
-        
-        // --- ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น ---
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        monthInput.value = `${year}-${month}`;
-
-
-        // --- ส่วนสำหรับดึงข้อมูลโครงการมาใส่ใน Dropdown ---
-        const populateProjectOptions = async () => {
-            try {
-                const doc = await db.collection('system_settings').doc('projects').get();
-                projectSelect.innerHTML = '<option value="">เลือกโครงการ...</option>';
-
-                if (doc.exists) {
-                    const projects = doc.data().names || [];
-                    projects.forEach(name => {
-                        const option = document.createElement('option');
-                        option.value = name;
-                        option.textContent = name;
-                        projectSelect.appendChild(option);
-                    });
+                } catch (error) {
+                    console.error("Error exporting to Excel:", error);
+                    alert("เกิดข้อผิดพลาดระหว่างการ Export ข้อมูล");
                 }
-            } catch (error) {
-                console.error("Error populating project summary dropdown:", error);
-            }
-        };
+            };
+            
+            // --- ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น ---
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            monthInput.value = `${year}-${month}`;
 
-        // --- ฟังก์ชันสำหรับค้นหาและแสดงผลข้อมูล (รายเดือน) ---
-        // --- ฟังก์ชันสำหรับค้นหาและแสดงผลข้อมูล (รายเดือน) ---
+
+            // --- ส่วนสำหรับดึงข้อมูลโครงการมาใส่ใน Dropdown ---
+            const populateProjectOptions = async () => {
+                try {
+                    const doc = await db.collection('system_settings').doc('projects').get();
+                    projectSelect.innerHTML = '<option value="">เลือกโครงการ...</option>';
+
+                    if (doc.exists) {
+                        const projects = doc.data().names || [];
+                        projects.forEach(name => {
+                            const option = document.createElement('option');
+                            option.value = name;
+                            option.textContent = name;
+                            projectSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error populating project summary dropdown:", error);
+                }
+            };
+
+            // --- ฟังก์ชันสำหรับค้นหาและแสดงผลข้อมูล (พร้อมข้อมูลทดสอบ) ---
+            // --- ฟังก์ชันสำหรับค้นหาและแสดงผลข้อมูล (รายเดือน) ---
 const fetchProjectData = async () => {
     const selectedProject = projectSelect.value;
-    const selectedMonth = monthInput.value; 
+    const selectedMonth = monthInput.value;
 
     if (!selectedProject || !selectedMonth) {
         resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>';
@@ -947,8 +917,6 @@ const fetchProjectData = async () => {
             return;
         }
 
-        // --- START: CODE EDITED ---
-        // เพิ่มส่วนหัวสำหรับแสดงจำนวนรายการ
         let resultsHTML = `
             <div class="flex justify-between items-center mb-3">
                 <h4 class="font-semibold text-gray-800">รายการทั้งหมด</h4>
@@ -958,7 +926,6 @@ const fetchProjectData = async () => {
             </div>
             <div class="space-y-3">
         `;
-        // --- END: CODE EDITED ---
 
         querySnapshot.forEach(doc => {
             const report = doc.data();
@@ -966,7 +933,6 @@ const fetchProjectData = async () => {
                 day: '2-digit', month: 'long', year: 'numeric'
             });
             
-            // --- ใช้สไตล์แบบแท็ก (Tag Style) ---
             resultsHTML += `
                 <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center">
@@ -995,14 +961,17 @@ const fetchProjectData = async () => {
     }
 };
 
-        // --- เพิ่ม Event Listener และเรียกใช้ฟังก์ชัน ---
-        populateProjectOptions();
-        projectSelect.addEventListener('change', fetchProjectData);
-        monthInput.addEventListener('change', fetchProjectData); // <-- เปลี่ยนจาก dateInput
-        exportBtn.addEventListener('click', exportProjectSummaryToExcel);
+            // --- เพิ่ม Event Listener และเรียกใช้ฟังก์ชัน ---
+            populateProjectOptions();
+            projectSelect.addEventListener('change', fetchProjectData);
+            monthInput.addEventListener('change', fetchProjectData);
+            exportBtn.addEventListener('click', exportProjectSummaryToExcel);
+        };
+
+        initializeProjectSummary();
+        controlsInitialized = true;
     };
 
-    // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
         if (!latestPosition) return alert("กำลังรอสัญญาณ GPS กรุณารอสักครู่...");
@@ -1263,14 +1232,10 @@ const fetchProjectData = async () => {
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
             showPage(pageId);
-            // --- (ส่วนที่แก้ไข) ---
             if (pageId === 'report-page') {
                 loadSentReports();
             }
-
-            // --- (ส่วนที่แก้ไข) เพิ่มการเรียกฟังก์ชันเมื่อเปิดหน้าโปรไฟล์ ---
             if (pageId === 'profile-page' && currentUser) {
-                // ดึงข้อมูลล่าสุดจาก Firestore มาแสดงผล
                 db.collection('users').doc(currentUser.uid).get().then(doc => {
                     if (doc.exists) {
                         updateProfilePage(doc.data());
@@ -1280,8 +1245,6 @@ const fetchProjectData = async () => {
         });
     });
     
-    
-
     function resetReportForm() {
         workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
         workTypeSelectedText.classList.add('text-gray-500');
@@ -1294,27 +1257,22 @@ const fetchProjectData = async () => {
         customTimeEndInput.value = '';
     }
 
-    
-    // --- (โค้ดใหม่) ฟังก์ชันสำหรับอัปเดตข้อมูลหน้าโปรไฟล์ ---
     function updateProfilePage(userData) {
         const profilePic = document.getElementById('profile-page-pic');
         const profileName = document.getElementById('profile-page-name');
         const profileDepartment = document.getElementById('profile-page-department');
 
         if (profilePic) {
-            // ใช้รูปจาก LINE หรือรูปโปรไฟล์ในระบบ ถ้าไม่มีใช้รูปเริ่มต้น
             profilePic.src = currentUser.photoURL || userData.profileImageUrl || 'https://placehold.co/150x150/E2E8F0/475569?text=User';
         }
         if (profileName) {
             profileName.textContent = userData.fullName || 'ชื่อผู้ใช้';
         }
         if (profileDepartment) {
-            // สมมติว่าใน Firestore มี field ชื่อ 'department'
             profileDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
         }
     }
 
-    // --- (อัปเดต) ฟังก์ชันสำหรับโหลดรายงานที่เคยส่ง ---
     async function loadSentReports() {
         if (!currentUser) return;
 
@@ -1325,8 +1283,6 @@ const fetchProjectData = async () => {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        // หมายเหตุ: ID ของเอกสารรายงานประจำวันจะขึ้นอยู่กับ UID ของผู้ใช้และวันที่
-        // เช่น 'someUserId_2025-10-17'
         const reportDocId = `${currentUser.uid}_${today}`;
         
         try {
@@ -1334,8 +1290,6 @@ const fetchProjectData = async () => {
 
             if (reportDoc.exists) {
                 const data = reportDoc.data();
-
-                // สร้าง HTML card รูปแบบใหม่ตามที่คุณต้องการ
                 const reportCardHTML = `
                     <div class="card !p-4">
                         <div>
@@ -1350,7 +1304,6 @@ const fetchProjectData = async () => {
                 `;
                 container.innerHTML = reportCardHTML;
             } else {
-                // ถ้าไม่มีรายงาน, ให้แสดงข้อความเริ่มต้น
                 container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่มีรายงานที่ส่งวันนี้</p>`;
             }
         } catch (error) {
@@ -1368,8 +1321,6 @@ const fetchProjectData = async () => {
     setInterval(updateClock, 1000);
     updateClock();
 });
-
-    
 </script>
 </body>
 </html>
