@@ -306,7 +306,7 @@
                             <div class="flex items-center space-x-2">
                                 <input type="text" id="add-work-type-input" placeholder="เพิ่มประเภทงานใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
                                 <button id="add-work-type-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
-                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"></path></svg>
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110 2h3V6a1 1 0 011-1z"></path></svg>
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -331,7 +331,7 @@
                              <div class="flex items-center space-x-2">
                                 <input type="text" id="add-project-input" placeholder="เพิ่มโครงการใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
                                 <button id="add-project-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
-                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"></path></svg>
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110 2h3V6a1 1 0 011-1z"></path></svg>
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -726,19 +726,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
             selectBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isCurrentlyHidden = panel.classList.contains('hidden');
                 
-                // ปิดอันอื่นทั้งหมดก่อน
+                // --- START: CODE EDITED ---
+                const isCurrentlyHidden = panel.classList.contains('hidden');
+
+                // ปิด Dropdown อื่นๆ ทั้งหมดก่อน
                 dropdownConfigs.forEach(otherConf => {
                     if (otherConf.panelId !== config.panelId) {
-                        document.getElementById(otherConf.panelId).classList.add('hidden');
+                        document.getElementById(otherConf.panelId)?.classList.add('hidden');
                     }
                 });
 
-                // เปิด/ปิดอันที่คลิก
+                // สลับการแสดงผล (เปิด/ปิด) ของ Dropdown ที่คลิก
                 if (isCurrentlyHidden) {
                     panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
                 }
+                // --- END: CODE EDITED ---
             });
             
             // FIX: หยุดไม่ให้คลิกใน Panel (เช่นช่องค้นหา) แล้ว Dropdown ปิด
