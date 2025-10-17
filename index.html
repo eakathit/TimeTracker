@@ -565,6 +565,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 await checkUserWorkStatus();
                 setupDynamicDropdowns();// <-- เรียกใช้ฟังก์ชันตรงนี้
                 setupAdminControls();
+                initializeControls(); // ติดตั้ง Event Listeners ทั้งหมดแค่ครั้งเดียว
+                await populateDropdownOptions(); // โหลดข้อมูล Dropdown ครั้งแรก
                 
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
@@ -677,41 +679,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 1. เปิด/ปิด Dropdown เมื่อกดปุ่ม
-    workTypeBtn.addEventListener('click', () => {
-        workTypePanel.classList.toggle('hidden');
-    });
-
-    // 2. เลือก Option
-    workTypeOptions.forEach(option => {
-    });
-
-    // 3. ค้นหา/Filter
-    workTypeSearch.addEventListener('input', () => {
-    });
-    
-    // 4. ปิด Dropdown เมื่อคลิกข้างนอก
-    document.addEventListener('click', (event) => {
-        if (!workTypeDropdown.contains(event.target)) {
-            workTypePanel.classList.add('hidden');
-        }
-    });
-    
-    // dropdown โครงการ
-    projectBtn.addEventListener('click', () => projectPanel.classList.toggle('hidden'));
-
-    projectOptions.forEach(option => {
-    });
-
-    projectSearch.addEventListener('input', () => {
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!projectDropdown.contains(event.target)) {
-            projectPanel.classList.add('hidden');
-        }
-    });
-    
     // ระยะเวลาการทำงาน
     durationBtn.addEventListener('click', () => durationPanel.classList.toggle('hidden'));
 
@@ -734,6 +701,142 @@ document.addEventListener('DOMContentLoaded', function() {
             durationPanel.classList.add('hidden');
         }
     });
+
+    // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
+    const populateDropdownOptions = async () => {
+        const db = firebase.firestore();
+        const configs = [
+            { docId: 'workTypes', optionsId: 'work-type-options' },
+            { docId: 'projects', optionsId: 'project-options' },
+            { docId: 'workTypes', optionsId: 'delete-work-type-options' },
+            { docId: 'projects', optionsId: 'delete-project-options' }
+        ];
+
+        for (const config of configs) {
+            try {
+                const doc = await db.collection('system_settings').doc(config.docId).get();
+                if (!doc.exists) continue;
+
+                const items = doc.data().names || [];
+                const optionsContainer = document.getElementById(config.optionsId);
+                const panel = optionsContainer.closest('.absolute');
+                const selectedText = panel.previousElementSibling.querySelector('span');
+                
+                optionsContainer.innerHTML = ''; // เคลียร์ของเก่า
+
+                items.forEach(name => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'p-2 rounded-lg hover:bg-sky-50 cursor-pointer text-sm';
+                    optionDiv.textContent = name;
+                    
+                    optionDiv.addEventListener('click', () => {
+                        selectedText.textContent = name;
+                        selectedText.classList.remove('text-gray-500');
+                        panel.classList.add('hidden');
+                    });
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } catch (error) {
+                console.error(`Error populating ${config.docId}:`, error);
+            }
+        }
+    };
+
+    // ฟังก์ชันนี้จะ "ติดตั้ง" การควบคุมทั้งหมดแค่ "ครั้งเดียว"
+    const initializeControls = () => {
+        const db = firebase.firestore();
+        
+        // --- 1. ติดตั้ง Dropdown Controls ---
+        const dropdownConfigs = [
+            { panelId: 'work-type-panel', selectBtnId: 'work-type-btn', searchId: 'work-type-search' },
+            { panelId: 'project-panel', selectBtnId: 'project-btn', searchId: 'project-search' },
+            { panelId: 'delete-work-type-panel', selectBtnId: 'delete-work-type-select-btn' },
+            { panelId: 'delete-project-panel', selectBtnId: 'delete-project-select-btn' },
+            { panelId: 'duration-panel', selectBtnId: 'duration-btn' } // เพิ่ม Dropdown ระยะเวลา
+        ];
+
+        dropdownConfigs.forEach(config => {
+            const selectBtn = document.getElementById(config.selectBtnId);
+            const panel = document.getElementById(config.panelId);
+            const dropdownContainer = selectBtn.closest('.relative');
+
+            selectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                panel.classList.toggle('hidden');
+            });
+
+            if (config.searchId) {
+                const searchInput = document.getElementById(config.searchId);
+                const optionsContainer = panel.querySelector('.overflow-y-auto');
+                searchInput.addEventListener('input', () => {
+                    const filter = searchInput.value.toLowerCase();
+                    for (const option of optionsContainer.children) {
+                        option.style.display = option.textContent.toLowerCase().includes(filter) ? '' : 'none';
+                    }
+                });
+            }
+        });
+
+        // Logic ปิด Dropdown ทั้งหมดเมื่อคลิกนอกพื้นที่
+        document.addEventListener('click', () => {
+            dropdownConfigs.forEach(config => {
+                document.getElementById(config.panelId).classList.add('hidden');
+            });
+        });
+        
+        // --- 2. ติดตั้ง Admin Controls ---
+        const setupAdminAction = (btnId, inputId, docId, action) => {
+            document.getElementById(btnId).addEventListener('click', async () => {
+                const isDelete = action === 'delete';
+                const valueElement = document.getElementById(inputId);
+                const value = isDelete ? valueElement.textContent : valueElement.value;
+                
+                if ((isDelete && value.includes('...')) || (!isDelete && (!value || value.trim() === ''))) {
+                    alert(isDelete ? 'กรุณาเลือกรายการที่จะลบ' : 'กรุณากรอกข้อมูล');
+                    return;
+                }
+
+                if (isDelete && !confirm(`คุณแน่ใจหรือไม่ว่าจะลบ "${value}"?`)) {
+                    return;
+                }
+                
+                const docRef = db.collection('system_settings').doc(docId);
+                const updateAction = isDelete 
+                    ? firebase.firestore.FieldValue.arrayRemove(value)
+                    : firebase.firestore.FieldValue.arrayUnion(value.trim());
+
+                try {
+                    await docRef.update({ names: updateAction });
+                    alert(`ดำเนินการสำเร็จ!`);
+                    populateDropdownOptions(); // รีเฟรชแค่ตัวเลือก
+                    if (isDelete) {
+                        valueElement.textContent = `เลือก${docId === 'workTypes' ? 'ประเภทงาน' : 'โครงการ'}ที่จะลบ...`;
+                        valueElement.classList.add('text-gray-500');
+                    } else {
+                        valueElement.value = '';
+                    }
+                } catch (error) {
+                    console.error(`Error updating ${docId}:`, error);
+                    alert('เกิดข้อผิดพลาด');
+                }
+            });
+        };
+        
+        setupAdminAction('add-work-type-btn', 'add-work-type-input', 'workTypes', 'add');
+        setupAdminAction('delete-work-type-btn', 'delete-work-type-selected-text', 'workTypes', 'delete');
+        setupAdminAction('add-project-btn', 'add-project-input', 'projects', 'add');
+        setupAdminAction('delete-project-btn', 'delete-project-selected-text', 'projects', 'delete');
+
+        // --- 3. ติดตั้ง Controls อื่นๆ ---
+        durationOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                durationSelectedText.textContent = option.textContent;
+                durationSelectedText.classList.remove('text-gray-500');
+                customTimeInputs.classList.toggle('hidden', option.textContent !== 'กำหนดเวลา');
+            });
+        });
+    };
+
     // --- Check-in Logic ---
     checkinBtn.addEventListener('click', async () => {
         if (!currentUser) return alert("ไม่พบข้อมูลผู้ใช้");
