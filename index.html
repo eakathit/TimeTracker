@@ -288,9 +288,7 @@
             <div id="admin-dashboard-page" class="page space-y-8">
     <div>
         <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-sky-500" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 11a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-sky-500" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 11a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             <span>Admin Dashboard</span>
         </h2>
         <p class="text-gray-500 mt-1">ภาพรวมและจัดการข้อมูลระบบ</p>
@@ -312,24 +310,41 @@
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <input type="text" id="delete-work-type-input" placeholder="พิมพ์ชื่อที่จะลบ..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                <div class="relative w-full">
+                                    <button id="delete-work-type-select-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-left flex justify-between items-center focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                        <span id="delete-work-type-selected-text" class="text-gray-500">เลือกประเภทงานที่จะลบ...</span>
+                                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                    </button>
+                                    <div id="delete-work-type-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                        <div id="delete-work-type-options" class="max-h-40 overflow-y-auto p-1"></div>
+                                    </div>
+                                </div>
                                 <button id="delete-work-type-btn" class="bg-red-500 text-white font-semibold p-3 rounded-lg hover:bg-red-600 transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
                                 </button>
                             </div>
                         </div>
                     </div>
+
                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <h4 class="font-semibold text-gray-700 mb-3">จัดการโครงการ</h4>
                         <div class="space-y-3">
-                            <div class="flex items-center space-x-2">
+                             <div class="flex items-center space-x-2">
                                 <input type="text" id="add-project-input" placeholder="เพิ่มโครงการใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
                                 <button id="add-project-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"></path></svg>
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <input type="text" id="delete-project-input" placeholder="พิมพ์ชื่อที่จะลบ..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                <div class="relative w-full">
+                                    <button id="delete-project-select-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-left flex justify-between items-center focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                        <span id="delete-project-selected-text" class="text-gray-500">เลือกโครงการที่จะลบ...</span>
+                                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                    </button>
+                                    <div id="delete-project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                        <div id="delete-project-options" class="max-h-40 overflow-y-auto p-1"></div>
+                                    </div>
+                                </div>
                                 <button id="delete-project-btn" class="bg-red-500 text-white font-semibold p-3 rounded-lg hover:bg-red-600 transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
                                 </button>
@@ -669,23 +684,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 2. เลือก Option
     workTypeOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            workTypeSelectedText.textContent = option.textContent;
-            workTypeSelectedText.classList.remove('text-gray-500'); // ทำให้ตัวหนังสือเข้มขึ้น
-            workTypePanel.classList.add('hidden'); // ปิด Panel หลังเลือก
-        });
     });
 
     // 3. ค้นหา/Filter
     workTypeSearch.addEventListener('input', () => {
-        const filter = workTypeSearch.value.toLowerCase();
-        workTypeOptions.forEach(option => {
-            if (option.textContent.toLowerCase().includes(filter)) {
-                option.style.display = ''; // แสดง
-            } else {
-                option.style.display = 'none'; // ซ่อน
-            }
-        });
     });
     
     // 4. ปิด Dropdown เมื่อคลิกข้างนอก
@@ -699,18 +701,9 @@ document.addEventListener('DOMContentLoaded', function() {
     projectBtn.addEventListener('click', () => projectPanel.classList.toggle('hidden'));
 
     projectOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            projectSelectedText.textContent = option.textContent;
-            projectSelectedText.classList.remove('text-gray-500');
-            projectPanel.classList.add('hidden');
-        });
     });
 
     projectSearch.addEventListener('input', () => {
-        const filter = projectSearch.value.toLowerCase();
-        projectOptions.forEach(option => {
-            option.style.display = option.textContent.toLowerCase().includes(filter) ? '' : 'none';
-        });
     });
 
     document.addEventListener('click', (event) => {
@@ -1020,32 +1013,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดข้อมูล Dropdown จาก Firestore ---
+    // --- (อัปเดต) ฟังก์ชันสำหรับโหลดและจัดการ Dropdown ทั้งหมด ---
     async function setupDynamicDropdowns() {
         const db = firebase.firestore();
 
-        // --- ฟังก์ชัน Helper สำหรับสร้าง Dropdown ---
-        const createDropdown = async (collectionDoc, optionsContainerId, selectedTextId, panelId, searchInputId) => {
+        const createDropdown = async (config) => {
             try {
-                const doc = await db.collection('system_settings').doc(collectionDoc).get();
-                if (!doc.exists) {
-                    console.error(`Document not found: ${collectionDoc}`);
-                    return;
-                }
+                const doc = await db.collection('system_settings').doc(config.docId).get();
+                if (!doc.exists) return;
 
                 const items = doc.data().names || [];
-                const optionsContainer = document.getElementById(optionsContainerId);
-                const selectedText = document.getElementById(selectedTextId);
-                const panel = document.getElementById(panelId);
-                const searchInput = document.getElementById(searchInputId);
+                const optionsContainer = document.getElementById(config.optionsId);
+                const selectedText = document.getElementById(config.selectedTextId);
+                const panel = document.getElementById(config.panelId);
+                const selectBtn = document.getElementById(config.selectBtnId);
+                const dropdownContainer = selectBtn.closest('.relative'); // หา Container หลักของ Dropdown
 
-                optionsContainer.innerHTML = ''; // เคลียร์ตัวเลือกเก่าทิ้ง
+                optionsContainer.innerHTML = ''; 
 
                 items.forEach(name => {
                     const optionDiv = document.createElement('div');
-                    optionDiv.className = 'p-2 rounded-lg hover:bg-sky-50 cursor-pointer';
+                    optionDiv.className = 'p-2 rounded-lg hover:bg-sky-50 cursor-pointer text-sm';
                     optionDiv.textContent = name;
                     
-                    // Event Listener สำหรับการคลิกเลือก
                     optionDiv.addEventListener('click', () => {
                         selectedText.textContent = name;
                         selectedText.classList.remove('text-gray-500');
@@ -1053,29 +1043,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     optionsContainer.appendChild(optionDiv);
                 });
-                
-                // --- แก้ไข Event Listener ของการค้นหา ---
-                // ย้ายมาไว้ตรงนี้เพื่อให้ทำงานกับตัวเลือกที่สร้างขึ้นใหม่ได้
-                searchInput.addEventListener('input', () => {
-                    const filter = searchInput.value.toLowerCase();
-                    // วนลูปหาจาก "children" ของ container โดยตรง
-                    for (const option of optionsContainer.children) {
-                        if (option.textContent.toLowerCase().includes(filter)) {
-                            option.style.display = '';
-                        } else {
-                            option.style.display = 'none';
-                        }
-                    }
-                });
 
+                if (selectBtn) {
+                     selectBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // หยุดไม่ให้ event click ทะลุไปถึง document
+                        panel.classList.toggle('hidden');
+                     });
+                }
+                
+                if (config.searchId) {
+                    const searchInput = document.getElementById(config.searchId);
+                    searchInput.addEventListener('input', () => {
+                        const filter = searchInput.value.toLowerCase();
+                        for (const option of optionsContainer.children) {
+                            option.style.display = option.textContent.toLowerCase().includes(filter) ? '' : 'none';
+                        }
+                    });
+                }
             } catch (error) {
-                console.error(`Error loading data for ${collectionDoc}:`, error);
+                console.error(`Error loading data for ${config.docId}:`, error);
             }
         };
 
-        // --- เรียกใช้งานฟังก์ชันเพื่อสร้าง Dropdown ทั้งสอง ---
-        createDropdown('workTypes', 'work-type-options', 'work-type-selected-text', 'work-type-panel', 'work-type-search');
-        createDropdown('projects', 'project-options', 'project-selected-text', 'project-panel', 'project-search');
+        // --- Configs for all dropdowns ---
+        const dropdownConfigs = [
+            { docId: 'workTypes', optionsId: 'work-type-options', selectedTextId: 'work-type-selected-text', panelId: 'work-type-panel', selectBtnId: 'work-type-btn', searchId: 'work-type-search' },
+            { docId: 'projects', optionsId: 'project-options', selectedTextId: 'project-selected-text', panelId: 'project-panel', selectBtnId: 'project-btn', searchId: 'project-search' },
+            { docId: 'workTypes', optionsId: 'delete-work-type-options', selectedTextId: 'delete-work-type-selected-text', panelId: 'delete-work-type-panel', selectBtnId: 'delete-work-type-select-btn' },
+            { docId: 'projects', optionsId: 'delete-project-options', selectedTextId: 'delete-project-selected-text', panelId: 'delete-project-panel', selectBtnId: 'delete-project-select-btn' }
+        ];
+
+        dropdownConfigs.forEach(createDropdown);
+
+        // --- (เพิ่มใหม่) Logic สำหรับปิด Dropdown ทั้งหมดเมื่อคลิกนอกพื้นที่ ---
+        document.addEventListener('click', (event) => {
+            dropdownConfigs.forEach(config => {
+                const dropdownContainer = document.getElementById(config.selectBtnId)?.closest('.relative');
+                if (dropdownContainer && !dropdownContainer.contains(event.target)) {
+                    document.getElementById(config.panelId).classList.add('hidden');
+                }
+            });
+        });
     }
 
     function resetReportForm() {
@@ -1090,33 +1098,37 @@ document.addEventListener('DOMContentLoaded', function() {
         customTimeEndInput.value = '';
     }
 
+    // --- (อัปเดต) ฟังก์ชันสำหรับจัดการปุ่มเพิ่ม-ลบของ Admin ---
     function setupAdminControls() {
         const db = firebase.firestore();
 
-        // --- ฟังก์ชัน Helper สำหรับการอัปเดตข้อมูล ---
-        const updateFirestoreArray = async (docId, fieldName, value, action) => {
-            if (!value || value.trim() === '') {
-                alert('กรุณากรอกข้อมูล');
-                return;
-            }
-
+        const updateFirestoreArray = async (docId, value, action) => {
             const docRef = db.collection('system_settings').doc(docId);
             let updateAction;
 
             if (action === 'add') {
+                if (!value || value.trim() === '') {
+                    alert('กรุณากรอกข้อมูล');
+                    return;
+                }
                 updateAction = firebase.firestore.FieldValue.arrayUnion(value.trim());
-                 alert(`เพิ่ม "${value.trim()}" สำเร็จ!`);
             } else if (action === 'delete') {
-                updateAction = firebase.firestore.FieldValue.arrayRemove(value.trim());
-                alert(`ลบ "${value.trim()}" สำเร็จ!`);
+                 if (value.includes('...')) {
+                    alert('กรุณาเลือกรายการที่จะลบ');
+                    return;
+                }
+                if (!confirm(`คุณแน่ใจหรือไม่ว่าจะลบ "${value}"?`)) {
+                    return; // ผู้ใช้กดยกเลิก
+                }
+                updateAction = firebase.firestore.FieldValue.arrayRemove(value);
             } else {
-                return; // ไม่ทำอะไรถ้า action ไม่ถูกต้อง
+                return;
             }
 
             try {
-                await docRef.update({ [fieldName]: updateAction });
-                // อัปเดต Dropdown ให้แสดงผลล่าสุดทันที
-                setupDynamicDropdowns();
+                await docRef.update({ names: updateAction });
+                alert(`ดำเนินการสำเร็จ!`);
+                setupDynamicDropdowns(); // อัปเดต Dropdown ทั้งหมด
             } catch (error) {
                 console.error(`Error updating ${docId}:`, error);
                 alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
@@ -1126,27 +1138,29 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- การทำงานของปุ่ม จัดการประเภทงาน ---
         document.getElementById('add-work-type-btn').addEventListener('click', () => {
             const input = document.getElementById('add-work-type-input');
-            updateFirestoreArray('workTypes', 'names', input.value, 'add');
-            input.value = ''; // เคลียร์ช่องกรอก
+            updateFirestoreArray('workTypes', input.value, 'add');
+            input.value = '';
         });
 
         document.getElementById('delete-work-type-btn').addEventListener('click', () => {
-            const input = document.getElementById('delete-work-type-input');
-            updateFirestoreArray('workTypes', 'names', input.value, 'delete');
-            input.value = ''; // เคลียร์ช่องกรอก
+            const selectedTextSpan = document.getElementById('delete-work-type-selected-text');
+            updateFirestoreArray('workTypes', selectedTextSpan.textContent, 'delete');
+            selectedTextSpan.textContent = 'เลือกประเภทงานที่จะลบ...';
+            selectedTextSpan.classList.add('text-gray-500');
         });
 
         // --- การทำงานของปุ่ม จัดการโครงการ ---
         document.getElementById('add-project-btn').addEventListener('click', () => {
             const input = document.getElementById('add-project-input');
-            updateFirestoreArray('projects', 'names', input.value, 'add');
-            input.value = ''; // เคลียร์ช่องกรอก
+            updateFirestoreArray('projects', input.value, 'add');
+            input.value = '';
         });
 
         document.getElementById('delete-project-btn').addEventListener('click', () => {
-            const input = document.getElementById('delete-project-input');
-            updateFirestoreArray('projects', 'names', input.value, 'delete');
-            input.value = ''; // เคลียร์ช่องกรอก
+            const selectedTextSpan = document.getElementById('delete-project-selected-text');
+            updateFirestoreArray('projects', selectedTextSpan.textContent, 'delete');
+            selectedTextSpan.textContent = 'เลือกโครงการที่จะลบ...';
+            selectedTextSpan.classList.add('text-gray-500');
         });
     }
 
