@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <style>
         /* CSS ของคุณ (ไม่ต้องแก้ไข) */
@@ -499,27 +500,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- UI Elements for Report Page ---
     const saveReportBtn = document.getElementById('save-report-btn');
-    // Dropdown ประเภทงาน
-    const workTypeDropdown = document.getElementById('work-type-dropdown');
-    const workTypeBtn = document.getElementById('work-type-btn');
-    const workTypePanel = document.getElementById('work-type-panel');
-    const workTypeSearch = document.getElementById('work-type-search');
-    const workTypeOptions = document.querySelectorAll('.work-type-option');
     const workTypeSelectedText = document.getElementById('work-type-selected-text');
-    // Dropdown โครงการ
-    const projectDropdown = document.getElementById('project-dropdown');
-    const projectBtn = document.getElementById('project-btn');
-    const projectPanel = document.getElementById('project-panel');
-    const projectSearch = document.getElementById('project-search');
-    const projectOptions = document.querySelectorAll('.project-option');
     const projectSelectedText = document.getElementById('project-selected-text');
-    // Dropdown ระยะเวลา
-    const durationDropdown = document.getElementById('duration-dropdown');
-    const durationBtn = document.getElementById('duration-btn');
-    const durationPanel = document.getElementById('duration-panel');
-    const durationOptions = document.querySelectorAll('.duration-option');
     const durationSelectedText = document.getElementById('duration-selected-text');
-    // ช่องกำหนดเวลาเอง
     const customTimeInputs = document.getElementById('custom-time-inputs');
     const customTimeStartInput = document.getElementById('custom-time-start-input');
     const customTimeEndInput = document.getElementById('custom-time-end-input');
@@ -533,41 +516,73 @@ document.addEventListener('DOMContentLoaded', function() {
     let controlsInitialized = false;
 
     // --- Firebase Auth State Changed ---
-    auth.onAuthStateChanged(async (user) => {
-        loginPage.style.display = 'none';
-        appContainer.style.display = 'none';
+    // --- Firebase Auth State Changed ---
+auth.onAuthStateChanged(async (user) => {
+    loginPage.style.display = 'none';
+    appContainer.style.display = 'none';
 
-        if (user) {
-            currentUser = user;
-            const userDoc = await db.collection('users').doc(user.uid).get();
+    if (user) {
+        currentUser = user;
+        const userDocRef = db.collection('users').doc(user.uid);
+        const userDoc = await userDocRef.get();
 
-            if (userDoc.exists) {
-                const userData = userDoc.data();
-                document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
-                document.getElementById('user-profile-pic').src = user.photoURL || userData.profileImageUrl;
+        if (userDoc.exists) {
+            // --- START: เรียกใช้ Function เพื่ออัปเดตรูปโปรไฟล์ ---
+            // ส่วนนี้จะทำงานหลัง Login เพื่อคัดลอกรูปไปเก็บใน Storage
+            try {
+                // ต้องเพิ่ม firebase-functions-compat.js ใน <head> ก่อน
+                const functions = firebase.functions();
+                const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
                 
-                updateProfilePage(userData);
-                startWatchingPosition();
-                await checkUserWorkStatus();
+                // ส่ง URL รูปชั่วคราวจาก LINE ไปให้ฟังก์ชันหลังบ้าน
+                await saveLineProfileImage({ photoURL: user.photoURL });
                 
-                initializeControls(); 
-                await populateDropdownOptions(); 
-
-                appContainer.style.display = 'block';
-                showPage('check-in-out-page');
-                document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
-            } else {
-                alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
-                auth.signOut();
-                loginPage.style.display = 'flex';
+                console.log("Profile image update function called successfully.");
+            } catch (error) {
+                console.error("Error calling update profile image function:", error);
             }
+            // --- END: เรียกใช้ Function ---
+
+            // ดึงข้อมูลผู้ใช้ล่าสุดอีกครั้งหลังจากฟังก์ชันอาจจะทำงานเสร็จ
+            const updatedUserDoc = await userDocRef.get();
+            const userData = updatedUserDoc.data();
+
+            // --- ส่วนจัดการรูปโปรไฟล์ด้านบน (Top Bar) ---
+            const topProfilePic = document.getElementById('user-profile-pic');
+            const placeholderSm = 'https://placehold.co/100x100/E2E8F0/475569?text=User';
+            
+            // หากโหลดรูปหลัก (จาก Firestore) ไม่ได้ ให้ใช้รูปสำรอง
+            topProfilePic.onerror = () => { topProfilePic.src = placeholderSm; };
+            
+            // ให้ลองโหลด URL ถาวรจาก Firestore ก่อนเสมอ
+            topProfilePic.src = userData.profileImageUrl || user.photoURL || placeholderSm;
+            
+            document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+
+            // เรียกใช้ฟังก์ชันเพื่ออัปเดตข้อมูลส่วนอื่นๆ
+            updateProfilePage(userData);
+            startWatchingPosition();
+            await checkUserWorkStatus();
+            
+            initializeControls();
+            await populateDropdownOptions();
+
+            appContainer.style.display = 'block';
+            showPage('check-in-out-page');
+            document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
+
         } else {
-            stopWatchingPosition();
-            currentUser = null;
+            alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
+            auth.signOut();
             loginPage.style.display = 'flex';
         }
-        loadingSpinner.style.display = 'none';
-    });
+    } else {
+        stopWatchingPosition();
+        currentUser = null;
+        loginPage.style.display = 'flex';
+    }
+    loadingSpinner.style.display = 'none';
+});
 
 
     saveReportBtn.addEventListener('click', async () => {
@@ -998,7 +1013,7 @@ const fetchProjectData = async () => {
             if (proceedCheckin) {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
-                const now = new Date('2025-10-15T08:30:00');
+                const now = new Date('2025-10-17T08:30:00'); //new Date('2025-10-15T08:30:00')
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 
                 let photoUrl = null;
@@ -1047,6 +1062,26 @@ const fetchProjectData = async () => {
         }
     });
     
+    function updateProfilePage(userData) {
+        const profilePic = document.getElementById('profile-page-pic');
+        const profileName = document.getElementById('profile-page-name');
+        const profileDepartment = document.getElementById('profile-page-department');
+
+        if (profilePic) {
+            const placeholderLg = 'https://placehold.co/150x150/E2E8F0/475569?text=User';
+            // ถ้าโหลดรูปหลักไม่ได้ ให้ใช้รูปสำรอง
+            profilePic.onerror = () => { profilePic.src = placeholderLg; };
+            // ให้ลองโหลดจาก URL ที่เก็บใน Firestore ก่อน ถ้าไม่มีให้ใช้จากข้อมูล auth
+            profilePic.src = userData.profileImageUrl || (currentUser && currentUser.photoURL) || placeholderLg;
+        }
+        if (profileName) {
+            profileName.textContent = userData.fullName || 'ชื่อผู้ใช้';
+        }
+        if (profileDepartment) {
+            profileDepartment.textContent = userData.department || 'ไม่มีข้อมูลแผนก';
+        }
+    }
+
     function startWatchingPosition() {
         if (navigator.geolocation && watchId === null) {
             const options = { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 };
@@ -1124,6 +1159,109 @@ const fetchProjectData = async () => {
         }
     }
 
+    async function loadEmployeeSummary() {
+        const container = document.getElementById('employee-summary-container-admin');
+        if (!container) return;
+
+        container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังโหลดข้อมูลพนักงาน...</p>';
+
+        try {
+            // 1. ดึงข้อมูลผู้ใช้ทั้งหมดที่มีในระบบ
+            const usersSnapshot = await db.collection('users').get();
+            if (usersSnapshot.empty) {
+                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลผู้ใช้ในระบบ</p>';
+                return;
+            }
+
+            // 2. เตรียมข้อมูลผู้ใช้ไว้ใน Object เพื่อให้ง่ายต่อการดึงใช้
+            const usersData = {};
+            usersSnapshot.forEach(doc => {
+                usersData[doc.id] = doc.data();
+            });
+
+            // 3. ดึงข้อมูลการทำงาน (work_records) ของวันนี้
+            const today = new Date();
+            const startDate = new Date(today.setHours(0, 0, 0, 0));
+            const endDate = new Date(today.setHours(23, 59, 59, 999));
+            
+            const recordsSnapshot = await db.collection('work_records')
+                                            .where('date', '>=', startDate)
+                                            .where('date', '<=', endDate)
+                                            .get();
+            
+            // 4. นำข้อมูลการทำงานมาใส่ในข้อมูลผู้ใช้
+            recordsSnapshot.forEach(doc => {
+                const record = doc.data();
+                if (usersData[record.userId]) {
+                    usersData[record.userId].workRecord = record;
+                }
+            });
+
+            // 5. สร้าง HTML card สำหรับพนักงานแต่ละคน
+            let resultsHTML = '';
+            for (const userId in usersData) {
+                const user = usersData[userId];
+                const record = user.workRecord;
+
+                let statusText = 'ยังไม่เข้างาน';
+                let statusColor = 'bg-gray-400';
+                let checkInTime = '-';
+                let checkOutTime = '-';
+                let workHours = '-';
+                let overtime = '-';
+                let workTypeInfo = '-';
+
+                if (record) {
+                    checkInTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : `On-site: ${record.checkIn.onSiteDetails}`;
+
+                    if (record.status === 'checked_in') {
+                        statusText = 'กำลังทำงาน';
+                        statusColor = 'bg-green-500';
+                    } else if (record.status === 'completed') {
+                        statusText = 'สิ้นสุดการทำงาน';
+                        statusColor = 'bg-red-500';
+                        checkOutTime = record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        
+                        const durationMillis = record.checkOut.timestamp.toDate() - record.checkIn.timestamp.toDate();
+                        workHours = (durationMillis / (1000 * 60 * 60)).toFixed(2) + ' ชม.';
+                        overtime = (record.overtime?.hours || 0) + ' ชม.';
+                    }
+                }
+
+                resultsHTML += `
+                    <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-12 h-12 rounded-full object-cover">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${user.fullName || 'ไม่มีชื่อ'}</p>
+                                    <div class="flex items-center gap-1.5 mt-1">
+                                        <div class="w-2.5 h-2.5 rounded-full ${statusColor}"></div>
+                                        <p class="text-xs font-medium text-gray-600">${statusText}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            <div><span class="text-gray-500">เข้า:</span> <span class="font-semibold text-green-600">${checkInTime}</span></div>
+                            <div><span class="text-gray-500">ออก:</span> <span class="font-semibold text-red-500">${checkOutTime}</span></div>
+                            <div><span class="text-gray-500">รวม:</span> <span class="font-medium text-gray-700">${workHours}</span></div>
+                            <div><span class="text-gray-500">OT:</span> <span class="font-medium text-gray-700">${overtime}</span></div>
+                            <div class="col-span-2 mt-1"><span class="text-gray-500">ประเภท:</span> <span class="font-medium text-gray-700">${workTypeInfo}</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = resultsHTML || '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลการทำงานของพนักงานในวันนี้</p>';
+
+        } catch (error) {
+            console.error("Error loading employee summary:", error);
+            container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+        }
+    }
+
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
         checkoutBtn.classList.add('hidden');
@@ -1155,7 +1293,7 @@ const fetchProjectData = async () => {
         if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
         try {
-            const now = new Date('2025-10-15T19:30:00');
+            const now = new Date('2025-10-17T18:10:00'); //new Date('2025-10-15T19:30:00');
             const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
             const workRecordRef = db.collection('work_records').doc(docId);
 
@@ -1232,8 +1370,13 @@ const fetchProjectData = async () => {
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
             showPage(pageId);
+            
             if (pageId === 'report-page') {
                 loadSentReports();
+            }
+            // --- เพิ่มการเรียกฟังก์ชันเมื่อเปิดหน้า Dashboard ---
+            if (pageId === 'admin-dashboard-page') {
+                loadEmployeeSummary(); 
             }
             if (pageId === 'profile-page' && currentUser) {
                 db.collection('users').doc(currentUser.uid).get().then(doc => {
