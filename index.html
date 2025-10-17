@@ -535,23 +535,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (user) {
             currentUser = user;
-            const userDocRef = db.collection('users').doc(user.uid);
-            const userDoc = await userDocRef.get();
+            const userDoc = await db.collection('users').doc(user.uid).get();
 
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                const userDisplayName = document.getElementById('user-display-name');
-                const userProfilePic = document.getElementById('user-profile-pic');
-                if (userDisplayName) userDisplayName.textContent = userData.fullName || 'ผู้ใช้งาน';
-                if (userProfilePic) userProfilePic.src = user.photoURL || userData.profileImageUrl;
-
+                document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+                document.getElementById('user-profile-pic').src = user.photoURL || userData.profileImageUrl;
+                
                 updateProfilePage(userData);
                 startWatchingPosition();
                 await checkUserWorkStatus();
-                initializeControls(); // ติดตั้ง Event Listeners ทั้งหมด (จะทำแค่ครั้งแรกครั้งเดียว)
-                await populateDropdownOptions(); // โหลดข้อมูล Dropdown ครั้งแรก
-                initializeProjectSummary();
                 
+                // --- (แก้ไข) ให้เหลือแค่ 2 บรรทัดนี้ ---
+                initializeControls(); 
+                await populateDropdownOptions(); 
+
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
                 document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
@@ -567,6 +565,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadingSpinner.style.display = 'none';
     });
+
+
         saveReportBtn.addEventListener('click', async () => {
         // 1. ตรวจสอบว่า Login หรือยัง
         if (!currentUser) {
@@ -665,6 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
    // --- (โค้ดใหม่ทั้งหมด) ---
 
+    // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
     // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
     const populateDropdownOptions = async () => {
         const db = firebase.firestore();
@@ -834,7 +835,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // ดึงข้อมูลอีกครั้งสำหรับการ Export
             const startDate = new Date(selectedDate);
             startDate.setHours(0, 0, 0, 0);
             const endDate = new Date(selectedDate);
@@ -852,9 +852,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // เตรียมข้อมูลสำหรับใส่ใน Excel
                 const dataForExcel = [
-                    ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "ระยะเวลา"] // Headers
+                    ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "ระยะเวลา"]
                 ];
                 
                 querySnapshot.forEach(doc => {
@@ -868,13 +867,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     ]);
                 });
 
-                // สร้าง Worksheet และ Workbook
                 const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'สรุปโครงการ');
 
-                // สร้างและดาวน์โหลดไฟล์ Excel
-                const dateStr = new Date(selectedDate).toLocaleDateString('en-CA'); // Format YYYY-MM-DD
+                const dateStr = new Date(selectedDate).toLocaleDateString('en-CA');
                 XLSX.writeFile(wb, `สรุปโครงการ_${selectedProject}_${dateStr}.xlsx`);
 
             } catch (error) {
@@ -883,15 +880,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // --- (โค้ดเดิม มีการแก้ไขเล็กน้อย) ---
         dateInput.value = new Date().toISOString().split('T')[0];
 
         const populateProjectOptions = async () => {
-            // ... (โค้ดส่วนนี้เหมือนเดิม) ...
+            try {
+                const doc = await db.collection('system_settings').doc('projects').get();
+                projectSelect.innerHTML = '<option value="">เลือกโครงการ...</option>'; // Clear and add default
+
+                if (doc.exists) {
+                    const projects = doc.data().names || [];
+                    projects.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        projectSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("Error populating project summary dropdown:", error);
+            }
         };
 
         const fetchProjectData = async () => {
-            // ... (โค้ดส่วนนี้เหมือนเดิม) ...
+            const selectedProject = projectSelect.value;
+            const selectedDate = dateInput.value;
+
+            if (!selectedProject || !selectedDate) {
+                resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกวันที่และโครงการ</p>';
+                return;
+            }
         };
 
         // --- (แก้ไข) เพิ่ม Event Listener ให้ปุ่ม Export ---
