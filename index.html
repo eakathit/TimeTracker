@@ -214,23 +214,7 @@
             </div>
             
             <div id="work-type-options" class="max-h-60 overflow-y-auto p-1">
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DESIGN MC</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DESIGN EE</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ASSEMBLY</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">WIRING</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">PROGRAM</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">AIR PIPING</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">MEETING</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">VISIT CUSTOMER</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">TEST RUN</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">INSTALLATION</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">OUTGOING</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">DELIVERY MC</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">HR</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ACCOUNT</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">FOLLOW PROJECT</div>
-                <div class="work-type-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">PLANNING</div>
-                </div>
+    </div>
         </div>
     </div>
 </div>
@@ -256,11 +240,7 @@
                 <input id="project-search" type="text" placeholder="ค้นหาโครงการ..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
             </div>
             <div id="project-options" class="max-h-60 overflow-y-auto p-1">
-                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">1554</div>
-                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">2303</div>
-                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">6648</div>
-                <div class="project-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">FAC</div>
-            </div>
+    </div>
         </div>
     </div>
 </div>
@@ -305,7 +285,6 @@
                 </div>
                 </div>
             
-
             <div id="admin-dashboard-page" class="page space-y-8">
     <div>
         <h2 class="text-2xl font-bold">Admin Dashboard</h2>
@@ -571,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateProfilePage(userData);
                 startWatchingPosition();
                 await checkUserWorkStatus();
+                setupDynamicDropdowns();// <-- เรียกใช้ฟังก์ชันตรงนี้
                 
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
@@ -1040,6 +1020,65 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดข้อมูล Dropdown จาก Firestore ---
+    async function setupDynamicDropdowns() {
+        const db = firebase.firestore();
+
+        // --- ฟังก์ชัน Helper สำหรับสร้าง Dropdown ---
+        const createDropdown = async (collectionDoc, optionsContainerId, selectedTextId, panelId, searchInputId) => {
+            try {
+                const doc = await db.collection('system_settings').doc(collectionDoc).get();
+                if (!doc.exists) {
+                    console.error(`Document not found: ${collectionDoc}`);
+                    return;
+                }
+
+                const items = doc.data().names || [];
+                const optionsContainer = document.getElementById(optionsContainerId);
+                const selectedText = document.getElementById(selectedTextId);
+                const panel = document.getElementById(panelId);
+                const searchInput = document.getElementById(searchInputId);
+
+                optionsContainer.innerHTML = ''; // เคลียร์ตัวเลือกเก่าทิ้ง
+
+                items.forEach(name => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'p-2 rounded-lg hover:bg-sky-50 cursor-pointer';
+                    optionDiv.textContent = name;
+                    
+                    // Event Listener สำหรับการคลิกเลือก
+                    optionDiv.addEventListener('click', () => {
+                        selectedText.textContent = name;
+                        selectedText.classList.remove('text-gray-500');
+                        panel.classList.add('hidden');
+                    });
+                    optionsContainer.appendChild(optionDiv);
+                });
+                
+                // --- แก้ไข Event Listener ของการค้นหา ---
+                // ย้ายมาไว้ตรงนี้เพื่อให้ทำงานกับตัวเลือกที่สร้างขึ้นใหม่ได้
+                searchInput.addEventListener('input', () => {
+                    const filter = searchInput.value.toLowerCase();
+                    // วนลูปหาจาก "children" ของ container โดยตรง
+                    for (const option of optionsContainer.children) {
+                        if (option.textContent.toLowerCase().includes(filter)) {
+                            option.style.display = '';
+                        } else {
+                            option.style.display = 'none';
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error(`Error loading data for ${collectionDoc}:`, error);
+            }
+        };
+
+        // --- เรียกใช้งานฟังก์ชันเพื่อสร้าง Dropdown ทั้งสอง ---
+        createDropdown('workTypes', 'work-type-options', 'work-type-selected-text', 'work-type-panel', 'work-type-search');
+        createDropdown('projects', 'project-options', 'project-selected-text', 'project-panel', 'project-search');
+    }
+
     function resetReportForm() {
         workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
         workTypeSelectedText.classList.add('text-gray-500');
