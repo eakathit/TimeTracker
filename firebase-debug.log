@@ -357,3 +357,110 @@
 [info] i  hosting: ::1 - - [16/Oct/2025:07:35:56 +0000] "GET /favicon.ico HTTP/1.1" 304 - "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:07:35:56 +0000] \"GET /favicon.ico HTTP/1.1\" 304 - \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
 [info] i  hosting: ::1 - - [16/Oct/2025:08:44:23 +0000] "GET /favicon.ico HTTP/1.1" 304 - "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:08:44:23 +0000] \"GET /favicon.ico HTTP/1.1\" 304 - \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
 [info] i  hosting: ::1 - - [16/Oct/2025:08:44:37 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [16/Oct/2025:08:44:37 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[debug] [2025-10-17T01:38:01.865Z] ----------------------------------------------------------------------
+[debug] [2025-10-17T01:38:01.872Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\acer\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js serve
+[debug] [2025-10-17T01:38:01.873Z] CLI Version:   14.20.0
+[debug] [2025-10-17T01:38:01.873Z] Platform:      win32
+[debug] [2025-10-17T01:38:01.873Z] Node Version:  v22.20.0
+[debug] [2025-10-17T01:38:01.873Z] Time:          Fri Oct 17 2025 08:38:01 GMT+0700 (เวลาอินโดจีน)
+[debug] [2025-10-17T01:38:01.873Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-17T01:38:02.094Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-17T01:38:02.094Z] > authorizing via signed-in user (eakarthitx@gmail.com)
+[debug] [2025-10-17T01:38:02.095Z] [iam] checking project timetracker-f1e11 for permissions ["firebase.projects.get"]
+[debug] [2025-10-17T01:38:02.096Z] Checked if tokens are valid: false, expires at: 1760602795616
+[debug] [2025-10-17T01:38:02.096Z] Checked if tokens are valid: false, expires at: 1760602795616
+[debug] [2025-10-17T01:38:02.096Z] > refreshing access token with scopes: []
+[debug] [2025-10-17T01:38:02.098Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-17T01:38:02.098Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-17T01:38:02.296Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-17T01:38:02.297Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-17T01:38:02.303Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions [none]
+[debug] [2025-10-17T01:38:02.303Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions x-goog-quota-user=projects/timetracker-f1e11
+[debug] [2025-10-17T01:38:02.303Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-17T01:38:03.575Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions 200
+[debug] [2025-10-17T01:38:03.575Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-17T01:38:03.576Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.576Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.576Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-17T01:38:03.855Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 200
+[debug] [2025-10-17T01:38:03.855Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 {"projectNumber":"470557940763","projectId":"timetracker-f1e11","lifecycleState":"ACTIVE","name":"TimeTracker","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-10-09T07:43:45.558454Z"}
+[info] 
+[info] === Serving from 'C:\Users\acer\TimeTracker'...
+[info] 
+[debug] [2025-10-17T01:38:03.858Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.858Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.868Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 
+[debug] [2025-10-17T01:38:03.925Z] defaultcredentials: writing to file C:\Users\acer\AppData\Roaming\firebase\eakarthitx_gmail_com_application_default_credentials.json
+[debug] [2025-10-17T01:38:03.927Z] Setting GAC to C:\Users\acer\AppData\Roaming\firebase\eakarthitx_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to C:\\Users\\acer\\AppData\\Roaming\\firebase\\eakarthitx_gmail_com_application_default_credentials.json"}}
+[debug] [2025-10-17T01:38:03.928Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.928Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:03.928Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig [none]
+[debug] [2025-10-17T01:38:04.800Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 200
+[debug] [2025-10-17T01:38:04.801Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites {"sites":[{"name":"projects/timetracker-f1e11/sites/timetracker-f1e11","defaultUrl":"https://timetracker-f1e11.web.app","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","type":"DEFAULT_SITE"}]}
+[debug] [2025-10-17T01:38:04.801Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:04.801Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:04.801Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config [none]
+[debug] [2025-10-17T01:38:05.248Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig 200
+[debug] [2025-10-17T01:38:05.248Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig {"projectId":"timetracker-f1e11","storageBucket":"timetracker-f1e11.firebasestorage.app"}
+[debug] [2025-10-17T01:38:06.131Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config 200
+[debug] [2025-10-17T01:38:06.131Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config {"projectId":"timetracker-f1e11","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","storageBucket":"timetracker-f1e11.firebasestorage.app","apiKey":"AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc","authDomain":"timetracker-f1e11.firebaseapp.com","messagingSenderId":"470557940763","measurementId":"G-C83H28RLSY","projectNumber":"470557940763","version":"2"}
+[debug] [2025-10-17T01:38:06.136Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:06.136Z] Checked if tokens are valid: true, expires at: 1760668681297
+[debug] [2025-10-17T01:38:06.136Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-17T01:38:06.461Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 200
+[debug] [2025-10-17T01:38:06.461Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 {"projectId":"timetracker-f1e11","projectNumber":"470557940763","displayName":"TimeTracker","name":"projects/timetracker-f1e11","resources":{"hostingSite":"timetracker-f1e11"},"state":"ACTIVE","etag":"1_d7c410bf-0446-4326-a973-5ad1a8cb84d9"}
+[info] i  functions: Watching "C:\Users\acer\TimeTracker\functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"C:\\Users\\acer\\TimeTracker\\functions\" for Cloud Functions..."}}
+[info] i  hosting[timetracker-f1e11]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
+[info] +  hosting[timetracker-f1e11]: Local server: http://localhost:5000 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5000\u001b[22m\u001b[24m"}}
+[debug] [2025-10-17T01:38:06.488Z] Validating nodejs source
+[debug] [2025-10-17T01:38:08.128Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-10-17T01:38:08.129Z] Building nodejs source
+[debug] [2025-10-17T01:38:08.129Z] Failed to find version of module node: reached end of search path C:\Users\acer\TimeTracker\functions\node_modules
+[info] +  functions: Using node@22 from host. 
+[debug] [2025-10-17T01:38:08.132Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-10-17T01:38:08.140Z] Found firebase-functions binary at 'C:\Users\acer\TimeTracker\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8428
+
+[debug] [2025-10-17T01:38:09.494Z] Got response from /__/functions.yaml {"endpoints":{"lineLoginRedirect":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"lineLoginRedirect"},"lineLoginCallback":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"lineLoginCallback"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] +  functions: Loaded functions definitions from source: lineLoginRedirect, lineLoginCallback. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: lineLoginRedirect, lineLoginCallback."}}
+[info] +  functions[us-central1-lineLoginRedirect]: http function initialized (http://localhost:5001/timetracker-f1e11/us-central1/lineLoginRedirect). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/timetracker-f1e11/us-central1/lineLoginRedirect)."}}
+[info] +  functions[us-central1-lineLoginCallback]: http function initialized (http://localhost:5001/timetracker-f1e11/us-central1/lineLoginCallback). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/timetracker-f1e11/us-central1/lineLoginCallback)."}}
+[info] i  hosting: ::1 - - [17/Oct/2025:01:38:18 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:01:38:18 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:01:38:18 +0000] "GET /firebase-config.js HTTP/1.1" 200 368 "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:01:38:18 +0000] \"GET /firebase-config.js HTTP/1.1\" 200 368 \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:01:38:19 +0000] "GET /favicon.ico HTTP/1.1" 200 - "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:01:38:19 +0000] \"GET /favicon.ico HTTP/1.1\" 200 - \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:01:53:28 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:01:53:28 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:01:56:00 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:01:56:00 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:11:57 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:11:57 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:20:53 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:20:53 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:20:53 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:20:53 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:23:45 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:23:45 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:24:23 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:24:23 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:24:37 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:24:37 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:28:14 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:28:14 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:28:56 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:28:56 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:29:36 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:29:36 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [17/Oct/2025:02:30:02 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [17/Oct/2025:02:30:02 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
