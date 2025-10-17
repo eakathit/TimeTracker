@@ -663,9 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-   // --- (โค้ดใหม่ทั้งหมด) ---
-
-    // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
     // ฟังก์ชันนี้จะ "เติม" หรือ "รีเฟรช" ตัวเลือกใน Dropdown เท่านั้น
     const populateDropdownOptions = async () => {
         const db = firebase.firestore();
@@ -733,7 +730,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // ปิดอันอื่นทั้งหมดก่อน
                 dropdownConfigs.forEach(otherConf => {
-                    document.getElementById(otherConf.panelId).classList.add('hidden');
+                    if (otherConf.panelId !== config.panelId) {
+                        document.getElementById(otherConf.panelId).classList.add('hidden');
+                    }
                 });
 
                 // เปิด/ปิดอันที่คลิก
@@ -816,7 +815,6 @@ document.addEventListener('DOMContentLoaded', function() {
         controlsInitialized = true;
     };
 
-
     // --- (อัปเดต) ฟังก์ชันสำหรับจัดการสรุปข้อมูลรายโครงการ ---
     const initializeProjectSummary = () => {
         const db = firebase.firestore();
@@ -825,12 +823,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultsContainer = document.getElementById('project-summary-results');
         const exportBtn = document.getElementById('export-project-summary-btn');
 
-        // --- (โค้ดใหม่) ฟังก์ชันสำหรับ Export ข้อมูลเป็น Excel ---
+        // --- ฟังก์ชันสำหรับ Export ข้อมูลเป็น Excel ---
         const exportProjectSummaryToExcel = async () => {
             const selectedProject = projectSelect.value;
             const selectedDate = dateInput.value;
 
-            if (!selectedProject || !selectedDate || selectedProject.includes('...')) {
+            if (!selectedProject || !selectedDate) {
                 alert('กรุณาเลือกวันที่และโครงการก่อน Export');
                 return;
             }
@@ -882,10 +880,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         dateInput.value = new Date().toISOString().split('T')[0];
 
+        // --- ส่วนสำหรับดึงข้อมูลโครงการมาใส่ใน Dropdown ---
         const populateProjectOptions = async () => {
             try {
                 const doc = await db.collection('system_settings').doc('projects').get();
-                projectSelect.innerHTML = '<option value="">เลือกโครงการ...</option>'; // Clear and add default
+                projectSelect.innerHTML = '<option value="">เลือกโครงการ...</option>';
 
                 if (doc.exists) {
                     const projects = doc.data().names || [];
@@ -901,6 +900,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
+        // --- (โค้ดที่แก้ไขและเพิ่มเติม) ฟังก์ชันสำหรับค้นหาและแสดงผลข้อมูล ---
         const fetchProjectData = async () => {
             const selectedProject = projectSelect.value;
             const selectedDate = dateInput.value;
@@ -909,13 +909,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกวันที่และโครงการ</p>';
                 return;
             }
+            
+            resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
+            
+            const startDate = new Date(selectedDate);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(selectedDate);
+            endDate.setHours(23, 59, 59, 999);
+
+            try {
+                const querySnapshot = await db.collection('daily_reports')
+                                              .where('project', '==', selectedProject)
+                                              .where('createdAt', '>=', startDate)
+                                              .where('createdAt', '<=', endDate)
+                                              .get();
+
+                if (querySnapshot.empty) {
+                    resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลรายงานสำหรับวันที่และโครงการที่เลือก</p>';
+                    return;
+                }
+
+                let resultsHTML = '<div class="space-y-3">';
+                querySnapshot.forEach(doc => {
+                    const report = doc.data();
+                    resultsHTML += `
+                        <div class="p-3 bg-white rounded-lg border border-gray-200 text-sm">
+                            <p class="font-semibold text-gray-800">${report.userName}</p>
+                            <p class="text-gray-600">${report.workType}</p>
+                            <p class="text-xs text-gray-400 mt-1">ระยะเวลา: ${report.duration}</p>
+                        </div>
+                    `;
+                });
+                resultsHTML += '</div>';
+                resultsContainer.innerHTML = resultsHTML;
+
+            } catch (error) {
+                console.error("Error fetching project data:", error);
+                resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการดึงข้อมูล</p>';
+            }
         };
 
-        // --- (แก้ไข) เพิ่ม Event Listener ให้ปุ่ม Export ---
+        // --- เพิ่ม Event Listener และเรียกใช้ฟังก์ชัน ---
         populateProjectOptions();
         projectSelect.addEventListener('change', fetchProjectData);
         dateInput.addEventListener('change', fetchProjectData);
-        exportBtn.addEventListener('click', exportProjectSummaryToExcel); // <-- เพิ่มบรรทัดนี้
+        exportBtn.addEventListener('click', exportProjectSummaryToExcel);
     };
 
     // --- Check-in Logic ---
@@ -1230,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- (โค้ดใหม่) ฟังก์ชันสำหรับโหลดรายงานที่เคยส่ง ---
+    // --- (อัปเดต) ฟังก์ชันสำหรับโหลดรายงานที่เคยส่ง ---
     async function loadSentReports() {
         if (!currentUser) return;
 
@@ -1241,6 +1279,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const today = new Date().toISOString().split('T')[0];
+        // หมายเหตุ: ID ของเอกสารรายงานประจำวันจะขึ้นอยู่กับ UID ของผู้ใช้และวันที่
+        // เช่น 'someUserId_2025-10-17'
         const reportDocId = `${currentUser.uid}_${today}`;
         
         try {
@@ -1248,23 +1288,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (reportDoc.exists) {
                 const data = reportDoc.data();
-                const reportDate = data.createdAt.toDate();
-                const formattedDate = reportDate.toLocaleDateString('th-TH', {
-                    day: 'numeric', month: 'long', year: 'numeric'
-                });
 
+                // สร้าง HTML card รูปแบบใหม่ตามที่คุณต้องการ
                 const reportCardHTML = `
-                    <div class="card !p-4 flex items-center justify-between">
+                    <div class="card !p-4">
                         <div>
-                            <p class="font-semibold">${formattedDate}</p>
-                            <p class="text-sm text-gray-500">Project: ${data.project} - ${data.workType}</p>
+                            <p class="text-sm text-gray-600">รายงาน: <span class="font-semibold text-gray-800">${data.userName}</span></p>
+                            <p class="text-lg font-bold text-sky-600 my-1">${data.workType}</p>
+                            <div class="pt-2 mt-2 border-t border-gray-100 text-sm space-y-1">
+                                <p class="text-gray-500">โครงการ: <span class="font-medium text-gray-700">${data.project}</span></p>
+                                <p class="text-gray-500">ระยะเวลา: <span class="font-medium text-gray-700">${data.duration}</span></p>
+                            </div>
                         </div>
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 `;
                 container.innerHTML = reportCardHTML;
             } else {
-                // ถ้าไม่มีรายงาน, ให้ใส่ข้อความเริ่มต้นกลับเข้าไป
+                // ถ้าไม่มีรายงาน, ให้แสดงข้อความเริ่มต้น
                 container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่มีรายงานที่ส่งวันนี้</p>`;
             }
         } catch (error) {
