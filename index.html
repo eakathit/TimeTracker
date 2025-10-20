@@ -431,60 +431,52 @@
             </div>
         </div>
     </div>
-    </div>  
-
-            <div id="calendar-page" class="page space-y-6">
-    <h2 class="text-2xl font-bold">ปฏิทินการทำงาน</h2>
-    <div class="card">
-        <p class="text-center text-gray-500">ส่วนแสดงผลปฏิทิน</p>
-        <div id="calendar-view" class="mt-4">
-            </div>
-    </div>
 </div>
 
             <div id="profile-page" class="page space-y-6">
-            <div class="card text-center">
-                 <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
-                 <h2 id="profile-page-name" class="text-2xl font-bold mt-4 text-gray-800"></h2>
-                 <p id="profile-page-department" class="text-gray-500 font-medium"></p>
-            </div>
-
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                     <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-                     <select id="history-range-select" class="text-sm border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
-                        <option value="7">7 วันล่าสุด</option>
-                        <option value="14">14 วันล่าสุด</option>
-                        <option value="30">30 วันล่าสุด</option>
-                     </select>
+                <div class="card text-center">
+                     <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
+                     <h2 id="profile-page-name" class="text-2xl font-bold mt-4 text-gray-800"></h2>
+                     <p id="profile-page-department" class="text-gray-500 font-medium"></p>
                 </div>
 
-                <div id="work-history-container" class="space-y-4">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                         <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
+                         <select id="history-range-select" class="text-sm border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
+                            <option value="7">7 วันล่าสุด</option>
+                            <option value="14">14 วันล่าสุด</option>
+                            <option value="30">30 วันล่าสุด</option>
+                         </select>
                     </div>
-            </div>
+                   
+                    <div id="work-history-container" class="space-y-4">
+                        </div>
+                </div>
 
-             <button id="logout-btn" class="w-full text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">ออกจากระบบ</button>
-        </div>
+                 <button id="logout-btn" class="w-full text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">ออกจากระบบ</button>
+            </div>
 
         </main>
         
         <nav class="fixed bottom-0 left-0 right-0 bg-white h-20 flex justify-around items-center border-t border-gray-200 bottom-nav">
-    <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
-        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="text-xs">ลงเวลา</span>
-    </a>
-     <a href="#" class="nav-item text-center text-gray-500" data-page="report-page">
-        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        <span class="text-xs">รายงาน</span>
-    </a>
-    <a href="#" id="nav-item-role-based" class="nav-item text-center text-gray-500" data-page="" style="display: none;"> <svg id="nav-icon-role-based" class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-             </svg>
-         <span id="nav-text-role-based" class="text-xs"></span> </a>
-    <a href="#" class="nav-item text-center text-gray-500" data-page="profile-page">
-        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-        <span class="text-xs">โปรไฟล์</span>
-    </a>
-</nav>
+            <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs">ลงเวลา</span>
+            </a>
+             <a href="#" class="nav-item text-center text-gray-500" data-page="report-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-xs">รายงาน</span>
+            </a>
+            <a href="#" class="nav-item text-center text-gray-500" data-page="admin-dashboard-page">
+                 <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-xs">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item text-center text-gray-500" data-page="profile-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="text-xs">โปรไฟล์</span>
+            </a>
+        </nav>
     </div>
 
     <div id="notification" class="fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white py-2 px-6 rounded-full shadow-lg text-sm transition-all duration-500 opacity-0 -translate-y-10">
@@ -651,62 +643,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let photoFile = null;
     let controlsInitialized = false;
 
-    function initializeRoleBasedUI(isAdmin) {
-    const roleBasedNavItem = document.getElementById('nav-item-role-based');
-    const roleBasedNavIcon = document.getElementById('nav-icon-role-based');
-    const roleBasedNavText = document.getElementById('nav-text-role-based');
-    const adminPage = document.getElementById('admin-dashboard-page');
-    const calendarPage = document.getElementById('calendar-page');
-
-    // ตรวจสอบว่า Element มีอยู่จริงหรือไม่
-    if (!roleBasedNavItem || !roleBasedNavIcon || !roleBasedNavText || !adminPage || !calendarPage) {
-         console.error("UI elements for role-based control not found!");
-         return;
-    }
-
-    // ซ่อนหน้า Admin และ Calendar ไว้ก่อนเสมอเมื่อเริ่มฟังก์ชันนี้
-    adminPage.style.display = 'none';
-    calendarPage.style.display = 'none';
-
-
-    if (isAdmin) {
-        console.log("User is Admin");
-        // ตั้งค่าปุ่มสำหรับ Admin (Dashboard)
-        roleBasedNavIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>`; // Dashboard Icon
-        roleBasedNavText.textContent = 'Dashboard';
-        roleBasedNavItem.dataset.page = 'admin-dashboard-page';
-        roleBasedNavItem.style.display = ''; // แสดงปุ่ม (ใช้ '' เพื่อกลับเป็นค่า default ของ CSS)
-    } else {
-        console.log("User is regular user");
-        // ตั้งค่าปุ่มสำหรับ User ทั่วไป (Calendar)
-        roleBasedNavIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>`; // Calendar Icon
-        roleBasedNavText.textContent = 'ปฏิทิน';
-        roleBasedNavItem.dataset.page = 'calendar-page';
-        roleBasedNavItem.style.display = ''; // แสดงปุ่ม
-    }
-
-    // --- จัดการการแสดงหน้าเริ่มต้น ---
-    // หาปุ่มที่ active อยู่ (ปกติคือปุ่มแรก 'ลงเวลา')
-    let initialPageId = 'check-in-out-page'; // Default
-    const currentActive = document.querySelector('.nav-item.active');
-    if (currentActive) {
-        initialPageId = currentActive.dataset.page;
-    }
-
-    // ตรวจสอบว่าหน้าที่ active อยู่ เหมาะสมกับ role หรือไม่
-    if ((initialPageId === 'admin-dashboard-page' && !isAdmin) || (initialPageId === 'calendar-page' && isAdmin)) {
-        // ถ้าไม่เหมาะสม (เช่น User active ที่ Dashboard), ให้กลับไปหน้า 'ลงเวลา'
-        initialPageId = 'check-in-out-page';
-        // อัปเดตสถานะ active ของปุ่ม nav
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        const checkInNav = document.querySelector('.nav-item[data-page="check-in-out-page"]');
-        if (checkInNav) checkInNav.classList.add('active');
-    }
-
-    // แสดงหน้าที่เหมาะสม
-    showPage(initialPageId);
-}
-
     // --- Firebase Auth State Changed ---
 auth.onAuthStateChanged(async (user) => {
     loginPage.style.display = 'none';
@@ -718,28 +654,36 @@ auth.onAuthStateChanged(async (user) => {
         const userDoc = await userDocRef.get();
 
         if (userDoc.exists) {
-            // ... (โค้ดเรียก saveLineProfileImage และดึง userData เหมือนเดิม) ...
-            const updatedUserDoc = await userDocRef.get(); // ดึงใหม่เผื่อมีการอัปเดต profileImageUrl
+            try {
+                const functions = firebase.functions();
+                const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
+                await saveLineProfileImage({ photoURL: user.photoURL });
+                console.log("Profile image update function called successfully.");
+            } catch (error) {
+                console.error("Error calling update profile image function:", error);
+            }
+
+            const updatedUserDoc = await userDocRef.get();
             const userData = updatedUserDoc.data();
-            const isAdmin = userData.isAdmin === true; // ตรวจสอบว่าเป็น Admin หรือไม่
 
-            // ... (โค้ดตั้งค่ารูปโปรไฟล์ ชื่อ เหมือนเดิม) ...
+            const topProfilePic = document.getElementById('user-profile-pic');
+            const placeholderSm = 'https://placehold.co/100x100/E2E8F0/475569?text=User';
+            
+            topProfilePic.onerror = () => { topProfilePic.src = placeholderSm; };
+            topProfilePic.src = userData.profileImageUrl || user.photoURL || placeholderSm;
+            
             document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+
             updateProfilePage(userData);
-
-            // --- Role-based UI control ---
-            initializeRoleBasedUI(isAdmin); // *** เรียกฟังก์ชันใหม่ ***
-
             startWatchingPosition();
             await checkUserWorkStatus();
-
+            
             initializeControls();
             await populateDropdownOptions();
 
             appContainer.style.display = 'block';
-            // *** ไม่ต้องกำหนดหน้าเริ่มต้นที่นี่แล้ว initializeRoleBasedUI จะจัดการเอง ***
-            // showPage('check-in-out-page');
-            // document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
+            showPage('check-in-out-page');
+            document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
 
         } else {
             alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
@@ -750,12 +694,10 @@ auth.onAuthStateChanged(async (user) => {
         stopWatchingPosition();
         currentUser = null;
         loginPage.style.display = 'flex';
-         // ซ่อนปุ่ม role-based เมื่อ logout
-        const roleBasedNavItem = document.getElementById('nav-item-role-based');
-        if(roleBasedNavItem) roleBasedNavItem.style.display = 'none';
     }
     loadingSpinner.style.display = 'none';
 });
+
     // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
     saveReportBtn.addEventListener('click', async () => {
         if (!currentUser) {
@@ -1070,7 +1012,6 @@ auth.onAuthStateChanged(async (user) => {
 
         // --- (โค้ดสำหรับจัดการสรุปข้อมูลรายโครงการ จะอยู่ในนี้) ---
         const initializeProjectSummary = () => {
-            console.log("Executing initializeProjectSummary...");
             const db = firebase.firestore();
             const projectSelect = document.getElementById('project-summary-select');
             const monthInput = document.getElementById('project-summary-month');
@@ -1467,7 +1408,6 @@ const fetchProjectData = async () => {
 
     // --- [ปรับปรุง] Logic สรุปข้อมูลพนักงาน (อ่านจาก work_records.report) ---
     async function loadEmployeeSummary() {
-        console.log("Executing loadEmployeeSummary...");
         const container = document.getElementById('employee-summary-container-admin');
         if (!container) return;
 
@@ -1587,6 +1527,7 @@ const fetchProjectData = async () => {
             const startDate = new Date();
             startDate.setDate(endDate.getDate() - daysToLoad);
 
+            // 1. Fetch work records (ที่เดียวจบ)
             const recordsSnapshot = await db.collection('work_records')
                 .where('userId', '==', currentUser.uid)
                 .where('date', '>=', startDate)
@@ -1594,6 +1535,8 @@ const fetchProjectData = async () => {
                 .orderBy('date', 'desc')
                 .get();
 
+            // 2. [ลบ] ไม่ต้องดึง daily_reports
+            
             if (recordsSnapshot.empty) {
                 container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">ไม่พบประวัติการทำงานในช่วง ${daysToLoad} วันที่ผ่านมา</p>`;
                 return;
@@ -1603,61 +1546,55 @@ const fetchProjectData = async () => {
             recordsSnapshot.forEach(doc => {
                 const record = doc.data();
                 const checkinTime = record.checkIn.timestamp.toDate();
-                const report = record.report; // ดึง report จาก record
+                const report = record.report; // [เปลี่ยน] ดึง report จาก record
 
-                let checkoutTime, workDurationString = '-', overtimeString = '';
-                let workTypeInfo = record.checkIn.workType === 'in_factory'
-                    ? 'ในโรงงาน'
+                let checkoutTime, regularWorkHours = 0, overtimeHours = 0, workTypeInfo = '';
+                
+                workTypeInfo = record.checkIn.workType === 'in_factory' 
+                    ? 'ในโรงงาน' 
                     : `On-site: ${record.checkIn.onSiteDetails || 'N/A'}`;
 
-                if (record.status === 'completed' && record.checkOut) {
+                if (record.status === 'completed') {
                     checkoutTime = record.checkOut.timestamp.toDate();
                     const hours = calculateWorkHours(checkinTime, checkoutTime);
-
-                    // คำนวณชั่วโมงรวมและนาที
-                    const totalMinutes = Math.floor((hours.regularWorkHours + hours.overtimeHours) * 60);
-                    const displayHours = Math.floor(totalMinutes / 60);
-                    const displayMinutes = totalMinutes % 60;
-                    workDurationString = `${displayHours} ชั่วโมง ${displayMinutes} นาที`;
-
-                    if (hours.overtimeHours > 0) {
-                        overtimeString = `<span class="text-orange-600">(OT: ${hours.overtimeHours.toFixed(1)} ชม.)</span>`;
-                    }
+                    regularWorkHours = hours.regularWorkHours;
+                    overtimeHours = hours.overtimeHours;
                 }
 
-                // --- สร้าง HTML ของ Card (ส่วนที่แก้ไข) ---
                 historyHtml += `
                 <div class="card !p-4">
-                    <p class="font-bold text-gray-800 mb-3 text-base">
-                        ${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
+                    <p class="font-semibold text-gray-800 mb-3">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <span class="font-medium">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <span class="font-medium">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
+                        </div>
 
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
                         <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            <span class="font-medium text-gray-700">เข้า: <span class="text-green-600 font-semibold">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span></span>
+                            <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-medium">${regularWorkHours.toFixed(2)} ชม.</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            <span class="font-medium text-gray-700">ออก: <span class="text-red-500 font-semibold">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span></span>
-                        </div>
-                        <div class="col-span-2 flex items-center gap-2"> <svg class="w-5 h-5 text-sky-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium text-gray-700">รวม: <span class="font-semibold">${workDurationString}</span> ${overtimeString}</span>
+                            <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-medium">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                         </div>
                     </div>
 
-                    <hr class="border-gray-100 my-3">
-
-                    <div class="text-sm space-y-2">
+                    <div class="mt-4 pt-3 border-t border-gray-100 text-sm space-y-2">
                         <div class="flex items-start gap-2">
                             <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             <span class="font-medium text-gray-700">${workTypeInfo}</span>
                         </div>
-
+                        
                         ${report ? `
                         <div class="flex items-start gap-2">
                             <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span class="font-medium text-gray-700">รายงาน: ${report.workType} (${report.project}) <span class="text-xs text-gray-500">- ${report.duration}</span></span>
+                            <span class="font-medium text-gray-700">${report.workType} (${report.project})</span>
                         </div>
                         ` : `
                         <div class="flex items-start gap-2">
@@ -1667,7 +1604,6 @@ const fetchProjectData = async () => {
                         `}
                     </div>
                 </div>`;
-                // --- จบ HTML ของ Card ---
             });
             container.innerHTML = historyHtml;
 
@@ -1677,7 +1613,6 @@ const fetchProjectData = async () => {
         }
     }
     
-
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
         checkoutBtn.classList.add('hidden');
@@ -1828,79 +1763,31 @@ const fetchProjectData = async () => {
         if (activePage) activePage.classList.add('active');
     }
 
-    // --- Event Listener ของ Navigation Items ---
     navItems.forEach(item => {
         item.addEventListener('click', e => {
             e.preventDefault();
             const pageId = item.dataset.page;
-
-            // --- เพิ่มการตรวจสอบ Role ก่อนแสดงหน้า Admin ---
+            navItems.forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            showPage(pageId);
+            
+            if (pageId === 'report-page') {
+                loadSentReports(); // [เปลี่ยน] โหลดจาก work_records
+            }
             if (pageId === 'admin-dashboard-page') {
-                // ดึงข้อมูล isAdmin อีกครั้ง (เผื่อกรณีสลับ User โดยไม่ Reload)
-                // หรือจะใช้ตัวแปร global ที่ตั้งค่าไว้ใน onAuthStateChanged ก็ได้
-                const userDocRef = db.collection('users').doc(currentUser.uid);
-                userDocRef.get().then(doc => {
-                    const userData = doc.data();
-                    const isAdminCheck = userData && userData.isAdmin === true;
-                    if (!isAdminCheck) {
-                        console.warn("User trying to access admin page!");
-                        showNotification("คุณไม่มีสิทธิ์เข้าถึงหน้านี้", "error");
-                        return; // ไม่เปลี่ยนหน้า
+                loadEmployeeSummary(); 
+                loadAllUsersForDropdown(); // [เพิ่ม] เรียกใช้ฟังก์ชันโหลด Admin
+                if (!editDateSelect.value) { // [เพิ่ม] ตั้งค่าวันที่
+                    editDateSelect.value = new Date().toISOString().split('T')[0];
+                }
+            }
+            if (pageId === 'profile-page') {
+                loadWorkHistory(); // [เปลี่ยน] โหลดจาก work_records
+                db.collection('users').doc(currentUser.uid).get().then(doc => {
+                    if (doc.exists) {
+                        updateProfilePage(doc.data());
                     }
-                    // ถ้าเป็น Admin ก็แสดงหน้าตามปกติ
-                    navItems.forEach(n => n.classList.remove('active'));
-                    item.classList.add('active');
-                    showPage(pageId);
-                    console.log("Nav click: Loading Admin Dashboard content..."); // <--- เพิ่ม log เช็ค
-                    loadEmployeeSummary();              // <--- ตรวจสอบว่ามีบรรทัดนี้
-                    loadAllUsersForDropdown();        // <--- ตรวจสอบว่ามีบรรทัดนี้
-                    // initializeProjectSummary(); // อาจจะเรียกอยู่ใน initializeControls แล้ว ไม่ต้องเรียกซ้ำตรงนี้ก็ได้
-                    if (!editDateSelect.value) {
-                         editDateSelect.value = new Date().toISOString().split('T')[0];
-                    }
-                }).catch(err => {
-                     console.error("Error checking admin status on nav click:", err);
-                     showNotification("เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์", "error");
                 });
-            }
-             // --- เพิ่มการตรวจสอบ Role ก่อนแสดงหน้า Calendar ---
-            else if (pageId === 'calendar-page') {
-                 // ดึงข้อมูล isAdmin อีกครั้ง (เผื่อกรณีสลับ User โดยไม่ Reload)
-                const userDocRef = db.collection('users').doc(currentUser.uid);
-                userDocRef.get().then(doc => {
-                    const userData = doc.data();
-                    const isAdminCheck = userData && userData.isAdmin === true;
-                     if (isAdminCheck) {
-                         console.warn("Admin trying to access user calendar page via nav!");
-                         // อาจจะ redirect ไป dashboard หรือทำอย่างอื่น
-                         // ในที่นี้สมมติว่า admin ก็ดู calendar ตัวเองได้ (ถ้าต้องการ)
-                         // ถ้าไม่ต้องการให้ admin เห็นปฏิทินเลย ก็ return; เหมือนข้างบน
-                     }
-                    // แสดงหน้าปฏิทิน
-                    navItems.forEach(n => n.classList.remove('active'));
-                    item.classList.add('active');
-                    showPage(pageId);
-                    loadCalendarData(); // เรียกฟังก์ชันโหลดข้อมูลปฏิทิน (ต้องสร้างเพิ่ม)
-
-                 }).catch(err => {
-                     console.error("Error checking user status on nav click:", err);
-                     showNotification("เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์", "error");
-                 });
-            }
-            // --- สำหรับหน้าอื่นๆ ---
-            else {
-                navItems.forEach(n => n.classList.remove('active'));
-                item.classList.add('active');
-                showPage(pageId);
-
-                // โหลดข้อมูลตามหน้าที่เปิด (เหมือนเดิม)
-                if (pageId === 'report-page') loadSentReports(); //
-                if (pageId === 'profile-page') { //
-                     loadWorkHistory(); //
-                     db.collection('users').doc(currentUser.uid).get().then(doc => { //
-                         if (doc.exists) updateProfilePage(doc.data()); //
-                     });
-                 }
             }
         });
     });
@@ -2075,22 +1962,6 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     }, 3000); // Hide after 3 seconds
 }
 
-async function loadCalendarData() {
-    if (!currentUser) return;
-    const calendarView = document.getElementById('calendar-view');
-    calendarView.innerHTML = '<p>กำลังโหลดข้อมูลปฏิทิน...</p>';
-
-    // --- Logic การดึงข้อมูลและแสดงผลปฏิทิน ---
-    // 1. กำหนดเดือนและปีที่จะแสดง
-    // 2. Query work_records ของ user ในเดือนนั้นๆ
-    // 3. สร้าง HTML ของปฏิทิน (อาจใช้ Library หรือสร้างตารางเอง)
-    // 4. ใส่ข้อมูล/สัญลักษณ์ ลงในวันที่ถูกต้อง
-    // 5. แสดงผลใน calendarView
-
-    // ตัวอย่างแสดงข้อความชั่วคราว
-    calendarView.innerHTML = '<p>ยังไม่ได้ Implement หน้าปฏิทิน</p>';
-}
-
     // --- Function to show confirmation dialog ---
 // Added optional onCancel parameter
 function showConfirmDialog(message, onConfirm, onCancel = null) {
@@ -2170,7 +2041,6 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
 
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     async function loadAllUsersForDropdown() {
-        console.log("Executing loadAllUsersForDropdown...");
         if (editUserSelect.options.length > 1) return; // โหลดไปแล้ว
         try {
             const usersSnapshot = await db.collection('users').orderBy('fullName').get();
