@@ -998,7 +998,7 @@ auth.onAuthStateChanged(async (user) => {
                         let userName = usersCache[record.userId];
                         if (!userName) {
                             const userDoc = await db.collection('users').doc(record.userId).get();
-                            userName = userDoc.exists() ? userDoc.data().fullName : record.userId;
+                            userName = userDoc.exists ? userDoc.data().fullName : record.userId;
                             usersCache[record.userId] = userName;
                         }
 
@@ -1106,7 +1106,7 @@ const fetchProjectData = async () => {
             let userName = usersCache[record.userId];
             if (!userName) {
                 const userDoc = await db.collection('users').doc(record.userId).get();
-                userName = userDoc.exists() ? userDoc.data().fullName : record.userId;
+                userName = userDoc.exists ? userDoc.data().fullName : record.userId;
                 usersCache[record.userId] = userName;
             }
 
