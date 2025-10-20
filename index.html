@@ -484,51 +484,99 @@
     </div>
     
     <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+    <div id="modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+    
+    <div class="card relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลการลงเวลา</h3>
         
-        <div class="card relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลการลงเวลา</h3>
+        <input type="hidden" id="edit-doc-id">
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">เวลา Check-in</label>
+                <input type="datetime-local" id="edit-checkin-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600">เวลา Check-out</label>
+                <input type="datetime-local" id="edit-checkout-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+            </div>
             
-            <input type="hidden" id="edit-doc-id">
+            <hr class="my-4">
+            <h4 class="font-semibold">ข้อมูลรายงาน</h4>
             
-            <div class="space-y-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-600">เวลา Check-in</label>
-                    <input type="datetime-local" id="edit-checkin-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
-                </div>
-                
-                <div>
-                    <label class="text-sm font-medium text-gray-600">เวลา Check-out</label>
-                    <input type="datetime-local" id="edit-checkout-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
-                </div>
-                
-                <hr class="my-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">สถานที่ On-site (ถ้ามี)</label>
+                <input type="text" id="edit-onsite-details" placeholder="เช่น บ. A, ไซต์งาน B" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+            </div>
 
-                <h4 class="font-semibold">ข้อมูลรายงาน</h4>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">สถานที่ On-site (ถ้ามี)</label>
-                    <input type="text" id="edit-onsite-details" placeholder="เช่น บ. A, ไซต์งาน B" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+            <div>
+                <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
+                <div class="relative mt-1">
+                    <button id="edit-modal-work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                        <span id="edit-modal-work-type-selected-text" class="text-gray-500">เลือกประเภทงาน...</span>
+                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="edit-modal-work-type-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div class="p-2 border-b border-gray-100">
+                            <input id="edit-modal-work-type-search" type="text" placeholder="ค้นหาประเภทงาน..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                        </div>
+                        <div id="edit-modal-work-type-options" class="max-h-40 overflow-y-auto p-1"></div>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
-                    <input type="text" id="edit-work-type" placeholder="เช่น ประกอบตู้, ซ่อมบำรุง" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">โครงการ</label>
-                    <input type="text" id="edit-project" placeholder="เช่น FAC, 1554, 2303" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">ระยะเวลา</label>
-                    <input type="text" id="edit-duration" placeholder="เช่น ทั้งวัน, 08:30 - 12:00" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
-                </div>
+            </div>
 
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button id="cancel-edit-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
-                    <button id="save-edit-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">บันทึกการแก้ไข</button>
+            <div>
+                <label class="text-sm font-medium text-gray-600">โครงการ</label>
+                <div class="relative mt-1">
+                    <button id="edit-modal-project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                        <span id="edit-modal-project-selected-text" class="text-gray-500">เลือกโครงการ...</span>
+                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="edit-modal-project-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div class="p-2 border-b border-gray-100">
+                            <input id="edit-modal-project-search" type="text" placeholder="ค้นหาโครงการ..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                        </div>
+                        <div id="edit-modal-project-options" class="max-h-40 overflow-y-auto p-1"></div>
+                    </div>
                 </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">ระยะเวลาการทำงาน</label>
+                <div class="relative mt-1">
+                    <button id="edit-modal-duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                        <span id="edit-modal-duration-selected-text" class="text-gray-500">เลือกระยะเวลา...</span>
+                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="edit-modal-duration-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div id="edit-modal-duration-options" class="p-1">
+                            <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ทั้งวัน (08:30 - 17:30)</div>
+                            <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันเช้า (08:30 - 12:00)</div>
+                            <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันบ่าย (13:00 - 17:30)</div>
+                            <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">กำหนดเวลา</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="edit-modal-custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+                        <input type="time" id="edit-modal-custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+                        <input type="time" id="edit-modal-custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button id="cancel-edit-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                <button id="save-edit-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">บันทึกการแก้ไข</button>
             </div>
         </div>
     </div>
+</div>
+
     <script src="firebase-config.js"></script>
 
 <script>
@@ -742,10 +790,15 @@ auth.onAuthStateChanged(async (user) => {
     const populateDropdownOptions = async () => {
         const db = firebase.firestore();
         const configs = [
+            // (Dropdowns เดิม)
             { docId: 'workTypes', optionsId: 'work-type-options' },
             { docId: 'projects', optionsId: 'project-options' },
             { docId: 'workTypes', optionsId: 'delete-work-type-options' },
-            { docId: 'projects', optionsId: 'delete-project-options' }
+            { docId: 'projects', optionsId: 'delete-project-options' },
+            
+            // [เพิ่ม] Dropdowns ใหม่ใน Modal
+            { docId: 'workTypes', optionsId: 'edit-modal-work-type-options' },
+            { docId: 'projects', optionsId: 'edit-modal-project-options' }
         ];
 
         for (const config of configs) {
@@ -784,11 +837,17 @@ auth.onAuthStateChanged(async (user) => {
         const db = firebase.firestore();
         
         const dropdownConfigs = [
+            // (Dropdowns เดิม)
             { panelId: 'work-type-panel', selectBtnId: 'work-type-btn', searchId: 'work-type-search' },
             { panelId: 'project-panel', selectBtnId: 'project-btn', searchId: 'project-search' },
             { panelId: 'delete-work-type-panel', selectBtnId: 'delete-work-type-select-btn' },
             { panelId: 'delete-project-panel', selectBtnId: 'delete-project-select-btn' },
-            { panelId: 'duration-panel', selectBtnId: 'duration-btn' }
+            { panelId: 'duration-panel', selectBtnId: 'duration-btn' },
+
+            // [เพิ่ม] Dropdowns ใหม่ใน Modal
+            { panelId: 'edit-modal-work-type-panel', selectBtnId: 'edit-modal-work-type-btn', searchId: 'edit-modal-work-type-search' },
+            { panelId: 'edit-modal-project-panel', selectBtnId: 'edit-modal-project-btn', searchId: 'edit-modal-project-search' },
+            { panelId: 'edit-modal-duration-panel', selectBtnId: 'edit-modal-duration-btn' }
         ];
 
         dropdownConfigs.forEach(config => {
@@ -876,6 +935,16 @@ auth.onAuthStateChanged(async (user) => {
                 durationSelectedText.classList.remove('text-gray-500');
                 document.getElementById('duration-panel').classList.add('hidden');
                 customTimeInputs.classList.toggle('hidden', selectedValue !== 'กำหนดเวลา');
+            }
+        });
+
+        document.getElementById('edit-modal-duration-options').addEventListener('click', (e) => {
+            if (e.target && e.target.classList.contains('duration-option')) {
+                const selectedValue = e.target.textContent;
+                editModalDurationSelectedText.textContent = selectedValue;
+                editModalDurationSelectedText.classList.remove('text-gray-500');
+                document.getElementById('edit-modal-duration-panel').classList.add('hidden');
+                editModalCustomTimeInputs.classList.toggle('hidden', selectedValue !== 'กำหนดเวลา');
             }
         });
 
@@ -1736,6 +1805,13 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     const editWorkTypeInput = document.getElementById('edit-work-type');
     const editProjectInput = document.getElementById('edit-project');
     const editDurationInput = document.getElementById('edit-duration');
+    // [เพิ่ม] Elements สำหรับ Dropdown ใน Modal
+    const editModalWorkTypeSelectedText = document.getElementById('edit-modal-work-type-selected-text');
+    const editModalProjectSelectedText = document.getElementById('edit-modal-project-selected-text');
+    const editModalDurationSelectedText = document.getElementById('edit-modal-duration-selected-text');
+    const editModalCustomTimeInputs = document.getElementById('edit-modal-custom-time-inputs');
+    const editModalCustomTimeStartInput = document.getElementById('edit-modal-custom-time-start-input');
+    const editModalCustomTimeEndInput = document.getElementById('edit-modal-custom-time-end-input');
 
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     async function loadAllUsersForDropdown() {
@@ -1819,6 +1895,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     };
 
     // 5. [ปรับปรุง] ฟังก์ชันเปิด Modal และดึงข้อมูล (รวม Report)
+    // 5. [ปรับปรุง] ฟังก์ชันเปิด Modal และดึงข้อมูล (รวม Report)
     async function openEditModal(docId) {
         try {
             const workRecordDoc = await db.collection('work_records').doc(docId).get();
@@ -1828,7 +1905,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
             }
             
             const record = workRecordDoc.data();
-            const report = record.report || {}; // [เปลี่ยน] ดึง report หรือ object ว่าง
+            const report = record.report || {}; // ดึง report หรือ object ว่าง
 
             const checkinDate = record.checkIn.timestamp.toDate();
             const checkoutDate = record.checkOut ? record.checkOut.timestamp.toDate() : null;
@@ -1839,10 +1916,53 @@ function calculateWorkHours(checkinTime, checkoutTime) {
             editCheckoutTimeInput.value = toLocalISOString(checkoutDate);
             editOnsiteDetailsInput.value = record.checkIn.onSiteDetails || '';
             
-            // [เพิ่ม] เติมข้อมูลรายงาน
-            editWorkTypeInput.value = report.workType || '';
-            editProjectInput.value = report.project || '';
-            editDurationInput.value = report.duration || '';
+            // [เปลี่ยน] เติมข้อมูลรายงานลงใน Dropdown
+            if (report.workType) {
+                editModalWorkTypeSelectedText.textContent = report.workType;
+                editModalWorkTypeSelectedText.classList.remove('text-gray-500');
+            } else {
+                editModalWorkTypeSelectedText.textContent = 'เลือกประเภทงาน...';
+                editModalWorkTypeSelectedText.classList.add('text-gray-500');
+            }
+
+            if (report.project) {
+                editModalProjectSelectedText.textContent = report.project;
+                editModalProjectSelectedText.classList.remove('text-gray-500');
+            } else {
+                editModalProjectSelectedText.textContent = 'เลือกโครงการ...';
+                editModalProjectSelectedText.classList.add('text-gray-500');
+            }
+
+            // [เพิ่ม] Logic การตั้งค่า Duration Dropdown
+            editModalCustomTimeInputs.classList.add('hidden'); // ซ่อนช่อง custom time ก่อน
+            const standardDurations = ['ทั้งวัน (08:30 - 17:30)', 'ครึ่งวันเช้า (08:30 - 12:00)', 'ครึ่งวันบ่าย (13:00 - 17:30)'];
+            if (report.duration) {
+                if (standardDurations.includes(report.duration)) {
+                    editModalDurationSelectedText.textContent = report.duration;
+                    editModalDurationSelectedText.classList.remove('text-gray-500');
+                } else {
+                    // ถ้าไม่ใช่ค่ามาตรฐาน ให้ถือว่าเป็น 'กำหนดเวลา'
+                    editModalDurationSelectedText.textContent = 'กำหนดเวลา';
+                    editModalDurationSelectedText.classList.remove('text-gray-500');
+                    editModalCustomTimeInputs.classList.remove('hidden'); // แสดงช่อง custom time
+                    
+                    // พยายามแยกเวลา
+                    const times = report.duration.split(' - ');
+                    if (times.length === 2) {
+                        editModalCustomTimeStartInput.value = times[0];
+                        editModalCustomTimeEndInput.value = times[1];
+                    } else {
+                        // ถ้าแยกไม่ได้ ก็เคลียร์ค่า
+                        editModalCustomTimeStartInput.value = '';
+                        editModalCustomTimeEndInput.value = '';
+                    }
+                }
+            } else {
+                editModalDurationSelectedText.textContent = 'เลือกระยะเวลา...';
+                editModalDurationSelectedText.classList.add('text-gray-500');
+                editModalCustomTimeStartInput.value = '';
+                editModalCustomTimeEndInput.value = '';
+            }
 
             editModal.classList.remove('hidden');
 
@@ -1868,19 +1988,54 @@ function calculateWorkHours(checkinTime, checkoutTime) {
         saveEditBtn.textContent = 'กำลังบันทึก...';
 
         try {
+            // [เปลี่ยน] อ่านค่าจาก Dropdowns
+            const selectedWorkType = editModalWorkTypeSelectedText.textContent;
+            const selectedProject = editModalProjectSelectedText.textContent;
+            const selectedDuration = editModalDurationSelectedText.textContent;
+
+            let finalDuration = selectedDuration;
+            
+            // ตรวจสอบค่าก่อนบันทึก
+            if (selectedWorkType.includes('...')) {
+                alert("กรุณาเลือกประเภทงาน");
+                saveEditBtn.disabled = false;
+                saveEditBtn.textContent = 'บันทึกการแก้ไข';
+                return;
+            }
+            if (selectedProject.includes('...')) {
+                alert("กรุณาเลือกโครงการ");
+                saveEditBtn.disabled = false;
+                saveEditBtn.textContent = 'บันทึกการแก้ไข';
+                return;
+            }
+
+            if (selectedDuration.includes('...')) {
+                finalDuration = null; // ถ้าไม่เลือก ก็ให้เป็น null
+            } else if (selectedDuration === 'กำหนดเวลา') {
+                const startTime = editModalCustomTimeStartInput.value;
+                const endTime = editModalCustomTimeEndInput.value;
+                if (!startTime || !endTime) {
+                    alert("กรุณากรอกเวลาเริ่มต้นและสิ้นสุดสำหรับ 'กำหนดเวลา'");
+                    saveEditBtn.disabled = false;
+                    saveEditBtn.textContent = 'บันทึกการแก้ไข';
+                    return;
+                }
+                finalDuration = `${startTime} - ${endTime}`;
+            }
+
             const newCheckinTime = firebase.firestore.Timestamp.fromDate(new Date(editCheckinTimeInput.value));
             
-            // [เปลี่ยน] สร้าง object สำหรับอัปเดตข้อมูลทั้งหมด
             const updatedData = {
                 'checkIn.timestamp': newCheckinTime,
                 'checkIn.onSiteDetails': editOnsiteDetailsInput.value || null,
-                'report.workType': editWorkTypeInput.value || null,
-                'report.project': editProjectInput.value || null,
-                'report.duration': editDurationInput.value || null,
-                'report.submittedAt': firebase.firestore.FieldValue.serverTimestamp() // อัปเดตเวลาส่ง
+                'report.workType': selectedWorkType,
+                'report.project': selectedProject,
+                'report.duration': finalDuration,
+                'report.submittedAt': firebase.firestore.FieldValue.serverTimestamp()
             };
             
             if (editCheckoutTimeInput.value) {
+                // ... (โค้ดคำนวณ Check-out และ OT เหมือนเดิม)
                 const newCheckoutTime = firebase.firestore.Timestamp.fromDate(new Date(editCheckoutTimeInput.value));
                 const { regularWorkHours, overtimeHours } = calculateWorkHours(newCheckinTime.toDate(), newCheckoutTime.toDate());
 
@@ -1897,8 +2052,8 @@ function calculateWorkHours(checkinTime, checkoutTime) {
 
             alert("บันทึกการแก้ไขสำเร็จ!");
             closeEditModal();
-            searchRecordBtn.click(); // Refresh ข้อมูลที่ค้นหา
-            loadEmployeeSummary(); // Refresh สรุปของ Admin
+            searchRecordBtn.click(); 
+            loadEmployeeSummary(); 
 
         } catch (error) {
             console.error("Error saving record:", error);
