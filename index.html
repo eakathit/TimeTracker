@@ -1230,7 +1230,7 @@ const fetchProjectData = async () => {
             if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
             // const now = new Date('2025-10-17T08:30:00'); // [ปิด] Hardcode
-            const now = new Date(); // [เปิด] ใช้เวลาจริง
+            const now = new Date('2025-10-20T08:30:00'); // [เปิด] ใช้เวลาจริง
 
             const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
 
