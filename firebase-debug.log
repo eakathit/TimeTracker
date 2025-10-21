@@ -1013,3 +1013,103 @@
 [info] i  hosting: ::1 - - [20/Oct/2025:10:18:00 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [20/Oct/2025:10:18:00 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
 [info] i  hosting: ::1 - - [20/Oct/2025:10:18:33 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [20/Oct/2025:10:18:33 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
 [info] i  hosting: ::1 - - [20/Oct/2025:10:18:38 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [20/Oct/2025:10:18:38 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[debug] [2025-10-21T01:35:12.626Z] ----------------------------------------------------------------------
+[debug] [2025-10-21T01:35:12.634Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\acer\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js serve
+[debug] [2025-10-21T01:35:12.635Z] CLI Version:   14.20.0
+[debug] [2025-10-21T01:35:12.635Z] Platform:      win32
+[debug] [2025-10-21T01:35:12.635Z] Node Version:  v22.20.0
+[debug] [2025-10-21T01:35:12.635Z] Time:          Tue Oct 21 2025 08:35:12 GMT+0700 (เวลาอินโดจีน)
+[debug] [2025-10-21T01:35:12.635Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-21T01:35:12.864Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-21T01:35:12.865Z] > authorizing via signed-in user (eakarthitx@gmail.com)
+[debug] [2025-10-21T01:35:12.865Z] [iam] checking project timetracker-f1e11 for permissions ["firebase.projects.get"]
+[debug] [2025-10-21T01:35:12.866Z] Checked if tokens are valid: false, expires at: 1760947176269
+[debug] [2025-10-21T01:35:12.866Z] Checked if tokens are valid: false, expires at: 1760947176269
+[debug] [2025-10-21T01:35:12.867Z] > refreshing access token with scopes: []
+[debug] [2025-10-21T01:35:12.869Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-21T01:35:12.869Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-21T01:35:13.039Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-21T01:35:13.039Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-21T01:35:13.046Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions [none]
+[debug] [2025-10-21T01:35:13.046Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions x-goog-quota-user=projects/timetracker-f1e11
+[debug] [2025-10-21T01:35:13.046Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-21T01:35:14.407Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions 200
+[debug] [2025-10-21T01:35:14.407Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-10-21T01:35:14.408Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.408Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.409Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-21T01:35:14.707Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 200
+[debug] [2025-10-21T01:35:14.707Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/timetracker-f1e11 {"projectNumber":"470557940763","projectId":"timetracker-f1e11","lifecycleState":"ACTIVE","name":"TimeTracker","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-10-09T07:43:45.558454Z"}
+[info] 
+[info] === Serving from 'C:\Users\acer\TimeTracker'...
+[info] 
+[debug] [2025-10-21T01:35:14.711Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.711Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.723Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 
+[debug] [2025-10-21T01:35:14.764Z] defaultcredentials: writing to file C:\Users\acer\AppData\Roaming\firebase\eakarthitx_gmail_com_application_default_credentials.json
+[debug] [2025-10-21T01:35:14.768Z] Setting GAC to C:\Users\acer\AppData\Roaming\firebase\eakarthitx_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to C:\\Users\\acer\\AppData\\Roaming\\firebase\\eakarthitx_gmail_com_application_default_credentials.json"}}
+[debug] [2025-10-21T01:35:14.769Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.769Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:14.769Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig [none]
+[debug] [2025-10-21T01:35:15.171Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig 200
+[debug] [2025-10-21T01:35:15.172Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/adminSdkConfig {"projectId":"timetracker-f1e11","storageBucket":"timetracker-f1e11.firebasestorage.app"}
+[debug] [2025-10-21T01:35:15.716Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites 200
+[debug] [2025-10-21T01:35:15.717Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/timetracker-f1e11/sites {"sites":[{"name":"projects/timetracker-f1e11/sites/timetracker-f1e11","defaultUrl":"https://timetracker-f1e11.web.app","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","type":"DEFAULT_SITE"}]}
+[debug] [2025-10-21T01:35:15.717Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:15.717Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:15.717Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config [none]
+[debug] [2025-10-21T01:35:16.730Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config 200
+[debug] [2025-10-21T01:35:16.730Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11/webApps/1:470557940763:web:6de43b02b5ba42fe46acbe/config {"projectId":"timetracker-f1e11","appId":"1:470557940763:web:6de43b02b5ba42fe46acbe","storageBucket":"timetracker-f1e11.firebasestorage.app","apiKey":"AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc","authDomain":"timetracker-f1e11.firebaseapp.com","messagingSenderId":"470557940763","measurementId":"G-C83H28RLSY","projectNumber":"470557940763","version":"2"}
+[debug] [2025-10-21T01:35:16.736Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:16.736Z] Checked if tokens are valid: true, expires at: 1761014112039
+[debug] [2025-10-21T01:35:16.736Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 [none]
+[debug] [2025-10-21T01:35:17.063Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 200
+[debug] [2025-10-21T01:35:17.063Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/timetracker-f1e11 {"projectId":"timetracker-f1e11","projectNumber":"470557940763","displayName":"TimeTracker","name":"projects/timetracker-f1e11","resources":{"hostingSite":"timetracker-f1e11"},"state":"ACTIVE","etag":"1_d7c410bf-0446-4326-a973-5ad1a8cb84d9"}
+[info] i  functions: Watching "C:\Users\acer\TimeTracker\functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"C:\\Users\\acer\\TimeTracker\\functions\" for Cloud Functions..."}}
+[info] i  hosting[timetracker-f1e11]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
+[info] +  hosting[timetracker-f1e11]: Local server: http://localhost:5000 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5000\u001b[22m\u001b[24m"}}
+[debug] [2025-10-21T01:35:17.087Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2025-10-21T01:35:18.601Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-10-21T01:35:18.601Z] Building nodejs source
+[debug] [2025-10-21T01:35:18.602Z] Failed to find version of module node: reached end of search path C:\Users\acer\TimeTracker\functions\node_modules
+[info] +  functions: Using node@22 from host. 
+[debug] [2025-10-21T01:35:18.605Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-10-21T01:35:18.612Z] Found firebase-functions binary at 'C:\Users\acer\TimeTracker\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8717
+
+[debug] [2025-10-21T01:35:19.757Z] Got response from /__/functions.yaml {"endpoints":{"saveLineProfileImage":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"saveLineProfileImage"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  hosting: ::1 - - [21/Oct/2025:01:35:22 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:01:35:22 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [21/Oct/2025:01:35:22 +0000] "GET /favicon.ico HTTP/1.1" 200 - "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:01:35:22 +0000] \"GET /favicon.ico HTTP/1.1\" 200 - \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] +  functions: Loaded functions definitions from source: saveLineProfileImage. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: saveLineProfileImage."}}
+[info] +  functions[us-central1-saveLineProfileImage]: http function initialized (http://localhost:5001/timetracker-f1e11/us-central1/saveLineProfileImage). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/timetracker-f1e11/us-central1/saveLineProfileImage)."}}
+[info] i  hosting: ::1 - - [21/Oct/2025:01:56:55 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:01:56:55 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [21/Oct/2025:01:56:55 +0000] "GET /firebase-config.js HTTP/1.1" 200 368 "http://localhost:5000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:01:56:55 +0000] \"GET /firebase-config.js HTTP/1.1\" 200 368 \"http://localhost:5000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [21/Oct/2025:01:58:27 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:01:58:27 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [21/Oct/2025:02:25:01 +0000] "GET / HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:02:25:01 +0000] \"GET / HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
+[info] i  hosting: ::1 - - [21/Oct/2025:02:25:14 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 187 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [21/Oct/2025:02:25:14 +0000] \"GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1\" 404 187 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\""}}
