@@ -302,11 +302,11 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
+
         <div class="space-y-8">
             <div class="card">
                 <h3 class="font-semibold text-lg text-gray-800 mb-4">⚙️ จัดการข้อมูลระบบ</h3>
-                <div class="space-y-6">
+                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <h4 class="font-semibold text-gray-700 mb-3">จัดการประเภทงาน</h4>
                         <div class="space-y-3">
@@ -314,8 +314,8 @@
                                 <input type="text" id="add-work-type-input" placeholder="เพิ่มประเภทงานใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
                                 <button id="add-work-type-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-    </svg>
+                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -341,8 +341,8 @@
                                 <input type="text" id="add-project-input" placeholder="เพิ่มโครงการใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
                                 <button id="add-project-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
                                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-    </svg>
+                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -363,68 +363,103 @@
                     </div>
 
                     <div class="card !p-0">
-                        <h3 class="font-semibold text-lg text-gray-800 mb-4">📝 แก้ไขข้อมูลการลงเวลา</h3>
+                        <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
-                            
                             <div>
                                 <label class="text-sm font-medium text-gray-600">เลือกพนักงาน</label>
                                 <select id="edit-user-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                                     <option value="">กำลังโหลดพนักงาน...</option>
                                 </select>
                             </div>
-
                             <div>
                                 <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
                                 <input type="date" id="edit-date-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                             </div>
-
                             <button id="search-record-btn" class="btn-primary w-full py-3 text-base">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
                                 ค้นหาข้อมูล
                             </button>
-
                             <div id="search-results-container" class="mt-4 pt-4 border-t border-gray-200">
                                 <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกพนักงานและวันที่</p>
                             </div>
                         </div>
                     </div>
-                    </div>
+                </div>
             </div>
         </div>
-        
+
         <div class="space-y-8">
             <div class="card">
                 <h3 class="font-semibold text-lg text-gray-800 mb-4">📊 ข้อมูลสรุปและรายงาน</h3>
                 <div class="space-y-6">
                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
-    <div class="flex justify-between items-start mb-3">
-        <h4 class="font-semibold text-gray-700">สรุปข้อมูลรายโครงการ (รายเดือน)</h4>
-        <button id="export-project-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
-            <span>Export</span>
-        </button>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-            <label class="text-sm font-medium text-gray-600">เลือกเดือน</label>
-            <input type="month" id="project-summary-month" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-        </div>
-        <div>
-            <label class="text-sm font-medium text-gray-600">เลือกโครงการ</label>
-            <select id="project-summary-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                </select>
-        </div>
-    </div>
-    <div id="project-summary-results" class="mt-4 pt-4 border-t border-gray-200 max-h-96 overflow-y-auto">
-         <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>
-    </div>
-</div>
-                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div class="flex justify-between items-center mb-3">
-                            <h4 class="font-semibold text-gray-700">สรุปเวลาทำงานพนักงาน (วันนี้)</h4>
-                            <button class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700">Export Excel</button>
+                         <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-semibold text-gray-700">สรุปข้อมูลรายโครงการ (รายเดือน)</h4>
+                            <button id="export-project-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                                <span>Export</span>
+                            </button>
                         </div>
-                        <div id="employee-summary-container-admin" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-600">เลือกเดือน</label>
+                                <input type="month" id="project-summary-month" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-600">เลือกโครงการ</label>
+                                <select id="project-summary-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                    <option value="">เลือกโครงการ...</option>
+                                    </select>
+                            </div>
+                        </div>
+                        <div id="project-summary-results" class="mt-4 pt-4 border-t border-gray-200 max-h-96 overflow-y-auto">
+                             <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-semibold text-gray-700">สรุปเวลาทำงานพนักงาน</h4>
+                            <button id="export-employee-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                                <span>Export Excel</span>
+                            </button>
+                        </div>
+
+                        <div class="space-y-4 mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div>
+                                    <label for="summary-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
+                                    <input type="date" id="summary-start-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                </div>
+                                <div>
+                                    <label for="summary-end-date" class="text-xs font-medium text-gray-600">วันที่สิ้นสุด</label>
+                                    <input type="date" id="summary-end-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                </div>
+                                <div>
+                                    <label for="summary-employee-select" class="text-xs font-medium text-gray-600">เลือกพนักงาน</label>
+                                    <select id="summary-employee-select" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                        <option value="">พนักงานทั้งหมด</option>
+                                        </select>
+                                </div>
+                                <div>
+                                    <label for="summary-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                                    <select id="summary-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                        <option value="">ทั้งหมด</option>
+                                        <option value="checked_in">กำลังทำงาน</option>
+                                        <option value="completed">สิ้นสุดการทำงาน</option>
+                                        <option value="not_checked_in">ยังไม่เข้างาน</option>
+                                    </select>
+                                </div>
+                            </div>
+                             <button id="apply-summary-filters-btn" class="w-full sm:w-auto mt-3 px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+                                แสดงข้อมูล
+                            </button>
+                        </div>
+                        <div id="employee-summary-container-admin" class="space-y-3 max-h-[60vh] overflow-y-auto">
+                            <p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>
+                        </div>
+                         <div id="summary-pagination-controls" class="mt-4 flex justify-center items-center space-x-2">
                             </div>
                     </div>
                 </div>
@@ -432,7 +467,6 @@
         </div>
     </div>
 </div>
-
             <div id="profile-page" class="page space-y-6">
                 <div class="card text-center">
                      <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
@@ -634,7 +668,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const customTimeInputs = document.getElementById('custom-time-inputs');
     const customTimeStartInput = document.getElementById('custom-time-start-input');
     const customTimeEndInput = document.getElementById('custom-time-end-input');
-
+    // ใส่ไว้ในส่วน Event Listeners หรือใน initializeControls
+    const summaryStartDateInput = document.getElementById('summary-start-date');
+    const summaryEndDateInput = document.getElementById('summary-end-date');
+    const summaryEmployeeFilterInput = document.getElementById('summary-employee-filter');
+    const summaryStatusFilterSelect = document.getElementById('summary-status-filter');
+    const applySummaryFiltersBtn = document.getElementById('apply-summary-filters-btn');
+    const exportEmployeeSummaryBtn = document.getElementById('export-employee-summary-btn'); // ปุ่ม Export
     // --- App State ---
     let currentUser = null;
     let watchId = null;
@@ -1093,6 +1133,17 @@ auth.onAuthStateChanged(async (user) => {
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
             monthInput.value = `${year}-${month}`;
 
+            // ตั้งค่าวันที่เริ่มต้นและสิ้นสุดเป็นวันปัจจุบัน
+const todayISO = new Date().toISOString().split('T')[0];
+summaryStartDateInput.value = todayISO;
+summaryEndDateInput.value = todayISO;
+
+applySummaryFiltersBtn.addEventListener('click', () => {
+    loadEmployeeSummary(); // เรียกโหลดข้อมูลเมื่อกดปุ่ม
+});
+
+// เพิ่ม Listener สำหรับการ Export (จะไปเรียกฟังก์ชัน exportEmployeeSummaryToExcel)
+exportEmployeeSummaryBtn.addEventListener('click', exportEmployeeSummaryToExcel);
 
             // --- ส่วนสำหรับดึงข้อมูลโครงการมาใส่ใน Dropdown ---
             const populateProjectOptions = async () => {
@@ -1407,45 +1458,117 @@ const fetchProjectData = async () => {
 }
 
     // --- [ปรับปรุง] Logic สรุปข้อมูลพนักงาน (อ่านจาก work_records.report) ---
-    async function loadEmployeeSummary() {
-        const container = document.getElementById('employee-summary-container-admin');
-        if (!container) return;
+    // --- [ปรับปรุง] Logic สรุปข้อมูลพนักงาน (อ่านจาก work_records + Filters + Pagination) ---
+async function loadEmployeeSummary(page = 1) { // เพิ่ม parameter page, default เป็น 1
+    const container = document.getElementById('employee-summary-container-admin');
+    const paginationControls = document.getElementById('summary-pagination-controls'); // Element สำหรับปุ่ม pagination
+    if (!container || !paginationControls) return;
 
-        container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังโหลดข้อมูลพนักงาน...</p>';
+    container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังโหลดข้อมูลพนักงาน...</p>';
+    paginationControls.innerHTML = ''; // เคลียร์ปุ่ม pagination เดิม
 
-        try {
-            const usersSnapshot = await db.collection('users').get();
-            if (usersSnapshot.empty) {
-                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลผู้ใช้ในระบบ</p>';
-                return;
-            }
+    // --- อ่านค่าจาก Filters ---
+    const startDateString = summaryStartDateInput.value;
+    const endDateString = summaryEndDateInput.value;
+    const userIdFilter = document.getElementById('summary-employee-select').value;
+    const statusFilter = summaryStatusFilterSelect.value;
 
-            const usersData = {};
-            usersSnapshot.forEach(doc => {
-                usersData[doc.id] = doc.data();
-            });
+    if (!startDateString || !endDateString) {
+         container.innerHTML = '<p class="text-sm text-center text-red-500 py-4">กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด</p>';
+         return;
+    }
 
-            const today = new Date();
-            const startDate = new Date(today.setHours(0, 0, 0, 0));
-            const endDate = new Date(today.setHours(23, 59, 59, 999));
-            
-            const recordsSnapshot = await db.collection('work_records')
-                                            .where('date', '>=', startDate)
-                                            .where('date', '<=', endDate)
-                                            .get();
-            
-            recordsSnapshot.forEach(doc => {
-                const record = doc.data();
-                if (usersData[record.userId]) {
-                    usersData[record.userId].workRecord = record;
-                }
-            });
+    // แปลงวันที่ + เวลา ให้ครอบคลุมทั้งวัน
+    const startDate = new Date(startDateString);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateString);
+    endDate.setHours(23, 59, 59, 999);
 
-            let resultsHTML = '';
-            for (const userId in usersData) {
-                const user = usersData[userId];
-                const record = user.workRecord;
-                const report = record?.report; // [เพิ่ม] ดึงข้อมูล report
+    // --- Pagination Settings ---
+    const ITEMS_PER_PAGE = 20; // จำนวนรายการต่อหน้า
+    let currentPage = page;
+    let totalItems = 0;
+    let totalPages = 1;
+
+    try {
+        // 1. โหลดข้อมูลผู้ใช้ทั้งหมดก่อน (อาจจะต้องปรับปรุงถ้าผู้ใช้เยอะมากๆ)
+        const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+        if (usersSnapshot.empty) {
+            container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลผู้ใช้ในระบบ</p>';
+            return;
+        }
+
+        let allUsersData = {};
+         usersSnapshot.forEach(doc => {
+             // กรองชื่อพนักงานตั้งแต่ตอนนี้เลย ถ้ามี filter
+             const userData = doc.data();
+             const fullName = (userData.fullName || '').toLowerCase();
+             if (!userIdFilter || doc.id === userIdFilter) {
+                    allUsersData[doc.id] = { ...userData, workRecords: [] };
+                 }
+        });
+
+        // 2. Query ข้อมูล work_records ตามช่วงวันที่
+        let workRecordsQuery = db.collection('work_records')
+                                 .where('date', '>=', startDate)
+                                 .where('date', '<=', endDate);
+
+        // เพิ่มเงื่อนไข query สำหรับ status filter ถ้าไม่ใช่ 'not_checked_in' หรือ ''
+        // หมายเหตุ: Firestore ไม่สามารถ query 'not equals' ได้โดยตรง การกรอง 'not_checked_in' จะทำทีหลัง
+        if (statusFilter && statusFilter !== 'not_checked_in') {
+            workRecordsQuery = workRecordsQuery.where('status', '==', statusFilter);
+        }
+
+        workRecordsQuery = workRecordsQuery.orderBy('date', 'desc'); // เรียงตามวันที่ล่าสุดก่อน
+
+        const recordsSnapshot = await workRecordsQuery.get();
+
+        // 3. Map work records เข้ากับ user data
+        recordsSnapshot.forEach(doc => {
+        const record = doc.data();
+        // เช็คว่า user คนนี้อยู่ใน allUsersData (ซึ่งผ่านการกรอง userId มาแล้ว) หรือไม่
+        if (allUsersData[record.userId]) {
+            allUsersData[record.userId].workRecords.push(record);
+        }
+    });
+
+        // 4. กรองข้อมูล Users ตาม Status Filter (โดยเฉพาะ 'not_checked_in') และเตรียมข้อมูลแสดงผล
+        let filteredUserIds = Object.keys(allUsersData);
+
+        if (statusFilter === 'not_checked_in') {
+            // เก็บเฉพาะ user ที่ไม่มี work record ในช่วงวันที่เลือก
+             filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length === 0);
+        } else if (statusFilter) {
+             // ถ้ากรอง status อื่น (checked_in, completed) ให้เอาเฉพาะ user ที่มี records
+             filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length > 0);
+        }
+         // ถ้า statusFilter เป็น "" (ทั้งหมด) ก็ไม่ต้องทำอะไรกับ filteredUserIds
+
+        totalItems = filteredUserIds.length;
+        totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        // 5. Slice ข้อมูลตามหน้าปัจจุบัน
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const userIdsToShow = filteredUserIds.slice(startIndex, endIndex);
+
+        // 6. สร้าง HTML สำหรับแสดงผล
+        let resultsHTML = '';
+        if (userIdsToShow.length === 0) {
+             resultsHTML = `<p class="text-sm text-center text-gray-500 py-4">ไม่พบข้อมูลพนักงานตามเงื่อนไขที่เลือก</p>`;
+        } else {
+             userIdsToShow.forEach(userId => {
+                const user = allUsersData[userId];
+                // --- สร้าง HTML Card สำหรับ user แต่ละคน ---
+                // (ใช้ logic คล้ายเดิม แต่ปรับปรุงให้วน loop records ถ้าต้องการแสดงรายวันในช่วงนั้น)
+                // ตัวอย่าง: แสดงข้อมูลของวันล่าสุดในช่วงที่เลือก หรือสรุปข้อมูลรวม
+                // **ปรับตรงนี้เพื่อแสดงผลตามต้องการ**
+
+                // --- Logic แสดงผลแบบเดิม (แสดงข้อมูลล่าสุด ถ้ามี) ---
+                const latestRecord = user.workRecords.length > 0 ? user.workRecords[0] : null; // เอา record ล่าสุด (เพราะ sort desc มา)
+                const report = latestRecord?.report;
 
                 let statusText = 'ยังไม่เข้างาน';
                 let statusColor = 'bg-gray-400';
@@ -1454,40 +1577,46 @@ const fetchProjectData = async () => {
                 let workHours = '-';
                 let overtime = '-';
                 let workTypeInfo = '-';
-                let reportInfo = '<span class="text-gray-400">ยังไม่ส่งรายงาน</span>'; // [เพิ่ม] สถานะรายงาน
+                let reportInfo = '<span class="text-gray-400">ยังไม่ส่งรายงาน</span>';
+                let recordDate = '-'; // วันที่ของ record
 
-                if (record) {
-                    checkInTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                    workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : `On-site: ${record.checkIn.onSiteDetails || 'N/A'}`;
-                    
-                    if(report) { // [เพิ่ม] ถ้ามี report
-                        reportInfo = `${report.workType} (${report.project})`;
+                if (latestRecord) {
+                     recordDate = latestRecord.date.toDate().toLocaleDateString('th-TH');
+                    checkInTime = latestRecord.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    workTypeInfo = latestRecord.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : `On-site: ${latestRecord.checkIn.onSiteDetails || 'N/A'}`;
+
+                    if(report) {
+                        reportInfo = `${report.workType} (${report.project || 'N/A'})`;
                     }
 
-                    if (record.status === 'checked_in') {
+                    if (latestRecord.status === 'checked_in') {
                         statusText = 'กำลังทำงาน';
                         statusColor = 'bg-green-500';
-                    } else if (record.status === 'completed') {
+                    } else if (latestRecord.status === 'completed') {
                         statusText = 'สิ้นสุดการทำงาน';
                         statusColor = 'bg-red-500';
-                        checkOutTime = record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                        
-                        const { regularWorkHours, overtimeHours } = calculateWorkHours(record.checkIn.timestamp.toDate(), record.checkOut.timestamp.toDate());
-                        workHours = regularWorkHours.toFixed(2) + ' ชม.';
-                        overtime = (overtimeHours || 0) + ' ชม.';
+                        if (latestRecord.checkOut) {
+                            checkOutTime = latestRecord.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                            const { regularWorkHours, overtimeHours } = calculateWorkHours(latestRecord.checkIn.timestamp.toDate(), latestRecord.checkOut.timestamp.toDate());
+                            workHours = regularWorkHours.toFixed(2) + ' ชม.';
+                            overtime = (latestRecord.overtime?.hours || 0).toFixed(1) + ' ชม.'; // อ่านจาก field overtime
+                        }
                     }
+                } else {
+                    // กรณี user ไม่มี record ในช่วงวันที่เลือก (จะแสดงเมื่อ filter status เป็น 'ทั้งหมด' หรือ 'ยังไม่เข้างาน')
+                     recordDate = 'ไม่มีข้อมูลในช่วงนี้';
                 }
 
-                resultsHTML += `
+                 resultsHTML += `
                     <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                         <div class="flex justify-between items-start">
                             <div class="flex items-center gap-3">
-                                <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-12 h-12 rounded-full object-cover">
+                                <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
                                 <div>
                                     <p class="font-semibold text-gray-800">${user.fullName || 'ไม่มีชื่อ'}</p>
                                     <div class="flex items-center gap-1.5 mt-1">
                                         <div class="w-2.5 h-2.5 rounded-full ${statusColor}"></div>
-                                        <p class="text-xs font-medium text-gray-600">${statusText}</p>
+                                        <p class="text-xs font-medium text-gray-600">${statusText} (${recordDate})</p>
                                     </div>
                                 </div>
                             </div>
@@ -1502,13 +1631,178 @@ const fetchProjectData = async () => {
                         </div>
                     </div>
                 `;
-            }
+             });
+         } // end if (userIdsToShow.length > 0)
 
-            container.innerHTML = resultsHTML || '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลการทำงานของพนักงานในวันนี้</p>';
+        container.innerHTML = resultsHTML;
+
+        // 7. สร้างปุ่ม Pagination
+        if (totalPages > 1) {
+            // ปุ่ม Previous
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '◀';
+            prevButton.className = `px-3 py-1 text-sm rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-sky-500 text-white hover:bg-sky-600'}`;
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => loadEmployeeSummary(currentPage - 1);
+            paginationControls.appendChild(prevButton);
+
+            // ตัวเลขหน้า (อาจจะแสดงแค่บางส่วนถ้าหน้าเยอะมากๆ)
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `หน้า ${currentPage} / ${totalPages}`;
+            pageInfo.className = 'text-sm text-gray-600 mx-2';
+            paginationControls.appendChild(pageInfo);
+
+            // ปุ่ม Next
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '▶';
+            nextButton.className = `px-3 py-1 text-sm rounded ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-sky-500 text-white hover:bg-sky-600'}`;
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => loadEmployeeSummary(currentPage + 1);
+            paginationControls.appendChild(nextButton);
+        }
+
+
+    } catch (error) {
+        console.error("Error loading employee summary:", error);
+        container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+    }
+}
+
+// --- [เพิ่ม] ฟังก์ชันสำหรับ Export ข้อมูลสรุปพนักงานเป็น Excel ---
+// --- [แก้ไข] ฟังก์ชันสำหรับ Export ข้อมูลสรุปพนักงานเป็น Excel ---
+    async function exportEmployeeSummaryToExcel() {
+        // --- อ่านค่า Filters ---
+        const startDateString = summaryStartDateInput.value;
+        const endDateString = summaryEndDateInput.value;
+        // อ่านค่า userIdFilter จาก Dropdown
+        const userIdFilter = document.getElementById('summary-employee-select').value;
+        const statusFilter = summaryStatusFilterSelect.value;
+
+        if (!startDateString || !endDateString) {
+            alert('กรุณาเลือกช่วงวันที่ก่อน Export');
+            return;
+        }
+
+        const startDate = new Date(startDateString);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(endDateString);
+        endDate.setHours(23, 59, 59, 999);
+
+        alert('กำลังเตรียมข้อมูลสำหรับ Export...'); // แจ้งเตือนผู้ใช้
+
+        try {
+            // 1. โหลดข้อมูลผู้ใช้ทั้งหมดก่อน (กรองตาม userIdFilter ถ้ามีการเลือก)
+             const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+             let allUsersData = {};
+             usersSnapshot.forEach(doc => {
+                 // --- กรองตาม userIdFilter ---
+                 if (!userIdFilter || doc.id === userIdFilter) {
+                     allUsersData[doc.id] = { ...doc.data(), workRecords: [] };
+                 }
+                 // --- จบการกรอง ---
+             });
+
+            // 2. Query work_records ตามช่วงวันที่ และ status (ถ้าเลือก)
+            let workRecordsQuery = db.collection('work_records')
+                                     .where('date', '>=', startDate)
+                                     .where('date', '<=', endDate);
+
+            if (statusFilter && statusFilter !== 'not_checked_in') {
+                workRecordsQuery = workRecordsQuery.where('status', '==', statusFilter);
+            }
+             workRecordsQuery = workRecordsQuery.orderBy('date', 'asc'); // เรียงตามวันที่เก่าไปใหม่สำหรับ Export
+
+            const recordsSnapshot = await workRecordsQuery.get();
+
+            // 3. Map records เข้า user data (เฉพาะ user ที่ผ่านการกรอง userIdFilter มาแล้ว)
+             recordsSnapshot.forEach(doc => {
+                const record = doc.data();
+                if (allUsersData[record.userId]) { // ตรวจสอบว่า user คนนี้อยู่ใน list ที่กรองไว้หรือไม่
+                    allUsersData[record.userId].workRecords.push(record);
+                }
+            });
+
+             // 4. กรอง user ตาม status filter อีกครั้ง (สำหรับ 'not_checked_in' หรือ 'ทั้งหมด')
+            let filteredUserIds = Object.keys(allUsersData); // ตอนนี้ allUsersData ผ่านการกรอง userIdFilter มาแล้ว
+            if (statusFilter === 'not_checked_in') {
+                filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length === 0);
+            } else if (statusFilter) { // checked_in หรือ completed
+                filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length > 0);
+            }
+            // ถ้า statusFilter เป็น "" (ทั้งหมด) ไม่ต้องกรองเพิ่ม
+
+            // 5. เตรียมข้อมูลสำหรับ Excel
+            const dataForExcel = [
+                // Header Row
+                ["ชื่อพนักงาน", "วันที่", "สถานะ", "เวลาเข้า", "เวลาออก", "ชั่วโมงปกติ", "ชั่วโมง OT", "ประเภทงาน", "รายละเอียด On-site", "รายงาน: ประเภท", "รายงาน: โครงการ", "รายงาน: ระยะเวลา"]
+            ];
+
+            filteredUserIds.forEach(userId => {
+                const user = allUsersData[userId];
+                const fullName = user.fullName || userId;
+
+                if (user.workRecords.length === 0 && statusFilter !== 'checked_in' && statusFilter !== 'completed') {
+                     dataForExcel.push([
+                        fullName, 'ไม่มีข้อมูลในช่วงนี้', 'ยังไม่เข้างาน', '-', '-', '-', '-', '-', '-', '-', '-', '-'
+                     ]);
+                } else {
+                    // วน Loop records ของ user คนนี้
+                    user.workRecords.forEach(record => {
+                        const report = record.report || {};
+                        let statusText = '';
+                        let checkInTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        let checkOutTime = '-';
+                        let regularWorkHours = 0;
+                        let overtimeHours = 0;
+                        let workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : 'On-site';
+                        let onSiteDetails = record.checkIn.onSiteDetails || '-';
+
+                         if (record.status === 'checked_in') {
+                            statusText = 'กำลังทำงาน';
+                        } else if (record.status === 'completed') {
+                            statusText = 'สิ้นสุดการทำงาน';
+                            if (record.checkOut) {
+                                checkOutTime = record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                                const hours = calculateWorkHours(record.checkIn.timestamp.toDate(), record.checkOut.timestamp.toDate());
+                                regularWorkHours = hours.regularWorkHours;
+                                overtimeHours = record.overtime?.hours || 0;
+                            }
+                        }
+
+                        dataForExcel.push([
+                            fullName,
+                            record.date.toDate().toLocaleDateString('th-TH'),
+                            statusText,
+                            checkInTime,
+                            checkOutTime,
+                            regularWorkHours.toFixed(2),
+                            overtimeHours.toFixed(1),
+                            workTypeInfo,
+                            onSiteDetails,
+                            report.workType || '-',
+                            report.project || '-',
+                            report.duration || '-'
+                        ]);
+                    });
+                }
+            });
+
+            // 6. สร้างและดาวน์โหลดไฟล์ Excel
+            if (dataForExcel.length <= 1) {
+                 alert('ไม่พบข้อมูลที่จะ Export ตามเงื่อนไขที่เลือก');
+                 return;
+             }
+
+            const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'สรุปเวลาทำงาน');
+            const fileName = `สรุปเวลาทำงาน_${startDateString}_ถึง_${endDateString}.xlsx`;
+            XLSX.writeFile(wb, fileName);
 
         } catch (error) {
-            console.error("Error loading employee summary:", error);
-            container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+            console.error("Error exporting employee summary to Excel:", error);
+            // แสดง error ที่เฉพาะเจาะจงมากขึ้นถ้าเป็นไปได้
+            alert("เกิดข้อผิดพลาดระหว่างการ Export ข้อมูล: " + error.message);
         }
     }
 
@@ -1774,7 +2068,7 @@ const fetchProjectData = async () => {
     console.log("Current hour is:", currentTime.getHours()); // Log เพิ่มเติม
 
     // เช็คว่าเวลาปัจจุบันคือ 18:00 น. หรือหลังจากนั้นหรือไม่ (หรือตามเงื่อนไขทดสอบ)
-    if (currentTime.getHours() >= 9) { // <<< แก้ไขตัวเลขตรงนี้ หากต้องการทดสอบ
+    if (currentTime.getHours() >= 11) { // <<< แก้ไขตัวเลขตรงนี้ หากต้องการทดสอบ
         console.log("Time is >= 18:00, showing confirm dialog."); // Log เพิ่มเติม
         // ถ้าใช่, แสดงกล่องยืนยัน
         showConfirmDialog(
@@ -1821,12 +2115,15 @@ const fetchProjectData = async () => {
                 loadSentReports(); // [เปลี่ยน] โหลดจาก work_records
             }
             if (pageId === 'admin-dashboard-page') {
-                loadEmployeeSummary(); 
-                loadAllUsersForDropdown(); // [เพิ่ม] เรียกใช้ฟังก์ชันโหลด Admin
-                if (!editDateSelect.value) { // [เพิ่ม] ตั้งค่าวันที่
-                    editDateSelect.value = new Date().toISOString().split('T')[0];
-                }
-            }
+                // loadEmployeeSummary(); 
+                loadAllUsersForDropdown();
+        if (!editDateSelect.value) {
+            editDateSelect.value = new Date().toISOString().split('T')[0];
+        }
+         // เคลียร์ข้อมูลเก่าเมื่อเปิดหน้าใหม่ และแสดงข้อความให้กดค้นหา
+        document.getElementById('employee-summary-container-admin').innerHTML = '<p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>';
+        document.getElementById('summary-pagination-controls').innerHTML = '';
+    }
             if (pageId === 'profile-page') {
                 loadWorkHistory(); // [เปลี่ยน] โหลดจาก work_records
                 db.collection('users').doc(currentUser.uid).get().then(doc => {
@@ -2087,68 +2384,41 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
 
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     async function loadAllUsersForDropdown() {
-        if (editUserSelect.options.length > 1) return; // โหลดไปแล้ว
-        try {
-            const usersSnapshot = await db.collection('users').orderBy('fullName').get();
-            editUserSelect.innerHTML = '<option value="">--- เลือกพนักงาน ---</option>';
-            
-            usersSnapshot.forEach(doc => {
-                const user = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id; 
-                option.textContent = user.fullName || doc.id;
-                editUserSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error("Error loading users:", error);
-            editUserSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
-        }
+    // ดึง element ของ select ที่เพิ่มเข้ามา
+    const summaryEmployeeSelect = document.getElementById('summary-employee-select');
+
+    // ตรวจสอบว่าโหลดไปหรือยัง (เช็คจาก select ตัวเดิมก็ได้)
+    if (editUserSelect.options.length > 1 && summaryEmployeeSelect.options.length > 1) return;
+
+    try {
+        const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+        // เคลียร์ option เก่า (ยกเว้นตัวแรก)
+        editUserSelect.innerHTML = '<option value="">--- เลือกพนักงาน ---</option>';
+        summaryEmployeeSelect.innerHTML = '<option value="">พนักงานทั้งหมด</option>'; // เพิ่มตัวเลือก "ทั้งหมด"
+
+        usersSnapshot.forEach(doc => {
+            const user = doc.data();
+            const optionText = user.fullName || doc.id;
+            const optionValue = doc.id;
+
+            // สร้าง option สำหรับ Edit Modal
+            const optionEdit = document.createElement('option');
+            optionEdit.value = optionValue;
+            optionEdit.textContent = optionText;
+            editUserSelect.appendChild(optionEdit);
+
+            // สร้าง option สำหรับ Summary Filter
+            const optionSummary = document.createElement('option');
+            optionSummary.value = optionValue;
+            optionSummary.textContent = optionText;
+            summaryEmployeeSelect.appendChild(optionSummary);
+        });
+    } catch (error) {
+        console.error("Error loading users:", error);
+        editUserSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
+        summaryEmployeeSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
     }
-
-    // 3. ฟังก์ชันสำหรับค้นหา Record
-    searchRecordBtn.addEventListener('click', async () => {
-        const userId = editUserSelect.value;
-        const selectedDate = editDateSelect.value; 
-
-        if (!userId || !selectedDate) {
-            alert("กรุณาเลือกพนักงานและวันที่");
-            return;
-        }
-
-        const docId = `${userId}_${selectedDate}`;
-        searchResultsContainer.innerHTML = `<p class="text-center text-gray-500">กำลังค้นหา...</p>`;
-
-        try {
-            const workRecordDoc = await db.collection('work_records').doc(docId).get();
-
-            if (workRecordDoc.exists) {
-                const record = workRecordDoc.data();
-                const report = record.report; // [เพิ่ม]
-                const checkinTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH');
-                const checkoutTime = record.checkOut ? record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH') : '-';
-                
-                searchResultsContainer.innerHTML = `
-                    <div class="p-4 bg-white rounded-xl border">
-                        <p class="font-semibold">${editUserSelect.options[editUserSelect.selectedIndex].text}</p>
-                        <p class="text-sm text-gray-500">วันที่: ${selectedDate}</p>
-                        <div class="text-sm mt-2">
-                            <p>Check-in: <span class="font-medium text-green-600">${checkinTime}</span></p>
-                            <p>Check-out: <span class="font-medium text-red-500">${checkoutTime}</span></p>
-                            <p>สถานะรายงาน: <span class="font-medium ${report ? 'text-green-600' : 'text-yellow-600'}">${report ? 'ส่งแล้ว' : 'ยังไม่ส่ง'}</span></p>
-                        </div>
-                        <button data-doc-id="${docId}" class="edit-record-btn w-full mt-3 py-2 px-4 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600">
-                            แก้ไข
-                        </button>
-                    </div>
-                `;
-            } else {
-                searchResultsContainer.innerHTML = `<p class="text-center text-red-500">ไม่พบข้อมูลการลงเวลาของพนักงานในวันที่เลือก</p>`;
-            }
-        } catch (error) {
-            console.error("Error searching record:", error);
-            searchResultsContainer.innerHTML = `<p class="text-center text-red-500">เกิดข้อผิดพลาดในการค้นหา</p>`;
-        }
-    });
+}
 
     // 4. ฟังก์ชันสำหรับเปิด Modal (ใช้ Event Delegation)
     searchResultsContainer.addEventListener('click', (e) => {
