@@ -583,7 +583,7 @@
         <h3 id="confirm-title" class="text-lg font-semibold mb-2">ยืนยันการดำเนินการ</h3>
         <p id="confirm-message" class="text-sm text-gray-600 mb-6">คุณแน่ใจหรือไม่?</p>
         <div class="flex justify-end space-x-3">
-            <button id="confirm-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+            <button id="confirm-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ออกงาน</button>
             <button id="confirm-ok-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ตกลง</button>
         </div>
     </div>
@@ -1230,7 +1230,7 @@ const fetchProjectData = async () => {
             if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
 
             // const now = new Date('2025-10-17T08:30:00'); // [ปิด] Hardcode
-            const now = new Date('2025-10-20T08:30:00'); // [เปิด] ใช้เวลาจริง
+            const now = new Date(); // [เปิด] ใช้เวลาจริง
 
             const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
 
@@ -1650,7 +1650,7 @@ const fetchProjectData = async () => {
 
     const checkoutSpan = checkoutBtn.querySelector('span'); // Element ข้อความบนปุ่ม
 
-    // 2. ฟังก์ชันสำหรับดำเนินการ Check-out จริง (หลังจากยืนยัน หรือ ไม่ต้องยืนยัน)
+    // 2. ฟังก์ชันสำหรับดำเนินการ Check-out จริง (คิด OT ตามปกติ)
     const proceedWithCheckout = async () => {
         console.log("Inside proceedWithCheckout"); // Log เพิ่มเติม
         checkoutBtn.disabled = true; // ปิดปุ่ม ป้องกันการกดซ้ำ
@@ -1714,27 +1714,73 @@ const fetchProjectData = async () => {
         // ไม่ต้องมี finally ที่นี่ เพราะถ้าสำเร็จ UI จะเปลี่ยนไปแล้ว ไม่ควรกดปุ่มเดิมได้
     };
 
-    // 3. ฟังก์ชันสำหรับกรณี กดยกเลิก ตอนยืนยัน OT
-    const cancelCheckout = () => {
-         console.log("Checkout cancelled (OT confirmation)."); // Log เพิ่มเติม
-         showNotification("ยกเลิกการลงเวลาออก", "warning");
-         // ไม่ต้องเปิดปุ่มคืน เพราะผู้ใช้ยังอยู่ในสถานะ checked_in และปุ่มยังไม่ได้ถูก disable
-         if (checkoutSpan) checkoutSpan.textContent = "Check Out"; // คืนข้อความปุ่ม
+    // [เพิ่ม] ฟังก์ชันสำหรับ Check-out ปกติ (บังคับไม่คิด OT)
+    const proceedWithCheckoutWithoutOT = async () => {
+        console.log("Inside proceedWithCheckoutWithoutOT"); // Log เพิ่มเติม
+        checkoutBtn.disabled = true; // ปิดปุ่ม ป้องกันการกดซ้ำ
+        // const checkoutSpan = checkoutBtn.querySelector('span'); // ดึงมาจากด้านนอกแล้ว
+        if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก..."; // เปลี่ยนข้อความปุ่ม
+
+        try {
+            const now = new Date();
+            const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+            const workRecordRef = db.collection('work_records').doc(docId);
+
+            const workRecordDoc = await workRecordRef.get();
+            if (!workRecordDoc.exists) {
+                throw new Error("ไม่พบข้อมูลการเข้างานของวันนี้");
+            }
+            const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
+
+            // คำนวณชั่วโมงทำงานปกติ แต่บังคับให้ OT เป็น 0
+            const { regularWorkHours } = calculateWorkHours(checkinTime, now); // ดึงมาแค่ regularWorkHours
+            const overtimeHours = 0; // <<< บังคับ OT เป็น 0 ตรงนี้
+
+            const checkOutData = {
+                timestamp: firebase.firestore.Timestamp.fromDate(now),
+                location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
+            };
+
+            // อัปเดตข้อมูลลง Firestore (ใช้ overtimeHours ที่เป็น 0)
+            await workRecordRef.update({
+                checkOut: checkOutData,
+                status: "completed",
+                overtime: { hours: overtimeHours } // <<< บันทึก OT เป็น 0
+            });
+
+            showNotification("บันทึกเวลาออกงานสำเร็จ (ไม่คิด OT)"); // เปลี่ยนข้อความแจ้งเตือนเล็กน้อย
+
+            updateUIToCompleted();
+
+            // อัปเดตข้อมูลสรุปบนหน้าจอ (ใช้ overtimeHours ที่เป็น 0)
+            summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
+            summaryCheckoutTime.classList.remove('text-gray-400');
+            summaryCheckoutTime.classList.add('text-red-500');
+            summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+            // ไม่ต้องแสดง (OT 0 ชม.)
+
+        } catch (error) {
+            console.error("Check-out without OT error:", error);
+            showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
+            checkoutBtn.disabled = false;
+            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+        }
     };
+
 
     // 4. ตรวจสอบเวลาปัจจุบันเพื่อยืนยัน OT
     console.log("Checking time for OT confirmation..."); // Log เพิ่มเติม
-    const currentTime = new Date(); // เทสโอที
+    const currentTime = new Date();
     console.log("Current hour is:", currentTime.getHours()); // Log เพิ่มเติม
 
-    // เช็คว่าเวลาปัจจุบันคือ 18:00 น. หรือหลังจากนั้นหรือไม่
-    if (currentTime.getHours() >= 18) {
+    // เช็คว่าเวลาปัจจุบันคือ 18:00 น. หรือหลังจากนั้นหรือไม่ (หรือตามเงื่อนไขทดสอบ)
+    if (currentTime.getHours() >= 9) { // <<< แก้ไขตัวเลขตรงนี้ หากต้องการทดสอบ
         console.log("Time is >= 18:00, showing confirm dialog."); // Log เพิ่มเติม
         // ถ้าใช่, แสดงกล่องยืนยัน
         showConfirmDialog(
             "ขณะนี้เป็นเวลา OT คุณยืนยันที่จะลงเวลาออกและบันทึก OT หรือไม่?",
-            proceedWithCheckout, // ฟังก์ชันที่จะทำเมื่อกด "ตกลง"
-            cancelCheckout       // ฟังก์ชันที่จะทำเมื่อกด "ยกเลิก"
+            proceedWithCheckout,         // ฟังก์ชันเมื่อกด "ตกลง" (คิด OT ปกติ)
+            proceedWithCheckoutWithoutOT // <<< ใช้ฟังก์ชันใหม่เมื่อกด "ยกเลิก"
         );
     } else {
         console.log("Time is < 18:00, proceeding directly."); // Log เพิ่มเติม
