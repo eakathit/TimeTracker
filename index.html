@@ -2527,11 +2527,7 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
     const editCheckinTimeInput = document.getElementById('edit-checkin-time');
     const editCheckoutTimeInput = document.getElementById('edit-checkout-time');
     const editOnsiteDetailsInput = document.getElementById('edit-onsite-details');
-    // [เพิ่ม] Input สำหรับ Report
-    const editWorkTypeInput = document.getElementById('edit-work-type');
-    const editProjectInput = document.getElementById('edit-project');
-    const editDurationInput = document.getElementById('edit-duration');
-    // [เพิ่ม] Elements สำหรับ Dropdown ใน Modal
+    // Elements สำหรับ Dropdown ใน Modal
     const editModalWorkTypeSelectedText = document.getElementById('edit-modal-work-type-selected-text');
     const editModalProjectSelectedText = document.getElementById('edit-modal-project-selected-text');
     const editModalDurationSelectedText = document.getElementById('edit-modal-duration-selected-text');
@@ -2542,7 +2538,7 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
     // 3. [เพิ่ม] ฟังก์ชันสำหรับค้นหาข้อมูลเมื่อคลิกปุ่ม
     searchRecordBtn.addEventListener('click', async () => {
         const userId = editUserSelect.value;
-        const dateStr = editDateSelect.value; // นี่คือ YYYY-MM-DD
+        const dateStr = editDateSelect.value; // YYYY-MM-DD
 
         if (!userId || !dateStr) {
             searchResultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">กรุณาเลือกพนักงานและวันที่</p>';
@@ -2552,12 +2548,12 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         searchResultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
 
         try {
-            // สร้าง docId จาก userId และ date string
             const docId = `${userId}_${dateStr}`;
             const workRecordRef = db.collection('work_records').doc(docId);
             const doc = await workRecordRef.get();
 
             if (doc.exists) {
+                // --- กรณีพบข้อมูล (เหมือนเดิม) ---
                 const record = doc.data();
                 const report = record.report || {};
                 
@@ -2565,7 +2561,6 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
                 const checkoutTime = record.checkOut ? record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
                 const reportInfo = report.workType ? `${report.workType} (${report.project || 'N/A'})` : 'ยังไม่ส่งรายงาน';
 
-                // แสดงผลข้อมูลที่พบ
                 searchResultsContainer.innerHTML = `
                     <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                         <div class="flex justify-between items-start">
@@ -2582,8 +2577,16 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
                     </div>
                 `;
             } else {
-                // ถ้าไม่พบข้อมูล
-                searchResultsContainer.innerHTML = '<p class="text-sm text-center text-yellow-600 py-2">ไม่พบข้อมูลการลงเวลาสำหรับผู้ใช้และวันที่ที่เลือก</p>';
+                // --- [แก้ไข] กรณีไม่พบข้อมูล -> แสดงปุ่ม "เพิ่ม" ---
+                searchResultsContainer.innerHTML = `
+                    <p class="text-sm text-center text-yellow-600 py-2">ไม่พบข้อมูลการลงเวลาสำหรับผู้ใช้และวันที่ที่เลือก</p>
+                    <button 
+                        data-user-id="${userId}" 
+                        data-date-str="${dateStr}" 
+                        class="add-record-btn mt-2 w-full btn-primary py-2 text-sm">
+                        + เพิ่มข้อมูลสำหรับวันนี้
+                    </button>
+                `;
             }
 
         } catch (error) {
@@ -2594,47 +2597,49 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
 
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     async function loadAllUsersForDropdown() {
-    // ดึง element ของ select ที่เพิ่มเข้ามา
-    const summaryEmployeeSelect = document.getElementById('summary-employee-select');
+        const summaryEmployeeSelect = document.getElementById('summary-employee-select');
+        if (editUserSelect.options.length > 1 && summaryEmployeeSelect.options.length > 1) return;
 
-    // ตรวจสอบว่าโหลดไปหรือยัง (เช็คจาก select ตัวเดิมก็ได้)
-    if (editUserSelect.options.length > 1 && summaryEmployeeSelect.options.length > 1) return;
+        try {
+            const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+            editUserSelect.innerHTML = '<option value="">--- เลือกพนักงาน ---</option>';
+            summaryEmployeeSelect.innerHTML = '<option value="">พนักงานทั้งหมด</option>'; 
 
-    try {
-        const usersSnapshot = await db.collection('users').orderBy('fullName').get();
-        // เคลียร์ option เก่า (ยกเว้นตัวแรก)
-        editUserSelect.innerHTML = '<option value="">--- เลือกพนักงาน ---</option>';
-        summaryEmployeeSelect.innerHTML = '<option value="">พนักงานทั้งหมด</option>'; // เพิ่มตัวเลือก "ทั้งหมด"
+            usersSnapshot.forEach(doc => {
+                const user = doc.data();
+                const optionText = user.fullName || doc.id;
+                const optionValue = doc.id;
 
-        usersSnapshot.forEach(doc => {
-            const user = doc.data();
-            const optionText = user.fullName || doc.id;
-            const optionValue = doc.id;
+                const optionEdit = document.createElement('option');
+                optionEdit.value = optionValue;
+                optionEdit.textContent = optionText;
+                editUserSelect.appendChild(optionEdit);
 
-            // สร้าง option สำหรับ Edit Modal
-            const optionEdit = document.createElement('option');
-            optionEdit.value = optionValue;
-            optionEdit.textContent = optionText;
-            editUserSelect.appendChild(optionEdit);
-
-            // สร้าง option สำหรับ Summary Filter
-            const optionSummary = document.createElement('option');
-            optionSummary.value = optionValue;
-            optionSummary.textContent = optionText;
-            summaryEmployeeSelect.appendChild(optionSummary);
-        });
-    } catch (error) {
-        console.error("Error loading users:", error);
-        editUserSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
-        summaryEmployeeSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
+                const optionSummary = document.createElement('option');
+                optionSummary.value = optionValue;
+                optionSummary.textContent = optionText;
+                summaryEmployeeSelect.appendChild(optionSummary);
+            });
+        } catch (error) {
+            console.error("Error loading users:", error);
+            editUserSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
+            summaryEmployeeSelect.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>';
+        }
     }
-}
 
     // 4. ฟังก์ชันสำหรับเปิด Modal (ใช้ Event Delegation)
     searchResultsContainer.addEventListener('click', (e) => {
+        // ปุ่ม "แก้ไข"
         if (e.target.classList.contains('edit-record-btn')) {
             const docId = e.target.dataset.docId;
-            openEditModal(docId);
+            openEditModal(docId, null, null); // ส่ง docId ไป
+        }
+        
+        // [เพิ่ม] ปุ่ม "เพิ่มข้อมูล"
+        if (e.target.classList.contains('add-record-btn')) {
+            const userId = e.target.dataset.userId;
+            const dateStr = e.target.dataset.dateStr;
+            openEditModal(null, userId, dateStr); // ส่ง null, userId, dateStr ไป
         }
     });
     
@@ -2647,33 +2652,52 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
     };
 
     // 5. [ปรับปรุง] ฟังก์ชันเปิด Modal และดึงข้อมูล (รวม Report)
-    // 5. [ปรับปรุง] ฟังก์ชันเปิด Modal และดึงข้อมูล (รวม Report)
-    async function openEditModal(docId) {
+    async function openEditModal(docId, newUserId, newDateStr) {
         try {
-            const workRecordDoc = await db.collection('work_records').doc(docId).get();
-            if (!workRecordDoc.exists) {
-                alert("ไม่พบข้อมูลที่จะแก้ไข");
-                return;
-            }
+            let record = {};
+            let report = {};
+            let checkinDate = null;
+            let checkoutDate = null;
+            let finalDocId = docId;
+
+            if (docId) {
+                // --- Case 1: แก้ไข (Logic เดิม) ---
+                const workRecordDoc = await db.collection('work_records').doc(docId).get();
+                if (!workRecordDoc.exists) {
+                    alert("ไม่พบข้อมูลที่จะแก้ไข");
+                    return;
+                }
+                record = workRecordDoc.data();
+                report = record.report || {};
+                checkinDate = record.checkIn.timestamp.toDate();
+                checkoutDate = record.checkOut ? record.checkOut.timestamp.toDate() : null;
             
-            const record = workRecordDoc.data();
-            const report = record.report || {}; // ดึง report หรือ object ว่าง
+            } else {
+                // --- Case 2: เพิ่มใหม่ (Logic ใหม่) ---
+                finalDocId = `${newUserId}_${newDateStr}`; // ตั้ง ID ที่จะสร้าง
+                
+                // ตั้งเวลาเริ่มต้น 08:30 และ 17:30 ของวันที่เลือก
+                const defaultCheckin = new Date(`${newDateStr}T08:30:00`);
+                const defaultCheckout = new Date(`${newDateStr}T17:30:00`);
 
-            const checkinDate = record.checkIn.timestamp.toDate();
-            const checkoutDate = record.checkOut ? record.checkOut.timestamp.toDate() : null;
+                checkinDate = defaultCheckin;
+                checkoutDate = defaultCheckout;
+                
+                // report กับ record.checkIn.onSiteDetails จะเป็น object ว่าง
+            }
 
-            // เติมข้อมูลเวลา
-            editDocIdInput.value = docId;
+            // --- เติมข้อมูลลง Modal (ใช้ร่วมกันทั้ง 2 กรณี) ---
+            editDocIdInput.value = finalDocId;
             editCheckinTimeInput.value = toLocalISOString(checkinDate);
             editCheckoutTimeInput.value = toLocalISOString(checkoutDate);
-            editOnsiteDetailsInput.value = record.checkIn.onSiteDetails || '';
-            
-            // [เปลี่ยน] เติมข้อมูลรายงานลงใน Dropdown
+            editOnsiteDetailsInput.value = record.checkIn?.onSiteDetails || '';
+
+            // เติมข้อมูล Report
             if (report.workType) {
                 editModalWorkTypeSelectedText.textContent = report.workType;
                 editModalWorkTypeSelectedText.classList.remove('text-gray-500');
             } else {
-                editModalWorkTypeSelectedText.textContent = 'เลือกประเภทงาน...';
+                editModalWorkTypeSelectedText.textContent = '--- เลือกประเภทงาน ---';
                 editModalWorkTypeSelectedText.classList.add('text-gray-500');
             }
 
@@ -2681,37 +2705,39 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
                 editModalProjectSelectedText.textContent = report.project;
                 editModalProjectSelectedText.classList.remove('text-gray-500');
             } else {
-                editModalProjectSelectedText.textContent = 'เลือกโครงการ...';
+                editModalProjectSelectedText.textContent = '--- เลือกโครงการ ---';
                 editModalProjectSelectedText.classList.add('text-gray-500');
             }
 
-            // [เพิ่ม] Logic การตั้งค่า Duration Dropdown
-            editModalCustomTimeInputs.classList.add('hidden'); // ซ่อนช่อง custom time ก่อน
+            // Logic การตั้งค่า Duration
+            editModalCustomTimeInputs.classList.add('hidden');
             const standardDurations = ['ทั้งวัน (08:30 - 17:30)', 'ครึ่งวันเช้า (08:30 - 12:00)', 'ครึ่งวันบ่าย (13:00 - 17:30)'];
             if (report.duration) {
                 if (standardDurations.includes(report.duration)) {
                     editModalDurationSelectedText.textContent = report.duration;
                     editModalDurationSelectedText.classList.remove('text-gray-500');
                 } else {
-                    // ถ้าไม่ใช่ค่ามาตรฐาน ให้ถือว่าเป็น 'กำหนดเวลา'
                     editModalDurationSelectedText.textContent = 'กำหนดเวลา';
                     editModalDurationSelectedText.classList.remove('text-gray-500');
-                    editModalCustomTimeInputs.classList.remove('hidden'); // แสดงช่อง custom time
-                    
-                    // พยายามแยกเวลา
+                    editModalCustomTimeInputs.classList.remove('hidden');
                     const times = report.duration.split(' - ');
                     if (times.length === 2) {
                         editModalCustomTimeStartInput.value = times[0];
                         editModalCustomTimeEndInput.value = times[1];
                     } else {
-                        // ถ้าแยกไม่ได้ ก็เคลียร์ค่า
                         editModalCustomTimeStartInput.value = '';
                         editModalCustomTimeEndInput.value = '';
                     }
                 }
             } else {
-                editModalDurationSelectedText.textContent = 'เลือกระยะเวลา...';
-                editModalDurationSelectedText.classList.add('text-gray-500');
+                // [แก้ไข] ถ้าเป็นการเพิ่มใหม่ ให้ตั้งค่าเริ่มต้นเป็น "ทั้งวัน"
+                if (!docId) { 
+                    editModalDurationSelectedText.textContent = 'ทั้งวัน (08:30 - 17:30)';
+                    editModalDurationSelectedText.classList.remove('text-gray-500');
+                } else {
+                    editModalDurationSelectedText.textContent = '--- เลือกระยะเวลา ---';
+                    editModalDurationSelectedText.classList.add('text-gray-500');
+                }
                 editModalCustomTimeStartInput.value = '';
                 editModalCustomTimeEndInput.value = '';
             }
@@ -2732,84 +2758,133 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
     modalOverlay.addEventListener('click', closeEditModal);
 
     // 7. [ปรับปรุง] ฟังก์ชันบันทึกการแก้ไข (รวม Report)
+    function closeEditModal() {
+        editModal.classList.add('hidden');
+    }
+    cancelEditBtn.addEventListener('click', closeEditModal);
+    modalOverlay.addEventListener('click', closeEditModal);
+
+    // 7. [แก้ไข] ฟังก์ชันบันทึก (รองรับทั้ง "แก้ไข" และ "เพิ่มใหม่")
     saveEditBtn.addEventListener('click', async () => {
         const docId = editDocIdInput.value;
         if (!docId) return;
+
+        const [userId, dateStr] = docId.split('_'); // ดึง userId และ dateStr จาก docId
+        if (!userId || !dateStr) {
+            alert("Doc ID ไม่ถูกต้อง");
+            return;
+        }
 
         saveEditBtn.disabled = true;
         saveEditBtn.textContent = 'กำลังบันทึก...';
 
         try {
-            // [เปลี่ยน] อ่านค่าจาก Dropdowns
+            // --- 1. อ่านและตรวจสอบข้อมูลจาก Modal ---
             const selectedWorkType = editModalWorkTypeSelectedText.textContent;
             const selectedProject = editModalProjectSelectedText.textContent;
             const selectedDuration = editModalDurationSelectedText.textContent;
-
             let finalDuration = selectedDuration;
-            
-            // ตรวจสอบค่าก่อนบันทึก
-            if (selectedWorkType.includes('...')) {
-                alert("กรุณาเลือกประเภทงาน");
-                saveEditBtn.disabled = false;
-                saveEditBtn.textContent = 'บันทึกการแก้ไข';
-                return;
-            }
-            if (selectedProject.includes('...')) {
-                alert("กรุณาเลือกโครงการ");
-                saveEditBtn.disabled = false;
-                saveEditBtn.textContent = 'บันทึกการแก้ไข';
-                return;
-            }
 
-            if (selectedDuration.includes('...')) {
-                finalDuration = null; // ถ้าไม่เลือก ก็ให้เป็น null
+            if (selectedWorkType.includes('---')) {
+                alert("กรุณาเลือกประเภทงาน");
+                throw new Error("Validation failed");
+            }
+            if (selectedProject.includes('---')) {
+                alert("กรุณาเลือกโครงการ");
+                throw new Error("Validation failed");
+            }
+            if (selectedDuration.includes('---')) {
+                finalDuration = null; // ถ้าไม่เลือก ให้เป็น null
             } else if (selectedDuration === 'กำหนดเวลา') {
                 const startTime = editModalCustomTimeStartInput.value;
                 const endTime = editModalCustomTimeEndInput.value;
                 if (!startTime || !endTime) {
                     alert("กรุณากรอกเวลาเริ่มต้นและสิ้นสุดสำหรับ 'กำหนดเวลา'");
-                    saveEditBtn.disabled = false;
-                    saveEditBtn.textContent = 'บันทึกการแก้ไข';
-                    return;
+                    throw new Error("Validation failed");
                 }
                 finalDuration = `${startTime} - ${endTime}`;
             }
 
-            const newCheckinTime = firebase.firestore.Timestamp.fromDate(new Date(editCheckinTimeInput.value));
-            
-            const updatedData = {
-                'checkIn.timestamp': newCheckinTime,
-                'checkIn.onSiteDetails': editOnsiteDetailsInput.value || null,
-                'report.workType': selectedWorkType,
-                'report.project': selectedProject,
-                'report.duration': finalDuration,
-                'report.submittedAt': firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            if (editCheckoutTimeInput.value) {
-                // ... (โค้ดคำนวณ Check-out และ OT เหมือนเดิม)
-                const newCheckoutTime = firebase.firestore.Timestamp.fromDate(new Date(editCheckoutTimeInput.value));
-                const { regularWorkHours, overtimeHours } = calculateWorkHours(newCheckinTime.toDate(), newCheckoutTime.toDate());
-
-                updatedData['checkOut.timestamp'] = newCheckoutTime;
-                updatedData['status'] = 'completed'; 
-                updatedData['overtime.hours'] = overtimeHours;
-            } else {
-                updatedData['checkOut'] = firebase.firestore.FieldValue.delete();
-                updatedData['status'] = 'checked_in'; 
-                updatedData['overtime'] = firebase.firestore.FieldValue.delete();
+            if (!editCheckinTimeInput.value) {
+                alert("กรุณาระบุเวลา Check-in");
+                throw new Error("Validation failed");
             }
 
-            await db.collection('work_records').doc(docId).update(updatedData);
+            const newCheckinTimestamp = firebase.firestore.Timestamp.fromDate(new Date(editCheckinTimeInput.value));
+            const newCheckoutTimestamp = editCheckoutTimeInput.value ? firebase.firestore.Timestamp.fromDate(new Date(editCheckoutTimeInput.value)) : null;
 
-            alert("บันทึกการแก้ไขสำเร็จ!");
+            // --- 2. เตรียม Object ข้อมูล ---
+            const reportData = {
+                workType: selectedWorkType,
+                project: selectedProject,
+                duration: finalDuration,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            let workHours = { regularWorkHours: 0, overtimeHours: 0 };
+            if (newCheckoutTimestamp) {
+                workHours = calculateWorkHours(newCheckinTimestamp.toDate(), newCheckoutTimestamp.toDate());
+            }
+
+            // --- 3. ตรวจสอบว่าเป็นการ "แก้ไข" หรือ "สร้างใหม่" ---
+            const docRef = db.collection('work_records').doc(docId);
+            const doc = await docRef.get();
+
+            if (doc.exists) {
+                // --- กรณีแก้ไข (Update) ---
+                const updatedData = {
+                    'checkIn.timestamp': newCheckinTimestamp,
+                    'checkIn.onSiteDetails': editOnsiteDetailsInput.value || null,
+                    'report': reportData // อัปเดต report ทั้ง object
+                };
+
+                if (newCheckoutTimestamp) {
+                    updatedData['checkOut'] = { 
+                        timestamp: newCheckoutTimestamp, 
+                        location: doc.data().checkOut?.location || new firebase.firestore.GeoPoint(0, 0) // ใช้ location เดิม (ถ้ามี) หรือ 0,0
+                    };
+                    updatedData['status'] = 'completed';
+                    updatedData['overtime'] = { hours: workHours.overtimeHours };
+                } else {
+                    updatedData['checkOut'] = firebase.firestore.FieldValue.delete();
+                    updatedData['status'] = 'checked_in';
+                    updatedData['overtime'] = firebase.firestore.FieldValue.delete();
+                }
+                
+                await docRef.update(updatedData);
+
+            } else {
+                // --- กรณีสร้างใหม่ (Set) ---
+                const newRecord = {
+                    userId: userId,
+                    date: firebase.firestore.Timestamp.fromDate(new Date(dateStr)), // วันที่ของเอกสาร
+                    checkIn: {
+                        timestamp: newCheckinTimestamp,
+                        onSiteDetails: editOnsiteDetailsInput.value || null,
+                        location: new firebase.firestore.GeoPoint(0, 0), // Admin add = 0,0
+                        accuracy: 0,
+                        workType: 'in_factory', // ตั้งค่า default
+                        photoUrl: null
+                    },
+                    report: reportData,
+                    status: newCheckoutTimestamp ? 'completed' : 'checked_in',
+                    checkOut: newCheckoutTimestamp ? { timestamp: newCheckoutTimestamp, location: new firebase.firestore.GeoPoint(0, 0) } : null,
+                    overtime: newCheckoutTimestamp ? { hours: workHours.overtimeHours } : null
+                };
+
+                await docRef.set(newRecord);
+            }
+
+            alert("บันทึกข้อมูลสำเร็จ!");
             closeEditModal();
-            searchRecordBtn.click(); 
-            loadEmployeeSummary(); 
+            searchRecordBtn.click(); // รีเฟรชผลการค้นหา
+            loadEmployeeSummary(); // รีเฟรชสรุป (ถ้าเปิดอยู่)
 
         } catch (error) {
             console.error("Error saving record:", error);
-            alert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+            if (error.message !== "Validation failed") {
+                alert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+            }
         } finally {
             saveEditBtn.disabled = false;
             saveEditBtn.textContent = 'บันทึกการแก้ไข';
