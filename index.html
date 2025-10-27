@@ -497,14 +497,24 @@
             </div>
         </div>
 
-    </div> <div class="space-y-4">
+    </div> 
+    <div class="space-y-4">
         <div class="flex justify-between items-center">
              <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-             <select id="history-range-select" class="text-sm border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
-                <option value="7">7 วันล่าสุด</option>
-                <option value="14">14 วันล่าสุด</option>
-                <option value="30">30 วันล่าสุด</option>
-             </select>
+             
+             <div class="relative inline-block shadow-sm rounded-lg">
+                <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
+                    <option value="7">7 วันล่าสุด</option>
+                    <option value="this_month">เดือนนี้</option>
+                    <option value="last_month">เดือนที่แล้ว</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+            
         </div>
        
         <div id="work-history-container" class="space-y-4">
@@ -1835,12 +1845,13 @@ async function loadEmployeeSummary(page = 1) { // เพิ่ม parameter page
 
 
 // ค้นหาฟังก์ชัน loadWorkHistory() เดิม และแทนที่ด้วยโค้ดนี้ทั้งหมด
+// ค้นหาฟังก์ชัน loadWorkHistory() เดิม และแทนที่ด้วยโค้ดนี้ทั้งหมด
 async function loadWorkHistory() {
     if (!currentUser) return;
 
     const container = document.getElementById('work-history-container');
     const rangeSelect = document.getElementById('history-range-select');
-    const daysToLoad = parseInt(rangeSelect.value, 10);
+    const selectedRange = rangeSelect.value; // อ่านค่า value ใหม่ ("7", "this_month", "last_month")
 
     // ดึง Element ของการ์ดสรุป
     const summaryHoursEl = document.getElementById('profile-summary-hours');
@@ -1854,9 +1865,26 @@ async function loadWorkHistory() {
     container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
 
     try {
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - daysToLoad);
+        // [ปรับปรุง Logic] คำนวณ startDate และ endDate ตามตัวเลือกใหม่
+        let startDate, endDate;
+        const now = new Date();
+        
+        // ตั้งค่าเวลาให้เป็น 00:00:00 เพื่อให้ครอบคลุมวันแรก
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+
+        if (selectedRange === "7") {
+            startDate = new Date(todayStart);
+            startDate.setDate(todayStart.getDate() - 6); // นับย้อนหลังไป 6 วัน (รวมวันนี้เป็น 7)
+            endDate = new Date(now); // สิ้นสุดที่เวลาปัจจุบัน
+        } else if (selectedRange === "this_month") {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1); // วันแรกของเดือนปัจจุบัน
+            endDate = new Date(now); // สิ้นสุดที่เวลาปัจจุบัน
+        } else if (selectedRange === "last_month") {
+            // วันแรกของเดือนที่แล้ว
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            // วันสุดท้ายของเดือนที่แล้ว (คือวันที่ 0 ของเดือนนี้)
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        }
 
         // 1. Fetch work records
         const recordsSnapshot = await db.collection('work_records')
@@ -1867,7 +1895,13 @@ async function loadWorkHistory() {
             .get();
 
         if (recordsSnapshot.empty) {
-            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">ไม่พบประวัติการทำงานในช่วง ${daysToLoad} วันที่ผ่านมา</p>`;
+            // [ปรับปรุง] เปลี่ยนข้อความแจ้งเตือนตามตัวเลือก
+            let emptyMessage = "ไม่พบประวัติการทำงาน";
+            if (selectedRange === "7") emptyMessage = "ไม่พบประวัติในช่วง 7 วันที่ผ่านมา";
+            else if (selectedRange === "this_month") emptyMessage = "ไม่พบประวัติในเดือนนี้";
+            else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
+            
+            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
             summaryDaysEl.textContent = '0 วัน'; // อัปเดตสรุปแม้ว่จะว่าง
             return;
         }
@@ -1914,7 +1948,7 @@ async function loadWorkHistory() {
             totalRegularHours += regularWorkHours;
             totalOtHours += overtimeHours;
 
-            // [ปรับปรุง] HTML ของการ์ดประวัติ (ไอคอนชุดใหม่ สไตล์ Outline 1.5px)
+            // [โค้ด HTML ของการ์ดประวัติ (ใช้ไอคอนชุดล่าสุด)]
             historyHtml += `
             <div class="card !p-4 shadow-sm">
                 <p class="font-semibold text-gray-800 mb-3">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
