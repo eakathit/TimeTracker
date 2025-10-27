@@ -468,28 +468,55 @@
     </div>
 </div>
             <div id="profile-page" class="page space-y-6">
-                <div class="card text-center">
-                     <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-md">
-                     <h2 id="profile-page-name" class="text-2xl font-bold mt-4 text-gray-800"></h2>
-                     <p id="profile-page-department" class="text-gray-500 font-medium"></p>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                         <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-                         <select id="history-range-select" class="text-sm border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
-                            <option value="7">7 วันล่าสุด</option>
-                            <option value="14">14 วันล่าสุด</option>
-                            <option value="30">30 วันล่าสุด</option>
-                         </select>
-                    </div>
-                   
-                    <div id="work-history-container" class="space-y-4">
-                        </div>
-                </div>
-
-                 <button id="logout-btn" class="w-full text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">ออกจากระบบ</button>
+    
+    <div class="card !p-0 overflow-hidden"> <div class="p-5 flex items-center space-x-4">
+            <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0">
+            <div class="overflow-hidden">
+                 <h2 id="profile-page-name" class="text-xl font-bold text-gray-800 truncate"></h2>
+                 <p id="profile-page-department" class="text-gray-500 font-medium"></p>
             </div>
+        </div>
+        
+        <div class="bg-gray-50 p-4 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-600 mb-3 ml-1">สรุปข้อมูล (ตามช่วงวันที่เลือก)</h3>
+            
+            <div class="grid grid-cols-3 gap-3 text-center">
+                
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs text-sky-600 font-semibold">ชั่วโมงปกติ</p>
+                    <p id="profile-summary-hours" class="text-xl font-bold text-sky-600 mt-1">-</p> </div>
+                
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs text-orange-600 font-semibold">OT รวม</p>
+                    <p id="profile-summary-ot" class="text-xl font-bold text-orange-600 mt-1">-</p> </div>
+                
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs text-green-600 font-semibold">จำนวนวัน</p>
+                    <p id="profile-summary-days" class="text-xl font-bold text-green-600 mt-1">-</p> </div>
+                
+            </div>
+        </div>
+
+    </div> <div class="space-y-4">
+        <div class="flex justify-between items-center">
+             <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
+             <select id="history-range-select" class="text-sm border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500">
+                <option value="7">7 วันล่าสุด</option>
+                <option value="14">14 วันล่าสุด</option>
+                <option value="30">30 วันล่าสุด</option>
+             </select>
+        </div>
+       
+        <div id="work-history-container" class="space-y-4">
+            </div>
+    </div>
+
+     <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <span>ออกจากระบบ</span>
+    </button>
+
+</div>
 
         </main>
         
@@ -1806,106 +1833,147 @@ async function loadEmployeeSummary(page = 1) { // เพิ่ม parameter page
         }
     }
 
-    // --- [ปรับปรุง] Logic ประวัติการทำงาน (ลบ daily_reports query) ---
-    async function loadWorkHistory() {
-        if (!currentUser) return;
 
-        const container = document.getElementById('work-history-container');
-        const rangeSelect = document.getElementById('history-range-select');
-        const daysToLoad = parseInt(rangeSelect.value, 10);
+// ค้นหาฟังก์ชัน loadWorkHistory() เดิม และแทนที่ด้วยโค้ดนี้ทั้งหมด
+async function loadWorkHistory() {
+    if (!currentUser) return;
 
-        container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
+    const container = document.getElementById('work-history-container');
+    const rangeSelect = document.getElementById('history-range-select');
+    const daysToLoad = parseInt(rangeSelect.value, 10);
 
-        try {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - daysToLoad);
+    // ดึง Element ของการ์ดสรุป
+    const summaryHoursEl = document.getElementById('profile-summary-hours');
+    const summaryOtEl = document.getElementById('profile-summary-ot');
+    const summaryDaysEl = document.getElementById('profile-summary-days');
 
-            // 1. Fetch work records (ที่เดียวจบ)
-            const recordsSnapshot = await db.collection('work_records')
-                .where('userId', '==', currentUser.uid)
-                .where('date', '>=', startDate)
-                .where('date', '<=', endDate)
-                .orderBy('date', 'desc')
-                .get();
+    // รีเซ็ตค่าสรุปและเคลียร์ container
+    summaryHoursEl.textContent = '-';
+    summaryOtEl.textContent = '-';
+    summaryDaysEl.textContent = '-';
+    container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
 
-            // 2. [ลบ] ไม่ต้องดึง daily_reports
+    try {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - daysToLoad);
+
+        // 1. Fetch work records
+        const recordsSnapshot = await db.collection('work_records')
+            .where('userId', '==', currentUser.uid)
+            .where('date', '>=', startDate)
+            .where('date', '<=', endDate)
+            .orderBy('date', 'desc')
+            .get();
+
+        if (recordsSnapshot.empty) {
+            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">ไม่พบประวัติการทำงานในช่วง ${daysToLoad} วันที่ผ่านมา</p>`;
+            summaryDaysEl.textContent = '0 วัน'; // อัปเดตสรุปแม้ว่จะว่าง
+            return;
+        }
+
+        let historyHtml = '';
+        // ตัวแปรสำหรับนับค่าสรุป
+        let totalRegularHours = 0;
+        let totalOtHours = 0;
+        let totalDays = recordsSnapshot.size;
+
+        recordsSnapshot.forEach(doc => {
+            const record = doc.data();
+            const checkinTime = record.checkIn.timestamp.toDate();
+            const report = record.report;
+
+            let checkoutTime, regularWorkHours = 0, overtimeHours = 0, workTypeInfo = '';
             
-            if (recordsSnapshot.empty) {
-                container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">ไม่พบประวัติการทำงานในช่วง ${daysToLoad} วันที่ผ่านมา</p>`;
-                return;
+            workTypeInfo = record.checkIn.workType === 'in_factory' 
+                ? 'ในโรงงาน' 
+                : `On-site: ${record.checkIn.onSiteDetails || 'N/A'}`;
+
+            if (record.status === 'completed') {
+                checkoutTime = record.checkOut.timestamp.toDate();
+                
+                // 1. ดึง OT ที่บันทึกไว้ตอน checkout
+                overtimeHours = record.overtime?.hours || 0; 
+                
+                // 2. คำนวณชั่วโมงทำงานทั้งหมด (รวมพักเที่ยง)
+                let workDurationMillis = checkoutTime - checkinTime;
+                if (workDurationMillis < 0) workDurationMillis = 0;
+                const lunchStart = new Date(checkinTime); lunchStart.setHours(12, 0, 0, 0);
+                const lunchEnd = new Date(checkinTime); lunchEnd.setHours(13, 0, 0, 0);
+                if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
+                    workDurationMillis -= 3600000; // ลบ 1 ชั่วโมงพักเที่ยง
+                }
+                const totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
+                
+                // 3. ชั่วโมงปกติ = ชั่วโมงทั้งหมด - OT ที่บันทึกไว้
+                regularWorkHours = totalWorkHours - overtimeHours;
+                if (regularWorkHours < 0) regularWorkHours = 0;
             }
 
-            let historyHtml = '';
-            recordsSnapshot.forEach(doc => {
-                const record = doc.data();
-                const checkinTime = record.checkIn.timestamp.toDate();
-                const report = record.report; // [เปลี่ยน] ดึง report จาก record
+            // เพิ่มค่าเข้าตัวแปรสรุป
+            totalRegularHours += regularWorkHours;
+            totalOtHours += overtimeHours;
 
-                let checkoutTime, regularWorkHours = 0, overtimeHours = 0, workTypeInfo = '';
+            // [ปรับปรุง] HTML ของการ์ดประวัติ (ไอคอนชุดใหม่ สไตล์ Outline 1.5px)
+            historyHtml += `
+            <div class="card !p-4 shadow-sm">
+                <p class="font-semibold text-gray-800 mb-3">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 
-                workTypeInfo = record.checkIn.workType === 'in_factory' 
-                    ? 'ในโรงงาน' 
-                    : `On-site: ${record.checkIn.onSiteDetails || 'N/A'}`;
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                        <span class="font-medium">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 7.5m0 0L7.5 12M12 7.5v13.5" /></svg>
+                        <span class="font-medium">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
+                    </div>
 
-                if (record.status === 'completed') {
-                    checkoutTime = record.checkOut.timestamp.toDate();
-                    const hours = calculateWorkHours(checkinTime, checkoutTime);
-                    regularWorkHours = hours.regularWorkHours;
-                    overtimeHours = hours.overtimeHours;
-                }
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="font-medium">${regularWorkHours.toFixed(2)} ชม.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="font-medium">OT: ${overtimeHours.toFixed(1)} ชม.</span>
+                    </div>
+                </div>
 
-                historyHtml += `
-                <div class="card !p-4">
-                    <p class="font-semibold text-gray-800 mb-3">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <div class="mt-4 pt-3 border-t border-gray-100 text-sm space-y-2">
+                    <div class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        <span class="font-medium text-gray-700">${workTypeInfo}</span>
+                    </div>
                     
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            <span class="font-medium">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                            <span class="font-medium">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium">${regularWorkHours.toFixed(2)} ชม.</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium">OT: ${overtimeHours.toFixed(1)} ชม.</span>
-                        </div>
+                    ${report ? `
+                    <div class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m-1.125 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M18.75 12H15V8.25h3.75V12z" /></svg>
+                        <span class="font-medium text-gray-700">${report.workType} (${report.project})</span>
                     </div>
-
-                    <div class="mt-4 pt-3 border-t border-gray-100 text-sm space-y-2">
-                        <div class="flex items-start gap-2">
-                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="font-medium text-gray-700">${workTypeInfo}</span>
-                        </div>
-                        
-                        ${report ? `
-                        <div class="flex items-start gap-2">
-                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span class="font-medium text-gray-700">${report.workType} (${report.project})</span>
-                        </div>
-                        ` : `
-                        <div class="flex items-start gap-2">
-                            <svg class="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <span class="font-medium text-yellow-600">ยังไม่ส่งรายงาน</span>
-                        </div>
-                        `}
+                    ` : `
+                    <div class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-yellow-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m-1.125 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M18.75 12H15V8.25h3.75V12z" /></svg>
+                        <span class="font-medium text-yellow-600">ยังไม่ส่งรายงาน</span>
                     </div>
-                </div>`;
-            });
-            container.innerHTML = historyHtml;
+                    `}
+                </div>
+            </div>`;
+        });
+        
+        container.innerHTML = historyHtml;
 
-        } catch (error) {
-            console.error("Error loading work history:", error);
-            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-        }
+        // อัปเดตค่าในการ์ดสรุป (แบบแยก OT)
+        summaryHoursEl.textContent = `${totalRegularHours.toFixed(2)}`;
+        summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
+        summaryDaysEl.textContent = `${totalDays} วัน`;
+
+
+    } catch (error)
+ {
+        console.error("Error loading work history:", error);
+        container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
     }
+}
     
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
@@ -2086,6 +2154,36 @@ async function loadEmployeeSummary(page = 1) { // เพิ่ม parameter page
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
     lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
+    // --- [เพิ่ม] โค้ดสำหรับปุ่ม Login ธรรมดา ---
+const emailLoginBtn = document.getElementById('login-btn');
+const emailInput = document.querySelector('input[placeholder="รหัสพนักงาน"]');
+const passwordInput = document.querySelector('input[placeholder="รหัสผ่าน"]');
+
+emailLoginBtn.addEventListener('click', () => {
+  // หมายเหตุ: เราใช้ช่อง "รหัสพนักงาน" เป็น "อีเมล" สำหรับการทดสอบนี้
+  const email = emailInput.value; 
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    return alert('กรุณากรอกอีเมล (ในช่องรหัสพนักงาน) และรหัสผ่าน');
+  }
+
+  emailLoginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+  emailLoginBtn.disabled = true;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      // สำเร็จ! 
+      // auth.onAuthStateChanged จะทำงานอัตโนมัติและพาเข้าแอป
+    })
+    .catch((error) => {
+      console.error("Email login error:", error);
+      alert('เข้าระบบล้มเหลว: ' + error.message);
+      emailLoginBtn.textContent = 'เข้าสู่ระบบ';
+      emailLoginBtn.disabled = false;
+    });
+});
+// --- จบส่วนที่เพิ่ม ---
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3;

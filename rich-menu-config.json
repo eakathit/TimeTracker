@@ -1,0 +1,43 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": false,
+  "name": "TimeTracker Main Menu",
+  "chatBarText": "เมนูหลัก",
+  "areas": [
+    {
+      "bounds": { "x": 0, "y": 0, "width": 2500, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "Open Web App",
+        "uri": "https://timetracker-f1e11.web.app"
+      }
+    },
+    {
+      "bounds": { "x": 0, "y": 843, "width": 833, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "CheckIn/Out Page",
+        "uri": "https://timetracker-f1e11.web.app"
+      }
+    },
+    {
+      "bounds": { "x": 833, "y": 843, "width": 834, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "Leave Page (Coming Soon)",
+        "uri": "https://timetracker-f1e11.web.app"
+      }
+    },
+    {
+      "bounds": { "x": 1667, "y": 843, "width": 833, "height": 843 },
+      "action": {
+        "type": "uri",
+        "label": "Calendar Page (Coming Soon)",
+        "uri": "https://timetracker-f1e11.web.app"
+      }
+    }
+  ]
+}
