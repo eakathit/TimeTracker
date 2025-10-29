@@ -307,6 +307,15 @@
                     <p class="text-gray-500 mt-1">ภาพรวมและจัดการข้อมูลระบบ</p>
                 </div>
 
+                <div class="card !bg-violet-50 border border-violet-200">
+                    <button id="admin-go-to-calendar-btn" class="w-full flex items-center justify-center text-center py-3 text-violet-700 rounded-xl font-semibold hover:bg-violet-100 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>ดูปฏิทินทีม (วางแผน/วันหยุด)</span>
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                     <div class="space-y-8">
@@ -578,7 +587,7 @@
                 <span class="text-xs">รายงาน</span>
             </a>
 
-            <a href="#" class="nav-item text-center text-gray-500" data-page="calendar-page">
+            <a href="#" id="calendar-or-admin-nav" class="nav-item text-center text-gray-500" data-page="calendar-page">
                  <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
@@ -804,12 +813,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 topProfilePic.src = userData.profileImageUrl || user.photoURL || placeholderSm;
                 
                 document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+                
+                // 1. ปุ่มที่ 2 (รายงาน) - ตั้งค่าให้เป็น "รายงาน" เสมอ
+                const reportNavButton = document.getElementById('report-or-admin-nav');
+                if (reportNavButton) {
+                    const navIcon = reportNavButton.querySelector('svg');
+                    const navText = reportNavButton.querySelector('span');
+                    const reportIconSvg = `
+                        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    `;
+                    reportNavButton.dataset.page = 'report-page';
+                    navText.textContent = 'รายงาน';
+                    navIcon.innerHTML = reportIconSvg;
+                }
 
-                // [แก้ไข] --- ส่วนตรวจสอบ Role และ "แปลงร่าง" เมนู (ปุ่มที่ 2) ---
-                const navButton = document.getElementById('report-or-admin-nav');
-                if (navButton) {
-                    const navIcon = navButton.querySelector('svg');
-                    const navText = navButton.querySelector('span');
+                // 2. ปุ่มที่ 3 (ปฏิทิน/Dashboard) - เปลี่ยนตาม Role
+                const thirdNavButton = document.getElementById('calendar-or-admin-nav');
+                if (thirdNavButton) {
+                    const navIcon = thirdNavButton.querySelector('svg');
+                    const navText = thirdNavButton.querySelector('span');
 
                     // ไอคอน Dashboard
                     const dashboardIconSvg = `
@@ -817,25 +841,26 @@ document.addEventListener('DOMContentLoaded', function() {
                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                     `;
-                    // ไอคอน Report (รายงาน)
-                    const reportIconSvg = `
+                    // ไอคอน Calendar (Default)
+                    const calendarIconSvg = `
                         <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                     `;
 
                     if (currentUserData && currentUserData.role === 'admin') {
                         // --- เป็น Admin ---
-                        navButton.dataset.page = 'admin-dashboard-page';
+                        thirdNavButton.dataset.page = 'admin-dashboard-page';
                         navText.textContent = 'Dashboard';
                         navIcon.innerHTML = dashboardIconSvg;
                     } else {
                         // --- เป็น User ทั่วไป ---
-                        navButton.dataset.page = 'report-page';
-                        navText.textContent = 'รายงาน';
-                        navIcon.innerHTML = reportIconSvg;
+                        thirdNavButton.dataset.page = 'calendar-page';
+                        navText.textContent = 'ปฏิทิน';
+                        navIcon.innerHTML = calendarIconSvg;
                     }
                 }
+                // --- จบส่วนตรวจสอบ Role ---
                 // --- จบส่วนตรวจสอบ Role ---
 
                 updateProfilePage(userData);
@@ -1365,6 +1390,25 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeProjectSummary();
         controlsInitialized = true;
     };
+
+    const adminGoToCalendarBtn = document.getElementById('admin-go-to-calendar-btn');
+    if (adminGoToCalendarBtn) {
+        adminGoToCalendarBtn.addEventListener('click', () => {
+            // 1. สั่งให้เปิดหน้าปฏิทิน
+            showPage('calendar-page');
+            
+            // 2. โหลดข้อมูลปฏิทิน
+            loadCalendarData(currentDisplayDate);
+
+            // 3. อัปเดตแถบเมนูด้านล่าง
+            navItems.forEach(n => n.classList.remove('active'));
+            // 3.1 หาปุ่มเมนูปฏิทิน (ปุ่มที่ 3)
+            const dashboardNavButton = document.getElementById('calendar-or-admin-nav');
+            if (dashboardNavButton) {
+                dashboardNavButton.classList.add('active');
+            }
+        });
+    }
 
     checkinBtn.addEventListener('click', async () => {
         if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
@@ -2233,10 +2277,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // [แก้ไข] --- ป้องกันการเข้าหน้า (Admin/User) ---
             if (pageId === 'admin-dashboard-page' && (!currentUserData || currentUserData.role !== 'admin')) {
                 alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
-                return; // ไม่ต้องทำอะไรต่อ
-            }
-            if (pageId === 'report-page' && (currentUserData && currentUserData.role === 'admin')) {
-                alert("Admin ไม่มีหน้ารายงาน (กรุณาใช้ Dashboard)");
                 return; // ไม่ต้องทำอะไรต่อ
             }
             // --- จบส่วนป้องกัน ---
