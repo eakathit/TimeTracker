@@ -1,0 +1,9 @@
+# โฟลเดอร์ที่เก็บ "อะไหล่" ทั้งหมด
+node_modules/
+
+# ล็อกไฟล์ของ Firebase
+firebase-debug.log
+
+# ไฟล์ระบบปฏิบัติการ (OS)
+.DS_Store
+Thumbs.db
