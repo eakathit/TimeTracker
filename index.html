@@ -695,6 +695,26 @@
     </div>
 </div>
 
+<div id="plan-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div id="plan-modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="card relative z-10 w-full max-w-md">
+            <h3 id="plan-modal-title" class="text-lg font-semibold mb-4">แผนงานสำหรับวันที่...</h3>
+
+            <input type="hidden" id="plan-modal-date-key">
+
+            <textarea id="plan-modal-textarea" class="w-full h-32 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none" placeholder="กรอกรายละเอียดแผนงาน..."></textarea>
+
+            <div class="flex justify-between items-center mt-4">
+                <button id="plan-delete-btn" class="py-2 px-4 bg-red-100 text-red-600 rounded-lg font-medium hover:bg-red-200" style="display: none;">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                </button>
+                <div class="space-x-3 ml-auto"> <button id="plan-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                    <button id="plan-save-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="firebase-config.js"></script>
 
 <script>
@@ -747,6 +767,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryStatusFilterSelect = document.getElementById('summary-status-filter');
     const applySummaryFiltersBtn = document.getElementById('apply-summary-filters-btn');
     const exportEmployeeSummaryBtn = document.getElementById('export-employee-summary-btn'); // ปุ่ม Export
+    // ปฎิทิน
+    const planModal = document.getElementById('plan-modal');
+    const planModalOverlay = document.getElementById('plan-modal-overlay');
+    const planModalTitle = document.getElementById('plan-modal-title');
+    const planModalTextarea = document.getElementById('plan-modal-textarea');
+    const planModalDateKey = document.getElementById('plan-modal-date-key');
+    const planCancelBtn = document.getElementById('plan-cancel-btn');
+    const planSaveBtn = document.getElementById('plan-save-btn');
+    const planDeleteBtn = document.getElementById('plan-delete-btn');
     // --- App State ---
     let currentUser = null;
     let watchId = null;
@@ -2556,205 +2585,195 @@ function calculateWorkHours(checkinTime, checkoutTime) {
 }
 
 // [แก้ไข] --- ฟังก์ชันสำหรับ Render ปฏิทิน (ดึงข้อมูลจาก system_settings/calendar_rules) ---
-        async function loadCalendarData(date) {
-            if (!currentUser) return;
-            const calGrid = document.getElementById('cal-grid');
-            const calHeader = document.getElementById('cal-month-year');
-            if (!calGrid || !calHeader) return;
+        // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เพิ่ม Plan + คลิกได้) ---
+    async function loadCalendarData(date) {
+        if (!currentUser) return;
+        const calGrid = document.getElementById('cal-grid');
+        const calHeader = document.getElementById('cal-month-year');
+        if (!calGrid || !calHeader) return;
 
-            calHeader.textContent = date.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
-            calGrid.innerHTML = '<div class="col-span-7 text-center p-4 text-gray-400">กำลังโหลด...</div>';
+        calHeader.textContent = date.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+        calGrid.innerHTML = '<div class="col-span-7 text-center p-4 text-gray-400">กำลังโหลด...</div>';
 
-            const year = date.getFullYear();
-            const month = date.getMonth(); // 0-11
+        const year = date.getFullYear();
+        const month = date.getMonth(); // 0-11
 
-            // 1. สร้างตัวแปรสำหรับ "วันนี้" และ "วันหยุด"
-            const today = new Date();
-            const todayDate = today.getDate();
-            const todayMonth = today.getMonth();
-            const todayYear = today.getFullYear();
-            
-            const holidayMap = new Map(); // Map สำหรับเก็บวันหยุดบริษัท
-            const workingSaturdayMap = new Map(); // Map สำหรับเก็บเสาร์ทำงาน
+        // 1. สร้างตัวแปร
+        const today = new Date();
+        const todayDate = today.getDate();
+        const todayMonth = today.getMonth();
+        const todayYear = today.getFullYear();
 
-            // หาวันที่เริ่มและสิ้นสุดของเดือน
-            const startDate = new Date(year, month, 1);
-            const endDate = new Date(year, month + 1, 0);
-            const firstDayOfWeek = startDate.getDay();
-            const daysInMonth = endDate.getDate();
+        const holidayMap = new Map();
+        const workingSaturdayMap = new Map();
+        const planMap = new Map(); // [เพิ่ม] Map สำหรับเก็บ Plan
 
-            // 2. [แก้ไข] ดึงข้อมูล 2 ส่วนพร้อมกัน (Promise.all)
-            const recordsMap = new Map();
-            try {
-                // Query 1: (เหมือนเดิม) ดึง work_records ของ user
-                const recordsQuery = db.collection('work_records')
-                    .where('userId', '==', currentUser.uid)
-                    .where('date', '>=', new Date(year, month, 1))
-                    .where('date', '<=', new Date(year, month, daysInMonth, 23, 59, 59))
-                    .get();
-                
-                // --- [!!! บรรทัดที่แก้ไข !!!] ---
-                // ดึงข้อมูลปฏิทินบริษัทจาก 'system_settings'
-                const calendarQuery = db.collection('system_settings').doc('calendar_rules').get();
-                // --- [!!! จบส่วนที่แก้ไข !!!] ---
+        // หาวันที่เริ่มและสิ้นสุด
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0);
+        const firstDayOfWeek = startDate.getDay();
+        const daysInMonth = endDate.getDate();
 
-                // รอทั้งสอง query พร้อมกัน
-                const [recordsSnapshot, calendarDoc] = await Promise.all([recordsQuery, calendarQuery]);
+        // 2. [อัปเกรด] ดึงข้อมูล 3 ส่วนพร้อมกัน (Promise.all)
+        const recordsMap = new Map();
+        try {
+            // Query 1: (เหมือนเดิม) ดึง work_records
+            const recordsQuery = db.collection('work_records')
+                .where('userId', '==', currentUser.uid)
+                .where('date', '>=', new Date(year, month, 1))
+                .where('date', '<=', new Date(year, month, daysInMonth, 23, 59, 59))
+                .get();
 
-                // ประมวลผล work_records (เหมือนเดิม)
-                recordsSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    const dayOfMonth = data.date.toDate().getDate();
-                    recordsMap.set(dayOfMonth, data);
-                });
+            // Query 2: (เหมือนเดิม) ดึงปฏิทินบริษัท
+            const calendarQuery = db.collection('system_settings').doc('calendar_rules').get();
 
-                // [NEW] ประมวลผลปฏิทินบริษัท
-                if (calendarDoc.exists) {
-                    const data = calendarDoc.data();
-                    // (Field 'holidays' และ 'workingSaturdays' ของคุณตรงกับโค้ดอยู่แล้ว)
-                    if (data.holidays && Array.isArray(data.holidays)) {
-                        data.holidays.forEach(dateStr => { // "YYYY-MM-DD"
-                            holidayMap.set(dateStr, true);
-                        });
-                    }
-                    if (data.workingSaturdays && Array.isArray(data.workingSaturdays)) {
-                         data.workingSaturdays.forEach(dateStr => { // "YYYY-MM-DD"
-                            workingSaturdayMap.set(dateStr, true);
-                        });
-                    }
+            // [เพิ่ม] Query 3: ดึง user_plans
+            const plansQuery = db.collection('user_plans')
+                .where('userId', '==', currentUser.uid)
+                .where('date', '>=', new Date(year, month, 1))
+                .where('date', '<=', new Date(year, month, daysInMonth, 23, 59, 59))
+                .get();
+
+            // รอทั้ง 3 query พร้อมกัน
+            const [recordsSnapshot, calendarDoc, plansSnapshot] = await Promise.all([recordsQuery, calendarQuery, plansQuery]);
+
+            // ประมวลผล work_records
+            recordsSnapshot.forEach(doc => {
+                const data = doc.data();
+                const dayOfMonth = data.date.toDate().getDate();
+                recordsMap.set(dayOfMonth, data);
+            });
+
+            // ประมวลผลปฏิทินบริษัท
+            if (calendarDoc.exists) {
+                const data = calendarDoc.data();
+                if (data.holidays && Array.isArray(data.holidays)) {
+                    data.holidays.forEach(dateStr => holidayMap.set(dateStr, true));
                 }
-                
-            } catch (error) {
-                console.error("Error fetching calendar data: ", error);
+                if (data.workingSaturdays && Array.isArray(data.workingSaturdays)) {
+                     data.workingSaturdays.forEach(dateStr => workingSaturdayMap.set(dateStr, true));
+                }
             }
 
-            calGrid.innerHTML = ''; // เคลียร์ Loading
+            // [เพิ่ม] ประมวลผล user_plans
+            plansSnapshot.forEach(doc => {
+                const data = doc.data();
+                const dayOfMonth = data.date.toDate().getDate();
+                planMap.set(dayOfMonth, data);
+            });
 
-            // 3. สร้างช่องว่างก่อนวันที่ 1 (เหมือนเดิม)
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                calGrid.innerHTML += `<div class="p-2"></div>`;
+        } catch (error) {
+            console.error("Error fetching calendar data: ", error);
+        }
+
+        calGrid.innerHTML = ''; // เคลียร์ Loading
+
+        // 3. สร้างช่องว่างก่อนวันที่ 1
+        for (let i = 0; i < firstDayOfWeek; i++) {
+            calGrid.innerHTML += `<div class="p-2"></div>`;
+        }
+
+        // 4. [อัปเกรด] สร้างวันที่ 1 ถึงวันสุดท้าย
+        for (let day = 1; day <= daysInMonth; day++) {
+
+            const isToday = (day === todayDate && month === todayMonth && year === todayYear);
+            const record = recordsMap.get(day);
+            const plan = planMap.get(day); // [เพิ่ม] ดึง plan ของวันนี้
+
+            const monthStr = (month + 1).toString().padStart(2, '0');
+            const dayStr = day.toString().padStart(2, '0');
+            const dateKey = `${year}-${monthStr}-${dayStr}`; // YYYY-MM-DD
+
+            const isHoliday = holidayMap.has(dateKey);
+            const isWorkingSaturday = workingSaturdayMap.has(dateKey);
+            const currentDayOfWeek = new Date(year, month, day).getDay();
+            const isSunday = (currentDayOfWeek === 0);
+            const isRegularSaturday = (currentDayOfWeek === 6);
+
+            let dayCellHtml = '';
+
+            // [เพิ่ม] สร้าง "จุด" ถ้ามี Plan
+            let planDotHtml = '';
+            if (plan && plan.planText) {
+                // ใช้สีม่วง (indigo)
+                planDotHtml = `<div class="w-2 h-2 bg-indigo-500 rounded-full mx-auto mt-0.5"></div>`;
             }
 
-            // 4. [แก้ไข] สร้างวันที่ 1 ถึงวันสุดท้าย (โค้ดส่วนนี้เหมือนเดิม ไม่ต้องแก้)
-            for (let day = 1; day <= daysInMonth; day++) {
-                
-                const isToday = (day === todayDate && month === todayMonth && year === todayYear);
-                const record = recordsMap.get(day);
+            // สร้าง HTML ของตัวเลข
+            let dayNumberHtml = '';
+            let dayNumberClass = ''; // คลาสสีสำหรับตัวเลข
 
-                // สร้าง Key (YYYY-MM-DD) เพื่อเช็กกับ Map
-                const monthStr = (month + 1).toString().padStart(2, '0');
-                const dayStr = day.toString().padStart(2, '0');
-                const dateKey = `${year}-${monthStr}-${dayStr}`;
+            if (isToday) {
+                dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
+            } else if (isHoliday) {
+                dayNumberClass = 'text-red-500 font-bold';
+            } else if (isWorkingSaturday) {
+                dayNumberClass = 'text-green-700 font-bold';
+            } else if (isSunday || isRegularSaturday) {
+                dayNumberClass = 'text-red-400';
+            } else {
+                dayNumberClass = 'text-gray-400';
+            }
 
-                const isHoliday = holidayMap.has(dateKey);
-                const isWorkingSaturday = workingSaturdayMap.has(dateKey);
-                const currentDayOfWeek = new Date(year, month, day).getDay(); // 0=อาทิตย์, 6=เสาร์
-                const isSunday = (currentDayOfWeek === 0);
-                const isRegularSaturday = (currentDayOfWeek === 6);
+            if (!dayNumberHtml) {
+                 dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto ${dayNumberClass}">${day}</div>`;
+            }
 
-                let dayCellHtml = '';
-                
-                // สร้าง HTML ของตัวเลข (จะถูกปรับแต่งสีด้านล่าง)
-                let dayNumberHtml = `
-                    <div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto">
-                        ${day}
+            // Logic การจัดลำดับความสำคัญของ Style
+            // [แก้ไข] เพิ่ม cursor-pointer, hover:bg-gray-100 และ data-attributes
+            let cellBaseClass = 'p-2 text-center rounded-lg cursor-pointer hover:bg-gray-100';
+
+            // [แก้ไข] เพิ่ม data-attributes เพื่อให้ JavaScript อ่านค่าได้
+            const dataAttributes = `data-date-key="${dateKey}" data-plan-text="${plan ? plan.planText.replace(/"/g, '&quot;') : ''}"`;
+
+            if (record) {
+                // 1. ถ้า "มีการลงเวลา"
+                let statusColor = 'bg-green-100 text-green-800';
+                if (record.status === 'checked_in') {
+                    statusColor = 'bg-sky-100 text-sky-800';
+                }
+                cellBaseClass = `p-2 ${statusColor} rounded-lg text-center cursor-pointer`; // ทับสี hover
+
+                dayCellHtml = `
+                    <div class="${cellBaseClass}" ${dataAttributes}>
+                        ${dayNumberHtml}
+                        ${planDotHtml} <div class="text-xs ${planDotHtml ? 'mt-0.5' : 'mt-1'}">
+                            ${record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                     </div>
                 `;
-                
-                // ใช้ตัวแปรนี้กำหนดสีตัวเลข (ถ้าไม่ใช่วันนี้)
-                let dayNumberClass = "text-gray-400"; // สีเริ่มต้น (วันธรรมดา)
 
-                // --- [NEW] Logic การจัดลำดับความสำคัญของ Style ---
+            } else if (isHoliday) {
+                // 2. ถ้า "เป็นวันหยุดบริษัท"
+                dayCellHtml = `
+                    <div class="${cellBaseClass}" ${dataAttributes}>
+                        ${dayNumberHtml}
+                        ${planDotHtml} <div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div>
+                    </div>
+                `;
 
-                if (record) {
-                    // 1. ถ้า "มีการลงเวลา" (สำคัญสุด)
-                    let statusColor = 'bg-green-100 text-green-800'; // Completed
-                    if (record.status === 'checked_in') {
-                        statusColor = 'bg-sky-100 text-sky-800'; // Checked in
-                    }
-                    
-                    if (isToday) {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-                    } else {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto font-bold">${day}</div>`;
-                    }
+            } else if (isWorkingSaturday) {
+                // 3. ถ้า "เป็นเสาร์ทำงาน"
+                cellBaseClass = 'p-2 bg-green-50 rounded-lg text-center cursor-pointer hover:bg-gray-100';
 
-                    dayCellHtml = `
-                        <div class="p-2 ${statusColor} rounded-lg text-center cursor-pointer">
-                            ${dayNumberHtml}
-                            <div class="text-xs mt-1">
-                                ${record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    `;
-
-                } else if (isHoliday) {
-                    // 2. ถ้า "เป็นวันหยุดบริษัท" (และยังไม่ลงเวลา)
-                    dayNumberClass = "text-red-500 font-medium"; // สีแดงวันหยุด
-                    
-                    if (isToday) {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-                    } else {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto ${dayNumberClass}">${day}</div>`;
-                    }
-                    
-                    dayCellHtml = `
-                        <div class="p-2 text-center">
-                            ${dayNumberHtml}
-                            <div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div>
-                        </div>
-                    `;
-
-                } else if (isWorkingSaturday) {
-                    // 3. ถ้า "เป็นเสาร์ทำงาน" (และยังไม่ลงเวลา)
-                    dayNumberClass = "text-green-700 font-medium"; // สีเขียวเสาร์ทำงาน
-                    
-                    if (isToday) {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-                    } else {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto ${dayNumberClass}">${day}</div>`;
-                    }
-
-                    dayCellHtml = `
-                        <div class="p-2 text-center">
-                            ${dayNumberHtml}
-                            <div class="text-xs mt-1 text-green-700 truncate" style="line-height: 1.25;">ทำงาน</div>
-                        </div>
-                    `;
-                } else if (isSunday || (isRegularSaturday && !isWorkingSaturday)) {
-                    // 4. ถ้า "เป็นวันหยุดสุดสัปดาห์ปกติ" (อาทิตย์ หรือ เสาร์ที่ไม่ใช่เสาร์ทำงาน)
-                    dayNumberClass = "text-red-400"; // สีแดงอ่อน (วันหยุดปกติ)
-                    
-                    if (isToday) {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-                    } else {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto ${dayNumberClass}">${day}</div>`;
-                    }
-
-                    dayCellHtml = `
-                        <div class="p-2 text-center">
-                            ${dayNumberHtml}
-                        </div>
-                    `;
-                } else {
-                    // 5. วันธรรมดาที่ยังไม่ลงเวลา
-                    
-                    if (isToday) {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-                    } else {
-                         dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto ${dayNumberClass}">${day}</div>`;
-                    }
-                    
-                    dayCellHtml = `
-                        <div class="p-2 text-center">
-                            ${dayNumberHtml}
-                        </div>
-                    `;
-                }
-                
-                calGrid.innerHTML += dayCellHtml;
+                dayCellHtml = `
+                    <div class="${cellBaseClass}" ${dataAttributes}>
+                        ${dayNumberHtml}
+                        ${planDotHtml} <div class="text-xs mt-1 text-green-700 font-medium truncate" style="line-height: 1.25;">ทำงาน</div>
+                    </div>
+                `;
+            } else {
+                // 4. วันอื่นๆ
+                dayCellHtml = `
+                    <div class="${cellBaseClass}" ${dataAttributes}>
+                        ${dayNumberHtml}
+                        ${planDotHtml} </div>
+                `;
             }
+
+            calGrid.innerHTML += dayCellHtml;
         }
+    }
 
 // 3. เพิ่ม Event Listener ให้ปุ่ม
 document.getElementById('cal-prev-month').addEventListener('click', () => {
@@ -3195,6 +3214,110 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         }
     });
 
+    // ฟังก์ชันเปิด Modal
+    function openPlanModal(e) {
+        // ใช้ .closest เพื่อหา 'div' ที่เราคลิก ไม่ว่าเราจะคลิกโดนตัวเลข หรือจุด
+        const cell = e.target.closest('[data-date-key]');
+        if (!cell) return; // ถ้าคลิกที่ว่างระหว่างวัน (ไม่มี data-date-key)
+
+        const dateKey = cell.dataset.dateKey; // YYYY-MM-DD
+        const planText = cell.dataset.planText || ''; // ดึง plan ที่ซ่อนไว้
+
+        // แปลง YYYY-MM-DD เป็นวันที่แบบไทย
+        const [y, m, d] = dateKey.split('-');
+        const dateObj = new Date(y, m - 1, d);
+        const thaiDate = dateObj.toLocaleDateString('th-TH', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        planModalTitle.textContent = `แผนงานสำหรับวันที่ ${thaiDate}`;
+        planModalDateKey.value = dateKey;
+        planModalTextarea.value = planText;
+
+        // ถ้าไม่มี planText ให้ซ่อนปุ่มลบ, ถ้ามี ให้แสดง
+        planDeleteBtn.style.display = planText ? 'block' : 'none';
+
+        planModal.classList.remove('hidden');
+    }
+
+    // ฟังก์ชันปิด Modal
+    function closePlanModal() {
+        planModal.classList.add('hidden');
+    }
+
+    // เพิ่ม Event Listener ให้ตารางปฏิทิน (Event Delegation)
+    // เราฟังคลิกที่ "ตาราง" แค่ที่เดียว
+    document.getElementById('cal-grid').addEventListener('click', openPlanModal);
+
+    // ปุ่มใน Modal
+    planCancelBtn.addEventListener('click', closePlanModal);
+    planModalOverlay.addEventListener('click', closePlanModal);
+
+    // ปุ่มบันทึก
+    planSaveBtn.addEventListener('click', async () => {
+        const dateKey = planModalDateKey.value;
+        const planText = planModalTextarea.value.trim();
+        // สร้าง ID ของเอกสารที่ไม่ซ้ำกัน = UserID + วันที่
+        const docId = `${currentUser.uid}_${dateKey}`;
+
+        if (!dateKey) return; // กันข้อผิดพลาด
+
+        // ถ้าผู้ใช้ลบข้อความจนหมด = ให้ถือว่าลบ
+        if (!planText) {
+            planDeleteBtn.click(); // กดปุ่มลบแทน
+            return;
+        }
+
+        planSaveBtn.disabled = true;
+        planSaveBtn.textContent = 'กำลังบันทึก...';
+
+        try {
+            const planData = {
+                userId: currentUser.uid,
+                date: firebase.firestore.Timestamp.fromDate(new Date(dateKey)), // เก็บเป็น Timestamp
+                planText: planText,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // ใช้ .set() เพื่อ "สร้างใหม่" หรือ "อัปเดตทับ" เอกสารเดิม
+            await db.collection('user_plans').doc(docId).set(planData);
+
+            showNotification('บันทึกแผนสำเร็จ!');
+            closePlanModal();
+            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินเพื่อแสดง "จุดสีม่วง"
+
+        } catch (error) {
+            console.error("Error saving plan:", error);
+            showNotification('เกิดข้อผิดพลาดในการบันทึก', 'error');
+        } finally {
+            planSaveBtn.disabled = false;
+            planSaveBtn.textContent = 'บันทึก';
+        }
+    });
+
+    // ปุ่มลบ
+    planDeleteBtn.addEventListener('click', async () => {
+        const dateKey = planModalDateKey.value;
+        const docId = `${currentUser.uid}_${dateKey}`;
+
+        // ยืนยันก่อนลบ
+        showConfirmDialog(
+            'คุณต้องการลบแผนงานนี้ใช่หรือไม่?',
+            async () => { // onConfirm (ฟังก์ชันที่จะรันเมื่อกดยืนยัน)
+                try {
+                    await db.collection('user_plans').doc(docId).delete();
+                    showNotification('ลบแผนงานแล้ว', 'success');
+                    closePlanModal();
+                    loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินเพื่อเอา "จุดสีม่วง" ออก
+                } catch (error) {
+                     console.error("Error deleting plan:", error);
+                     showNotification('เกิดข้อผิดพลาดในการลบ', 'error');
+                }
+            }
+            // ไม่ต้องใส่ onCancel, เพราะ showConfirmDialog จะปิดตัวเองไป
+        );
+    });
+    
 });
 </script>
 </body>
