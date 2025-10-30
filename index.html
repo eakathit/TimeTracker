@@ -15,6 +15,15 @@
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#38BDF8">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TimeTracker">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+
     <style>
         /* CSS ของคุณ (ไม่ต้องแก้ไข) */
         :root {
@@ -315,7 +324,7 @@
                             <h3 class="font-semibold text-lg text-gray-800 mb-4">⚙️ จัดการข้อมูลระบบ</h3>
                             <button id="admin-go-to-calendar-btn" class="w-full flex items-center justify-center text-sm font-medium text-violet-600 p-3 mb-4 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors">
                                 <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <span>ดูปฏิทินทีม (วางแผน/วันหยุด)</span>
+                                <span>ดูปฏิทิน (วางแผน/วันหยุด)</span>
                             </button>
                              <div class="space-y-6">
                                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
@@ -480,7 +489,7 @@
             </div>
 
             <div id="calendar-page" class="page space-y-6">
-                <h2 class="text-2xl font-bold">ปฏิทินทีม</h2>
+                <h2 class="text-2xl font-bold">ปฏิทิน</h2>
                 
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
@@ -710,6 +719,19 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful!');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+    
     // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -2477,6 +2499,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     }, 3000); // Hide after 3 seconds
 }
 
+
 // [แก้ไข] --- ฟังก์ชันสำหรับ Render ปฏิทิน (ดึงข้อมูลจาก system_settings/calendar_rules) ---
         // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เพิ่ม Plan + คลิกได้) ---
     // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เวอร์ชัน "ปฏิทินบริษัท") ---
@@ -2617,24 +2640,10 @@ function calculateWorkHours(checkinTime, checkoutTime) {
                 const dataAttributes = `data-day-number="${day}" data-date-key="${dateKey}"`;
 
                 let dayCellHtml = '';
-                if (record) {
-                    let statusColor = 'bg-green-100 text-green-800';
-                    if (record.status === 'checked_in') statusColor = 'bg-sky-100 text-sky-800';
-                    cellBaseClass = `p-2 ${statusColor} rounded-lg text-center cursor-pointer`;
-
-                    dayCellHtml = `
-                        <div class="${cellBaseClass}" ${dataAttributes}>
-                            ${dayNumberHtml}
-                            ${planDotHtml}
-                            <div class="text-xs ${planDotHtml ? 'mt-0.5' : 'mt-1'}">
-                                ${record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>`;
-                } else if (isHoliday) {
+                if (isHoliday) {
                     dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div></div>`;
                 } else if (isWorkingSaturday) {
-                    cellBaseClass = 'p-2 bg-green-50 rounded-lg text-center cursor-pointer hover:bg-gray-100';
-                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-green-700 font-medium truncate" style="line-height: 1.25;">ทำงาน</div></div>`;
+                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
                 } else {
                     dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
                 }
