@@ -382,6 +382,13 @@
                                     </div>
                                 </div>
 
+                                <div class="card">
+    <h3 class="font-semibold text-lg text-gray-800 mb-4">🆕 รายการใบลา (รออนุมัติ)</h3>
+    
+    <div id="leave-approval-list" class="space-y-4 max-h-96 overflow-y-auto">
+        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลดรายการ...</p>
+    </div>
+</div>
                                 <div class="card !p-0">
                                     <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
                                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
@@ -491,6 +498,13 @@
             <div id="calendar-page" class="page space-y-6">
                 <h2 class="text-2xl font-bold">ปฏิทิน</h2>
                 
+                <div class="card !p-4 flex justify-between items-center">
+    <p class="font-semibold text-gray-700">คุณมีโควต้าวันลาพักร้อนคงเหลือ: 10 วัน</p>
+    <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
+        + ยื่นใบลา
+    </button>
+</div>
+
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
                         <button id="cal-prev-month" class="p-2 rounded-full hover:bg-gray-100">
@@ -717,6 +731,46 @@
         </div>
     </div>
 
+    <div id="leave-request-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
+    <div id="leave-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+    <div class="card relative z-10 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-6">ยื่นเรื่องขออนุมัติลา</h3>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">ประเภทการลา</label>
+                <select id="leave-type-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    <option value="">-- เลือกประเภทการลา --</option>
+                    <option value="annual">ลาพักร้อน (Annual Leave)</option>
+                    <option value="sick">ลาป่วย (Sick Leave)</option>
+                    <option value="personal">ลากิจ (Personal Leave)</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">วันที่เริ่มต้น</label>
+                    <input type="date" id="leave-start-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">วันที่สิ้นสุด</label>
+                    <input type="date" id="leave-end-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">เหตุผลประกอบการลา</label>
+                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระต่างจังหวัด..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button id="cancel-leave-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                <button id="submit-leave-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ส่งใบลา</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script src="firebase-config.js"></script>
 
 <script>
@@ -804,7 +858,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const editModalCustomTimeInputs = document.getElementById('edit-modal-custom-time-inputs');
     const editModalCustomTimeStartInput = document.getElementById('edit-modal-custom-time-start-input');
     const editModalCustomTimeEndInput = document.getElementById('edit-modal-custom-time-end-input');
-
+    // --- 1. ดึง Element ของฟอร์มใบลา ---
+    const leaveRequestModal = document.getElementById('leave-request-modal');
+    const leaveOverlay = document.getElementById('leave-overlay');
+    const cancelLeaveBtn = document.getElementById('cancel-leave-btn');
+    const submitLeaveBtn = document.getElementById('submit-leave-btn');
+    // --- 2. ดึง Element ของ Input ---
+    const leaveTypeSelect = document.getElementById('leave-type-select');
+    const leaveStartDate = document.getElementById('leave-start-date');
+    const leaveEndDate = document.getElementById('leave-end-date');
+    const leaveReason = document.getElementById('leave-reason');
     // --- App State ---
     let currentUser = null;
     let watchId = null;
@@ -813,7 +876,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let photoFile = null;
     let controlsInitialized = false;
     let currentUserData = null; 
-    
     // [เพิ่มใหม่] ตัวแปรสำหรับเก็บเดือนที่ดูอยู่
     let currentDisplayDate = new Date();
     
@@ -2405,6 +2467,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (pageId === 'admin-dashboard-page') {
                 loadAllUsersForDropdown();
+                loadPendingLeaveRequests();
                 if (!editDateSelect.value) {
                     editDateSelect.value = new Date().toISOString().split('T')[0];
                 }
@@ -2781,6 +2844,113 @@ document.getElementById('cal-next-month').addEventListener('click', () => {
     loadCalendarData(currentDisplayDate);
 });
 
+const openLeaveModal = () => {
+        if (leaveRequestModal) {
+            leaveRequestModal.classList.remove('hidden');
+        }
+    };
+    
+    // ฟังก์ชันปิด Modal และล้างฟอร์ม
+    const closeLeaveModal = () => {
+        if (leaveRequestModal) {
+            leaveRequestModal.classList.add('hidden');
+            // ล้างค่าในฟอร์ม
+            leaveTypeSelect.value = "";
+            leaveStartDate.value = "";
+            leaveEndDate.value = "";
+            leaveReason.value = "";
+        }
+    };
+
+    // --- 4. ผูก Event Listener (ปุ่มเปิด/ปิด) ---
+    
+    // (สำคัญ) ต้องรอให้ DOM โหลดเสร็จก่อน จึงใช้ Event Delegation กับ body
+    // หรือถ้าคุณมั่นใจว่าปุ่ม 'show-leave-form-btn' อยู่ใน DOM ตอนโหลดเสร็จ ก็ใช้แบบนี้ได้:
+    // const showLeaveFormBtn = document.getElementById('show-leave-form-btn');
+    // if (showLeaveFormBtn) {
+    //     showLeaveFormBtn.addEventListener('click', openLeaveModal);
+    // }
+    
+    // นี่คือวิธีที่ปลอดภัยกว่า หากปุ่มถูกสร้างทีหลัง หรืออยู่ในหน้าที่ยังไม่ active
+    document.body.addEventListener('click', function(event) {
+        if (event.target.id === 'show-leave-form-btn') {
+            openLeaveModal();
+        }
+    });
+
+    if (cancelLeaveBtn) {
+        cancelLeaveBtn.addEventListener('click', closeLeaveModal);
+    }
+    if (leaveOverlay) {
+        leaveOverlay.addEventListener('click', closeLeaveModal);
+    }
+
+    // --- 5. [ฟังก์ชันหลัก] Event Listener สำหรับปุ่ม "ส่งใบลา" ---
+    if (submitLeaveBtn) {
+        submitLeaveBtn.addEventListener('click', async () => {
+            
+            // ตรวจสอบว่า Login หรือยัง (ใช้ตัวแปรจากโค้ดเดิมของคุณ)
+            if (!currentUser || !currentUserData) {
+                showNotification('กรุณาเข้าสู่ระบบก่อนยื่นใบลา', 'error');
+                return;
+            }
+
+            // --- 5.1 ดึงข้อมูลและ Validate ---
+            const leaveType = leaveTypeSelect.value;
+            const startDateStr = leaveStartDate.value;
+            const endDateStr = leaveEndDate.value;
+            const reason = leaveReason.value.trim();
+
+            if (!leaveType || !startDateStr || !endDateStr || !reason) {
+                showNotification('กรุณากรอกข้อมูลให้ครบทุกช่อง', 'warning');
+                return;
+            }
+            
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+
+            if (endDate < startDate) {
+                showNotification('วันที่สิ้นสุด ต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
+                return;
+            }
+            
+            // ป้องกันการกดซ้ำ
+            submitLeaveBtn.disabled = true;
+            submitLeaveBtn.textContent = 'กำลังส่งเรื่อง...';
+
+            // --- 5.2 เตรียมข้อมูลสำหรับ Firestore ---
+            const leaveData = {
+                userId: currentUser.uid,
+                userName: currentUserData.fullName,
+                userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
+                leaveType: leaveType,
+                startDate: firebase.firestore.Timestamp.fromDate(startDate),
+                endDate: firebase.firestore.Timestamp.fromDate(endDate),
+                reason: reason,
+                status: "pending", // สถานะเริ่มต้น: รออนุมัติ
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp() //
+            };
+
+            // --- 5.3 บันทึกลง Firestore ---
+            try {
+                // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
+                await db.collection('leave_requests').add(leaveData);
+                
+                showNotification('ยื่นใบลาสำเร็จ รอการอนุมัติ', 'success');
+                closeLeaveModal(); // ปิด Modal เมื่อสำเร็จ
+
+            } catch (error) {
+                console.error("Error submitting leave request:", error);
+                showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            } finally {
+                // คืนค่าปุ่ม
+                submitLeaveBtn.disabled = false;
+                submitLeaveBtn.textContent = 'ส่งใบลา';
+            }
+        });
+    }
+
+
 // [แก้ไข] 1. ฟังก์ชันสำหรับ "แสดง" รายละเอียด (ซ่อนฟอร์มไว้ก่อน)
         function showCalendarDetails(e) {
             const cell = e.target.closest('[data-day-number]');
@@ -3156,6 +3326,70 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         }
     });
 
+    // --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
+async function loadPendingLeaveRequests() {
+    const listContainer = document.getElementById('leave-approval-list');
+    const loadingMsg = document.getElementById('leave-loading-msg');
+    
+    if (!listContainer || !loadingMsg) return;
+
+    listContainer.innerHTML = ''; // ล้างของเก่า
+    loadingMsg.textContent = 'กำลังโหลดรายการ...';
+    listContainer.appendChild(loadingMsg); // ใส่ "กำลังโหลด" กลับเข้าไป
+
+    try {
+        // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
+        const querySnapshot = await db.collection('leave_requests')
+                                      .where('status', '==', 'pending')
+                                      .orderBy('submittedAt', 'asc')
+                                      .get();
+
+        if (querySnapshot.empty) {
+            loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
+            return;
+        }
+
+        listContainer.innerHTML = ''; // ล้าง "กำลังโหลด" ออก
+
+        querySnapshot.forEach(doc => {
+            const leave = doc.data();
+            const docId = doc.id;
+
+            // แปลง Timestamp เป็นวันที่อ่านง่าย
+            const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
+            const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
+
+            const cardHTML = `
+            <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                    <div>
+                        <p class="font-semibold">${leave.userName}</p>
+                        <p class="text-sm font-medium text-sky-700">${leave.leaveType}</p>
+                        <p class="text-sm text-gray-500">${startDate} ถึง ${endDate}</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg">${leave.reason}</p>
+                
+                <div class="flex justify-end gap-3 mt-4">
+                    <button data-id="${docId}" class="reject-leave-btn text-sm font-semibold text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
+                        ไม่อนุมัติ
+                    </button>
+                    <button data-id="${docId}" class="approve-leave-btn text-sm font-semibold text-white bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600">
+                        อนุมัติ
+                    </button>
+                </div>
+            </div>
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
+
+    } catch (error) {
+        console.error("Error loading leave requests:", error);
+        loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+    }
+}
+
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     async function loadAllUsersForDropdown() {
         const summaryEmployeeSelect = document.getElementById('summary-employee-select');
@@ -3188,6 +3422,30 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         }
     }
 
+// --- 3. Event Listener สำหรับปุ่ม Approve/Reject ---
+    const leaveListContainer = document.getElementById('leave-approval-list');
+    if (leaveListContainer) {
+        leaveListContainer.addEventListener('click', (event) => {
+            const target = event.target;
+            const docId = target.dataset.id;
+
+            if (target.classList.contains('approve-leave-btn')) {
+                // กดปุ่มอนุมัติ
+                target.disabled = true; 
+                target.textContent = 'กำลังบันทึก...';
+                // [แก้ไข] ส่ง target (ปุ่ม) เข้าไปด้วย
+                handleLeaveApproval(docId, 'approved', target); 
+            }
+
+            if (target.classList.contains('reject-leave-btn')) {
+                // กดปุ่มไม่อนุมัติ
+                target.disabled = true; 
+                // ส่ง target (ปุ่ม) เข้าไปด้วย
+                handleLeaveApproval(docId, 'rejected', target);
+            }
+        });
+    }
+
     // 4. ฟังก์ชันสำหรับเปิด Modal (ใช้ Event Delegation)
     searchResultsContainer.addEventListener('click', (e) => {
         // ปุ่ม "แก้ไข"
@@ -3211,6 +3469,36 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         const localISOTime = (new Date(date - tzoffset)).toISOString().slice(0, 16);
         return localISOTime;
     };
+
+    // --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
+// --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
+async function handleLeaveApproval(docId, newStatus, buttonElement) { // [แก้ไข] เพิ่ม , buttonElement
+    if (!docId) return;
+
+    try {
+        // 1. อัปเดต Firestore
+        await db.collection('leave_requests').doc(docId).update({
+            status: newStatus,
+            approvedBy: currentUserData.fullName
+        });
+        
+        showNotification(`อัปเดตสถานะเป็น "${newStatus}" สำเร็จ`, 'success');
+        
+        // 2. [แก้ไข] รอให้โหลดรายการใหม่ให้เสร็จ
+        await loadPendingLeaveRequests(); 
+
+    } catch (error) {
+        // 3. [แก้ไข] ถ้าเกิดข้อผิดพลาด (ไม่ว่าขั้นตอนไหน) ให้แจ้งเตือน และ "ปลดล็อก" ปุ่ม
+        console.error("Error updating leave status:", error);
+        showNotification('เกิดข้อผิดพลาดในการอัปเดต', 'error');
+        
+        if (buttonElement) {
+            buttonElement.disabled = false;
+            // ตั้งค่าข้อความปุ่มให้กลับมาเป็นเหมือนเดิม
+            buttonElement.textContent = (newStatus === 'approved') ? 'อนุมัติ' : 'ไม่อนุมัติ';
+        }
+    }
+}
 
     // 5. [ปรับปรุง] ฟังก์ชันเปิด Modal และดึงข้อมูล (รวม Report)
     async function openEditModal(docId, newUserId, newDateStr) {
