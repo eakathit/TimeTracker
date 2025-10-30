@@ -606,9 +606,11 @@
         </nav>
     </div>
 
-    <div id="notification" class="fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white py-2 px-6 rounded-full shadow-lg text-sm transition-all duration-500 opacity-0 -translate-y-10">
-        <p>บันทึกเวลาสำเร็จ!</p>
-    </div>
+    <div id="notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg text-sm transition-all duration-500 opacity-0 translate-y-10">
+    <span id="notification-icon">
+        </span>
+    <p id="notification-message">บันทึกเวลาสำเร็จ!</p>
+</div>
     
     <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div id="modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
@@ -2469,33 +2471,50 @@ function calculateWorkHours(checkinTime, checkoutTime) {
 
     function showNotification(message, type = 'success') {
     const notificationElement = document.getElementById('notification');
-    const textElement = notificationElement.querySelector('p');
+    // [แก้ไข] เลือก p และ span ด้วย ID ใหม่
+    const msgElement = document.getElementById('notification-message');
+    const iconElement = document.getElementById('notification-icon');
 
-    if (!notificationElement || !textElement) return;
+    if (!notificationElement || !msgElement || !iconElement) return;
 
-    textElement.textContent = message;
+    msgElement.textContent = message;
+
+    // [ใหม่] สร้างชุดไอคอนสำหรับสถานะต่างๆ
+    const icons = {
+        success: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
+        error: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`,
+        warning: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.1 2.15-1.1 2.786 0l5.625 9.742c.636 1.1-.178 2.46-1.393 2.46H3.725c-1.215 0-2.029-1.36-1.393-2.46l5.625-9.742zM9 11a1 1 0 112 0v1a1 1 0 11-2 0v-1zm1-4a1 1 0 011 1v2a1 1 0 11-2 0V8a1 1 0 011-1z" clip-rule="evenodd" /></svg>`
+    };
 
     // Reset classes
-    notificationElement.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500');
-    notificationElement.classList.remove('opacity-0', '-translate-y-10');
-    notificationElement.classList.add('opacity-100', 'translate-y-0'); // Show
+    notificationElement.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-gray-500');
+    // [แก้ไข] เปลี่ยนจาก -translate-y-10 เป็น translate-y-10 (เลื่อนจากล่าง)
+    notificationElement.classList.remove('opacity-0', 'translate-y-10');
+    
+    // Add showing classes (เลื่อนขึ้นมาที่ 0)
+    notificationElement.classList.add('opacity-100', 'translate-y-0');
 
-    // Set color based on type
+    // Set color and icon based on type
     if (type === 'success') {
         notificationElement.classList.add('bg-green-500');
+        iconElement.innerHTML = icons.success;
     } else if (type === 'error') {
         notificationElement.classList.add('bg-red-500');
+        iconElement.innerHTML = icons.error;
     } else if (type === 'warning') {
-        notificationElement.classList.add('bg-yellow-500'); // Optional: Add yellow for warnings
+        notificationElement.classList.add('bg-yellow-500'); // [แก้ไข] ใช้สีเหลืองสำหรับ warning
+        iconElement.innerHTML = icons.warning;
     } else {
-        notificationElement.classList.add('bg-gray-500'); // Default
+        notificationElement.classList.add('bg-gray-500');
+        iconElement.innerHTML = ''; // ไม่มีไอคอน
     }
 
 
     // Hide after a delay
     setTimeout(() => {
         notificationElement.classList.remove('opacity-100', 'translate-y-0');
-        notificationElement.classList.add('opacity-0', '-translate-y-10'); // Hide
+        // [แก้ไข] ให้เลื่อนกลับลงไปด้านล่าง
+        notificationElement.classList.add('opacity-0', 'translate-y-10'); 
     }, 3000); // Hide after 3 seconds
 }
 
