@@ -286,15 +286,15 @@
                         </div>
 
                         <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
-                            <div>
-                                <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
-                                <input type="time" id="custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
-                                <input type="time" id="custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
-                            </div>
-                        </div>
+    <div>
+        <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+        <input type="time" id="custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
+    </div>
+    <div>
+        <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+        <input type="time" id="custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
+    </div>
+</div>
                     </div>
                     <button id="save-report-btn" class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
                 </div>
@@ -780,7 +780,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryEmployeeFilterInput = document.getElementById('summary-employee-filter');
     const summaryStatusFilterSelect = document.getElementById('summary-status-filter');
     const applySummaryFiltersBtn = document.getElementById('apply-summary-filters-btn');
-    const exportEmployeeSummaryBtn = document.getElementById('export-employee-summary-btn'); 
+    const exportEmployeeSummaryBtn = document.getElementById('export-employee-summary-btn');    
+    // 1. ดึง Elements
+    const editUserSelect = document.getElementById('edit-user-select');
+    const editDateSelect = document.getElementById('edit-date-select');
+    const searchRecordBtn = document.getElementById('search-record-btn');
+    const searchResultsContainer = document.getElementById('search-results-container');
+
+    const editModal = document.getElementById('edit-modal');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const saveEditBtn = document.getElementById('save-edit-btn');
+
+    // Input ภายใน Modal
+    const editDocIdInput = document.getElementById('edit-doc-id');
+    const editCheckinTimeInput = document.getElementById('edit-checkin-time');
+    const editCheckoutTimeInput = document.getElementById('edit-checkout-time');
+    const editOnsiteDetailsInput = document.getElementById('edit-onsite-details');
+    // Elements สำหรับ Dropdown ใน Modal
+    const editModalWorkTypeSelectedText = document.getElementById('edit-modal-work-type-selected-text');
+    const editModalProjectSelectedText = document.getElementById('edit-modal-project-selected-text');
+    const editModalDurationSelectedText = document.getElementById('edit-modal-duration-selected-text');
+    const editModalCustomTimeInputs = document.getElementById('edit-modal-custom-time-inputs');
+    const editModalCustomTimeStartInput = document.getElementById('edit-modal-custom-time-start-input');
+    const editModalCustomTimeEndInput = document.getElementById('edit-modal-custom-time-end-input');
 
     // --- App State ---
     let currentUser = null;
@@ -1801,108 +1824,180 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusFilter = summaryStatusFilterSelect.value;
 
         if (!startDateString || !endDateString) {
-            alert('กรุณาเลือกช่วงวันที่ก่อน Export');
-            return;
+            return alert('กรุณาเลือกช่วงวันที่ก่อน Export');
         }
 
-        const startDate = new Date(startDateString);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(endDateString);
-        endDate.setHours(23, 59, 59, 999);
-
-        showNotification('กำลังเตรียมข้อมูลสำหรับ Export...'); 
+        showNotification('กำลังเตรียมข้อมูลสำหรับ Export...');
 
         try {
-             const usersSnapshot = await db.collection('users').orderBy('fullName').get();
-             let allUsersData = {};
-             usersSnapshot.forEach(doc => {
-                 if (!userIdFilter || doc.id === userIdFilter) {
-                     allUsersData[doc.id] = { ...doc.data(), workRecords: [] };
-                 }
-             });
+            const startDate = new Date(startDateString);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(endDateString);
+            endDate.setHours(23, 59, 59, 999);
 
-            let workRecordsQuery = db.collection('work_records')
-                                     .where('date', '>=', startDate)
-                                     .where('date', '<=', endDate);
-
-            if (statusFilter && statusFilter !== 'not_checked_in') {
-                workRecordsQuery = workRecordsQuery.where('status', '==', statusFilter);
+            // --- [ใหม่] Step 1: ดึงข้อมูลปฏิทิน (วันหยุด) ---
+            const holidayMap = new Map();
+            const workingSaturdayMap = new Map();
+            try {
+                const calendarDoc = await db.collection('system_settings').doc('calendar_rules').get();
+                if (calendarDoc.exists) {
+                    const data = calendarDoc.data();
+                    (data.holidays || []).forEach(dateStr => holidayMap.set(dateStr, true));
+                    (data.workingSaturdays || []).forEach(dateStr => workingSaturdayMap.set(dateStr, true));
+                }
+            } catch (e) {
+                console.warn("Could not load calendar rules for export:", e);
             }
-             workRecordsQuery = workRecordsQuery.orderBy('date', 'asc'); 
 
-            const recordsSnapshot = await workRecordsQuery.get();
-
-             recordsSnapshot.forEach(doc => {
-                const record = doc.data();
-                if (allUsersData[record.userId]) { 
-                    allUsersData[record.userId].workRecords.push(record);
+            // --- [ใหม่] Step 2: ดึง User ทั้งหมด (และกรองถ้าจำเป็น) ---
+            const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+            let filteredUsers = [];
+            usersSnapshot.forEach(doc => {
+                if (!userIdFilter || doc.id === userIdFilter) {
+                    // [ใหม่] เพิ่มข้อมูล user ที่จำเป็น
+                    filteredUsers.push({ 
+                        id: doc.id, 
+                        fullName: doc.data().fullName || doc.id,
+                        department: doc.data().department || '-' // (เพิ่มคอลัมน์แผนก)
+                    });
                 }
             });
 
-            let filteredUserIds = Object.keys(allUsersData); 
-            if (statusFilter === 'not_checked_in') {
-                filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length === 0);
-            } else if (statusFilter) { 
-                filteredUserIds = filteredUserIds.filter(userId => allUsersData[userId].workRecords.length > 0);
+            if (filteredUsers.length === 0) {
+                 alert('ไม่พบข้อมูลพนักงานที่เลือก');
+                 return;
             }
 
+            // --- [ใหม่] Step 3: ดึง work_records ทั้งหมดในช่วงเวลา ---
+            const recordsSnapshot = await db.collection('work_records')
+                                         .where('date', '>=', startDate)
+                                         .where('date', '<=', endDate)
+                                         .get();
+
+            // --- [ใหม่] Step 4: จัดเรียง work_records ลง Map เพื่อง่ายต่อการค้นหา ---
+            // โครงสร้าง: Map<userId, Map<dateString, recordData>>
+            const recordsMap = new Map();
+            recordsSnapshot.forEach(doc => {
+                const record = doc.data();
+                const userId = record.userId;
+                // ใช้ YYYY-MM-DD เป็น Key เพื่อป้องกันปัญหา Timezone
+                const dateString = record.date.toDate().toISOString().split('T')[0]; 
+                
+                if (!recordsMap.has(userId)) {
+                    recordsMap.set(userId, new Map());
+                }
+                recordsMap.get(userId).set(dateString, record);
+            });
+
+            // --- [แก้ไข] Step 5: สร้าง Headers (เพิ่ม "แผนก" และ "ประเภทวัน") ---
             const dataForExcel = [
-                ["ชื่อพนักงาน", "วันที่", "สถานะ", "เวลาเข้า", "เวลาออก", "ชั่วโมงปกติ", "ชั่วโมง OT", "ประเภทงาน", "รายละเอียด On-site", "รายงาน: ประเภท", "รายงาน: โครงการ", "รายงาน: ระยะเวลา"]
+                ["ชื่อพนักงาน", "แผนก", "วันที่", "ประเภทวัน", "สถานะ", "เวลาเข้า", "เวลาออก", "ชั่วโมงปกติ", "ชั่วโมง OT", "ประเภทงาน", "รายละเอียด On-site", "รายงาน: ประเภท", "รายงาน: โครงการ", "รายงาน: ระยะเวลา"]
             ];
+            
+            // Format วันที่และเวลาของไทย
+            const localDateFormatter = new Intl.DateTimeFormat('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const localTimeFormatter = new Intl.DateTimeFormat('th-TH', { hour: '2-digit', minute: '2-digit' });
 
-            filteredUserIds.forEach(userId => {
-                const user = allUsersData[userId];
-                const fullName = user.fullName || userId;
+            // --- [ใหม่] Step 6: Loop ตามวัน (ไม่ใช่ตามข้อมูลที่พบ) ---
+            for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+                
+                const dateKey = day.toISOString().split('T')[0]; // YYYY-MM-DD
+                const dayOfWeek = day.getDay(); // 0=Sunday, 6=Saturday
+                
+                // [ใหม่] ตรวจสอบประเภทวัน
+                let dayType = "วันทำงาน";
+                if (holidayMap.has(dateKey)) {
+                    dayType = "วันหยุดนักขัตฤกษ์";
+                } else if (dayOfWeek === 0) {
+                    dayType = "วันอาทิตย์";
+                } else if (dayOfWeek === 6 && !workingSaturdayMap.has(dateKey)) {
+                    dayType = "วันเสาร์ (หยุด)";
+                } else if (dayOfWeek === 6 && workingSaturdayMap.has(dateKey)) {
+                    dayType = "วันเสาร์ (ทำงาน)";
+                }
 
-                if (user.workRecords.length === 0 && statusFilter !== 'checked_in' && statusFilter !== 'completed') {
-                     dataForExcel.push([
-                        fullName, 'ไม่มีข้อมูลในช่วงนี้', 'ยังไม่เข้างาน', '-', '-', '-', '-', '-', '-', '-', '-', '-'
-                     ]);
-                } else {
-                    user.workRecords.forEach(record => {
+                // --- [ใหม่] Step 7: Loop ตาม User ที่กรองไว้ ---
+                for (const user of filteredUsers) {
+                    
+                    const userRecords = recordsMap.get(user.id);
+                    // ดึงข้อมูลของ user คนนี้ ในวันนี้ (ถ้ามี)
+                    const record = userRecords ? userRecords.get(dateKey) : null;
+
+                    // ตั้งค่า Default
+                    let statusText = "";
+                    let checkInTime = "-";
+                    let checkOutTime = "-";
+                    let regularWorkHours = 0;
+                    let overtimeHours = 0;
+                    let workTypeInfo = "-";
+                    let onSiteDetails = "-";
+                    let reportType = "-";
+                    let reportProject = "-";
+                    let reportDuration = "-";
+
+                    if (record) {
+                        // --- Case 1: มีข้อมูล (พนักงานมาทำงาน) ---
                         const report = record.report || {};
-                        let statusText = '';
-                        let checkInTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                        let checkOutTime = '-';
-                        let regularWorkHours = 0;
-                        let overtimeHours = 0;
-                        let workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : 'On-site';
-                        let onSiteDetails = record.checkIn.onSiteDetails || '-';
+                        checkInTime = localTimeFormatter.format(record.checkIn.timestamp.toDate());
+                        workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : 'On-site';
+                        onSiteDetails = record.checkIn.onSiteDetails || '-';
+                        reportType = report.workType || '-';
+                        reportProject = report.project || '-';
+                        reportDuration = report.duration || '-';
 
-                         if (record.status === 'checked_in') {
+                        if (record.status === 'checked_in') {
                             statusText = 'กำลังทำงาน';
                         } else if (record.status === 'completed') {
                             statusText = 'สิ้นสุดการทำงาน';
                             if (record.checkOut) {
-                                checkOutTime = record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                                checkOutTime = localTimeFormatter.format(record.checkOut.timestamp.toDate());
                                 const hours = calculateWorkHours(record.checkIn.timestamp.toDate(), record.checkOut.timestamp.toDate());
                                 regularWorkHours = hours.regularWorkHours;
                                 overtimeHours = record.overtime?.hours || 0;
                             }
                         }
+                    } else {
+                        // --- Case 2: ไม่มีข้อมูล (พนักงานไม่มาทำงาน) ---
+                        if (dayType === "วันทำงาน" || dayType === "วันเสาร์ (ทำงาน)") {
+                            statusText = "ไม่ได้ลงเวลา"; // เป็นวันที่ควรมาแต่ไม่มา
+                        } else {
+                            statusText = "วันหยุด"; // เป็นวันที่หยุดอยู่แล้ว
+                        }
+                    }
+                    
+                    // --- [ใหม่] Step 8: Filter ตาม Status ที่ user เลือก ---
+                    // ถ้าเลือก "ไม่ได้ลงเวลา" แต่สถานะไม่ใช่ "ไม่ได้ลงเวลา" -> ข้าม
+                    if (statusFilter === "not_checked_in" && statusText !== "ไม่ได้ลงเวลา") continue;
+                    // ถ้าเลือก "กำลังทำงาน" แต่สถานะไม่ใช่ "กำลังทำงาน" -> ข้าม
+                    if (statusFilter === "checked_in" && statusText !== "กำลังทำงาน") continue;
+                    // ถ้าเลือก "สิ้นสุดการทำงาน" แต่สถานะไม่ใช่ "สิ้นสุดการทำงาน" -> ข้าม
+                    if (statusFilter === "completed" && statusText !== "สิ้นสุดการทำงาน") continue;
+                    // (ถ้า statusFilter = "" (ทั้งหมด) จะไม่ข้ามเลย)
 
-                        dataForExcel.push([
-                            fullName,
-                            record.date.toDate().toLocaleDateString('th-TH'),
-                            statusText,
-                            checkInTime,
-                            checkOutTime,
-                            regularWorkHours.toFixed(2),
-                            overtimeHours.toFixed(1),
-                            workTypeInfo,
-                            onSiteDetails,
-                            report.workType || '-',
-                            report.project || '-',
-                            report.duration || '-'
-                        ]);
-                    });
-                }
-            });
+                    // --- Step 9: เพิ่มข้อมูลลง Excel ---
+                    dataForExcel.push([
+                        user.fullName,
+                        user.department,                 // [ใหม่]
+                        localDateFormatter.format(day),  // ใช้วันที่จาก Loop
+                        dayType,                         // [ใหม่]
+                        statusText,                      // [ใหม่]
+                        checkInTime,
+                        checkOutTime,
+                        regularWorkHours.toFixed(2),
+                        overtimeHours.toFixed(1),
+                        workTypeInfo,
+                        onSiteDetails,
+                        reportType,
+                        reportProject,
+                        reportDuration
+                    ]);
+                } // จบ Loop User
+            } // จบ Loop วันที่
 
             if (dataForExcel.length <= 1) {
                  alert('ไม่พบข้อมูลที่จะ Export ตามเงื่อนไขที่เลือก');
                  return;
-             }
+            }
 
             const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
             const wb = XLSX.utils.book_new();
@@ -2825,6 +2920,133 @@ document.getElementById('cal-next-month').addEventListener('click', () => {
     document.getElementById('cal-details-container').addEventListener('click', handleCalendarDetailClick);
 
     // --- จบส่วนโค้ด Details ---
+    
+    saveEditBtn.addEventListener('click', async () => {
+        const docId = editDocIdInput.value;
+        const checkinStr = editCheckinTimeInput.value;
+        const checkoutStr = editCheckoutTimeInput.value;
+
+        if (!docId || !checkinStr) {
+            alert('ข้อมูล ID หรือ เวลา Check-in ไม่ถูกต้อง');
+            return;
+        }
+
+        saveEditBtn.disabled = true;
+        saveEditBtn.textContent = 'กำลังบันทึก...';
+
+        try {
+            // ดึง userId และ dateKey จาก docId
+            const [userId, dateKey] = docId.split('_'); 
+            const baseDate = new Date(dateKey + 'T00:00:00'); // ใช้วันที่จาก docId เป็นหลัก
+
+            // --- 1. รวบรวมข้อมูล Report ---
+            const workType = editModalWorkTypeSelectedText.textContent;
+            const project = editModalProjectSelectedText.textContent;
+            let duration = editModalDurationSelectedText.textContent;
+
+            if (duration === 'กำหนดเวลา') {
+                const startTime = editModalCustomTimeStartInput.value;
+                const endTime = editModalCustomTimeEndInput.value;
+                if (startTime && endTime) {
+                    duration = `${startTime} - ${endTime}`;
+                } else {
+                    duration = 'กำหนดเวลา (ไม่สมบูรณ์)';
+                }
+            }
+
+            const reportData = {
+                workType: (workType.includes('...') ? null : workType),
+                project: (project.includes('...') ? null : project),
+                duration: (duration.includes('...') ? null : duration),
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // --- 2. ตรวจสอบว่าเป็นการ "เพิ่มใหม่" หรือ "แก้ไข" ---
+            const workRecordRef = db.collection('work_records').doc(docId);
+            const doc = await workRecordRef.get();
+            let isCreatingNew = !doc.exists;
+
+            let dataToSave = {};
+            const checkinTimestamp = firebase.firestore.Timestamp.fromDate(new Date(checkinStr));
+            const checkoutTimestamp = checkoutStr ? firebase.firestore.Timestamp.fromDate(new Date(checkoutStr)) : null;
+
+            if (isCreatingNew) {
+                // --- 3A. Logic สำหรับ "การสร้างใหม่" (Add) ---
+                dataToSave = {
+                    userId: userId,
+                    date: firebase.firestore.Timestamp.fromDate(baseDate), // ใช้วันที่ที่เลือก
+                    checkIn: {
+                        timestamp: checkinTimestamp,
+                        location: null, // Admin add, no location
+                        accuracy: null,
+                        workType: "in_factory", // Default for admin
+                        onSiteDetails: editOnsiteDetailsInput.value || null,
+                        photoUrl: null
+                    },
+                    checkOut: checkoutTimestamp ? {
+                        timestamp: checkoutTimestamp,
+                        location: null
+                    } : null,
+                    status: checkoutTimestamp ? "completed" : "checked_in",
+                    report: (reportData.workType ? reportData : null), // เพิ่ม report ถ้ามีการกรอก
+                    overtime: null // ต้องคำนวณ
+                };
+
+                // คำนวณ OT ถ้าสถานะเป็น completed
+                if (dataToSave.status === "completed") {
+                    const { regularWorkHours, overtimeHours } = calculateWorkHours(new Date(checkinStr), new Date(checkoutStr));
+                    dataToSave.overtime = { hours: overtimeHours };
+                }
+                
+                // ใช้ .set() สำหรับการสร้างเอกสารใหม่
+                await workRecordRef.set(dataToSave);
+
+            } else {
+                // --- 3B. Logic สำหรับ "การแก้ไข" (Edit) ---
+                const existingRecord = doc.data();
+                
+                // ใช้ .update() เพื่อ merge ข้อมูล, ป้องกันข้อมูลเดิม (เช่น location) หาย
+                dataToSave = {
+                    'checkIn.timestamp': checkinTimestamp,
+                    'checkIn.onSiteDetails': editOnsiteDetailsInput.value || null, // อัปเดต onSiteDetails
+                    'checkOut': checkoutTimestamp ? {
+                        timestamp: checkoutTimestamp,
+                        location: existingRecord.checkOut?.location || null // ใช้ location เดิมถ้ามี
+                    } : null,
+                    'status': checkoutTimestamp ? "completed" : "checked_in",
+                    'report': (reportData.workType ? reportData : existingRecord.report) // อัปเดต report
+                };
+
+                // คำนวณ OT ถ้าสถานะเป็น completed
+                if (dataToSave.status === "completed") {
+                    const { regularWorkHours, overtimeHours } = calculateWorkHours(new Date(checkinStr), new Date(checkoutStr));
+                    dataToSave['overtime'] = { hours: overtimeHours }; // อัปเดต field overtime
+                } else {
+                    dataToSave['overtime'] = null; // ล้างค่า OT ถ้า check-out ถูกลบ
+                }
+
+                // ใช้ .update() สำหรับการแก้ไขเอกสารเดิม
+                await workRecordRef.update(dataToSave);
+            }
+
+            // --- 4. Success ---
+            showNotification('บันทึกข้อมูลสำเร็จ!', 'success');
+            editModal.classList.add('hidden');
+            searchRecordBtn.click(); // กดค้นหาอีกครั้งเพื่อรีเฟรชข้อมูลที่แสดง
+
+        } catch (error) {
+            console.error("Error saving record:", error);
+            showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
+        } finally {
+            saveEditBtn.disabled = false;
+            saveEditBtn.textContent = 'บันทึกการแก้ไข';
+        }
+    });
+
+    // เพิ่ม Event Listener ให้ปุ่ม Cancel (โค้ดนี้น่าจะมีอยู่แล้ว)
+    cancelEditBtn.addEventListener('click', () => {
+        editModal.classList.add('hidden');
+    });
 
     // --- Function to show confirmation dialog ---
 // Added optional onCancel parameter
@@ -2873,31 +3095,6 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
 
     confirmModal.classList.remove('hidden'); // Show Modal
 }
-    // --- [เพิ่มใหม่] --- โค้ดสำหรับ Admin Edit Modal (ที่ปรับปรุงแล้ว) ---
-
-    // 1. ดึง Elements
-    const editUserSelect = document.getElementById('edit-user-select');
-    const editDateSelect = document.getElementById('edit-date-select');
-    const searchRecordBtn = document.getElementById('search-record-btn');
-    const searchResultsContainer = document.getElementById('search-results-container');
-
-    const editModal = document.getElementById('edit-modal');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const cancelEditBtn = document.getElementById('cancel-edit-btn');
-    const saveEditBtn = document.getElementById('save-edit-btn');
-
-    // Input ภายใน Modal
-    const editDocIdInput = document.getElementById('edit-doc-id');
-    const editCheckinTimeInput = document.getElementById('edit-checkin-time');
-    const editCheckoutTimeInput = document.getElementById('edit-checkout-time');
-    const editOnsiteDetailsInput = document.getElementById('edit-onsite-details');
-    // Elements สำหรับ Dropdown ใน Modal
-    const editModalWorkTypeSelectedText = document.getElementById('edit-modal-work-type-selected-text');
-    const editModalProjectSelectedText = document.getElementById('edit-modal-project-selected-text');
-    const editModalDurationSelectedText = document.getElementById('edit-modal-duration-selected-text');
-    const editModalCustomTimeInputs = document.getElementById('edit-modal-custom-time-inputs');
-    const editModalCustomTimeStartInput = document.getElementById('edit-modal-custom-time-start-input');
-    const editModalCustomTimeEndInput = document.getElementById('edit-modal-custom-time-end-input');
 
     // 3. [เพิ่ม] ฟังก์ชันสำหรับค้นหาข้อมูลเมื่อคลิกปุ่ม
     searchRecordBtn.addEventListener('click', async () => {
