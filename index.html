@@ -3472,7 +3472,8 @@ async function loadPendingLeaveRequests() {
 
     // --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
 // --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
-async function handleLeaveApproval(docId, newStatus, buttonElement) { // [แก้ไข] เพิ่ม , buttonElement
+// ใน index.html
+async function handleLeaveApproval(docId, newStatus, buttonElement) { 
     if (!docId) return;
 
     try {
@@ -3484,17 +3485,19 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) { // [แก
         
         showNotification(`อัปเดตสถานะเป็น "${newStatus}" สำเร็จ`, 'success');
         
-        // 2. [แก้ไข] รอให้โหลดรายการใหม่ให้เสร็จ
+        // 2. รอให้โหลดรายการใหม่ให้เสร็จ
         await loadPendingLeaveRequests(); 
 
     } catch (error) {
-        // 3. [แก้ไข] ถ้าเกิดข้อผิดพลาด (ไม่ว่าขั้นตอนไหน) ให้แจ้งเตือน และ "ปลดล็อก" ปุ่ม
+        // 3. ถ้าเกิดข้อผิดพลาด
         console.error("Error updating leave status:", error);
         showNotification('เกิดข้อผิดพลาดในการอัปเดต', 'error');
-        
+
+    } finally {
+        // [เพิ่ม] 4. คืนค่าปุ่ม "เสมอ" ไม่ว่าจะสำเร็จหรือล้มเหลว
+        // (ถึงแม้ list จะ refresh ไปแล้ว แต่ถ้าเกิด error ก่อน refresh ปุ่มจะค้าง)
         if (buttonElement) {
             buttonElement.disabled = false;
-            // ตั้งค่าข้อความปุ่มให้กลับมาเป็นเหมือนเดิม
             buttonElement.textContent = (newStatus === 'approved') ? 'อนุมัติ' : 'ไม่อนุมัติ';
         }
     }
