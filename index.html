@@ -326,7 +326,7 @@
                                 <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 <span>ดูปฏิทิน (วางแผน/วันหยุด)</span>
                             </button>
-                             <div class="space-y-6">
+                             <div class="space-y-6">    
                                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                                     <h4 class="font-semibold text-gray-700 mb-3">จัดการประเภทงาน</h4>
                                     <div class="space-y-3">
@@ -381,7 +381,41 @@
                                         </div>
                                     </div>
                                 </div>
-
+                                
+                                <div class="card space-y-4">
+                                    <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c.12-.23.37-.37.64-.37.27 0 .52.14.64.37l1.41 2.66c.12.23.18.49.18.75v10.84c0 .83-.67 1.5-1.5 1.5H7.64c-.83 0-1.5-.67-1.5-1.5V6.58c0-.26.06-.52.18-.75l1.41-2.66zM10 8a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                        Admin: จัดการปฏิทินบริษัท
+                                    </h3>
+                                    
+                                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                        <h4 class="font-semibold text-gray-700 mb-3">เพิ่มวันที่</h4>
+                                        <div class="flex flex-col sm:flex-row gap-3">
+                                            <input type="date" id="calendar-admin-date-input" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                            <button id="calendar-admin-add-holiday" class="flex-shrink-0 px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600">
+                                                + เพิ่มเป็นวันหยุด
+                                            </button>
+                                            <button id="calendar-admin-add-worksat" class="flex-shrink-0 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700">
+                                                + เพิ่มเป็นวันเสาร์ทำงาน
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-700 mb-2">รายการวันหยุด (Holidays)</h4>
+                                            <div id="holiday-list" class="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border">
+                                                <p class="text-sm text-gray-400">กำลังโหลด...</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-700 mb-2">วันเสาร์ทำงาน (Working Sats)</h4>
+                                            <div id="working-saturday-list" class="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border">
+                                                <p class="text-sm text-gray-400">กำลังโหลด...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="card">
                                     <h3 class="font-semibold text-lg text-gray-800 mb-4">🗓️ จัดการการลา</h3>
 
@@ -389,7 +423,7 @@
                                         <nav id="leave-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
                                             <a href="#" data-target="leave-pending-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-semibold border-sky-500 text-sky-600" aria-current="page">
                                                 รออนุมัติ
-                                                </a>
+                                            </a>
                                             <a href="#" data-target="leave-history-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
                                                 ประวัติทั้งหมด
                                             </a>
@@ -419,7 +453,7 @@
                                                         <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
                                                         <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
                                                             <option value="">พนักงานทั้งหมด</option>
-                                                            </select>
+                                                        </select>
                                                     </div>
                                                 </div>
                                                 <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
@@ -433,7 +467,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="card !p-0">
                                     <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
                                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
@@ -539,7 +572,7 @@
                     </div>
                 </div>
             </div>
-
+            
 
             <div id="calendar-page" class="page space-y-6">
                 <h2 class="text-2xl font-bold">ปฏิทิน</h2>
@@ -838,6 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const LEAVE_TYPE_MAP = { 'annual': 'ลาพักร้อน (Annual Leave)', 'sick': 'ลาป่วย (Sick Leave)', 'personal': 'ลากิจ (Personal Leave)' };
     const storage = firebase.storage(); 
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
     const ALLOWED_RADIUS_METERS = 200;
@@ -1342,6 +1376,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        document.getElementById('calendar-admin-add-holiday')?.addEventListener('click', () => {
+            handleAddCalendarRule('holidays');
+        });
+        document.getElementById('calendar-admin-add-worksat')?.addEventListener('click', () => {
+            handleAddCalendarRule('workingSaturdays');
+        });
+        // Event Delegation สำหรับปุ่มลบ
+        document.getElementById('admin-calendar-controls-card')?.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.calendar-delete-btn');
+            if (deleteBtn) {
+                const date = deleteBtn.dataset.date;
+                const type = deleteBtn.dataset.type;
+                handleDeleteCalendarRule(type, date, deleteBtn);
+            }
+        });
+
         const leaveHistorySearchBtn = document.getElementById('leave-history-search-btn');
         if (leaveHistorySearchBtn) {
             leaveHistorySearchBtn.addEventListener('click', loadLeaveHistory);
@@ -1384,7 +1434,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         }
-        
+
+
         const initializeProjectSummary = () => {
             const db = firebase.firestore();
             const projectSelect = document.getElementById('project-summary-select');
@@ -2564,8 +2615,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // [เพิ่ม] เรียกฟังก์ชันโหลดปฏิทิน
+            // [แก้ไข] เรียกฟังก์ชันโหลดปฏิทิน และตรวจสอบสิทธิ์ Admin
             if (pageId === 'calendar-page') {
-                loadCalendarData(currentDisplayDate); 
+                loadCalendarData(currentDisplayDate);
+                
+                // [ใหม่] ตรวจสอบสิทธิ์เพื่อแสดงกล่อง Admin
+                const adminControls = document.getElementById('admin-calendar-controls-card');
+                if (adminControls) {
+                    if (currentUserData && currentUserData.role === 'admin') {
+                        adminControls.classList.remove('hidden');
+                        loadCalendarRules(); // โหลดรายการวันหยุด
+                    } else {
+                        adminControls.classList.add('hidden');
+                    }
+                }
             }
             
             if (pageId === 'profile-page') {
@@ -3414,6 +3477,114 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
         }
     });
 
+    async function loadCalendarRules() {
+    const holidayList = document.getElementById('holiday-list');
+    const workSatList = document.getElementById('working-saturday-list');
+    if (!holidayList || !workSatList) return;
+
+    holidayList.innerHTML = '<p class="text-sm text-gray-400">กำลังโหลด...</p>';
+    workSatList.innerHTML = '<p class="text-sm text-gray-400">กำลังโหลด...</p>';
+
+    try {
+        const doc = await db.collection('system_settings').doc('calendar_rules').get();
+        if (!doc.exists) {
+            holidayList.innerHTML = '<p class="text-sm text-gray-400">ไม่พบข้อมูล</p>';
+            workSatList.innerHTML = '<p class="text-sm text-gray-400">ไม่พบข้อมูล</p>';
+            return;
+        }
+
+        const data = doc.data();
+        const holidays = data.holidays || [];
+        const workingSaturdays = data.workingSaturdays || [];
+
+        // ฟังก์ชัน Helper สร้าง HTML
+        const createListHTML = (dateArray, type) => {
+            if (dateArray.length === 0) return '<p class="text-sm text-gray-400">ไม่มีรายการ</p>';
+            // เรียงวันที่จากน้อยไปมาก
+            dateArray.sort((a, b) => new Date(a) - new Date(b));
+            
+            return dateArray.map(dateStr => `
+                <div class="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
+                    <span class="text-sm font-medium">${dateStr}</span>
+                    <button data-date="${dateStr}" data-type="${type}" class="calendar-delete-btn text-red-400 hover:text-red-600 p-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        holidayList.innerHTML = createListHTML(holidays, 'holidays');
+        workSatList.innerHTML = createListHTML(workingSaturdays, 'workingSaturdays');
+
+    } catch (error) {
+        console.error("Error loading calendar rules:", error);
+        holidayList.innerHTML = '<p class="text-sm text-red-500">โหลดล้มเหลว</p>';
+        workSatList.innerHTML = '<p class="text-sm text-red-500">โหลดล้มเหลว</p>';
+    }
+}
+
+// 2. ฟังก์ชันเพิ่มกฎ (Holiday หรือ Working Saturday)
+async function handleAddCalendarRule(type) {
+    const dateInput = document.getElementById('calendar-admin-date-input');
+    const dateString = dateInput.value; // YYYY-MM-DD
+    
+    if (!dateString) {
+        showNotification('กรุณาเลือกวันที่ก่อน', 'warning');
+        return;
+    }
+
+    const buttonId = (type === 'holidays') ? 'calendar-admin-add-holiday' : 'calendar-admin-add-worksat';
+    const button = document.getElementById(buttonId);
+    button.disabled = true;
+    button.textContent = 'กำลังเพิ่ม...';
+
+    try {
+        const docRef = db.collection('system_settings').doc('calendar_rules');
+        
+        // ใช้ arrayUnion เพื่อเพิ่มค่าลงใน array (ถ้ายังไม่มี)
+        await docRef.set({
+            [type]: firebase.firestore.FieldValue.arrayUnion(dateString)
+        }, { merge: true }); // merge: true เพื่อไม่ให้ลบ field อื่น
+
+        showNotification(`เพิ่มวันที่ ${dateString} สำเร็จ`, 'success');
+        dateInput.value = ''; // ล้างค่า
+        loadCalendarRules(); // โหลดรายการใหม่
+
+    } catch (error) {
+        console.error("Error adding calendar rule:", error);
+        showNotification('เกิดข้อผิดพลาด', 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = (type === 'holidays') ? '+ เพิ่มเป็นวันหยุด' : '+ เพิ่มเป็นวันเสาร์ทำงาน';
+    }
+}
+
+// 3. ฟังก์ชันลบกฎ
+async function handleDeleteCalendarRule(type, dateString, buttonElement) {
+    if (!type || !dateString) return;
+
+    buttonElement.disabled = true;
+    buttonElement.style.opacity = '0.5';
+
+    try {
+        const docRef = db.collection('system_settings').doc('calendar_rules');
+        
+        // ใช้ arrayRemove เพื่อลบค่าออกจาก array
+        await docRef.update({
+            [type]: firebase.firestore.FieldValue.arrayRemove(dateString)
+        });
+
+        showNotification(`ลบวันที่ ${dateString} สำเร็จ`, 'success');
+        loadCalendarRules(); // โหลดรายการใหม่ (วิธีนี้ง่ายที่สุด)
+
+    } catch (error) {
+        console.error("Error deleting calendar rule:", error);
+        showNotification('เกิดข้อผิดพลาด', 'error');
+        buttonElement.disabled = false;
+        buttonElement.style.opacity = '1';
+    }
+}
+
     // --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
 // [ปรับปรุง] --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
 // (แทนที่ฟังก์ชันเดิม)
@@ -3456,7 +3627,7 @@ async function loadPendingLeaveRequests() {
                     <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
                     <div>
                         <p class="font-semibold">${leave.userName}</p>
-                        <p class="text-sm font-medium text-sky-700">${leave.leaveType}</p>
+                        <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
                         <p class="text-sm text-gray-500">${startDate} ถึง ${endDate}</p>
                     </div>
                 </div>
@@ -3638,7 +3809,7 @@ async function loadAllUsersForDropdown() {
                             <p class="font-semibold">${leave.userName}</p>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColorClass}">${statusText}</span>
                         </div>
-                        <p class="text-sm font-medium text-sky-700">${leave.leaveType}</p>
+                        <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
                         <p class="text-sm text-gray-500">${startDate} ถึง ${endDate}</p>
                     </div>
                 </div>
