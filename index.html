@@ -326,7 +326,7 @@
                                 <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 <span>ดูปฏิทิน (วางแผน/วันหยุด)</span>
                             </button>
-                             <div class="space-y-6">    
+                             <div class="space-y-6">
                                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                                     <h4 class="font-semibold text-gray-700 mb-3">จัดการประเภทงาน</h4>
                                     <div class="space-y-3">
@@ -382,36 +382,30 @@
                                     </div>
                                 </div>
                                 
-                                <div class="card space-y-4">
-                                    <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c.12-.23.37-.37.64-.37.27 0 .52.14.64.37l1.41 2.66c.12.23.18.49.18.75v10.84c0 .83-.67 1.5-1.5 1.5H7.64c-.83 0-1.5-.67-1.5-1.5V6.58c0-.26.06-.52.18-.75l1.41-2.66zM10 8a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                                        Admin: จัดการปฏิทินบริษัท
-                                    </h3>
-                                    
-                                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                        <h4 class="font-semibold text-gray-700 mb-3">เพิ่มวันที่</h4>
-                                        <div class="flex flex-col sm:flex-row gap-3">
-                                            <input type="date" id="calendar-admin-date-input" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
-                                            <button id="calendar-admin-add-holiday" class="flex-shrink-0 px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600">
-                                                + เพิ่มเป็นวันหยุด
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h4 class="font-semibold text-gray-700 mb-3">🗓️ จัดการวันหยุด/วันทำงาน</h4>
+                                    <div class="space-y-3">
+                                        
+                                        <div>
+                                            <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
+                                            <input type="date" id="admin-calendar-date-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button id="add-holiday-btn" class="flex items-center justify-center gap-2 w-full p-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                                                <span>เพิ่มเป็นวันหยุด</span>
                                             </button>
-                                            <button id="calendar-admin-add-worksat" class="flex-shrink-0 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700">
-                                                + เพิ่มเป็นวันเสาร์ทำงาน
+                                            <button id="add-working-saturday-btn" class="flex items-center justify-center gap-2 w-full p-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors text-sm">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                                <span>เพิ่มเป็นเสาร์ทำงาน</span>
                                             </button>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <h4 class="font-semibold text-gray-700 mb-2">รายการวันหยุด (Holidays)</h4>
-                                            <div id="holiday-list" class="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border">
-                                                <p class="text-sm text-gray-400">กำลังโหลด...</p>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-semibold text-gray-700 mb-2">วันเสาร์ทำงาน (Working Sats)</h4>
-                                            <div id="working-saturday-list" class="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50 rounded-lg border">
-                                                <p class="text-sm text-gray-400">กำลังโหลด...</p>
+
+                                        <div class="pt-3 border-t border-gray-200">
+                                            <h5 class="text-sm font-semibold text-gray-600 mb-2">รายการที่บันทึกไว้ (คลิกเพื่อลบ)</h5>
+                                            <div id="holiday-list-container" class="space-y-2 max-h-60 overflow-y-auto">
+                                                <p class="text-xs text-center text-gray-400">กำลังโหลด...</p>
                                             </div>
                                         </div>
                                     </div>
@@ -423,7 +417,7 @@
                                         <nav id="leave-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
                                             <a href="#" data-target="leave-pending-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-semibold border-sky-500 text-sky-600" aria-current="page">
                                                 รออนุมัติ
-                                            </a>
+                                                </a>
                                             <a href="#" data-target="leave-history-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
                                                 ประวัติทั้งหมด
                                             </a>
@@ -453,7 +447,7 @@
                                                         <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
                                                         <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
                                                             <option value="">พนักงานทั้งหมด</option>
-                                                        </select>
+                                                            </select>
                                                     </div>
                                                 </div>
                                                 <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
@@ -467,6 +461,7 @@
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="card !p-0">
                                     <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
                                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
@@ -1632,6 +1627,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         initializeProjectSummary();
+        setupAdminCalendarControls();
         controlsInitialized = true;
     };
 
@@ -2827,9 +2823,137 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     }, 3000); // Hide after 3 seconds
 }
 
+// [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
+async function loadAndDisplayHolidays() {
+    const container = document.getElementById('holiday-list-container');
+    if (!container) return;
+    
+    container.innerHTML = '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
+    
+    try {
+        const doc = await db.collection('system_settings').doc('calendar_rules').get();
+        if (!doc.exists) {
+            container.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+            return;
+        }
 
-// [แก้ไข] --- ฟังก์ชันสำหรับ Render ปฏิทิน (ดึงข้อมูลจาก system_settings/calendar_rules) ---
-        // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เพิ่ม Plan + คลิกได้) ---
+        const data = doc.data();
+        const holidays = data.holidays || [];
+        const workingSaturdays = data.workingSaturdays || [];
+        
+        container.innerHTML = ''; // ล้าง "กำลังโหลด"
+
+        if (holidays.length === 0 && workingSaturdays.length === 0) {
+            container.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+            return;
+        }
+
+        // เรียงวันที่
+        holidays.sort();
+        workingSaturdays.sort();
+
+        // แสดงผลวันหยุด
+        holidays.forEach(dateStr => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center p-2 bg-red-50 rounded-lg text-red-700 text-sm font-medium cursor-pointer hover:bg-red-100';
+            div.textContent = `วันหยุด: ${dateStr}`;
+            div.dataset.date = dateStr;
+            div.dataset.type = 'holidays'; // ระบุประเภท
+            container.appendChild(div);
+        });
+
+        // แสดงผลวันเสาร์ทำงาน
+        workingSaturdays.forEach(dateStr => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center p-2 bg-green-50 rounded-lg text-green-700 text-sm font-medium cursor-pointer hover:bg-green-100';
+            div.textContent = `เสาร์ทำงาน: ${dateStr}`;
+            div.dataset.date = dateStr;
+            div.dataset.type = 'workingSaturdays'; // ระบุประเภท
+            container.appendChild(div);
+        });
+
+        // [สำคัญ] เพิ่ม Event Listener ให้ปุ่มลบ (แก้ปัญหาลบไม่ได้)
+        container.querySelectorAll('div[data-date]').forEach(el => {
+            el.addEventListener('click', () => {
+                const date = el.dataset.date;
+                const type = el.dataset.type; // 'holidays' หรือ 'workingSaturdays'
+                const typeText = type === 'holidays' ? 'วันหยุด' : 'เสาร์ทำงาน';
+                
+                showConfirmDialog(
+                    `คุณแน่ใจหรือไม่ว่าต้องการลบ "${typeText}: ${date}"?`,
+                    async () => { // ฟังก์ชัน onConfirm (เมื่อกดยืนยัน)
+                        try {
+                            const docRef = db.collection('system_settings').doc('calendar_rules');
+                            // ใช้ FieldValue.arrayRemove() เพื่อลบออกจาก Array
+                            const updateAction = firebase.firestore.FieldValue.arrayRemove(date);
+                            
+                            await docRef.update({ [type]: updateAction });
+
+                            showNotification(`ลบ "${date}" สำเร็จ!`, 'success');
+                            await loadAndDisplayHolidays(); // โหลดรายการในหน้านี้ใหม่
+                            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
+                        } catch (error) {
+                            console.error("Error deleting holiday/workday:", error);
+                            showNotification('เกิดข้อผิดพลาดในการลบ', 'error');
+                        }
+                    }
+                );
+            });
+        });
+
+    } catch (error) {
+        console.error("Error loading holiday list:", error);
+        container.innerHTML = '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
+    }
+}
+
+// [โค้ดใหม่] ฟังก์ชันสำหรับผูกปุ่ม "เพิ่ม" วันหยุด/วันเสาร์ทำงาน
+function setupAdminCalendarControls() {
+    const dateInput = document.getElementById('admin-calendar-date-input');
+    const addHolidayBtn = document.getElementById('add-holiday-btn');
+    const addWorkingSatBtn = document.getElementById('add-working-saturday-btn');
+
+    if (!dateInput || !addHolidayBtn || !addWorkingSatBtn) return;
+
+    // ฟังก์ชันสำหรับ "เพิ่ม" ข้อมูล (ใช้ 'holidays' หรือ 'workingSaturdays')
+    const handleAddDate = async (type) => { 
+        const dateStr = dateInput.value; // "YYYY-MM-DD"
+        if (!dateStr) {
+            showNotification('กรุณาเลือกวันที่ก่อน', 'warning');
+            return;
+        }
+
+        const button = (type === 'holidays') ? addHolidayBtn : addWorkingSatBtn;
+        button.disabled = true;
+        button.classList.add('opacity-50');
+
+        try {
+            const docRef = db.collection('system_settings').doc('calendar_rules');
+            // ใช้ FieldValue.arrayUnion() เพื่อเพิ่มข้อมูลเข้า Array (ป้องกันการซ้ำ)
+            const updateAction = firebase.firestore.FieldValue.arrayUnion(dateStr);
+            
+            // ใช้ { merge: true } เพื่อสร้างเอกสาร/field ถ้ายังไม่มี
+            await docRef.set({ [type]: updateAction }, { merge: true });
+
+            showNotification(`เพิ่ม "${dateStr}" สำเร็จ!`, 'success');
+            dateInput.value = ''; // ล้างช่องวันที่
+            await loadAndDisplayHolidays(); // โหลดรายการในหน้านี้ใหม่
+            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
+
+        } catch (error) {
+            console.error(`Error adding ${type}:`, error);
+            showNotification('เกิดข้อผิดพลาดในการเพิ่ม', 'error');
+        } finally {
+            button.disabled = false;
+            button.classList.remove('opacity-50');
+        }
+    };
+
+    // ผูก Event ให้ปุ่ม
+    addHolidayBtn.addEventListener('click', () => handleAddDate('holidays'));
+    addWorkingSatBtn.addEventListener('click', () => handleAddDate('workingSaturdays'));
+}
+
     // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เวอร์ชัน "ปฏิทินบริษัท") ---
     async function loadCalendarData(date) {
         if (!currentUser) return;
@@ -3012,15 +3136,6 @@ const openLeaveModal = () => {
             leaveReason.value = "";
         }
     };
-
-    // --- 4. ผูก Event Listener (ปุ่มเปิด/ปิด) ---
-    
-    // (สำคัญ) ต้องรอให้ DOM โหลดเสร็จก่อน จึงใช้ Event Delegation กับ body
-    // หรือถ้าคุณมั่นใจว่าปุ่ม 'show-leave-form-btn' อยู่ใน DOM ตอนโหลดเสร็จ ก็ใช้แบบนี้ได้:
-    // const showLeaveFormBtn = document.getElementById('show-leave-form-btn');
-    // if (showLeaveFormBtn) {
-    //     showLeaveFormBtn.addEventListener('click', openLeaveModal);
-    // }
     
     // นี่คือวิธีที่ปลอดภัยกว่า หากปุ่มถูกสร้างทีหลัง หรืออยู่ในหน้าที่ยังไม่ active
     document.body.addEventListener('click', function(event) {
