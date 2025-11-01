@@ -2603,6 +2603,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageId === 'admin-dashboard-page') {
                 loadAllUsersForDropdown();
                 loadPendingLeaveRequests();
+                loadAndDisplayHolidays();
                 if (!editDateSelect.value) {
                     editDateSelect.value = new Date().toISOString().split('T')[0];
                 }
@@ -2824,6 +2825,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
 }
 
 // [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
+// [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
 async function loadAndDisplayHolidays() {
     const container = document.getElementById('holiday-list-container');
     if (!container) return;
@@ -2831,6 +2833,7 @@ async function loadAndDisplayHolidays() {
     container.innerHTML = '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
     
     try {
+        // [แก้ไข] ใช้ตัวแปร db ที่คุณประกาศไว้ด้านบน
         const doc = await db.collection('system_settings').doc('calendar_rules').get();
         if (!doc.exists) {
             container.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
