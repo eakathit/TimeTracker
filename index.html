@@ -383,43 +383,57 @@
                                 </div>
 
                                 <div class="card">
-                                    <h3 class="font-semibold text-lg text-gray-800 mb-4">🆕 รายการใบลา (รออนุมัติ)</h3>
-                                    
-                                    <div id="leave-approval-list" class="space-y-4 max-h-96 overflow-y-auto">
-                                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลดรายการ...</p>
+                                    <h3 class="font-semibold text-lg text-gray-800 mb-4">🗓️ จัดการการลา</h3>
+
+                                    <div class="border-b border-gray-200">
+                                        <nav id="leave-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                            <a href="#" data-target="leave-pending-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-semibold border-sky-500 text-sky-600" aria-current="page">
+                                                รออนุมัติ
+                                                </a>
+                                            <a href="#" data-target="leave-history-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                                                ประวัติทั้งหมด
+                                            </a>
+                                        </nav>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <div id="leave-pending-content" class="leave-tab-content space-y-4 max-h-96 overflow-y-auto">
+                                            <div id="leave-approval-list" class="space-y-4">
+                                                <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลดรายการ...</p>
+                                            </div>
+                                        </div>
+
+                                        <div id="leave-history-content" class="leave-tab-content hidden">
+                                            <div class="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label for="leave-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                                                        <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">ทั้งหมด</option>
+                                                            <option value="pending">รออนุมัติ</option>
+                                                            <option value="approved">อนุมัติแล้ว</option>
+                                                            <option value="rejected">ไม่อนุมัติ</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
+                                                        <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">พนักงานทั้งหมด</option>
+                                                            </select>
+                                                    </div>
+                                                </div>
+                                                <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+                                                    ค้นหาประวัติ
+                                                </button>
+                                            </div>
+                                            
+                                            <div id="leave-history-list" class="space-y-4 max-h-96 overflow-y-auto">
+                                                <p id="leave-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ"</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="card">
-                                    <h3 class="font-semibold text-lg text-gray-800 mb-4">📜 ประวัติการยื่นใบลา (ทั้งหมด)</h3>
-                                    
-                                    <div class="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div>
-                                                <label for="leave-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
-                                                <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
-                                                    <option value="">ทั้งหมด</option>
-                                                    <option value="pending">รออนุมัติ</option>
-                                                    <option value="approved">อนุมัติแล้ว</option>
-                                                    <option value="rejected">ไม่อนุมัติ</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
-                                                <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
-                                                    <option value="">พนักงานทั้งหมด</option>
-                                                    </select>
-                                            </div>
-                                        </div>
-                                        <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
-                                            ค้นหาประวัติ
-                                        </button>
-                                    </div>
-                                    
-                                    <div id="leave-history-list" class="space-y-4 max-h-96 overflow-y-auto">
-                                        <p id="leave-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ"</p>
-                                    </div>
-                                </div>
                                 <div class="card !p-0">
                                     <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
                                     <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
@@ -1333,6 +1347,44 @@ document.addEventListener('DOMContentLoaded', function() {
             leaveHistorySearchBtn.addEventListener('click', loadLeaveHistory);
         }
 
+        const leaveTabNav = document.getElementById('leave-tab-nav');
+        if (leaveTabNav) {
+            // ดึงปุ่มแท็บทั้งหมด (ปุ่ม <a>)
+            const tabs = leaveTabNav.querySelectorAll('a.leave-tab-btn');
+            // ดึงเนื้อหาแท็บทั้งหมด (div .leave-tab-content)
+            const contents = leaveTabNav.closest('.card').querySelectorAll('.leave-tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = tab.dataset.target; // เช่น "leave-pending-content"
+
+                    // 1. (รีเซ็ต) ซ่อนเนื้อหาทั้งหมด และ ลบคลาส active ออกจากแท็บทั้งหมด
+                    tabs.forEach(t => {
+                        // เปลี่ยนปุ่มแท็บอื่นให้เป็นสีเทา (ไม่ active)
+                        t.classList.remove('border-sky-500', 'text-sky-600', 'font-semibold');
+                        t.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
+                    });
+                    contents.forEach(c => {
+                        // ซ่อนเนื้อหาทั้งหมด
+                        c.classList.add('hidden');
+                    });
+
+                    // 2. (ตั้งค่า) แสดงแท็บและเนื้อหาที่ถูกเลือก
+                    
+                    // ทำให้ปุ่มที่คลิกเป็นสีฟ้า (active)
+                    tab.classList.add('border-sky-500', 'text-sky-600', 'font-semibold');
+                    tab.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
+                    
+                    // แสดงเนื้อหาที่ตรงกับปุ่มที่คลิก
+                    const targetContent = document.getElementById(targetId);
+                    if (targetContent) {
+                        targetContent.classList.remove('hidden');
+                    }
+                });
+            });
+        }
+        
         const initializeProjectSummary = () => {
             const db = firebase.firestore();
             const projectSelect = document.getElementById('project-summary-select');
