@@ -155,7 +155,7 @@
 
                     <div id="notification-modal" class="hidden absolute right-0 top-14 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-200">
                         <div class="p-4 border-b border-gray-100">
-                            <h3 class="text-lg font-bold text-gray-800">การแจ้งเตือนวันลาวันนี้</h3>
+                            <h3 class="text-lg font-bold text-gray-800">การแจ้งเตือนวันนี้</h3>
                         </div>
                         <div id="notification-list" class="max-h-80 overflow-y-auto p-4 space-y-3">
                             <p id="no-notifications-msg" class="text-center text-gray-500 text-sm">วันนี้ไม่มีพนักงานลา</p>
@@ -4261,9 +4261,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             // ลบ Badge เมื่อกดเปิด Modal
             notificationBadge.classList.add('hidden');
             notificationBadge.textContent = '0';
-            
-            // โหลดข้อมูลล่าสุดอีกครั้ง (ถ้าจำเป็น)
-            loadDailyLeaveNotifications(); 
+
         });
 
         // ปิด Modal เมื่อคลิกนอกพื้นที่
