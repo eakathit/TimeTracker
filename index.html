@@ -2260,7 +2260,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // --- Step 6: Loop ตามวัน ---
             for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
                 
-                const dateKey = day.toISOString().split('T')[0];
+                // *** FIX: สร้าง dateKey จาก Local Date components เพื่อให้ตรงกับวันที่ใน Map ***
+                const y = day.getFullYear();
+                const m = (day.getMonth() + 1).toString().padStart(2, '0');
+                const d = day.getDate().toString().padStart(2, '0');
+                const dateKey = `${y}-${m}-${d}`;
                 const dayOfWeek = day.getDay();
                 
                 let dayType = "วันทำงาน";
