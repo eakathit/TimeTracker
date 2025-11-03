@@ -3922,93 +3922,85 @@ async function handleDeleteCalendarRule(type, dateString, buttonElement) {
     // --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
 // [ปรับปรุง] --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
 // (แทนที่ฟังก์ชันเดิม)
-async function loadPendingLeaveRequests() {
-    const listContainer = document.getElementById('leave-approval-list');
-    const loadingMsg = document.getElementById('leave-loading-msg');
-    
-    if (!listContainer || !loadingMsg) return;
+// --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
+    // [ปรับปรุง] --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
+    // (แทนที่ฟังก์ชันเดิม)
+    async function loadPendingLeaveRequests() {
+        const listContainer = document.getElementById('leave-approval-list');
+        const loadingMsg = document.getElementById('leave-loading-msg');
+        
+        if (!listContainer || !loadingMsg) return;
 
-    listContainer.innerHTML = ''; // ล้างของเก่า
-    loadingMsg.textContent = 'กำลังโหลดรายการ...';
-    listContainer.appendChild(loadingMsg); // ใส่ "กำลังโหลด" กลับเข้าไป
+        listContainer.innerHTML = ''; // ล้างของเก่า
+        loadingMsg.textContent = 'กำลังโหลดรายการ...';
+        listContainer.appendChild(loadingMsg); // ใส่ "กำลังโหลด" กลับเข้าไป
 
-    try {
-        // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
-        const querySnapshot = await db.collection('leave_requests')
-                                      .where('status', '==', 'pending')
-                                      .orderBy('submittedAt', 'asc')
-                                      .get();
+        try {
+            // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
+            const querySnapshot = await db.collection('leave_requests')
+                                          .where('status', '==', 'pending')
+                                          .orderBy('submittedAt', 'asc')
+                                          .get();
 
-        if (querySnapshot.empty) {
-            loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
-            return;
-        }
+            if (querySnapshot.empty) {
+                loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
+                return;
+            }
 
-        listContainer.innerHTML = ''; // ล้าง "กำลังโหลด" ออก
+            listContainer.innerHTML = ''; // ล้าง "กำลังโหลด" ออก
 
-        querySnapshot.forEach(doc => {
-            const leave = doc.data();
-            const docId = doc.id;
+            querySnapshot.forEach(doc => {
+                const leave = doc.data();
+                const docId = doc.id;
 
-            // แปลง Timestamp เป็นวันที่อ่านง่าย
-            const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
-            const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
+                // แปลง Timestamp เป็นวันที่อ่านง่าย
+                const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
+                const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
 
-            // [แก้ไข] เพิ่ม class="leave-request-card" เข้าไป
-            const cardHTML = `
-            <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm leave-request-card">
-                <div class="flex items-start gap-3">
-                    <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                    <div>
-                        <p class="font-semibold">${leave.userName}</p>
-                        <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
-                        <p class="text-sm text-gray-500">${startDate} ถึง ${endDate}</p>
+                // [ใหม่] สร้างข้อความแสดงผลวันที่/เวลา
+                let dateInfoText = '';
+                if (leave.durationType === 'hourly' && leave.startTime && leave.endTime) {
+                    // สำหรับลารายชั่วโมง: "3/11/2568 (09:30 - 10:30)"
+                    dateInfoText = `${startDate} (${leave.startTime} - ${leave.endTime})`;
+                } else {
+                    // สำหรับลาเต็มวัน (แบบเดิม): "3/11/2568 ถึง 3/11/2568"
+                    dateInfoText = `${startDate} ถึง ${endDate}`;
+                }
+
+
+                // [แก้ไข] เพิ่ม class="leave-request-card" เข้าไป
+                const cardHTML = `
+                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm leave-request-card">
+                    <div class="flex items-start gap-3">
+                        <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div>
+                            <p class="font-semibold">${leave.userName}</p>
+                            <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
+                            
+                            <p class="text-sm text-gray-500 font-medium">${dateInfoText}</p>
+
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg">${leave.reason}</p>
+                    
+                    <div class="flex justify-end gap-3 mt-4">
+                        <button data-id="${docId}" class="reject-leave-btn text-sm font-semibold text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
+                            ไม่อนุมัติ
+                        </button>
+                        <button data-id="${docId}" class="approve-leave-btn text-sm font-semibold text-white bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600">
+                            อนุมัติ
+                        </button>
                     </div>
                 </div>
-                <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg">${leave.reason}</p>
-                
-                <div class="flex justify-end gap-3 mt-4">
-                    <button data-id="${docId}" class="reject-leave-btn text-sm font-semibold text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
-                        ไม่อนุมัติ
-                    </button>
-                    <button data-id="${docId}" class="approve-leave-btn text-sm font-semibold text-white bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600">
-                        อนุมัติ
-                    </button>
-                </div>
-            </div>
-            `;
-            listContainer.innerHTML += cardHTML;
-        });
+                `;
+                listContainer.innerHTML += cardHTML;
+            });
 
-    } catch (error) {
-        console.error("Error loading leave requests:", error);
-        loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        } catch (error) {
+            console.error("Error loading leave requests:", error);
+            loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        }
     }
-}
-    // [เพิ่มใหม่] --- 3. Event Listener สำหรับปุ่ม Approve/Reject ---
-const leaveListContainer = document.getElementById('leave-approval-list');
-if (leaveListContainer) {
-    leaveListContainer.addEventListener('click', (event) => {
-        const target = event.target; // ปุ่มที่ถูกคลิก
-        const docId = target.dataset.id; // ดึง ID ของใบลาจากปุ่ม
-
-        if (!docId) return; // ถ้าคลิกโดนส่วนอื่นที่ไม่ใช่ปุ่ม ให้ออก
-
-        if (target.classList.contains('approve-leave-btn')) {
-            // กดปุ่มอนุมัติ
-            target.disabled = true; 
-            target.textContent = 'กำลังบันทึก...';
-            handleLeaveApproval(docId, 'approved', target); 
-        }
-
-        if (target.classList.contains('reject-leave-btn')) {
-            // กดปุ่มไม่อนุมัติ
-            target.disabled = true;
-            target.textContent = 'กำลังบันทึก...';
-            handleLeaveApproval(docId, 'rejected', target);
-        }
-    });
-}
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     // [ปรับปรุง] --- 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน ---
 // (แทนที่ฟังก์ชันเดิมใน index.html)
@@ -4068,115 +4060,123 @@ async function loadAllUsersForDropdown() {
 }
 
     async function loadLeaveHistory() {
-    const listContainer = document.getElementById('leave-history-list');
-    // FIX: ต้องตรวจสอบและสร้าง element ใหม่ถ้าถูกลบไป
-    let loadingMsg = document.getElementById('leave-history-loading-msg'); 
-    
-    if (!listContainer) {
-        console.error("Leave history elements not found!");
-        return;
-    }
-
-    // หาก loadingMsg ไม่มีอยู่ (ถูกล้างไปในการค้นหาก่อนหน้า) ให้สร้างใหม่
-    if (!loadingMsg) {
-        loadingMsg = document.createElement('p');
-        loadingMsg.id = 'leave-history-loading-msg';
-        loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
-    }
-
-    listContainer.innerHTML = ''; // ล้างของเก่า
-    loadingMsg.textContent = 'กำลังโหลดประวัติ...';
-    listContainer.appendChild(loadingMsg);
-
-    // 1. ดึงค่าจากฟิลเตอร์
-    const statusFilter = document.getElementById('leave-history-status-filter').value;
-    const userFilter = document.getElementById('leave-history-user-filter').value;
-
-    try {
-        let query = db.collection('leave_requests');
-
-        // 2. สร้าง Query ตามฟิลเตอร์
-        if (statusFilter) {
-            query = query.where('status', '==', statusFilter);
-        }
-        if (userFilter) {
-            query = query.where('userId', '==', userFilter);
-        }
+        const listContainer = document.getElementById('leave-history-list');
+        // FIX: ต้องตรวจสอบและสร้าง element ใหม่ถ้าถูกลบไป
+        let loadingMsg = document.getElementById('leave-history-loading-msg'); 
         
-        // 3. เรียงลำดับ (ต้องสร้าง Index ใน Firestore ถ้า Query ซับซ้อน)
-        // ถ้าใช้แค่ filter เดียว ให้เรียงตาม submittedAt
-        if (!statusFilter || !userFilter) {
-             query = query.orderBy('submittedAt', 'desc');
-        }
-        // (หมายเหตุ: ถ้าใช้ filter 2 ช่องพร้อมกัน อาจต้องสร้าง Composite Index ใน Firebase)
-
-        const querySnapshot = await query.get();
-
-        if (querySnapshot.empty) {
-            loadingMsg.textContent = 'ไม่พบประวัติใบลาตามเงื่อนไขที่เลือก';
+        if (!listContainer) {
+            console.error("Leave history elements not found!");
             return;
         }
 
-        listContainer.innerHTML = ''; // ล้าง "กำลังโหลด"
+        // หาก loadingMsg ไม่มีอยู่ (ถูกล้างไปในการค้นหาก่อนหน้า) ให้สร้างใหม่
+        if (!loadingMsg) {
+            loadingMsg = document.createElement('p');
+            loadingMsg.id = 'leave-history-loading-msg';
+            loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
+        }
 
-        querySnapshot.forEach(doc => {
-            const leave = doc.data();
-            const docId = doc.id;
+        listContainer.innerHTML = ''; // ล้างของเก่า
+        loadingMsg.textContent = 'กำลังโหลดประวัติ...';
+        listContainer.appendChild(loadingMsg);
 
-            const startDate = leave.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
-            const endDate = leave.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+        // 1. ดึงค่าจากฟิลเตอร์
+        const statusFilter = document.getElementById('leave-history-status-filter').value;
+        const userFilter = document.getElementById('leave-history-user-filter').value;
 
-            // 4. กำหนดสีและข้อความของสถานะ
-            let statusText, statusColorClass;
-            switch (leave.status) {
-                case 'approved':
-                    statusText = 'อนุมัติแล้ว';
-                    statusColorClass = 'bg-green-100 text-green-800';
-                    break;
-                case 'rejected':
-                    statusText = 'ไม่อนุมัติ';
-                    statusColorClass = 'bg-red-100 text-red-800';
-                    break;
-                default:
-                    statusText = 'รออนุมัติ';
-                    statusColorClass = 'bg-yellow-100 text-yellow-800';
+        try {
+            let query = db.collection('leave_requests');
+
+            // 2. สร้าง Query ตามฟิลเตอร์
+            if (statusFilter) {
+                query = query.where('status', '==', statusFilter);
+            }
+            if (userFilter) {
+                query = query.where('userId', '==', userFilter);
+            }
+            
+            // 3. เรียงลำดับ (ต้องสร้าง Index ใน Firestore ถ้า Query ซับซ้อน)
+            // ถ้าใช้แค่ filter เดียว ให้เรียงตาม submittedAt
+            if (!statusFilter || !userFilter) {
+                query = query.orderBy('submittedAt', 'desc');
+            }
+            // (หมายเหตุ: ถ้าใช้ filter 2 ช่องพร้อมกัน อาจต้องสร้าง Composite Index ใน Firebase)
+
+            const querySnapshot = await query.get();
+
+            if (querySnapshot.empty) {
+                loadingMsg.textContent = 'ไม่พบประวัติใบลาตามเงื่อนไขที่เลือก';
+                return;
             }
 
-            const cardHTML = `
-            <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                <div class="flex items-start gap-3">
-                    <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <p class="font-semibold">${leave.userName}</p>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColorClass}">${statusText}</span>
-                        </div>
-                        <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
-                        <p class="text-sm text-gray-500">${startDate} ถึง ${endDate}</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${leave.reason}</p>
-                ${leave.status !== 'pending' ? `<p class="text-xs text-gray-400 mt-2 text-right">จัดการโดย: ${leave.approvedBy || 'N/A'}</p>` : ''}
-            </div>
-            `;
-            listContainer.innerHTML += cardHTML;
-        });
+            listContainer.innerHTML = ''; // ล้าง "กำลังโหลด"
 
-    } catch (error) {
-        console.error("Error loading leave history:", error);
-        loadingMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
-        // (ถ้า error เกี่ยวกับ Index, Firebase จะบอกใน Console)
-        if (error.code === 'failed-precondition') {
-             loadingMsg.textContent = 'Error: ต้องสร้าง Index ใน Firestore สำหรับการค้นหานี้';
+            querySnapshot.forEach(doc => {
+                const leave = doc.data();
+                const docId = doc.id;
+
+                const startDate = leave.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+                const endDate = leave.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                // 4. กำหนดสีและข้อความของสถานะ
+                let statusText, statusColorClass;
+                switch (leave.status) {
+                    case 'approved':
+                        statusText = 'อนุมัติแล้ว';
+                        statusColorClass = 'bg-green-100 text-green-800';
+                        break;
+                    case 'rejected':
+                        statusText = 'ไม่อนุมัติ';
+                        statusColorClass = 'bg-red-100 text-red-800';
+                        break;
+                    default:
+                        statusText = 'รออนุมัติ';
+                        statusColorClass = 'bg-yellow-100 text-yellow-800';
+                }
+
+                // [ใหม่] สร้างข้อความแสดงผลวันที่/เวลา
+                let dateInfoText = '';
+                if (leave.durationType === 'hourly' && leave.startTime && leave.endTime) {
+                    // สำหรับลารายชั่วโมง (ใช้ startDate ที่ format แล้ว)
+                    dateInfoText = `${startDate} (${leave.startTime} - ${leave.endTime})`;
+                } else {
+                    // สำหรับลาเต็มวัน (แบบเดิม)
+                    dateInfoText = `${startDate} ถึง ${endDate}`;
+                }
+
+
+                const cardHTML = `
+                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <p class="font-semibold">${leave.userName}</p>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColorClass}">${statusText}</span>
+                            </div>
+                            <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
+                            
+                            <p class="text-sm text-gray-500 font-medium">${dateInfoText}</p>
+
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${leave.reason}</p>
+                    ${leave.status !== 'pending' ? `<p class="text-xs text-gray-400 mt-2 text-right">จัดการโดย: ${leave.approvedBy || 'N/A'}</p>` : ''}
+                </div>
+                `;
+                listContainer.innerHTML += cardHTML;
+            });
+
+        } catch (error) {
+            console.error("Error loading leave history:", error);
+            loadingMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+            // (ถ้า error เกี่ยวกับ Index, Firebase จะบอกใน Console)
+            if (error.code === 'failed-precondition') {
+                loadingMsg.textContent = 'Error: ต้องสร้าง Index ใน Firestore สำหรับการค้นหานี้';
+            }
         }
     }
-}
-
-  // [ปรับปรุง] --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
-// (แทนที่ฟังก์ชันเดิมใน index.html)
-// [แก้ไข] --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
-// (แทนที่ฟังก์ชันเดิมใน index.html)
-// [ปรับปรุง] --- 2. ฟังก์ชันสำหรับอัปเดตสถานะ (Approve/Reject) ---
+    
 // (แทนที่ฟังก์ชันเดิม)
 async function handleLeaveApproval(docId, newStatus, buttonElement) { 
     if (!docId) return;
