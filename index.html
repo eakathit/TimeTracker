@@ -533,7 +533,7 @@
 
                                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                                     <div class="flex justify-between items-center mb-4">
-                                        <h4 class="font-semibold text-gray-700">สรุปเวลาทำงานพนักงาน (ข้อมูลทั้งหมด)</h4>
+                                        <h4 class="font-semibold text-gray-700">ข้อมูลเวลาทำงานของพนักงาน</h4>
                                         <button id="export-employee-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
                                             <span>Export Excel</span>
@@ -577,7 +577,39 @@
                                         </div>
                                 </div>
                             </div>
+
+                            <div class="card">
+    <h3 class="font-semibold text-lg text-gray-800 mb-4">📈 สรุปข้อมูลพนักงาน</h3>
+    
+    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="payroll-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
+                <input type="date" id="payroll-start-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+            </div>
+            <div>
+                <label for="payroll-end-date" class="text-xs font-medium text-gray-600">วันที่สิ้นสุด</label>
+                <input type="date" id="payroll-end-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button id="generate-payroll-summary-btn" class="flex-1 btn-primary !py-2 !text-sm">
+                แสดงข้อมูลสรุป
+            </button>
+            <button id="export-payroll-summary-btn" class="flex-1 text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                <span>Export to Excel</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="payroll-summary-results-container" class="mt-4 pt-4 border-t border-gray-200 max-h-[60vh] overflow-y-auto">
+         <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูลสรุป"</p>
+    </div>
+</div>
                         </div>
+
+        
 
                         <div class="card">
                             <h3 class="font-semibold text-lg text-gray-800 mb-4">📝 แก้ไขข้อมูลการลงเวลา</h3>
@@ -2134,6 +2166,267 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
+    async function fetchPayrollData(startDate, endDate) {
+        
+        // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
+        const [usersSnapshot, recordsSnapshot, approvedLeaveSnapshot, calendarDoc] = await Promise.all([
+            db.collection('users').orderBy('fullName').get(),
+            db.collection('work_records').where('date', '>=', startDate).where('date', '<=', endDate).get(),
+            db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endDate).get(),
+            db.collection('system_settings').doc('calendar_rules').get()
+        ]);
+
+        // 2. ประมวลผลกฎปฏิทิน (วันหยุด, วันทำงาน)
+        const holidayMap = new Map();
+        const workingSaturdayMap = new Map();
+        if (calendarDoc.exists) {
+            (calendarDoc.data().holidays || []).forEach(d => holidayMap.set(d, true));
+            (calendarDoc.data().workingSaturdays || []).forEach(d => workingSaturdayMap.set(d, true));
+        }
+
+        // 3. ประมวลผลใบลาที่อนุมัติแล้ว (สร้าง Map เพื่อให้ค้นหาเร็ว)
+        const approvedLeaveMap = new Map();
+        for (const doc of approvedLeaveSnapshot.docs) {
+            const leave = doc.data();
+            const start = leave.startDate.toDate();
+            const end = leave.endDate.toDate();
+            
+            // วนลูปทุกวันในใบลา (กรณีลาหลายวัน)
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                if (d < startDate || d > endDate) continue; // นับเฉพาะวันที่อยู่ในช่วงที่เลือก
+                const dateKey = toLocalDateKey(new Date(d)); // ใช้วันที่ที่ปรับโซนเวลาแล้ว
+                const key = `${leave.userId}_${dateKey}`;
+                approvedLeaveMap.set(key, leave);
+            }
+        }
+
+        // 4. ประมวลผลเวลาทำงาน (สร้าง Map ซ้อน Map)
+        const recordsMap = new Map(); // Map<userId, Map<dateKey, record>>
+        recordsSnapshot.forEach(doc => {
+            const record = doc.data();
+            const dateKey = toLocalDateKey(record.date.toDate());
+            if (!recordsMap.has(record.userId)) {
+                recordsMap.set(record.userId, new Map());
+            }
+            recordsMap.get(record.userId).set(dateKey, record);
+        });
+
+        // 5. เริ่มการรวบรวมข้อมูลสรุป
+        const payrollSummary = [];
+        for (const userDoc of usersSnapshot.docs) {
+            const user = userDoc.data();
+            const userId = userDoc.id;
+            
+            let summary = {
+                userId: userId,
+                fullName: user.fullName || 'N/A',
+                department: user.department || 'N/A',
+                totalRegularHours: 0,
+                totalOT: 0,
+                totalLateDays: 0,
+                totalLeaveDays: 0,
+                totalAbsentDays: 0,
+                totalWorkDays: 0 // จำนวนวันที่มาทำงานจริง
+            };
+
+            const userRecords = recordsMap.get(userId) || new Map();
+
+            // วนลูปทุกวันใน "ช่วงวันที่ที่เลือก"
+            for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+                const dateKey = toLocalDateKey(new Date(day)); // ใช้วันที่ที่ปรับโซนเวลาแล้ว
+                const dayOfWeek = day.getDay();
+                
+                // ตรวจสอบว่าเป็น "วันทำงาน" หรือไม่
+                const isHoliday = holidayMap.has(dateKey);
+                const isWorkingSat = workingSaturdayMap.has(dateKey);
+                const isWeekend = (dayOfWeek === 0 || (dayOfWeek === 6 && !isWorkingSat));
+                const isWorkingDay = !isHoliday && !isWeekend; // คือวันที่ต้องมาทำงาน
+
+                const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
+                const record = userRecords.get(dateKey);
+
+                if (leave) {
+                    // ถ้ามีใบลา (นับเฉพาะลาเต็มวัน)
+                    if (leave.durationType !== 'hourly') {
+                        summary.totalLeaveDays++;
+                    }
+                    // (หมายเหตุ: หากต้องการนับลารายชั่วโมงเป็นวันลาด้วย ให้ลบ if(leave.durationType...) ออก)
+                
+                } else if (isWorkingDay) {
+                    // ถ้าเป็น "วันทำงาน" และ "ไม่ลา"
+                    if (record) {
+                        // 1. มาทำงาน
+                        summary.totalWorkDays++;
+                        
+                        // 2. นับชั่วโมง (เฉพาะวันที่ทำงานเสร็จ)
+                        if (record.status === 'completed' && record.checkOut) {
+                            const checkinTime = record.checkIn.timestamp.toDate();
+                            const checkoutTime = record.checkOut.timestamp.toDate();
+                            const { regularWorkHours } = calculateWorkHours(checkinTime, checkoutTime);
+                            
+                            summary.totalRegularHours += regularWorkHours;
+                            summary.totalOT += (record.overtime?.hours || 0);
+                        }
+
+                        // 3. เช็คมาสาย (นับจากเวลา Check-in)
+                        const checkinTime = record.checkIn.timestamp.toDate();
+                        const checkInMinutes = checkinTime.getHours() * 60 + checkinTime.getMinutes();
+                        const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
+                        if (checkInMinutes > LATE_THRESHOLD_MINUTES) {
+                            summary.totalLateDays++;
+                        }
+
+                    } else {
+                        // 4. ไม่มาทำงาน (ไม่ลา, ไม่มีบันทึกเวลา) = ขาดงาน
+                        summary.totalAbsentDays++;
+                    }
+                }
+                // (ถ้าไม่ใช่วันทำงาน และไม่ลา ก็คือวันหยุดปกติ ไม่ต้องนับอะไร)
+            } // จบการวนลูปตามวัน
+
+            payrollSummary.push(summary);
+        } // จบการวนลูปตามพนักงาน
+
+        return payrollSummary;
+    }
+
+    // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
+    async function loadPayrollSummary() {
+        const container = document.getElementById('payroll-summary-results-container');
+        const startInput = document.getElementById('payroll-start-date');
+        const endInput = document.getElementById('payroll-end-date');
+        
+        if (!startInput.value || !endInput.value) {
+            return showNotification('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด', 'warning');
+        }
+        
+        container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังประมวลผลข้อมูลสรุป...</p>';
+        
+        try {
+            const startDate = new Date(startInput.value); startDate.setHours(0,0,0,0);
+            const endDate = new Date(endInput.value); endDate.setHours(23,59,59,999);
+            
+            if (endDate < startDate) {
+                return showNotification('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
+            }
+            
+            const summaryData = await fetchPayrollData(startDate, endDate);
+            
+            if (summaryData.length === 0) {
+                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลพนักงาน</p>';
+                return;
+            }
+
+            // สร้างตาราง HTML
+            let tableHTML = `
+                <table class="w-full text-left text-sm">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">พนักงาน</th>
+                            <th scope="col" class="px-2 py-3 text-center">ทำงาน (วัน)</th>
+                            <th scope="col" class="px-2 py-3 text-center">ชั่วโมงปกติ</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT (ชม.)</th>
+                            <th scope="col" class="px-2 py-3 text-center">มาสาย</th>
+                            <th scope="col" class="px-2 py-3 text-center">ลา</th>
+                            <th scope="col" class="px-2 py-3 text-center">ขาด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            summaryData.forEach(user => {
+                tableHTML += `
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-900">${user.fullName}</td>
+                        <td class="px-2 py-3 text-center">${user.totalWorkDays}</td>
+                        <td class="px-2 py-3 text-center">${user.totalRegularHours.toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center">${user.totalOT.toFixed(1)}</td>
+                        <td class="px-2 py-3 text-center ${user.totalLateDays > 0 ? 'text-yellow-600 font-bold' : ''}">${user.totalLateDays}</td>
+                        <td class="px-2 py-3 text-center ${user.totalLeaveDays > 0 ? 'text-blue-600 font-bold' : ''}">${user.totalLeaveDays}</td>
+                        <td class="px-2 py-3 text-center ${user.totalAbsentDays > 0 ? 'text-red-600 font-bold' : ''}">${user.totalAbsentDays}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `</tbody></table>`;
+            container.innerHTML = tableHTML;
+            
+        } catch (error) {
+            console.error("Error loading payroll summary:", error);
+            container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาด: ' + error.message + '</p>';
+        }
+    }
+
+    // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
+    async function exportPayrollSummaryToExcel() {
+        const startInput = document.getElementById('payroll-start-date');
+        const endInput = document.getElementById('payroll-end-date');
+        
+        if (!startInput.value || !endInput.value) {
+            return showNotification('กรุณาเลือกช่วงวันที่ก่อน Export', 'warning');
+        }
+        
+        showNotification('กำลังเตรียมข้อมูล Excel...', 'success');
+
+        try {
+            const startDate = new Date(startInput.value); startDate.setHours(0,0,0,0);
+            const endDate = new Date(endInput.value); endDate.setHours(23,59,59,999);
+            
+            if (endDate < startDate) {
+                return showNotification('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
+            }
+            
+            const summaryData = await fetchPayrollData(startDate, endDate);
+            
+            const dataForExcel = [
+                ["ID พนักงาน", "ชื่อ-สกุล", "แผนก", "จำนวนวันทำงาน", "ชั่วโมงทำงานปกติ", "ชั่วโมง OT", "จำนวนวันมาสาย", "จำนวนวันลา", "จำนวนวันขาด"]
+            ];
+            
+            summaryData.forEach(user => {
+                dataForExcel.push([
+                    user.userId,
+                    user.fullName,
+                    user.department,
+                    user.totalWorkDays,
+                    user.totalRegularHours.toFixed(2),
+                    user.totalOT.toFixed(1),
+                    user.totalLateDays,
+                    user.totalLeaveDays,
+                    user.totalAbsentDays
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+            // (Optional) กำหนดความกว้างของคอลัมน์
+            ws['!cols'] = [
+                { wch: 30 }, // ID พนักงาน
+                { wch: 25 }, // ชื่อ-สกุล
+                { wch: 15 }, // แผนก
+                { wch: 15 }, // วันทำงาน
+                { wch: 15 }, // ชั่วโมงปกติ
+                { wch: 10 }, // OT
+                { wch: 10 }, // มาสาย
+                { wch: 10 }, // ลา
+                { wch: 10 }  // ขาด
+            ];
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Payroll Summary');
+            const fileName = `PayrollSummary_${startInput.value}_to_${endInput.value}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+        } catch (error) {
+            console.error("Error exporting payroll summary:", error);
+            showNotification('Export Excel ล้มเหลว: ' + error.message, 'error');
+        }
+    }
+
+    // --- [โค้ดสำหรับผูกปุ่ม] ---
+    // (นำ 2 บรรทัดนี้ไปวางไว้ในฟังก์ชัน initializeControls() หรือ DOMContentLoaded)
+    document.getElementById('generate-payroll-summary-btn')?.addEventListener('click', loadPayrollSummary);
+    document.getElementById('export-payroll-summary-btn')?.addEventListener('click', exportPayrollSummaryToExcel);
+
     async function exportEmployeeSummaryToExcel() {
         const startDateString = summaryStartDateInput.value;
         const endDateString = summaryEndDateInput.value;
@@ -2506,7 +2799,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
                         workDurationMillis -= 3600000; 
                     }
+
+                    // ========== ⚠️ START: จุดที่แก้ไข ==========
+                    // แก้จาก (1000 * 60 * 6) เป็น (1000 * 60 * 60)
                     const totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
+                    // ========== ⚠️ END: จุดที่แก้ไข ==========
                     
                     regularWorkHours = totalWorkHours - overtimeHours;
                     if (regularWorkHours < 0) regularWorkHours = 0;
