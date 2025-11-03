@@ -16,7 +16,6 @@
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <link rel="manifest" href="manifest.json">
-
     <meta name="theme-color" content="#38BDF8">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -432,33 +431,36 @@
                                         </div>
 
                                         <div id="leave-history-content" class="leave-tab-content hidden">
-                                            <div class="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label for="leave-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
-                                                        <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
-                                                            <option value="">ทั้งหมด</option>
-                                                            <option value="pending">รออนุมัติ</option>
-                                                            <option value="approved">อนุมัติแล้ว</option>
-                                                            <option value="rejected">ไม่อนุมัติ</option>
-                                                        </select>
-                                                    </div>
-                                                    <div>
-                                                        <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
-                                                        <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
-                                                            <option value="">พนักงานทั้งหมด</option>
-                                                            </select>
-                                                    </div>
-                                                </div>
-                                                <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
-                                                    ค้นหาประวัติ
-                                                </button>
-                                            </div>
-                                            
-                                            <div id="leave-history-list" class="space-y-4 max-h-96 overflow-y-auto">
-                                                <p id="leave-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ"</p>
-                                            </div>
-                                        </div>
+    
+    <div class="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label for="leave-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                    <option value="">ทั้งหมด</option>
+                    <option value="pending">รออนุมัติ</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div>
+                <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
+                <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                    <option value="">พนักงานทั้งหมด</option>
+                    </select>
+            </div>
+        </div>
+        <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+            ค้นหาประวัติ
+        </button>
+    </div>
+    
+    <div id="leave-history-list" class="space-y-4 max-h-96 overflow-y-auto">
+        
+        <p id="leave-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ"</p>
+    
+    </div>
+</div>
                                     </div>
                                 </div>
 
@@ -798,7 +800,7 @@
             <h3 id="confirm-title" class="text-lg font-semibold mb-2">ยืนยันการดำเนินการ</h3>
             <p id="confirm-message" class="text-sm text-gray-600 mb-6">คุณแน่ใจหรือไม่?</p>
             <div class="flex justify-end space-x-3">
-                <button id="confirm-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ออกงาน</button>
+                <button id="confirm-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
                 <button id="confirm-ok-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ตกลง</button>
             </div>
         </div>
@@ -844,8 +846,6 @@
     </div>
 </div>
 
-    <script src="firebase-config.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -862,10 +862,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // --- Initialize Firebase & Config ---
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const firebaseConfig = {
+        apiKey: "AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc",
+        authDomain: "timetracker-f1e11.firebaseapp.com",
+        projectId: "timetracker-f1e11",
+        storageBucket: "timetracker-f1e11.firebasestorage.app",
+        messagingSenderId: "470557940763",
+        appId: "1:470557940763:web:6de43b02b5ba42fe46acbe",
+        measurementId: "G-C83H28RLSY"
+    };
+    
+    // --- Initialize Firebase & Config ---
+    
+    // 1. [แก้ไข] Initialize app และเก็บ app instance ไว้ในตัวแปร
+    const app = firebase.initializeApp(firebaseConfig); 
+    
+    // 2. [แก้ไข] ส่ง "app" instance เข้าไปใน service ทุกตัว
+    const auth = firebase.auth(app);
+    const db = firebase.firestore(app);
+    
+    // 3. [แก้ไข] ส่ง "app" และ "region" เข้าไปใน functions
+    // (Syntax นี้รองรับใน v8/compat: firebase.functions(app, region))
+    const functions = firebase.functions(app, 'asia-southeast1'); 
 
+    const recordTimestamp = functions.httpsCallable('recordTimestamp');
     const LEAVE_TYPE_MAP = { 'annual': 'ลาพักร้อน (Annual Leave)', 'sick': 'ลาป่วย (Sick Leave)', 'personal': 'ลากิจ (Personal Leave)' };
     const storage = firebase.storage(); 
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
@@ -953,7 +973,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // [เพิ่มใหม่] ตัวแปรสำหรับเก็บเดือนที่ดูอยู่
     let currentDisplayDate = new Date();
     
-    // [เพิ่มใหม่] สร้าง Cache เพื่อเก็บข้อมูลที่โหลดมา
+    // สร้าง Cache เพื่อเก็บข้อมูลที่โหลดมา
     let calendarDataCache = {
         plans: new Map(),
         records: new Map(),
@@ -972,7 +992,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (userDoc.exists) {
                 try {
-                    const functions = firebase.functions();
+                    const functions = firebase.functions(app, 'aisa-southeast1');
                     const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
                     await saveLineProfileImage({ photoURL: user.photoURL });
                     console.log("Profile image update function called successfully.");
@@ -1651,95 +1671,77 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     checkinBtn.addEventListener('click', async () => {
-        if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
-        if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning"); 
+    if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
 
-        if (selectedWorkType === 'on_site') {
-            if (!onsiteLocationInput.value.trim()) return showNotification("กรุณาระบุสถานที่ On-site", "warning"); 
-            if (!photoFile) return showNotification("กรุณาแนบรูปภาพเพื่อยืนยัน", "warning"); 
+    // (เรายังคงต้องเช็ก GPS ฝั่ง Client เพื่อส่งค่าไปให้ Function)
+    if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning"); 
+
+    if (selectedWorkType === 'on_site') {
+        if (!onsiteLocationInput.value.trim()) return showNotification("กรุณาระบุสถานที่ On-site", "warning"); 
+        if (!photoFile) return showNotification("กรุณาแนบรูปภาพเพื่อยืนยัน", "warning"); 
+    }
+
+    const checkinSpan = checkinBtn.querySelector('span');
+    checkinBtn.disabled = true;
+    if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
+
+    try {
+        const now = new Date(); 
+        const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+        let photoUrl = null;
+
+        // 1. [สำคัญ] ถ้าเป็น On-site เรายังต้องอัปโหลดรูปก่อน
+        if (selectedWorkType === 'on_site' && photoFile) {
+            if (checkinSpan) checkinSpan.textContent = "กำลังอัปโหลดรูป...";
+            const filePath = `checkin-photos/${currentUser.uid}/${docId}.jpg`;
+            const fileSnapshot = await storage.ref(filePath).put(photoFile);
+            photoUrl = await fileSnapshot.ref.getDownloadURL();
         }
 
-        const checkinSpan = checkinBtn.querySelector('span');
-        checkinBtn.disabled = true;
-        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
+        if (checkinSpan) checkinSpan.textContent = "กำลังตรวจสอบ...";
 
-        const proceedWithCheckin = async (finalWorkType) => {
-            try {
-                if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-                const now = new Date(); 
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-
-                let photoUrl = null;
-                if (finalWorkType === 'on_site' && photoFile) {
-                    if (checkinSpan) checkinSpan.textContent = "กำลังอัปโหลดรูป...";
-                    const filePath = `checkin-photos/${currentUser.uid}/${docId}.jpg`;
-                    const fileSnapshot = await storage.ref(filePath).put(photoFile);
-                    photoUrl = await fileSnapshot.ref.getDownloadURL();
+        // 2. [เปลี่ยน] รวบรวมข้อมูลเพื่อส่งไป Function
+        const dataToSend = {
+            type: 'checkin',
+            latestPosition: { // ส่งเฉพาะข้อมูลที่จำเป็น
+                coords: {
+                    latitude: latestPosition.coords.latitude,
+                    longitude: latestPosition.coords.longitude,
+                    accuracy: latestPosition.coords.accuracy
                 }
-
-                const workRecord = {
-                    userId: currentUser.uid,
-                    date: firebase.firestore.Timestamp.fromDate(now),
-                    checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(now),
-                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-                        accuracy: latestPosition.coords.accuracy,
-                        workType: finalWorkType, 
-                        onSiteDetails: finalWorkType === 'on_site' ? onsiteLocationInput.value.trim() : null,
-                        photoUrl: photoUrl
-                    },
-                    status: "checked_in",
-                    report: null,
-                    checkOut: null,
-                    overtime: null
-                };
-
-                await db.collection('work_records').doc(docId).set(workRecord);
-                showNotification("บันทึกเวลาเข้างานสำเร็จ!"); 
-                updateUIToCheckedIn();
-
-                const savedRecord = await db.collection('work_records').doc(docId).get();
-                if (savedRecord.exists) {
-                    const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
-                    summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
-                    summaryCheckinTime.classList.remove('text-gray-400');
-                    summaryCheckinTime.classList.add('text-green-600');
-                    summaryCheckoutTime.textContent = '-';
-                    summaryCheckoutTime.classList.add('text-gray-400');
-                    summaryCheckoutTime.classList.remove('text-red-500');
-                    summaryWorkHours.textContent = '-';
-                    summaryWorkHours.classList.add('text-gray-400');
-                }
-
-            } catch (error) {
-                console.error("Check-in error:", error);
-                showNotification("เกิดข้อผิดพลาด: " + error.message, 'error'); 
-            } finally {
-                checkinBtn.disabled = false;
-                if (checkinSpan) checkinSpan.textContent = "Check In";
-            }
+            },
+            workType: selectedWorkType,
+            onSiteDetails: onsiteLocationInput.value.trim(),
+            photoUrl: photoUrl // จะเป็น null ถ้าไม่ใช่ on_site
         };
 
-        try {
-            const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-            let workType = selectedWorkType; 
+        // 3. [เปลี่ยน] เรียก Function แทนการเขียน DB เอง
+        const result = await recordTimestamp(dataToSend);
 
-            if (workType === 'in_factory' && distance > ALLOWED_RADIUS_METERS) {
-                showNotification(`อยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.) ไม่สามารถเช็คอิน 'ในโรงงาน' ได้`, 'error');
-                checkinBtn.disabled = false; 
-                if (checkinSpan) checkinSpan.textContent = "Check In"; 
-                return; 
-            } else {
-                proceedWithCheckin(workType);
-            }
+        // 4. สำเร็จ (ย้ายโค้ดจาก
+        showNotification(result.data.message || "บันทึกเวลาเข้างานสำเร็จ!"); 
+        updateUIToCheckedIn();
 
-        } catch (error) {
-            console.error("Initial Check-in error:", error);
-            showNotification("เกิดข้อผิดพลาดก่อนตรวจสอบพื้นที่: " + error.message, 'error');
-            checkinBtn.disabled = false;
-            if (checkinSpan) checkinSpan.textContent = "Check In";
-        }
-    });
+        // (โค้ดอัปเดต UI ส่วนสรุป)
+        const serverCheckinTime = new Date(); // ใช้เวลาปัจจุบันไปก่อน
+        summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
+        summaryCheckinTime.classList.remove('text-gray-400');
+        summaryCheckinTime.classList.add('text-green-600');
+        summaryCheckoutTime.textContent = '-';
+        summaryCheckoutTime.classList.add('text-gray-400');
+        summaryCheckoutTime.classList.remove('text-red-500');
+        summaryWorkHours.textContent = '-';
+        summaryWorkHours.classList.add('text-gray-400');
+
+    } catch (error) {
+        // 5. ล้มเหลว (Function จะโยน error.message กลับมา)
+        console.error("Check-in error:", error);
+        showNotification(error.message, 'error'); // แสดง Error ที่มาจาก Server
+    } finally {
+        checkinBtn.disabled = false;
+        if (checkinSpan) checkinSpan.textContent = "Check In";
+    }
+});
 
     function updateProfilePage(userData) {
         const profilePic = document.getElementById('profile-page-pic');
@@ -2426,111 +2428,67 @@ document.addEventListener('DOMContentLoaded', function() {
             return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
         }
         if (!latestPosition) {
+            // (ยังคงต้องใช้ latestPosition เพื่อส่งให้ Function)
             return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
         }
+        
         const checkoutSpan = checkoutBtn.querySelector('span'); 
 
-        const proceedWithCheckout = async () => {
+        // [เปลี่ยน] ย้าย Logic ทั้งหมดไปไว้ใน Function
+        const handleCheckout = async (calculateOT) => {
             checkoutBtn.disabled = true; 
             if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก..."; 
 
             try {
-                const now = new Date();
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-                const workRecordRef = db.collection('work_records').doc(docId);
-
-                const workRecordDoc = await workRecordRef.get();
-                if (!workRecordDoc.exists) {
-                    throw new Error("ไม่พบข้อมูลการเข้างานของวันนี้");
-                }
-                const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
-
-                const { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, now);
-
-                const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
+                const dataToSend = {
+                    type: 'checkout',
+                    calculateOT: calculateOT, // ส่งไปบอก Server ว่าจะคิด OT หรือไม่
+                    latestPosition: { // ส่งเฉพาะข้อมูลที่จำเป็น
+                        coords: {
+                            latitude: latestPosition.coords.latitude,
+                            longitude: latestPosition.coords.longitude,
+                            accuracy: latestPosition.coords.accuracy
+                        }
+                    }
                 };
 
-                await workRecordRef.update({
-                    checkOut: checkOutData,
-                    status: "completed", 
-                    overtime: { hours: overtimeHours } 
-                });
-
-                showNotification("บันทึกเวลาออกงานสำเร็จ!");
+                // 1. [เปลี่ยน] เรียก Function
+                const result = await recordTimestamp(dataToSend);
+                
+                // 2. สำเร็จ
+                showNotification(result.data.message || "บันทึกเวลาออกงานสำเร็จ!");
                 updateUIToCompleted(); 
 
-                summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.remove('text-gray-400');
-                summaryCheckoutTime.classList.add('text-red-500');
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-                if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-                }
-
-            } catch (error) {
-                console.error("Check-out error:", error);
-                showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
-                checkoutBtn.disabled = false;
-                if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-            }
-        };
-
-        const proceedWithCheckoutWithoutOT = async () => {
-            checkoutBtn.disabled = true; 
-            if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก..."; 
-
-            try {
+                // 3. [เปลี่ยน] ใช้ค่าที่ Server คำนวณส่งกลับมา
+                const data = result.data;
                 const now = new Date();
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-                const workRecordRef = db.collection('work_records').doc(docId);
-
-                const workRecordDoc = await workRecordRef.get();
-                if (!workRecordDoc.exists) {
-                    throw new Error("ไม่พบข้อมูลการเข้างานของวันนี้");
-                }
-                const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
-
-                const { regularWorkHours } = calculateWorkHours(checkinTime, now); 
-                const overtimeHours = 0; 
-
-                const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
-                };
-
-                await workRecordRef.update({
-                    checkOut: checkOutData,
-                    status: "completed",
-                    overtime: { hours: overtimeHours } 
-                });
-
-                showNotification("บันทึกเวลาออกงานสำเร็จ (ไม่คิด OT)"); 
-                updateUIToCompleted();
-
                 summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+                summaryWorkHours.textContent = `${data.regularWorkHours.toFixed(2)} ชั่วโมง`;
+                if (data.overtimeHours > 0) {
+                    summaryWorkHours.textContent += ` (OT ${data.overtimeHours} ชม.)`;
+                }
 
             } catch (error) {
-                console.error("Check-out without OT error:", error);
-                showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
+                // 4. ล้มเหลว
+                console.error("Check-out error:", error);
+                showNotification(error.message || "เกิดข้อผิดพลาด", 'error'); // แสดง Error จาก Server
                 checkoutBtn.disabled = false;
                 if (checkoutSpan) checkoutSpan.textContent = "Check Out";
             }
         };
 
+        // (โค้ดส่วน Confirm OT ยังเหมือนเดิม)
         const currentTime = new Date();
-        if (currentTime.getHours() >= 18) { // ตั้งค่าตามจริง (>= 18 คือ 18:00 เป็นต้นไป)
+        if (currentTime.getHours() >= 18) { 
              showConfirmDialog(
                 "ขณะนี้เป็นเวลา OT คุณยืนยันที่จะลงเวลาออกและบันทึก OT หรือไม่?",
-                proceedWithCheckout,         
-                proceedWithCheckoutWithoutOT 
+                () => handleCheckout(true),  // OnConfirm -> calculateOT = true
+                () => handleCheckout(false)  // OnCancel -> calculateOT = false
             );
         } else {
-            proceedWithCheckout();
+            handleCheckout(true); // เวลาก่อน 18:00 (calculateOT จะเป็น true แต่ server จะคำนวณได้ 0 อยู่ดี)
         }
     }); 
 
@@ -2958,6 +2916,7 @@ function setupAdminCalendarControls() {
 }
 
     // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เวอร์ชัน "ปฏิทินบริษัท") ---
+    // [โค้ดแก้ไข] 
     async function loadCalendarData(date) {
         if (!currentUser) return;
         const calGrid = document.getElementById('cal-grid');
@@ -3090,18 +3049,31 @@ function setupAdminCalendarControls() {
                     dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto text-gray-400">${day}</div>`;
                 }
 
-                // [เปลี่ยน] เพิ่ม data-day-number และลบ data-plan-text
+                // [แก้ไข] --- นี่คือส่วนที่เปลี่ยนแปลง ---
                 let cellBaseClass = 'p-2 text-center rounded-lg cursor-pointer hover:bg-gray-100';
                 const dataAttributes = `data-day-number="${day}" data-date-key="${dateKey}"`;
 
                 let dayCellHtml = '';
+                let subTextHtml = ''; // สร้างตัวแปรสำหรับข้อความด้านล่าง
+
                 if (isHoliday) {
-                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div></div>`;
+                    // 1. วันหยุดนักขัตฤกษ์ (แดง) -> แสดง "หยุด"
+                    subTextHtml = `<div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div>`;
                 } else if (isWorkingSaturday) {
-                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
-                } else {
-                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
+                    // 2. วันเสาร์ทำงาน (เขียว) -> แสดง "ทำงาน"
+                    subTextHtml = `<div class="text-xs mt-1 text-green-700 truncate" style="line-height: 1.25;">ทำงาน</div>`;
+                } else if (isRegularSaturday && !isWorkingSaturday) {
+                    // 3. วันเสาร์ปกติ (แดงอ่อน) -> แสดง "หยุด"
+                    subTextHtml = `<div class="text-xs mt-1 text-red-400 truncate" style="line-height: 1.25;">หยุด</div>`;
+                } else if (isSunday) {
+                    // 4. วันอาทิตย์ -> ไม่ต้องแสดงข้อความ
+                    subTextHtml = '';
                 }
+                // (ถ้าเป็นวันธรรมดา subTextHtml จะเป็นค่าว่าง)
+
+                // ประกอบร่าง
+                dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}${subTextHtml}</div>`;
+                // --- จบส่วนที่เปลี่ยนแปลง ---
 
                 calGrid.innerHTML += dayCellHtml;
             }
@@ -3853,7 +3825,7 @@ async function loadAllUsersForDropdown() {
 
     async function loadLeaveHistory() {
     const listContainer = document.getElementById('leave-history-list');
-    const loadingMsg = document.getElementById('leave-history-loading-msg');
+    const loadingMsg = document.getElementById('leave-history-loading-msg'); // <-- [แก้ไข]
     
     if (!listContainer || !loadingMsg) {
         console.error("Leave history elements not found!");
