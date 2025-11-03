@@ -604,14 +604,14 @@
             
 
             <div id="calendar-page" class="page space-y-6">
-                <h2 class="text-2xl font-bold">ปฏิทิน</h2>
-                <div class="card !p-4 flex justify-between items-center">
-    <p class="font-semibold text-gray-700">คุณมีโควต้าวันลาพักร้อนคงเหลือ: 10 วัน</p>
-    <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
-        + ยื่นใบลา
-    </button>
-</div>
-
+                
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">ปฏิทิน</h2>
+                    <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
+                        + ยื่นใบลา
+                    </button>
+                </div>
+                
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
                         <button id="cal-prev-month" class="p-2 rounded-full hover:bg-gray-100">
@@ -851,23 +851,43 @@
                     <option value="annual">ลาพักร้อน (Annual Leave)</option>
                     <option value="sick">ลาป่วย (Sick Leave)</option>
                     <option value="personal">ลากิจ (Personal Leave)</option>
-                </select>
+                    <option value="maternity">ลาคลอด (Maternity Leave)</option> </select>
             </div>
             
+            <div>
+                <label class="text-sm font-medium text-gray-600">ระยะเวลา</label>
+                <select id="leave-duration-type" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    <option value="full_day">เต็มวัน (Full Day)</option>
+                    <option value="hourly">รายชั่วโมง (Hourly)</option>
+                </select>
+            </div>
+
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-sm font-medium text-gray-600">วันที่เริ่มต้น</label>
+                    <label class="text-sm font-medium text-gray-600">วันที่ลา</label>
                     <input type="date" id="leave-start-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
-                <div>
+                <div id="leave-end-date-wrapper">
                     <label class="text-sm font-medium text-gray-600">วันที่สิ้นสุด</label>
                     <input type="date" id="leave-end-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
             </div>
 
+            <div id="leave-hourly-inputs-wrapper" class="hidden grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">เวลาเริ่มต้น</label>
+                    <input type="time" id="leave-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด</label>
+                    <input type="time" id="leave-end-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                </div>
+            </div>
+
+
             <div>
                 <label class="text-sm font-medium text-gray-600">เหตุผลประกอบการลา</label>
-                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระต่างจังหวัด..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม. (9:30-10:30)..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
@@ -917,7 +937,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const LEAVE_TYPE_MAP = { 'annual': 'ลาพักร้อน (Annual Leave)', 'sick': 'ลาป่วย (Sick Leave)', 'personal': 'ลากิจ (Personal Leave)' };
+    const LEAVE_TYPE_MAP = { 
+        'annual': 'ลาพักร้อน (Annual Leave)', 
+        'sick': 'ลาป่วย (Sick Leave)', 
+        'personal': 'ลากิจ (Personal Leave)',
+        'maternity': 'ลาคลอด (Maternity Leave)' // เพิ่มบรรทัดนี้
+    };
     const storage = firebase.storage(); 
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
     const ALLOWED_RADIUS_METERS = 200;
@@ -988,6 +1013,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const leaveOverlay = document.getElementById('leave-overlay');
     const cancelLeaveBtn = document.getElementById('cancel-leave-btn');
     const submitLeaveBtn = document.getElementById('submit-leave-btn');
+    // [ใหม่] ดึง Element ที่เพิ่มเข้ามา
+    const leaveDurationType = document.getElementById('leave-duration-type');
+    const leaveEndDateWrapper = document.getElementById('leave-end-date-wrapper');
+    const leaveHourlyInputsWrapper = document.getElementById('leave-hourly-inputs-wrapper');
+    const leaveStartTime = document.getElementById('leave-start-time');
+    const leaveEndTime = document.getElementById('leave-end-time');
     // --- 2. ดึง Element ของ Input ---
     const leaveTypeSelect = document.getElementById('leave-type-select');
     const leaveStartDate = document.getElementById('leave-start-date');
@@ -3225,7 +3256,8 @@ function setupAdminCalendarControls() {
                 if (isHoliday) {
                     dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div></div>`;
                 } else if (isWorkingSaturday) {
-                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
+                    // [แก้ไข] เพิ่ม div ข้อความ "ทำงาน" กลับเข้าไป
+                    dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-green-700 truncate" style="line-height: 1.25;">ทำงาน</div></div>`;
                 } else {
                     dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
                 }
@@ -3256,6 +3288,7 @@ const openLeaveModal = () => {
     };
     
     // ฟังก์ชันปิด Modal และล้างฟอร์ม
+    // ฟังก์ชันปิด Modal และล้างฟอร์ม (แก้ไข)
     const closeLeaveModal = () => {
         if (leaveRequestModal) {
             leaveRequestModal.classList.add('hidden');
@@ -3264,6 +3297,28 @@ const openLeaveModal = () => {
             leaveStartDate.value = "";
             leaveEndDate.value = "";
             leaveReason.value = "";
+            
+            // [ใหม่] รีเซ็ตค่าใหม่
+            leaveDurationType.value = "full_day"; // กลับไปเป็นค่าเริ่มต้น
+            leaveStartTime.value = "";
+            leaveEndTime.value = "";
+            
+            // [ใหม่] รีเซ็ตการแสดงผล
+            leaveEndDateWrapper.classList.remove('hidden');
+            leaveHourlyInputsWrapper.classList.add('hidden');
+
+            if (leaveDurationType) {
+        leaveDurationType.addEventListener('change', () => {
+            const durationType = leaveDurationType.value;
+            if (durationType === 'hourly') {
+                leaveEndDateWrapper.classList.add('hidden');
+                leaveHourlyInputsWrapper.classList.remove('hidden');
+            } else { // 'full_day'
+                leaveEndDateWrapper.classList.remove('hidden');
+                leaveHourlyInputsWrapper.classList.add('hidden');
+            }
+        });
+    }
         }
     };
     
@@ -3282,10 +3337,11 @@ const openLeaveModal = () => {
     }
 
     // --- 5. [ฟังก์ชันหลัก] Event Listener สำหรับปุ่ม "ส่งใบลา" ---
+    // --- 5. [ฟังก์ชันหลัก] Event Listener สำหรับปุ่ม "ส่งใบลา" (แก้ไข) ---
     if (submitLeaveBtn) {
         submitLeaveBtn.addEventListener('click', async () => {
             
-            // ตรวจสอบว่า Login หรือยัง (ใช้ตัวแปรจากโค้ดเดิมของคุณ)
+            // (ส่วนตรวจสอบ currentUser ... เหมือนเดิม)
             if (!currentUser || !currentUserData) {
                 showNotification('กรุณาเข้าสู่ระบบก่อนยื่นใบลา', 'error');
                 return;
@@ -3294,23 +3350,48 @@ const openLeaveModal = () => {
             // --- 5.1 ดึงข้อมูลและ Validate ---
             const leaveType = leaveTypeSelect.value;
             const startDateStr = leaveStartDate.value;
-            const endDateStr = leaveEndDate.value;
             const reason = leaveReason.value.trim();
+            
+            // [ใหม่] ดึงข้อมูลใหม่
+            const durationType = leaveDurationType.value;
+            const endDateStr = leaveEndDate.value;
+            const startTimeStr = leaveStartTime.value;
+            const endTimeStr = leaveEndTime.value;
 
-            if (!leaveType || !startDateStr || !endDateStr || !reason) {
-                showNotification('กรุณากรอกข้อมูลให้ครบทุกช่อง', 'warning');
+            if (!leaveType || !startDateStr || !reason) {
+                showNotification('กรุณากรอกประเภทการลา, วันที่ลา, และเหตุผล', 'warning');
                 return;
             }
-            
-            const startDate = new Date(startDateStr);
-            const endDate = new Date(endDateStr);
 
-            if (endDate < startDate) {
-                showNotification('วันที่สิ้นสุด ต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
-                return;
+            let startDate = new Date(startDateStr);
+            let endDate;
+            
+            // [ใหม่] Validation ตาม durationType
+            if (durationType === 'hourly') {
+                if (!startTimeStr || !endTimeStr) {
+                    showNotification('กรุณากรอกเวลาเริ่มต้นและสิ้นสุด', 'warning');
+                    return;
+                }
+                // สำหรับรายชั่วโมง วันที่สิ้นสุดคือวันเดียวกับวันที่เริ่ม
+                endDate = new Date(startDateStr); 
+                
+                // (Optional) ทำให้วันที่เริ่มต้นและสิ้นสุดมีเวลาเป็น 00:00:00
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(0, 0, 0, 0);
+
+            } else { // 'full_day'
+                if (!endDateStr) {
+                    showNotification('กรุณากรอกวันที่สิ้นสุด', 'warning');
+                    return;
+                }
+                endDate = new Date(endDateStr);
+                if (endDate < startDate) {
+                    showNotification('วันที่สิ้นสุด ต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
+                    return;
+                }
             }
             
-            // ป้องกันการกดซ้ำ
+            // (ส่วนปิดปุ่ม ... เหมือนเดิม)
             submitLeaveBtn.disabled = true;
             submitLeaveBtn.textContent = 'กำลังส่งเรื่อง...';
 
@@ -3320,16 +3401,25 @@ const openLeaveModal = () => {
                 userName: currentUserData.fullName,
                 userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
                 leaveType: leaveType,
-                startDate: firebase.firestore.Timestamp.fromDate(startDate),
-                endDate: firebase.firestore.Timestamp.fromDate(endDate),
                 reason: reason,
-                status: "pending", // สถานะเริ่มต้น: รออนุมัติ
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp() //
+                status: "pending", 
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                
+                // [ใหม่] เพิ่มข้อมูลใหม่
+                durationType: durationType, // 'full_day' or 'hourly'
+                startDate: firebase.firestore.Timestamp.fromDate(startDate),
+                endDate: firebase.firestore.Timestamp.fromDate(endDate)
             };
+            
+            // [ใหม่] เพิ่มข้อมูลเวลา ถ้าเป็นรายชั่วโมง
+            if (durationType === 'hourly') {
+                leaveData.startTime = startTimeStr;
+                leaveData.endTime = endTimeStr;
+            }
 
             // --- 5.3 บันทึกลง Firestore ---
             try {
-                // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
+                // (ส่วน try/catch ... เหมือนเดิม)
                 await db.collection('leave_requests').add(leaveData);
                 
                 showNotification('ยื่นใบลาสำเร็จ รอการอนุมัติ', 'success');
@@ -3339,13 +3429,12 @@ const openLeaveModal = () => {
                 console.error("Error submitting leave request:", error);
                 showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
             } finally {
-                // คืนค่าปุ่ม
+                // (ส่วนคืนค่าปุ่ม ... เหมือนเดิม)
                 submitLeaveBtn.disabled = false;
                 submitLeaveBtn.textContent = 'ส่งใบลา';
             }
         });
     }
-
 
 // [แก้ไข] 1. ฟังก์ชันสำหรับ "แสดง" รายละเอียด (ซ่อนฟอร์มไว้ก่อน)
         function showCalendarDetails(e) {
