@@ -879,7 +879,24 @@
 </div>
 
     <script src="firebase-config.js"></script>
+    <script>
+    // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
+    function toLocalISOString(date) {
+        if (!date) return ''; // สำหรับ handle ค่า null เช่น checkout ที่ยังไม่เกิด
 
+        const d = new Date(date);
+        
+        // ดึงค่าตามโซนเวลาท้องถิ่น (Local Timezone)
+        const year = d.getFullYear();
+        const month = (d.getMonth() + 1).toString().padStart(2, '0'); // getMonth() เริ่มที่ 0
+        const day = d.getDate().toString().padStart(2, '0');
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+
+        // ส่งค่ากลับในฟอร์แมต YYYY-MM-DDTHH:MM
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -1309,6 +1326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
+
         const setupAdminAction = (btnId, valueSourceId, docId, action) => {
             const actionButton = document.getElementById(btnId);
             if (!actionButton) {
@@ -1423,6 +1441,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        const adminSearchResultsContainer = document.getElementById('search-results-container');
+        if (adminSearchResultsContainer) {
+            adminSearchResultsContainer.addEventListener('click', (e) => {
+                // ตรวจสอบว่าปุ่มที่คลิก (หรือแม่ของมัน) คือปุ่ม "แก้ไข" หรือไม่
+                const editBtn = e.target.closest('.edit-record-btn');
+                // ตรวจสอบว่าปุ่มที่คลิก (หรือแม่ของมัน) คือปุ่ม "เพิ่ม" หรือไม่
+                const addBtn = e.target.closest('.add-record-btn');
+
+                if (editBtn) {
+                    // ถ้าใช่ปุ่ม "แก้ไข"
+                    e.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้น
+                    const docId = editBtn.dataset.docId;
+                    openEditModal(docId, null, null); // เรียก Modal โดยใช้ docId
+                } else if (addBtn) {
+                    // ถ้าใช่ปุ่ม "เพิ่ม"
+                    e.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้น
+                    const userId = addBtn.dataset.userId;
+                    const dateStr = addBtn.dataset.dateStr;
+                    openEditModal(null, userId, dateStr); // เรียก Modal โดยใช้ userId และ date
+                }
+            });
+        }
+        
         const leaveHistorySearchBtn = document.getElementById('leave-history-search-btn');
         if (leaveHistorySearchBtn) {
             leaveHistorySearchBtn.addEventListener('click', loadLeaveHistory);
@@ -1466,7 +1507,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-
+        
         const initializeProjectSummary = () => {
             const db = firebase.firestore();
             const projectSelect = document.getElementById('project-summary-select');
