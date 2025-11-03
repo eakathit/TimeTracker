@@ -418,11 +418,30 @@
                                         </div>
 
                                         <div class="pt-3 border-t border-gray-200">
-                                            <h5 class="text-sm font-semibold text-gray-600 mb-2">รายการที่บันทึกไว้ (คลิกเพื่อลบ)</h5>
-                                            <div id="holiday-list-container" class="space-y-2 max-h-60 overflow-y-auto">
-                                                <p class="text-xs text-center text-gray-400">กำลังโหลด...</p>
-                                            </div>
-                                        </div>
+                        <button id="toggle-holiday-list-btn" class="w-full text-sm font-medium text-sky-600 p-2 rounded-lg hover:bg-sky-50 border border-sky-200 bg-sky-50 mb-3 transition-colors">
+                            แสดงรายการที่บันทึกไว้
+                        </button>
+                        
+                        <div id="holiday-list-wrapper" class="hidden">
+                        <div class="grid grid-cols-2 gap-3">
+                            
+                            <div>
+                                <h5 class="text-sm font-semibold text-gray-600 mb-2">วันหยุด (คลิกเพื่อลบ)</h5>
+                                <div id="holiday-list-display" class="space-y-2 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                                    <p class="text-xs text-center text-gray-400">...</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h5 class="text-sm font-semibold text-gray-600 mb-2">เสาร์ทำงาน (คลิกเพื่อลบ)</h5>
+                                <div id="worksat-list-display" class="space-y-2 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                                    <p class="text-xs text-center text-gray-400">...</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    </div>
                                     </div>
                                 </div>
                                 <div class="card">
@@ -2620,7 +2639,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pageId === 'admin-dashboard-page') {
                 loadAllUsersForDropdown();
                 loadPendingLeaveRequests();
-                loadAndDisplayHolidays();
                 if (!editDateSelect.value) {
                     editDateSelect.value = new Date().toISOString().split('T')[0];
                 }
@@ -2842,100 +2860,90 @@ function calculateWorkHours(checkinTime, checkoutTime) {
 }
 
 // [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
-// [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
+// [แทนที่ฟังก์ชันเดิมทั้งหมด]
 async function loadAndDisplayHolidays() {
-    const container = document.getElementById('holiday-list-container');
-    if (!container) return;
+    // 1. [NEW] ดึง ID ของ 2 คอลัมน์ใหม่
+    const holidayContainer = document.getElementById('holiday-list-display');
+    const worksatContainer = document.getElementById('worksat-list-display');
     
-    container.innerHTML = '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
+    if (!holidayContainer || !worksatContainer) {
+        console.error("Holiday list containers not found!");
+        return;
+    }
+    
+    // 2. [NEW] ตั้งค่า "กำลังโหลด" ให้ทั้งสองฝั่ง
+    holidayContainer.innerHTML = '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
+    worksatContainer.innerHTML = '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
     
     try {
-        // [แก้ไข] ใช้ตัวแปร db ที่คุณประกาศไว้ด้านบน
         const doc = await db.collection('system_settings').doc('calendar_rules').get();
-        if (!doc.exists) {
-            container.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
-            return;
-        }
-
-        const data = doc.data();
-        const holidays = data.holidays || [];
-        const workingSaturdays = data.workingSaturdays || [];
         
-        container.innerHTML = ''; // ล้าง "กำลังโหลด"
+        let holidays = [];
+        let workingSaturdays = [];
 
-        if (holidays.length === 0 && workingSaturdays.length === 0) {
-            container.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
-            return;
+        if (doc.exists) {
+            const data = doc.data();
+            holidays = data.holidays || [];
+            workingSaturdays = data.workingSaturdays || [];
         }
 
-        // เรียงวันที่
-        holidays.sort();
-        workingSaturdays.sort();
+        // 3. [NEW] สร้างฟังก์ชัน Helper เพื่อสร้าง HTML ของแต่ละรายการ
+        const createItemHTML = (dateStr, type) => {
+            const isHoliday = type === 'holidays';
+            const bgColor = isHoliday ? 'bg-red-50' : 'bg-green-50';
+            const textColor = isHoliday ? 'text-red-700' : 'text-green-700';
+            const hoverColor = isHoliday ? 'hover:bg-red-100' : 'hover:bg-green-100';
+            
+            // เพิ่ม class 'calendar-delete-item-btn' สำหรับการคลิกลบ
+            return `
+                <div class="flex justify-between items-center p-2 rounded-lg ${bgColor} ${textColor} text-sm font-medium">
+                    <span>${dateStr}</span>
+                    <button class="calendar-delete-item-btn ${hoverColor} rounded p-0.5" data-date="${dateStr}" data-type="${type}">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+            `;
+        };
 
-        // แสดงผลวันหยุด
-        holidays.forEach(dateStr => {
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-2 bg-red-50 rounded-lg text-red-700 text-sm font-medium cursor-pointer hover:bg-red-100';
-            div.textContent = `วันหยุด: ${dateStr}`;
-            div.dataset.date = dateStr;
-            div.dataset.type = 'holidays'; // ระบุประเภท
-            container.appendChild(div);
-        });
+        // 4. [NEW] เติมข้อมูล "วันหยุด" (ฝั่งซ้าย)
+        if (holidays.length === 0) {
+            holidayContainer.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+        } else {
+            holidays.sort();
+            holidayContainer.innerHTML = holidays.map(date => createItemHTML(date, 'holidays')).join('');
+        }
 
-        // แสดงผลวันเสาร์ทำงาน
-        workingSaturdays.forEach(dateStr => {
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center p-2 bg-green-50 rounded-lg text-green-700 text-sm font-medium cursor-pointer hover:bg-green-100';
-            div.textContent = `เสาร์ทำงาน: ${dateStr}`;
-            div.dataset.date = dateStr;
-            div.dataset.type = 'workingSaturdays'; // ระบุประเภท
-            container.appendChild(div);
-        });
-
-        // [สำคัญ] เพิ่ม Event Listener ให้ปุ่มลบ (แก้ปัญหาลบไม่ได้)
-        container.querySelectorAll('div[data-date]').forEach(el => {
-            el.addEventListener('click', () => {
-                const date = el.dataset.date;
-                const type = el.dataset.type; // 'holidays' หรือ 'workingSaturdays'
-                const typeText = type === 'holidays' ? 'วันหยุด' : 'เสาร์ทำงาน';
-                
-                showConfirmDialog(
-                    `คุณแน่ใจหรือไม่ว่าต้องการลบ "${typeText}: ${date}"?`,
-                    async () => { // ฟังก์ชัน onConfirm (เมื่อกดยืนยัน)
-                        try {
-                            const docRef = db.collection('system_settings').doc('calendar_rules');
-                            // ใช้ FieldValue.arrayRemove() เพื่อลบออกจาก Array
-                            const updateAction = firebase.firestore.FieldValue.arrayRemove(date);
-                            
-                            await docRef.update({ [type]: updateAction });
-
-                            showNotification(`ลบ "${date}" สำเร็จ!`, 'success');
-                            await loadAndDisplayHolidays(); // โหลดรายการในหน้านี้ใหม่
-                            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
-                        } catch (error) {
-                            console.error("Error deleting holiday/workday:", error);
-                            showNotification('เกิดข้อผิดพลาดในการลบ', 'error');
-                        }
-                    }
-                );
-            });
-        });
+        // 5. [NEW] เติมข้อมูล "เสาร์ทำงาน" (ฝั่งขวา)
+        if (workingSaturdays.length === 0) {
+            worksatContainer.innerHTML = '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+        } else {
+            workingSaturdays.sort();
+            worksatContainer.innerHTML = workingSaturdays.map(date => createItemHTML(date, 'workingSaturdays')).join('');
+        }
+        
+        // 6. [REMOVED] ลบโค้ดจัดการการลบออกจากฟังก์ชันนี้ (เราจะย้ายไปไว้ข้างนอก)
 
     } catch (error) {
         console.error("Error loading holiday list:", error);
-        container.innerHTML = '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
+        holidayContainer.innerHTML = '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
+        worksatContainer.innerHTML = '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
     }
 }
 
 // [โค้ดใหม่] ฟังก์ชันสำหรับผูกปุ่ม "เพิ่ม" วันหยุด/วันเสาร์ทำงาน
+// [แทนที่ฟังก์ชันเดิมทั้งหมด]
 function setupAdminCalendarControls() {
+    // 1. ดึง Element สำหรับ "การเพิ่ม" ข้อมูล
     const dateInput = document.getElementById('admin-calendar-date-input');
     const addHolidayBtn = document.getElementById('add-holiday-btn');
     const addWorkingSatBtn = document.getElementById('add-working-saturday-btn');
 
-    if (!dateInput || !addHolidayBtn || !addWorkingSatBtn) return;
+    if (!dateInput || !addHolidayBtn || !addWorkingSatBtn) {
+        console.error("Admin calendar 'add' controls not found.");
+        return; // หยุด ถ้าไม่เจอ Element หลัก
+    }
 
-    // ฟังก์ชันสำหรับ "เพิ่ม" ข้อมูล (ใช้ 'holidays' หรือ 'workingSaturdays')
+    // 2. ฟังก์ชันสำหรับ "เพิ่ม" ข้อมูล (ใช้ 'holidays' หรือ 'workingSaturdays')
     const handleAddDate = async (type) => { 
         const dateStr = dateInput.value; // "YYYY-MM-DD"
         if (!dateStr) {
@@ -2957,8 +2965,14 @@ function setupAdminCalendarControls() {
 
             showNotification(`เพิ่ม "${dateStr}" สำเร็จ!`, 'success');
             dateInput.value = ''; // ล้างช่องวันที่
-            await loadAndDisplayHolidays(); // โหลดรายการในหน้านี้ใหม่
-            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
+
+            // [ปรับปรุง] เช็คว่ารายการกำลังแสดงอยู่หรือไม่ ถ้าแสดงอยู่ ก็ให้โหลดใหม่
+            const listWrapper = document.getElementById('holiday-list-wrapper');
+            if (listWrapper && !listWrapper.classList.contains('hidden')) {
+                await loadAndDisplayHolidays(); // โหลดรายการในกล่องนี้ใหม่
+            }
+            
+            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก (ทำเสมอ)
 
         } catch (error) {
             console.error(`Error adding ${type}:`, error);
@@ -2969,9 +2983,64 @@ function setupAdminCalendarControls() {
         }
     };
 
-    // ผูก Event ให้ปุ่ม
+    // 3. ผูก Event ให้ปุ่ม "เพิ่ม"
     addHolidayBtn.addEventListener('click', () => handleAddDate('holidays'));
     addWorkingSatBtn.addEventListener('click', () => handleAddDate('workingSaturdays'));
+
+    // 4. ดึง Element สำหรับ "การแสดง/ซ่อน" และ "การลบ"
+    const toggleBtn = document.getElementById('toggle-holiday-list-btn');
+    const listWrapper = document.getElementById('holiday-list-wrapper');
+
+    if (toggleBtn && listWrapper) {
+        
+        // 5. ผูก Event ให้ปุ่ม "แสดง/ซ่อน"
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = listWrapper.classList.contains('hidden');
+            if (isHidden) {
+                // ถ้าซ่อนอยู่: ให้โหลดข้อมูล, ลบคลาส hidden, และเปลี่ยนข้อความปุ่ม
+                loadAndDisplayHolidays(); // เรียกโหลดข้อมูลเมื่อกด
+                listWrapper.classList.remove('hidden');
+                toggleBtn.textContent = 'ซ่อนรายการที่บันทึกไว้';
+            } else {
+                // ถ้าแสดงอยู่: ให้ซ่อน และเปลี่ยนข้อความปุ่ม
+                listWrapper.classList.add('hidden');
+                toggleBtn.textContent = 'แสดงรายการที่บันทึกไว้';
+            }
+        });
+
+        // 6. [NEW] ผูก Event "การลบ" ที่ตัว Wrapper (Event Delegation)
+        // เพื่อให้ปุ่มลบที่สร้างขึ้นมาทีหลังยังทำงานได้
+        listWrapper.addEventListener('click', (e) => {
+            // ค้นหาปุ่มลบที่ใกล้ที่สุดที่ถูกคลิก
+            const deleteBtn = e.target.closest('.calendar-delete-item-btn');
+            
+            if (deleteBtn) {
+                // ถ้าเจอปุ่มลบ
+                const date = deleteBtn.dataset.date;
+                const type = deleteBtn.dataset.type; // 'holidays' หรือ 'workingSaturdays'
+                const typeText = type === 'holidays' ? 'วันหยุด' : 'เสาร์ทำงาน';
+                
+                showConfirmDialog(
+                    `คุณแน่ใจหรือไม่ว่าต้องการลบ "${typeText}: ${date}"?`,
+                    async () => { // ฟังก์ชัน onConfirm (เมื่อกดยืนยัน)
+                        try {
+                            const docRef = db.collection('system_settings').doc('calendar_rules');
+                            const updateAction = firebase.firestore.FieldValue.arrayRemove(date);
+                            
+                            await docRef.update({ [type]: updateAction });
+
+                            showNotification(`ลบ "${date}" สำเร็จ!`, 'success');
+                            await loadAndDisplayHolidays(); // โหลดรายการในกล่องนี้ใหม่
+                            loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
+                        } catch (error) {
+                            console.error("Error deleting holiday/workday:", error);
+                            showNotification('เกิดข้อผิดพลาดในการลบ', 'error');
+                        }
+                    }
+                );
+            }
+        });
+    }
 }
 
     // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เวอร์ชัน "ปฏิทินบริษัท") ---
