@@ -4176,6 +4176,36 @@ async function loadAllUsersForDropdown() {
             }
         }
     }
+
+    const leaveListContainer = document.getElementById('leave-approval-list');
+    if (leaveListContainer) {
+        leaveListContainer.addEventListener('click', (event) => {
+            
+            // [แก้ไข] ใช้ .closest() เพื่อหาปุ่มที่ถูกคลิก
+            // วิธีนี้จะแม่นยำกว่า แม้ว่าผู้ใช้จะคลิกโดนข้อความบนปุ่ม
+            const approveBtn = event.target.closest('.approve-leave-btn');
+            const rejectBtn = event.target.closest('.reject-leave-btn');
+
+            if (approveBtn) {
+                // กดปุ่มอนุมัติ
+                const docId = approveBtn.dataset.id;
+                if (!docId) return; // ตรวจสอบอีกครั้ง
+                
+                approveBtn.disabled = true; 
+                approveBtn.textContent = 'กำลังบันทึก...';
+                handleLeaveApproval(docId, 'approved', approveBtn); 
+            }
+            else if (rejectBtn) {
+                // กดปุ่มไม่อนุมัติ
+                const docId = rejectBtn.dataset.id;
+                if (!docId) return; // ตรวจสอบอีกครั้ง
+                
+                rejectBtn.disabled = true;
+                rejectBtn.textContent = 'กำลังบันทึก...';
+                handleLeaveApproval(docId, 'rejected', rejectBtn);
+            }
+        });
+    }
     
 // (แทนที่ฟังก์ชันเดิม)
 async function handleLeaveApproval(docId, newStatus, buttonElement) { 
