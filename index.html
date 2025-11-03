@@ -138,16 +138,31 @@
         <main id="main-content" class="p-4 md:p-6">
 
             <div id="check-in-out-page" class="page space-y-6">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center relative">
                     <div>
                         <p class="text-gray-500">ยินดีต้อนรับ</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
-                    <div class="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                        <img id="user-profile-pic" src="https://placehold.co/100x100/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-full h-full object-cover">
-                    </div>
-                </div>
+                    
+                    <button id="notification-bell-btn" class="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.405L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                            0
+                        </span>
+                    </button>
 
+                    <div id="notification-modal" class="hidden absolute right-0 top-14 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-200">
+                        <div class="p-4 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-800">การแจ้งเตือนวันลาวันนี้</h3>
+                        </div>
+                        <div id="notification-list" class="max-h-80 overflow-y-auto p-4 space-y-3">
+                            <p id="no-notifications-msg" class="text-center text-gray-500 text-sm">วันนี้ไม่มีพนักงานลา</p>
+                        </div>
+                    </div>
+                    
+                </div>
                 <div class="card text-center">
                     <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
                     <p id="current-time" class="text-5xl font-bold my-4"></p>
@@ -942,6 +957,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const leaveStartDate = document.getElementById('leave-start-date');
     const leaveEndDate = document.getElementById('leave-end-date');
     const leaveReason = document.getElementById('leave-reason');
+    // [NEW] Notification Elements
+    const notificationBellBtn = document.getElementById('notification-bell-btn');
+    const notificationModal = document.getElementById('notification-modal');
+    const notificationBadge = document.getElementById('notification-badge');
+    const notificationList = document.getElementById('notification-list');
+    const noNotificationsMsg = document.getElementById('no-notifications-msg');
     // --- App State ---
     let currentUser = null;
     let watchId = null;
@@ -984,12 +1005,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const userData = updatedUserDoc.data();
                 
                 currentUserData = userData; 
-
-                const topProfilePic = document.getElementById('user-profile-pic');
-                const placeholderSm = 'https://placehold.co/100x100/E2E8F0/475569?text=User';
-                
-                topProfilePic.onerror = () => { topProfilePic.src = placeholderSm; };
-                topProfilePic.src = userData.profileImageUrl || user.photoURL || placeholderSm;
                 
                 document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
                 
@@ -1046,6 +1061,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 startWatchingPosition();
                 await checkUserWorkStatus();
                 
+                await loadDailyLeaveNotifications();
+
                 initializeControls();
                 await populateDropdownOptions();
 
@@ -4131,6 +4148,133 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         }
     }
 
+        // [NEW FUNCTION] Load and display daily leave notifications
+    // [NEW FUNCTION] Load and display daily leave notifications
+    async function loadDailyLeaveNotifications() {
+        if (!currentUser) return;
+
+        const today = new Date();
+        // ตั้งเวลาเริ่มต้นของวันนี้
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+        // ตั้งเวลาสิ้นสุดของวันนี้
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+        try {
+            // Query: Status เป็น 'approved' และช่วงวันลาครอบคลุมวันนี้
+            const querySnapshot = await db.collection('leave_requests')
+                .where('status', '==', 'approved')
+                .where('startDate', '<=', todayEnd) // วันลาต้องเริ่มก่อนหรือตรงกับสิ้นวัน
+                .where('endDate', '>=', todayStart)   // วันลาต้องสิ้นสุดหลังหรือตรงกับต้นวัน
+                .get();
+
+            let notifications = [];
+            
+            querySnapshot.forEach(doc => {
+                const leave = doc.data();
+                const startDate = leave.startDate.toDate();
+                const endDate = leave.endDate.toDate();
+                
+                if (startDate <= todayEnd && endDate >= todayStart) {
+                    notifications.push(leave);
+                }
+            });
+
+            // --- Render UI ---
+            let listHTML = '';
+            
+            if (notifications.length > 0) {
+                notificationBadge.textContent = notifications.length;
+                notificationBadge.classList.remove('hidden');
+
+                notifications.forEach(leave => {
+                    // ใช้ LEAVE_TYPE_MAP ที่มีอยู่แล้วในโค้ด
+                    const leaveTypeText = LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType;
+                    
+                    // [NEW] กำหนดสีและไอคอนตามประเภทการลา
+                    let colorClass = 'bg-red-50 text-red-800 border-red-200'; // Default: Annual (พักร้อน)
+                    let statusIcon = `
+                        <svg class="w-5 h-5 flex-shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+                    
+                    if (leave.leaveType === 'sick') { // ลาป่วย
+                         colorClass = 'bg-yellow-50 text-yellow-800 border-yellow-200';
+                         statusIcon = `
+                            <svg class="w-5 h-5 flex-shrink-0 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                              <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                            </svg>
+                        `;
+                    } else if (leave.leaveType === 'personal') { // ลากิจ
+                        colorClass = 'bg-indigo-50 text-indigo-800 border-indigo-200';
+                        statusIcon = `
+                            <svg class="w-5 h-5 flex-shrink-0 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                        `;
+                    }
+
+                    // แสดงช่วงวันที่
+                    const dateInfo = leave.startDate.toDate().toLocaleDateString('th-TH') === leave.endDate.toDate().toLocaleDateString('th-TH')
+                        ? leave.startDate.toDate().toLocaleDateString('th-TH')
+                        : `${leave.startDate.toDate().toLocaleDateString('th-TH')} - ${leave.endDate.toDate().toLocaleDateString('th-TH')}`;
+                        
+                    // [UPDATED] ปรับโครงสร้าง HTML: ลบ User ID ออก, จัด Head ใหม่, เพิ่ม class สำหรับการแสดงผลเหตุผล
+                    listHTML += `
+                        <div class="p-3 rounded-lg border shadow-sm ${colorClass}">
+                            <div class="flex items-start space-x-2">
+                                ${statusIcon}
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold truncate">${leave.userName}</p>
+                                    <p class="text-xs font-medium">${leaveTypeText}</p>
+                                    <p class="text-xs text-gray-500">${dateInfo}</p>
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-current border-opacity-30">
+                                <p class="text-xs text-gray-700 whitespace-pre-wrap">${leave.reason}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                notificationBadge.classList.add('hidden');
+                listHTML = `<p id="no-notifications-msg" class="text-center text-gray-500 text-sm">วันนี้ไม่มีพนักงานลา</p>`;
+            }
+
+            notificationList.innerHTML = listHTML;
+
+        } catch (error) {
+            console.error("Error loading daily leave notifications:", error);
+            notificationList.innerHTML = `<p class="text-center text-red-500 text-sm">เกิดข้อผิดพลาดในการโหลด</p>`;
+            notificationBadge.classList.add('hidden');
+        }
+    }
+
+    // [NEW] Notification Bell Event Listener
+    if (notificationBellBtn) {
+        notificationBellBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            // สลับการแสดง Modal
+            notificationModal.classList.toggle('hidden');
+            
+            // ลบ Badge เมื่อกดเปิด Modal
+            notificationBadge.classList.add('hidden');
+            notificationBadge.textContent = '0';
+            
+            // โหลดข้อมูลล่าสุดอีกครั้ง (ถ้าจำเป็น)
+            loadDailyLeaveNotifications(); 
+        });
+
+        // ปิด Modal เมื่อคลิกนอกพื้นที่
+        document.addEventListener('click', (e) => {
+            if (notificationModal && !notificationModal.classList.contains('hidden') && 
+                !notificationModal.contains(e.target) && !notificationBellBtn.contains(e.target)) {
+                
+                notificationModal.classList.add('hidden');
+            }
+        });
+    }
 
 });
 
