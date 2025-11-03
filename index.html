@@ -3853,11 +3853,19 @@ async function loadAllUsersForDropdown() {
 
     async function loadLeaveHistory() {
     const listContainer = document.getElementById('leave-history-list');
-    const loadingMsg = document.getElementById('leave-history-loading-msg');
+    // FIX: ต้องตรวจสอบและสร้าง element ใหม่ถ้าถูกลบไป
+    let loadingMsg = document.getElementById('leave-history-loading-msg'); 
     
-    if (!listContainer || !loadingMsg) {
+    if (!listContainer) {
         console.error("Leave history elements not found!");
         return;
+    }
+
+    // หาก loadingMsg ไม่มีอยู่ (ถูกล้างไปในการค้นหาก่อนหน้า) ให้สร้างใหม่
+    if (!loadingMsg) {
+        loadingMsg = document.createElement('p');
+        loadingMsg.id = 'leave-history-loading-msg';
+        loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
     }
 
     listContainer.innerHTML = ''; // ล้างของเก่า
