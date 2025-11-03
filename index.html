@@ -916,6 +916,14 @@
         // ส่งค่ากลับในฟอร์แมต YYYY-MM-DDTHH:MM
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
+
+    function toLocalDateKey(date) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
     </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1188,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         saveReportBtn.textContent = 'กำลังบันทึก...';
         
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = toLocalDateKey(new Date());
             // [เปลี่ยน] ใช้ ID ของ work_records
             const workRecordDocId = `${currentUser.uid}_${today}`;
             const workRecordRef = db.collection('work_records').doc(workRecordDocId);
@@ -1775,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
                 const now = new Date(); 
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; // [แก้ไข]
 
                 let photoUrl = null;
                 if (finalWorkType === 'on_site' && photoFile) {
@@ -1907,7 +1915,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function checkUserWorkStatus() {
         if (!currentUser) return;
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalDateKey(new Date());
         const docId = `${currentUser.uid}_${today}`;
         const workRecordDoc = await db.collection('work_records').doc(docId).get();
 
@@ -2240,9 +2248,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const recordsMap = new Map();
             recordsSnapshot.forEach(doc => {
                 const record = doc.data();
+                const docId = doc.id;
+                const dateString = docId.substring(docId.indexOf('_') + 1);// ดึง YYYY-MM-DD จาก USERID_YYYY-MM-DD
                 const userId = record.userId;
-                const dateString = record.date.toDate().toISOString().split('T')[0]; 
-                
+
                 if (!recordsMap.has(userId)) {
                     recordsMap.set(userId, new Map());
                 }
@@ -2626,7 +2635,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 const now = new Date();
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
 
                 const workRecordDoc = await workRecordRef.get();
@@ -2923,7 +2932,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
             return;
         }
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = toLocalDateKey(new Date());
         const reportDocId = `${currentUser.uid}_${today}`;
         
         try {
