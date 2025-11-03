@@ -496,29 +496,7 @@
                                     </div>
                                 </div>
 
-                                <div class="card !p-0">
-                                    <h3 class="font-semibold text-lg text-gray-800 p-4 pb-0">📝 แก้ไขข้อมูลการลงเวลา</h3>
-                                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
-                                        <div>
-                                            <label class="text-sm font-medium text-gray-600">เลือกพนักงาน</label>
-                                            <select id="edit-user-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                                                <option value="">กำลังโหลดพนักงาน...</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
-                                            <input type="date" id="edit-date-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                                        </div>
-                                        <button id="search-record-btn" class="btn-primary w-full py-3 text-base">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                                            ค้นหาข้อมูล
-                                        </button>
-                                        <div id="search-results-container" class="mt-4 pt-4 border-t border-gray-200">
-                                            <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกพนักงานและวันที่</p>
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
 
@@ -560,7 +538,7 @@
                                         </button>
                                     </div>
 
-                                    <div class="space-y-4 mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                                    <div class="space-y-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                             <div>
                                                 <label for="summary-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
@@ -598,6 +576,30 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="card">
+                            <h3 class="font-semibold text-lg text-gray-800 mb-4">📝 แก้ไขข้อมูลการลงเวลา</h3>
+                            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                                <div>
+                        <label class="text-sm font-medium text-gray-600">เลือกพนักงาน</label>
+                                    <select id="edit-user-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                        <option value="">กำลังโหลดพนักงาน...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
+                                    <input type="date" id="edit-date-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                </div>
+                                <button id="search-record-btn" class="btn-primary w-full py-3 text-base">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                                    ค้นหาข้อมูล
+                                </button>
+                                <div id="search-results-container" class="mt-4 pt-4 border-t border-gray-200">
+                                    <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกพนักงานและวันที่</p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
