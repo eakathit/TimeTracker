@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
 
     <link rel="manifest" href="manifest.json">
 
@@ -3038,6 +3038,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }); 
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
+    provider.addScope('profile');
     lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
     
     const emailLoginBtn = document.getElementById('login-btn');
@@ -4807,21 +4808,22 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
         try {
-            // Query: Status เป็น 'approved' และช่วงวันลาครอบคลุมวันนี้
+
+// 1. แก้ไข Query ให้เหลือ inequality แค่ 1 field
             const querySnapshot = await db.collection('leave_requests')
                 .where('status', '==', 'approved')
-                .where('startDate', '<=', todayEnd) // วันลาต้องเริ่มก่อนหรือตรงกับสิ้นวัน
-                .where('endDate', '>=', todayStart)   // วันลาต้องสิ้นสุดหลังหรือตรงกับต้นวัน
+                .where('startDate', '<=', todayEnd) // <-- เหลือแค่ field นี้
                 .get();
 
             let notifications = [];
-            
+
+            // 2. ย้าย Logic การกรอง 'endDate' มาไว้ที่ Client (ใน Loop)
             querySnapshot.forEach(doc => {
                 const leave = doc.data();
-                const startDate = leave.startDate.toDate();
                 const endDate = leave.endDate.toDate();
-                
-                if (startDate <= todayEnd && endDate >= todayStart) {
+
+                // 3. กรอง field ที่ 2 (endDate) ด้วย JavaScript
+                if (endDate >= todayStart) { 
                     notifications.push(leave);
                 }
             });
