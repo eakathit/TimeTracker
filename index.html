@@ -1170,7 +1170,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // --- จบส่วนตรวจสอบ Role ---
 
                 updateProfilePage(userData);
-                startWatchingPosition();
                 await checkUserWorkStatus();
                 
                 await loadDailyLeaveNotifications();
@@ -3087,6 +3086,12 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const pageId = item.dataset.page;
 
+            // ✨ [เพิ่มส่วนที่ 1] ✨
+            // หยุด GPS ทันที ถ้าไปหน้าอื่นที่ไม่ใช่หน้าลงเวลา
+            if (pageId !== 'check-in-out-page') {
+                stopWatchingPosition();
+            }
+
             // [แก้ไข] --- ป้องกันการเข้าหน้า (Admin/User) ---
             if (pageId === 'admin-dashboard-page' && (!currentUserData || currentUserData.role !== 'admin')) {
                 alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
@@ -3098,10 +3103,13 @@ document.addEventListener('DOMContentLoaded', function() {
             item.classList.add('active');
             showPage(pageId);
             
-            if (pageId === 'report-page') {
-                loadSentReports(); 
+            // ✨ [เพิ่มส่วนที่ 2] ✨
+            // เริ่ม GPS อีกครั้ง เมื่อกลับมาหน้าลงเวลา
+            if (pageId === 'check-in-out-page') {
+                startWatchingPosition();
             }
-            if (pageId === 'admin-dashboard-page') {
+
+            if (pageId === 'report-page') {
                 loadAllUsersForDropdown();
                 loadPendingLeaveRequests();
                 if (!editDateSelect.value) {
