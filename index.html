@@ -3039,7 +3039,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
     provider.addScope('profile');
-    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
+    lineLoginBtn.addEventListener('click', () => { auth.signInWithRedirect(provider).catch(e => console.error("Login Error:", e)); });
     
     const emailLoginBtn = document.getElementById('login-btn');
     const emailInput = document.querySelector('input[placeholder="รหัสพนักงาน"]');
