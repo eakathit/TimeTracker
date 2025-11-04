@@ -677,59 +677,66 @@
                         <p class="text-center text-gray-400 text-sm">คลิกวันที่เพื่อดูรายละเอียด</p>
                     </div>
                     
-                </div> </div>
-            <div id="profile-page" class="page space-y-6">
-                <div class="card !p-0 overflow-hidden"> <div class="p-5 flex items-center space-x-4">
-                        <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0">
-                        <div class="overflow-hidden">
-                             <h2 id="profile-page-name" class="text-xl font-bold text-gray-800 truncate"></h2>
-                             <p id="profile-page-department" class="text-gray-500 font-medium"></p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gray-50 p-4 border-t border-gray-100">
-                        <h3 class="text-sm font-semibold text-gray-600 mb-3 ml-1">สรุปข้อมูล (ตามช่วงวันที่เลือก)</h3>
-                        
-                        <div class="grid grid-cols-3 gap-3 text-center">
-                            
-                            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                <p class="text-xs text-sky-600 font-semibold">ชั่วโมงปกติ</p>
-                                <p id="profile-summary-hours" class="text-xl font-bold text-sky-600 mt-1">-</p> </div>
-                            
-                            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                <p class="text-xs text-orange-600 font-semibold">OT รวม</p>
-                                <p id="profile-summary-ot" class="text-xl font-bold text-orange-600 mt-1">-</p> </div>
-                            
-                            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-                                <p class="text-xs text-green-600 font-semibold">จำนวนวัน</p>
-                                <p id="profile-summary-days" class="text-xl font-bold text-green-600 mt-1">-</p> </div>
-                            
-                        </div>
-                    </div>
-
                 </div> 
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                         <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-                         
-                         <div class="relative inline-block shadow-sm rounded-lg">
-                            <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
-                                <option value="7">7 วันล่าสุด</option>
-                                <option value="this_month">เดือนนี้</option>
-                                <option value="last_month">เดือนที่แล้ว</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </div>
-                        
-                    </div>
-                   
-                    <div id="work-history-container" class="space-y-4">
-                        </div>
+            </div>
+
+            <div id="profile-page" class="page space-y-6">
+    
+    <div class="card !p-5">
+        <div class="flex justify-between items-start">
+            <div class="flex items-center space-x-4">
+                <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md flex-shrink-0">
+                <div class="overflow-hidden">
+                     <h2 id="profile-page-name" class="text-2xl font-bold text-gray-800 truncate">กำลังโหลด...</h2>
+                     <p id="profile-page-department" class="text-gray-500 font-medium">...</p>
                 </div>
+            </div>
+        </div>
+        
+        <div class="mt-5 pt-4 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-600 mb-3">สรุปข้อมูล (ตามช่วงวันที่เลือก)</h3>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                
+                <div class="bg-sky-50 p-3 rounded-xl border border-sky-100">
+                    <p class="text-xs text-sky-700 font-semibold">ชั่วโมงปกติ</p>
+                    <p id="profile-summary-hours" class="text-2xl font-bold text-sky-600 mt-1">-</p> 
+                </div>
+                
+                <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                    <p class="text-xs text-orange-700 font-semibold">OT รวม</p>
+                    <p id="profile-summary-ot" class="text-2xl font-bold text-orange-600 mt-1">-</p> 
+                </div>
+                
+                <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                    <p class="text-xs text-green-700 font-semibold">จำนวนวัน</p>
+                    <p id="profile-summary-days" class="text-2xl font-bold text-green-600 mt-1">-</p> 
+                </div>
+                
+            </div>
+        </div>
+    </div> 
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+             <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
+             
+             <div class="relative inline-block shadow-sm rounded-lg">
+                <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
+                    <option value="7">7 วันล่าสุด</option>
+                    <option value="this_month">เดือนนี้</option>
+                    <option value="last_month">เดือนที่แล้ว</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+            
+        </div>
+       
+        <div id="work-history-container">
+            </div>
+    </div>
 
                  <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -2767,25 +2774,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const report = record.report;
 
                 let checkoutTime, regularWorkHours = 0, overtimeHours = 0;
-                
-                let workTypeInfo = '';
-                let workTypeIcon = '';
-                
-                if (record.checkIn.workType === 'in_factory') {
-                    workTypeInfo = 'ในโรงงาน';
-                    workTypeIcon = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 flex-shrink-0">
-                          <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zM8.5 13.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" />
-                        </svg>
-                    `;
-                } else {
-                    workTypeInfo = `On-site: ${record.checkIn.onSiteDetails || 'N/A'}`;
-                    workTypeIcon = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 flex-shrink-0">
-                            <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" />
-                        </svg>
-                    `;
-                }
 
                 if (record.status === 'completed') {
                     checkoutTime = record.checkOut.timestamp.toDate();
@@ -2799,11 +2787,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
                         workDurationMillis -= 3600000; 
                     }
-
-                    // ========== ⚠️ START: จุดที่แก้ไข ==========
-                    // แก้จาก (1000 * 60 * 6) เป็น (1000 * 60 * 60)
                     const totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
-                    // ========== ⚠️ END: จุดที่แก้ไข ==========
                     
                     regularWorkHours = totalWorkHours - overtimeHours;
                     if (regularWorkHours < 0) regularWorkHours = 0;
@@ -2813,60 +2797,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalOtHours += overtimeHours;
 
                 historyHtml += `
-                <div class="card !p-4 shadow-sm">
-                    <p class="font-semibold text-gray-800 mb-3">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <div class="flex space-x-4">
+                    <div class="flex flex-col items-center">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center leading-none">
+                            <span class="text-xs text-sky-600 font-medium">${checkinTime.toLocaleDateString('th-TH', { month: 'short' })}</span>
+                            <span class="text-xl font-bold text-sky-700">${checkinTime.getDate()}</span>
+                        </div>
+                        <div class="flex-1 w-px bg-gray-200 my-2"></div> </div>
                     
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-green-500">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.25 5.75a.75.75 0 011.5 0v5.69l1.97-1.97a.75.75 0 111.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 111.06-1.06l1.97 1.97V5.75z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-red-500">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-4.75a.75.75 0 001.5 0V8.66l1.97 1.97a.75.75 0 101.06-1.06l-3.5-3.5a.75.75 0 00-1.06 0l-3.5 3.5a.75.75 0 101.06 1.06l1.97-1.97v4.59z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
+                    <div class="flex-1 card !p-4 !shadow-sm mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-gray-800">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long' })}</p>
+                                <p class="text-sm text-gray-500 font-medium">
+                                    <span class="text-green-600">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
+                                    <span> → </span>
+                                    <span class="text-red-500">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-sky-500">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium">${regularWorkHours.toFixed(2)} ชม.</span>
+                        <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
+                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
+                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
+                            </div>
+                            <div class="flex items-center gap-1.5" title="Overtime">
+                                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-orange-500">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.75 9.75h-1.5a.75.75 0 000 1.5h1.5v1.5a.75.75 0 001.5 0v-1.5h1.5a.75.75 0 000-1.5h-1.5V8.25a.75.75 0 00-1.5 0v1.5z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium">OT: ${overtimeHours.toFixed(1)} ชม.</span>
-                        </div>
-                    </div>
 
-                    <div class="mt-4 pt-3 border-t border-gray-100 text-sm space-y-2">
-                        <div class="flex items-start gap-2">
-                            ${workTypeIcon}
-                            <span class="font-medium text-gray-700">${workTypeInfo}</span>
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
+                            <div>
+                                ${record.checkIn.workType === 'in_factory' ? `
+                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
+                                        ในโรงงาน
+                                    </span>
+                                ` : `
+                                    <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
+                                        On-site: ${record.checkIn.onSiteDetails || 'N/A'}
+                                    </span>
+                                `}
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${report ? `
+                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" /><path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" /><path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" /></svg>
+                                        ${report.workType}
+                                    </span>
+                                    
+                                    ${report.project === 'FAC' ? `
+                                        <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
+                                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.183 2.25c.348-.7 1.286-.7 1.634 0l.963 1.947a.75.75 0 00.563.41l2.15.312c.732.106 1.025.99.494 1.506l-1.556 1.516a.75.75 0 00-.216.66l.367 2.14c.124.729-.64.128-1.283.3l-1.928.898a.75.75 0 00-.58 0l-1.928-.898c-.643-.172-1.407.428-1.283-.3l.367-2.14a.75.75 0 00-.216-.66L2.3 6.43c-.53-.516-.238-1.4.494-1.506l2.15-.312a.75.75 0 00.563-.41l.963-1.947z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M10 12.25a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
+                                            ${report.project} (Factory)
+                                        </span>
+                                    ` : `
+                                        <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.379 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                            ${report.project}
+                                        </span>
+                                        `}
+                                ` : `
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" /></svg>
+                                        ยังไม่ส่งรายงาน
+                                    </span>
+                                `}
+                            </div>
                         </div>
-                        
-                        ${report ? `
-                        <div class="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 flex-shrink-0">
-                              <path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" />
-                              <path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" />
-                              <path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" />
-                            </svg>
-                            <span class="font-medium text-gray-700">${report.workType} (${report.project})</span>
-                        </div>
-                        ` : `
-                        <div class="flex items-start gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-yellow-500 flex-shrink-0">
-                                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium text-yellow-600">ยังไม่ส่งรายงาน</span>
-                        </div>
-                        `}
+
                     </div>
                 </div>`;
             });
@@ -3097,8 +3100,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
                 return; // ไม่ต้องทำอะไรต่อ
             }
-            // --- จบส่วนป้องกัน ---
 
+            // --- จบส่วนป้องกัน ---
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
             showPage(pageId);
