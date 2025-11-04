@@ -126,7 +126,7 @@
             </button>
             <p class="text-gray-400 text-sm my-4">หรือ</p>
             <div class="space-y-4">
-                <input type="text" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                <input type="email" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                 <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
             </div>
             <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
@@ -1113,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (userDoc.exists) {
                 try {
                     const functions = firebase.functions();
-                    const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
+                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage');
                     await saveLineProfileImage({ photoURL: user.photoURL });
                     console.log("Profile image update function called successfully.");
                 } catch (error) {
@@ -1179,7 +1179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateProfilePage(userData);
                 await checkUserWorkStatus();
                 
-                await loadDailyLeaveNotifications();
+                if (currentUserData.role === 'admin') {
+                    await loadDailyLeaveNotifications();
+                } else {
+                    // [เพิ่ม] ถ้าไม่ใช่ Admin ให้ซ่อนปุ่มกระดิ่งไปเลย
+                    const bellBtn = document.getElementById('notification-bell-btn');
+                    if (bellBtn) bellBtn.style.display = 'none';
+                }
 
                 initializeControls();
                 await populateDropdownOptions();
@@ -3039,7 +3045,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
     provider.addScope('profile');
-    lineLoginBtn.addEventListener('click', () => { auth.signInWithRedirect(provider).catch(e => console.error("Login Error:", e)); });
+
+    lineLoginBtn.addEventListener('click', () => { 
+    // เปลี่ยนจาก signInWithRedirect เป็น signInWithPopup
+    auth.signInWithPopup(provider).catch(e => {
+        // (แนะนำ) เพิ่มการดักจับ Error กรณีเบราว์เซอร์บล็อก Pop-up
+        if (e.code === 'auth/popup-blocked') {
+            alert('เบราว์เซอร์ของคุณบล็อก Pop-up กรุณาอนุญาต Pop-up แล้วลองอีกครั้ง');
+        } else if (e.code === 'auth/cancelled-popup-request') {
+            // ผู้ใช้ปิด Pop-up เอง ไม่ต้องแจ้งเตือน
+            console.log('Popup closed by user');
+        } else {
+            console.error("Login Error:", e);
+            alert('เกิดข้อผิดพลาดในการล็อกอิน: ' + e.message);
+        }
+    }); 
+});
     
     const emailLoginBtn = document.getElementById('login-btn');
     const emailInput = document.querySelector('input[placeholder="รหัสพนักงาน"]');
