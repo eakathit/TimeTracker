@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <link rel="manifest" href="manifest.json">
 
@@ -126,7 +126,7 @@
             </button>
             <p class="text-gray-400 text-sm my-4">หรือ</p>
             <div class="space-y-4">
-                <input type="email" placeholder="รหัสพนักงาน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                <input type="text" placeholder="อีเมล" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                 <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
             </div>
             <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
@@ -941,7 +941,6 @@
         </div>
     </div>
 </div>
-
     <script src="firebase-config.js"></script>
     <script>
     // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
@@ -1113,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (userDoc.exists) {
                 try {
                     const functions = firebase.functions();
-                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage');
+                    const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
                     await saveLineProfileImage({ photoURL: user.photoURL });
                     console.log("Profile image update function called successfully.");
                 } catch (error) {
@@ -1125,6 +1124,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 currentUserData = userData; 
                 
+
+        
                 document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
                 
                 // 1. ปุ่มที่ 2 (รายงาน) - ตั้งค่าให้เป็น "รายงาน" เสมอ
@@ -1179,13 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateProfilePage(userData);
                 await checkUserWorkStatus();
                 
-                if (currentUserData.role === 'admin') {
-                    await loadDailyLeaveNotifications();
-                } else {
-                    // [เพิ่ม] ถ้าไม่ใช่ Admin ให้ซ่อนปุ่มกระดิ่งไปเลย
-                    const bellBtn = document.getElementById('notification-bell-btn');
-                    if (bellBtn) bellBtn.style.display = 'none';
-                }
+                await loadDailyLeaveNotifications();
 
                 initializeControls();
                 await populateDropdownOptions();
@@ -2945,6 +2940,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 const now = new Date();
+                // now.setHours(18, 0, 0, 0);
+
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
 
@@ -2992,6 +2989,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 const now = new Date();
+                // now.setHours(18, 0, 0, 0); 
+
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
 
@@ -3032,6 +3031,8 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         const currentTime = new Date();
+        // currentTime.setHours(18, 0, 0, 0);
+
         if (currentTime.getHours() >= 18) { // ตั้งค่าตามจริง (>= 18 คือ 18:00 เป็นต้นไป)
              showConfirmDialog(
                 "ขณะนี้เป็นเวลา OT คุณยืนยันที่จะลงเวลาออกและบันทึก OT หรือไม่?",
@@ -3044,26 +3045,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }); 
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
-    provider.addScope('profile');
-
-    lineLoginBtn.addEventListener('click', () => { 
-    // เปลี่ยนจาก signInWithRedirect เป็น signInWithPopup
-    auth.signInWithPopup(provider).catch(e => {
-        // (แนะนำ) เพิ่มการดักจับ Error กรณีเบราว์เซอร์บล็อก Pop-up
-        if (e.code === 'auth/popup-blocked') {
-            alert('เบราว์เซอร์ของคุณบล็อก Pop-up กรุณาอนุญาต Pop-up แล้วลองอีกครั้ง');
-        } else if (e.code === 'auth/cancelled-popup-request') {
-            // ผู้ใช้ปิด Pop-up เอง ไม่ต้องแจ้งเตือน
-            console.log('Popup closed by user');
-        } else {
-            console.error("Login Error:", e);
-            alert('เกิดข้อผิดพลาดในการล็อกอิน: ' + e.message);
-        }
-    }); 
-});
+    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
     
     const emailLoginBtn = document.getElementById('login-btn');
-    const emailInput = document.querySelector('input[placeholder="รหัสพนักงาน"]');
+    const emailInput = document.querySelector('input[placeholder="อีเมล"]');
     const passwordInput = document.querySelector('input[placeholder="รหัสผ่าน"]');
 
     emailLoginBtn.addEventListener('click', () => {
@@ -3128,7 +3113,6 @@ document.addEventListener('DOMContentLoaded', function() {
             item.classList.add('active');
             showPage(pageId);
             
-            // ✨ [เพิ่มส่วนที่ 2] ✨
             // เริ่ม GPS อีกครั้ง เมื่อกลับมาหน้าลงเวลา
             if (pageId === 'check-in-out-page') {
                 startWatchingPosition();
@@ -3144,7 +3128,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('summary-pagination-controls').innerHTML = '';
             }
             
-            // [เพิ่ม] เรียกฟังก์ชันโหลดปฏิทิน
             // [แก้ไข] เรียกฟังก์ชันโหลดปฏิทิน และตรวจสอบสิทธิ์ Admin
             if (pageId === 'calendar-page') {
                 loadCalendarData(currentDisplayDate);
@@ -3192,6 +3175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         historyRangeSelect.addEventListener('change', loadWorkHistory);
     }
     
+
     function resetReportForm() {
         workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
         workTypeSelectedText.classList.add('text-gray-500');
@@ -3257,6 +3241,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     };
 }
 
+    
     // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
     async function loadSentReports() {
         if (!currentUser) return;
@@ -3357,7 +3342,7 @@ function calculateWorkHours(checkinTime, checkoutTime) {
     }, 3000); // Hide after 3 seconds
 }
 
-// [โค้ดใหม่] ฟังก์ชันสำหรับโหลดรายการวันหยุด/วันทำงาน มาโชว์ในหน้า Admin
+
 // [แทนที่ฟังก์ชันเดิมทั้งหมด]
 async function loadAndDisplayHolidays() {
     // 1. [NEW] ดึง ID ของ 2 คอลัมน์ใหม่
@@ -4829,22 +4814,21 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
 
         try {
-
-// 1. แก้ไข Query ให้เหลือ inequality แค่ 1 field
+            // Query: Status เป็น 'approved' และช่วงวันลาครอบคลุมวันนี้
             const querySnapshot = await db.collection('leave_requests')
                 .where('status', '==', 'approved')
-                .where('startDate', '<=', todayEnd) // <-- เหลือแค่ field นี้
+                .where('startDate', '<=', todayEnd) // วันลาต้องเริ่มก่อนหรือตรงกับสิ้นวัน
+                .where('endDate', '>=', todayStart)   // วันลาต้องสิ้นสุดหลังหรือตรงกับต้นวัน
                 .get();
 
             let notifications = [];
-
-            // 2. ย้าย Logic การกรอง 'endDate' มาไว้ที่ Client (ใน Loop)
+            
             querySnapshot.forEach(doc => {
                 const leave = doc.data();
+                const startDate = leave.startDate.toDate();
                 const endDate = leave.endDate.toDate();
-
-                // 3. กรอง field ที่ 2 (endDate) ด้วย JavaScript
-                if (endDate >= todayStart) { 
+                
+                if (startDate <= todayEnd && endDate >= todayStart) {
                     notifications.push(leave);
                 }
             });
