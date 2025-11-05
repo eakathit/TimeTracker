@@ -500,7 +500,7 @@
                                         <h4 class="font-semibold text-gray-700">สรุปข้อมูลรายโครงการ (รายเดือน)</h4>
                                         <button id="export-project-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
-                                            <span>Export</span>
+                                            <span>Export Excel</span>
                                         </button>
                                     </div>
 
@@ -628,7 +628,7 @@
             <div id="calendar-page" class="page space-y-6">
                 
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">ปฏิทิน</h2>
+                    <h2 class="text-2xl font-bold">ปฏิทินการทำงาน</h2>
                     <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
                         + ยื่นใบลา
                     </button>
@@ -2159,6 +2159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
+    // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
     async function fetchPayrollData(startDate, endDate) {
         
         // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
@@ -2210,12 +2211,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const user = userDoc.data();
             const userId = userDoc.id;
             
+            // [แก้ไข] 1/3: Object 'summary' ที่มี 4 ช่อง OT
             let summary = {
                 userId: userId,
                 fullName: user.fullName || 'N/A',
                 department: user.department || 'N/A',
                 totalRegularHours: 0,
-                totalOT: 0,
+                // totalOT: 0, (ลบออกแล้ว)
+
+                // เพิ่ม 4 ตัวนี้แทนครับ:
+                total_OT_1_5x: 0,       // สำหรับ OT วันทำงาน (1.5x)
+                total_Holiday_1x: 0,    // สำหรับ ทำงานวันหยุด (1x - รายเดือน)
+                total_Holiday_2x: 0,    // สำหรับ ทำงานวันหยุด (2x - รายวัน)
+                total_OT_3x: 0,         // สำหรับ OT วันหยุด (3x)
+
                 totalLateDays: 0,
                 totalLeaveDays: 0,
                 totalAbsentDays: 0,
@@ -2238,43 +2247,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
                 const record = userRecords.get(dateKey);
 
+                // [แก้ไข] 2/3: Logic การนับชั่วโมง (The Bug Fix)
                 if (leave) {
-                    // ถ้ามีใบลา (นับเฉพาะลาเต็มวัน)
+                    // --- 1. ถ้ามีใบลาก่อน ---
                     if (leave.durationType !== 'hourly') {
                         summary.totalLeaveDays++;
                     }
-                    // (หมายเหตุ: หากต้องการนับลารายชั่วโมงเป็นวันลาด้วย ให้ลบ if(leave.durationType...) ออก)
                 
-                } else if (isWorkingDay) {
-                    // ถ้าเป็น "วันทำงาน" และ "ไม่ลา"
-                    if (record) {
-                        // 1. มาทำงาน
-                        summary.totalWorkDays++;
-                        
-                        // 2. นับชั่วโมง (เฉพาะวันที่ทำงานเสร็จ)
-                        if (record.status === 'completed' && record.checkOut) {
-                            const checkinTime = record.checkIn.timestamp.toDate();
-                            const checkoutTime = record.checkOut.timestamp.toDate();
-                            const { regularWorkHours } = calculateWorkHours(checkinTime, checkoutTime);
-                            
-                            summary.totalRegularHours += regularWorkHours;
-                            summary.totalOT += (record.overtime?.hours || 0);
-                        }
+                } else if (record) {
+                    // --- 2. [ใหม่] ถ้า "ไม่ลา" และ "มีบันทึกการทำงาน" (record) ---
+                    
+                    // 2.1. นับว่าเป็นวันทำงาน
+                    summary.totalWorkDays++;
 
-                        // 3. เช็คมาสาย (นับจากเวลา Check-in)
+                    // 2.2. คำนวณชั่วโมง (เฉพาะวันที่ทำงานเสร็จ)
+                    if (record.status === 'completed' && record.checkOut) {
                         const checkinTime = record.checkIn.timestamp.toDate();
-                        const checkInMinutes = checkinTime.getHours() * 60 + checkinTime.getMinutes();
-                        const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
-                        if (checkInMinutes > LATE_THRESHOLD_MINUTES) {
-                            summary.totalLateDays++;
-                        }
+                        const checkoutTime = record.checkOut.timestamp.toDate();
+                        
+                        // ดึงค่า ชม. ปกติ และ ชม. OT ที่คำนวณไว้
+                        const { regularWorkHours } = calculateWorkHours(checkinTime, checkoutTime);
+                        const otHoursToday = (record.overtime?.hours || 0);
 
-                    } else {
-                        // 4. ไม่มาทำงาน (ไม่ลา, ไม่มีบันทึกเวลา) = ขาดงาน
-                        summary.totalAbsentDays++;
+                        // 2.3. [ย้ายมาไว้ข้างใน] แยกประเภทวัน
+                        if (isWorkingDay) {
+                            // ---- ถ้าเป็น "วันทำงานปกติ" (จ-ศ) ----
+                            summary.totalRegularHours += regularWorkHours;
+                            summary.total_OT_1_5x += otHoursToday;
+                        
+                        } else {
+                            // ---- ถ้าเป็น "วันหยุด" (อาทิตย์, วันหยุดที่เพิ่ม) ----
+                            if (user.employeeType === 'monthly') {
+                                summary.total_Holiday_1x += regularWorkHours; // 1x
+                            } else { // 'daily'
+                                summary.total_Holiday_2x += regularWorkHours; // 2x
+                            }
+                            // OT ที่เกิดขึ้นในวันหยุด นับเป็น 3x
+                            summary.total_OT_3x += otHoursToday;
+                        }
                     }
+
+                    // 2.4. เช็คมาสาย (นับเฉพาะเมื่อมาทำงาน)
+                    const checkinTime = record.checkIn.timestamp.toDate();
+                    const checkInMinutes = checkinTime.getHours() * 60 + checkinTime.getMinutes();
+                    const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
+                    
+                    // [แก้ไข] เช็คสาย "เฉพาะในวันทำงานปกติ" เท่านั้น
+                    if (isWorkingDay && checkInMinutes > LATE_THRESHOLD_MINUTES) {
+                        summary.totalLateDays++;
+                    }
+
+                } else if (isWorkingDay) {
+                    // --- 3. [ใหม่] ถ้า "ไม่ลา" และ "ไม่มีบันทึก" และ "เป็นวันทำงาน" ---
+                    // (คือขาดงาน)
+                    // [แก้ไข] 3/3: นับขาดงานสำหรับทุกคน
+                    summary.totalAbsentDays++;
+                
                 }
-                // (ถ้าไม่ใช่วันทำงาน และไม่ลา ก็คือวันหยุดปกติ ไม่ต้องนับอะไร)
+                // --- 4. (ไม่ต้องมี else) ---
+                // (ถ้า "ไม่ลา", "ไม่มีบันทึก" และ "เป็นวันหยุด" = ไม่ต้องทำอะไร)
+                
             } // จบการวนลูปตามวัน
 
             payrollSummary.push(summary);
@@ -2283,6 +2315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return payrollSummary;
     }
 
+    // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
     // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
     async function loadPayrollSummary() {
         const container = document.getElementById('payroll-summary-results-container');
@@ -2310,7 +2343,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // สร้างตาราง HTML
+            // [แก้ไข] 1/2: อัปเดต "หัวตาราง" (Header)
             let tableHTML = `
                 <table class="w-full text-left text-sm">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50">
@@ -2318,7 +2351,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th scope="col" class="px-4 py-3">พนักงาน</th>
                             <th scope="col" class="px-2 py-3 text-center">ทำงาน (วัน)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชั่วโมงปกติ</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT (ชม.)</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT (1.5x)</th>
+                            <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (1x)</th>
+                            <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (2x)</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT (3x)</th>
                             <th scope="col" class="px-2 py-3 text-center">มาสาย</th>
                             <th scope="col" class="px-2 py-3 text-center">ลา</th>
                             <th scope="col" class="px-2 py-3 text-center">ขาด</th>
@@ -2332,8 +2368,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr class="bg-white border-b hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium text-gray-900">${user.fullName}</td>
                         <td class="px-2 py-3 text-center">${user.totalWorkDays}</td>
+                        
                         <td class="px-2 py-3 text-center">${user.totalRegularHours.toFixed(2)}</td>
-                        <td class="px-2 py-3 text-center">${user.totalOT.toFixed(1)}</td>
+                        <td class="px-2 py-3 text-center">${user.total_OT_1_5x.toFixed(1)}</td>
+                        <td class="px-2 py-3 text-center">${user.total_Holiday_1x.toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center">${user.total_Holiday_2x.toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center">${user.total_OT_3x.toFixed(1)}</td>
+                        
                         <td class="px-2 py-3 text-center ${user.totalLateDays > 0 ? 'text-yellow-600 font-bold' : ''}">${user.totalLateDays}</td>
                         <td class="px-2 py-3 text-center ${user.totalLeaveDays > 0 ? 'text-blue-600 font-bold' : ''}">${user.totalLeaveDays}</td>
                         <td class="px-2 py-3 text-center ${user.totalAbsentDays > 0 ? 'text-red-600 font-bold' : ''}">${user.totalAbsentDays}</td>
@@ -2372,8 +2413,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const summaryData = await fetchPayrollData(startDate, endDate);
             
             const dataForExcel = [
-                ["ID พนักงาน", "ชื่อ-สกุล", "แผนก", "จำนวนวันทำงาน", "ชั่วโมงทำงานปกติ", "ชั่วโมง OT", "จำนวนวันมาสาย", "จำนวนวันลา", "จำนวนวันขาด"]
-            ];
+            ["ID พนักงาน", "ชื่อ-สกุล", "แผนก", "จำนวนวันทำงาน", "ชั่วโมงทำงานปกติ", "OT (1.5x)", "ชม.หยุด (1x)", "ชม.หยุด (2x)", "OT (3x)", "จำนวนวันมาสาย", "จำนวนวันลา", "จำนวนวันขาด"]
+        ];
             
             summaryData.forEach(user => {
                 dataForExcel.push([
@@ -2382,7 +2423,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     user.department,
                     user.totalWorkDays,
                     user.totalRegularHours.toFixed(2),
-                    user.totalOT.toFixed(1),
+                    user.total_OT_1_5x.toFixed(1),
+                    user.total_Holiday_1x.toFixed(2),
+                    user.total_Holiday_2x.toFixed(2),
+                    user.total_OT_3x.toFixed(1),
                     user.totalLateDays,
                     user.totalLeaveDays,
                     user.totalAbsentDays
@@ -2397,7 +2441,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 { wch: 15 }, // แผนก
                 { wch: 15 }, // วันทำงาน
                 { wch: 15 }, // ชั่วโมงปกติ
-                { wch: 10 }, // OT
+                { wch: 10 }, // OT (1.5x)
+                { wch: 12 }, // ชม.หยุด (1x)
+                { wch: 12 }, // ชม.หยุด (2x)
+                { wch: 10 }, // OT (3x)
                 { wch: 10 }, // มาสาย
                 { wch: 10 }, // ลา
                 { wch: 10 }  // ขาด
