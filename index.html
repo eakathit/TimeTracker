@@ -3754,15 +3754,16 @@ const openLeaveModal = () => {
         });
     }
     
-    // [Fix 2] ฟังก์ชันสำหรับจำกัดการลา "รายชั่วโมง" (Feature Request)
+// [Fix 2] ฟังก์ชันสำหรับจำกัดการลา "รายชั่วโมง" (Feature Request)
     const handleLeaveTypeChange = () => {
         const selectedType = leaveTypeSelect.value;
         
-        if (selectedType === 'personal') {
-            // ถ้าเป็น "ลากิจ" -> ปลดล็อค dropdown
+        // [แก้ไข] เพิ่ม 'sick' (ลาป่วย) เข้าไปในเงื่อนไข
+        if (selectedType === 'personal' || selectedType === 'sick') {
+            // ถ้าเป็น "ลากิจ" หรือ "ลาป่วย" -> ปลดล็อค dropdown
             leaveDurationType.disabled = false;
         } else {
-            // ถ้าเป็นประเภทอื่น (พักร้อน, ป่วย, คลอด)
+            // ถ้าเป็นประเภทอื่น (พักร้อน, คลอด)
             // 1. บังคับให้เป็น "เต็มวัน"
             leaveDurationType.value = 'full_day';
             // 2. ล็อค dropdown
@@ -3778,7 +3779,7 @@ const openLeaveModal = () => {
     if (leaveTypeSelect) {
         leaveTypeSelect.addEventListener('change', handleLeaveTypeChange);
     }
-    
+
     // นี่คือวิธีที่ปลอดภัยกว่า หากปุ่มถูกสร้างทีหลัง หรืออยู่ในหน้าที่ยังไม่ active
     document.body.addEventListener('click', function(event) {
         if (event.target.id === 'show-leave-form-btn') {
