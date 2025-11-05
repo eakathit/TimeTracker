@@ -1189,6 +1189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showPage('check-in-out-page');
                 document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
 
+                startWatchingPosition();
             } else {
                 alert("บัญชีของคุณยังไม่ได้รับการลงทะเบียนในระบบ");
                 auth.signOut();
