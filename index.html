@@ -1202,9 +1202,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         loadingSpinner.style.display = 'none';
     });
-
-    // --- ฟังก์ชันต่างๆ (Check-in, Check-out, Report, Admin, Profile, etc.) ---
-    // (โค้ดฟังก์ชันเหล่านี้เหมือนเดิม ไม่ต้องแก้ไข)
     
     // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
@@ -3699,7 +3696,7 @@ const openLeaveModal = () => {
         }
     };
     
-    // ฟังก์ชันปิด Modal และล้างฟอร์ม
+    // ฟังก์ชันปิด Modal และล้างฟอร์ม (แก้ไข)
     // ฟังก์ชันปิด Modal และล้างฟอร์ม (แก้ไข)
     const closeLeaveModal = () => {
         if (leaveRequestModal) {
@@ -3712,6 +3709,7 @@ const openLeaveModal = () => {
             
             // [ใหม่] รีเซ็ตค่าใหม่
             leaveDurationType.value = "full_day"; // กลับไปเป็นค่าเริ่มต้น
+            leaveDurationType.disabled = false; // [เพิ่ม] ปลดล็อค dropdown เสมอเมื่อปิด
             leaveStartTime.value = "";
             leaveEndTime.value = "";
             
@@ -3719,34 +3717,67 @@ const openLeaveModal = () => {
             leaveEndDateWrapper.classList.remove('hidden');
             leaveHourlyInputsWrapper.classList.add('hidden');
 
-            if (leaveDurationType) {
+            // [ลบส่วนที่เป็นบั๊กออกแล้ว]
+        }
+    };
+                
+    // --- [แก้ไข] ย้าย Event Listeners ของฟอร์มลาออกมาไว้ข้างนอก ---
+
+    // [Fix 1] ฟังก์ชันสำหรับสลับการแสดงผล (Full Day/Hourly)
     const handleDurationToggle = () => {
         const durationType = leaveDurationType.value;
         if (durationType === 'hourly') {
             leaveEndDateWrapper.classList.add('hidden');
             leaveHourlyInputsWrapper.classList.remove('hidden');
-            // ลบค่าวันที่สิ้นสุดออก
-            leaveEndDate.value = leaveStartDate.value; // ตั้งวันที่เริ่มต้นและสิ้นสุดเป็นวันเดียวกัน (เพื่อให้โค้ด submit ทำงานได้)
-            
+            // ตั้งวันที่สิ้นสุดให้เป็นวันเดียวกับวันที่เริ่ม
+            leaveEndDate.value = leaveStartDate.value;
         } else { // 'full_day'
             leaveEndDateWrapper.classList.remove('hidden');
             leaveHourlyInputsWrapper.classList.add('hidden');
-            // ล้างค่าเวลาเริ่มต้น/สิ้นสุดของ Hourly Leave
+            // ล้างค่าเวลา (เผื่อไว้)
             leaveStartTime.value = '';
             leaveEndTime.value = '';
         }
     };
+
+    // [Fix 1] ผูก Event Listener ของ leaveDurationType (สลับวัน/ชั่วโมง) *เพียงครั้งเดียว*
+    if (leaveDurationType) {
+        leaveDurationType.addEventListener('change', handleDurationToggle);
+    }
+
+    // [Fix 1] ผูก Event Listener ของ leaveStartDate (สำหรับโหมด Hourly) *เพียงครั้งเดียว*
+    if (leaveStartDate) {
+        leaveStartDate.addEventListener('change', () => {
+            if (leaveDurationType.value === 'hourly') {
+                leaveEndDate.value = leaveStartDate.value;
+            }
+        });
+    }
     
-    leaveDurationType.addEventListener('change', handleDurationToggle);
-    // [เพิ่ม] เมื่อเลือกวันที่เริ่มต้น ให้ตั้งค่าวันที่สิ้นสุด (ถ้าอยู่ในโหมด Hourly)
-    leaveStartDate.addEventListener('change', () => {
-        if (leaveDurationType.value === 'hourly') {
-            leaveEndDate.value = leaveStartDate.value;
-        }
-    });
-}
+    // [Fix 2] ฟังก์ชันสำหรับจำกัดการลา "รายชั่วโมง" (Feature Request)
+    const handleLeaveTypeChange = () => {
+        const selectedType = leaveTypeSelect.value;
+        
+        if (selectedType === 'personal') {
+            // ถ้าเป็น "ลากิจ" -> ปลดล็อค dropdown
+            leaveDurationType.disabled = false;
+        } else {
+            // ถ้าเป็นประเภทอื่น (พักร้อน, ป่วย, คลอด)
+            // 1. บังคับให้เป็น "เต็มวัน"
+            leaveDurationType.value = 'full_day';
+            // 2. ล็อค dropdown
+            leaveDurationType.disabled = true;
+            
+            // 3. (สำคัญ) เรียกใช้ handleDurationToggle() เพื่อซ่อนช่องรายชั่วโมง
+            //    (เผื่อว่าก่อนหน้านี้มันถูกเปิดค้างไว้)
+            handleDurationToggle();
         }
     };
+
+    // [Fix 2] ผูก Event Listener ของ leaveTypeSelect (เลือกประเภทการลา) *เพียงครั้งเดียว*
+    if (leaveTypeSelect) {
+        leaveTypeSelect.addEventListener('change', handleLeaveTypeChange);
+    }
     
     // นี่คือวิธีที่ปลอดภัยกว่า หากปุ่มถูกสร้างทีหลัง หรืออยู่ในหน้าที่ยังไม่ active
     document.body.addEventListener('click', function(event) {
