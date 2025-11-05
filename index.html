@@ -2216,6 +2216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 userId: userId,
                 fullName: user.fullName || 'N/A',
                 department: user.department || 'N/A',
+                employeeType: user.employeeType || 'N/A',
                 totalRegularHours: 0,
                 // totalOT: 0, (ลบออกแล้ว)
 
@@ -2316,7 +2317,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
-    // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
     async function loadPayrollSummary() {
         const container = document.getElementById('payroll-summary-results-container');
         const startInput = document.getElementById('payroll-start-date');
@@ -2392,6 +2392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
+    // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
     async function exportPayrollSummaryToExcel() {
         const startInput = document.getElementById('payroll-start-date');
         const endInput = document.getElementById('payroll-end-date');
@@ -2412,15 +2413,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const summaryData = await fetchPayrollData(startDate, endDate);
             
+            // [แก้ไข] 1/3: แก้ไข "หัวตาราง" (Headers)
             const dataForExcel = [
-            ["ID พนักงาน", "ชื่อ-สกุล", "แผนก", "จำนวนวันทำงาน", "ชั่วโมงทำงานปกติ", "OT (1.5x)", "ชม.หยุด (1x)", "ชม.หยุด (2x)", "OT (3x)", "จำนวนวันมาสาย", "จำนวนวันลา", "จำนวนวันขาด"]
-        ];
+                ["ชื่อ-สกุล", "แผนก", "ประเภท", "จำนวนวันทำงาน", "ชั่วโมงทำงานปกติ", "OT (1.5x)", "ชม.หยุด (1x)", "ชม.หยุด (2x)", "OT (3x)", "จำนวนวันมาสาย", "จำนวนวันลา", "จำนวนวันขาด"]
+            ];
             
+            // [แก้ไข] 2/3: แก้ไข "ข้อมูล" (Data loop)
             summaryData.forEach(user => {
+                // [เพิ่มบรรทัดนี้] แปลง 'monthly'/'daily' เป็นข้อความที่ HR เข้าใจง่าย
+                const employeeTypeText = (user.employeeType === 'monthly') ? 'พนักงาน (รายเดือน)' : (user.employeeType === 'daily' ? 'เด็กฝึกงาน (รายวัน)' : 'N/A');
+
                 dataForExcel.push([
-                    user.userId,
+                    // user.userId, // (ลบออกแล้ว)
                     user.fullName,
                     user.department,
+                    employeeTypeText, // (เพิ่มเข้ามา)
                     user.totalWorkDays,
                     user.totalRegularHours.toFixed(2),
                     user.total_OT_1_5x.toFixed(1),
@@ -2433,12 +2440,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 ]);
             });
 
+            // [แก้ไข] 3/3: แก้ไข "ความกว้างคอลัมน์"
             const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-            // (Optional) กำหนดความกว้างของคอลัมน์
             ws['!cols'] = [
-                { wch: 30 }, // ID พนักงาน
+                // { wch: 30 }, // (ลบออก - ID พนักงาน)
                 { wch: 25 }, // ชื่อ-สกุล
                 { wch: 15 }, // แผนก
+                { wch: 20 }, // (เพิ่ม - ประเภท)
                 { wch: 15 }, // วันทำงาน
                 { wch: 15 }, // ชั่วโมงปกติ
                 { wch: 10 }, // OT (1.5x)
@@ -2459,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Error exporting payroll summary:", error);
             showNotification('Export Excel ล้มเหลว: ' + error.message, 'error');
         }
-    }
+    }  
 
     // --- [โค้ดสำหรับผูกปุ่ม] ---
     // (นำ 2 บรรทัดนี้ไปวางไว้ในฟังก์ชัน initializeControls() หรือ DOMContentLoaded)
