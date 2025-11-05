@@ -1231,7 +1231,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 appContainer.style.display = 'block';
                 showPage('check-in-out-page');
-                document.querySelector('.nav-item[data-page="check-in-out-page"]').classList.add('active');
+
+                // (เพิ่มใหม่) 1. ดึงปุ่ม nav-item ทั้งหมด
+                const allNavItems = document.querySelectorAll('.nav-item');
+                // (เพิ่มใหม่) 2. ล้างคลาส active ออกจากปุ่มทั้งหมดก่อน
+                allNavItems.forEach(n => n.classList.remove('active'));
+                
+                // (แก้ไข) 3. หาปุ่ม "ลงเวลา" *ทั้งหมด* (ทั้ง sidebar และ bottom-nav)
+                const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
+                // (แก้ไข) 4. เพิ่มคลาส active ให้ปุ่ม "ลงเวลา" ทั้งหมด
+                checkInNavItems.forEach(n => n.classList.add('active'));
 
                 startWatchingPosition();
                 
@@ -3208,7 +3217,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // --- จบส่วนป้องกัน ---
             navItems.forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
+            
+            // (แก้ไข) หาปุ่มทั้งหมดที่ตรงกับ pageId นี้
+            const newActiveItems = document.querySelectorAll(`.nav-item[data-page="${pageId}"]`);
+            // (แก้ไข) เพิ่มคลาส active ให้กับทุกปุ่มที่เจอ (ทั้งใน sidebar และ bottom-nav)
+            newActiveItems.forEach(nav => nav.classList.add('active'));
+            
             showPage(pageId);
             
             // เริ่ม GPS อีกครั้ง เมื่อกลับมาหน้าลงเวลา
