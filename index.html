@@ -1130,47 +1130,130 @@ document.addEventListener('DOMContentLoaded', function() {
     // (วางโค้ดนี้ก่อน auth.onAuthStateChanged)
 
 async function initializeApp(user, userData) {
-    // --- นี่คือโค้ดทั้งหมดที่คัดลอกมาจาก if (userDoc.exists) ---
+        // --- นี่คือโค้ดทั้งหมดที่คัดลอกมาจาก if (userDoc.exists) ---
+        
+        currentUserData = userData;
+        
+        document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+        // (เพิ่มใหม่) ดึงปุ่มจาก Sidebar
+        const reportNavButtonSidebar = document.getElementById('report-or-admin-nav-sidebar');
+        const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
+        // 1. ปุ่มที่ 2 (รายงาน) - ตั้งค่าให้เป็น "รายงาน" เสมอ
+        const reportNavButton = document.getElementById('report-or-admin-nav');
+        if (reportNavButton) {
+            const navIcon = reportNavButton.querySelector('svg');
+            const navText = reportNavButton.querySelector('span');
+            const reportIconSvg = `
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            `;
+            reportNavButton.dataset.page = 'report-page';
+            navText.textContent = 'รายงาน';
+            navIcon.innerHTML = reportIconSvg;
+        }
 
-    currentUserData = userData; 
+        // (เพิ่มใหม่) อัปเดตปุ่มที่ 2 ของ Sidebar
+        if (reportNavButtonSidebar) {
+            const navIcon = reportNavButtonSidebar.querySelector('svg');
+            const navText = reportNavButtonSidebar.querySelector('span');
+            const reportIconSvg = `
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            `;
+            reportNavButtonSidebar.dataset.page = 'report-page';
+            navText.textContent = 'รายงาน';
+            navIcon.innerHTML = reportIconSvg;
+        }
 
-    document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
-    // (ส่วนโค้ดที่เช็ก role admin และอัปเดต Navbar ทั้งหมด...)
-    const reportNavButtonSidebar = document.getElementById('report-or-admin-nav-sidebar');
-    const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
-    const reportNavButton = document.getElementById('report-or-admin-nav');
-    if (reportNavButton) {
-        // ... (โค้ดอัปเดตปุ่มรายงาน) ...
+        // 2. ปุ่มที่ 3 (ปฏิทิน/Dashboard) - เปลี่ยนตาม Role
+        const thirdNavButton = document.getElementById('calendar-or-admin-nav');
+        // (โค้ดเดิมที่ดึง sidebar)
+        // const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
+
+        // ( ★★★ เพิ่มใหม่ ★★★ )
+        // ไอคอนสำหรับ Bottom Nav (w-7 h-7)
+        const dashboardIconSvg_BottomNav = `
+        <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        `;
+        const calendarIconSvg_BottomNav = `
+        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        `;
+        
+        // ไอคอนสำหรับ Sidebar (w-6 h-6)
+        const dashboardIconSvg_Sidebar = `
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        `;
+        const calendarIconSvg_Sidebar = `
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        `;
+
+        if (currentUserData && currentUserData.role === 'admin') {
+            // --- 1. ตั้งค่า Sidebar ---
+            if (thirdNavButtonSidebar) {
+                const navIcon = thirdNavButtonSidebar.querySelector('svg');
+                const navText = thirdNavButtonSidebar.querySelector('span');
+                thirdNavButtonSidebar.dataset.page = 'admin-dashboard-page';
+                navText.textContent = 'Dashboard';
+                navIcon.innerHTML = dashboardIconSvg_Sidebar;
+            }
+            // --- 2. ( ★★★ ที่แก้ไข ★★★ ) ตั้งค่า Bottom Nav Bar ---
+            if (thirdNavButton) {
+                const navIcon = thirdNavButton.querySelector('svg');
+                const navText = thirdNavButton.querySelector('span');
+                thirdNavButton.dataset.page = 'admin-dashboard-page';
+                navText.textContent = 'Dashboard';
+                navIcon.innerHTML = dashboardIconSvg_BottomNav;
+            }
+        } else {
+            // --- 1. ตั้งค่า Sidebar ---
+            if (thirdNavButtonSidebar) {
+                const navIcon = thirdNavButtonSidebar.querySelector('svg');
+                const navText = thirdNavButtonSidebar.querySelector('span');
+                thirdNavButtonSidebar.dataset.page = 'calendar-page';
+                navText.textContent = 'ปฏิทิน';
+                navIcon.innerHTML = calendarIconSvg_Sidebar;
+            }
+            // --- 2. ( ★★★ ที่แก้ไข ★★★ ) ตั้งค่า Bottom Nav Bar ---
+            if (thirdNavButton) {
+                const navIcon = thirdNavButton.querySelector('svg');
+                const navText = thirdNavButton.querySelector('span');
+                thirdNavButton.dataset.page = 'calendar-page';
+                navText.textContent = 'ปฏิทิน';
+                navIcon.innerHTML = calendarIconSvg_BottomNav;
+            }
+        }
+        // --- จบส่วนตรวจสอบ Role ---
+
+        updateProfilePage(userData);
+        await checkUserWorkStatus();
+        
+        await loadDailyLeaveNotifications();
+
+        initializeControls();
+        await populateDropdownOptions();
+
+        appContainer.style.display = 'block';
+        showPage('check-in-out-page');
+
+        const allNavItems = document.querySelectorAll('.nav-item');
+        allNavItems.forEach(n => n.classList.remove('active'));
+        const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
+        checkInNavItems.forEach(n => n.classList.add('active'));
+
+        startWatchingPosition();
+        
+        // --- จบโค้ดที่คัดลอกมา ---
     }
-    if (reportNavButtonSidebar) {
-        // ... (โค้ดอัปเดตปุ่มรายงาน Sidebar) ...
-    }
-    const thirdNavButton = document.getElementById('calendar-or-admin-nav');
-    if (thirdNavButtonSidebar) {
-        // ... (โค้ดอัปเดตปุ่มปฏิทิน/Dashboard Sidebar) ...
-    }
-    // --- จบส่วนตรวจสอบ Role ---
-
-    updateProfilePage(userData);
-    await checkUserWorkStatus();
-
-    await loadDailyLeaveNotifications();
-
-    initializeControls();
-    await populateDropdownOptions();
-
-    appContainer.style.display = 'block';
-    showPage('check-in-out-page');
-
-    const allNavItems = document.querySelectorAll('.nav-item');
-    allNavItems.forEach(n => n.classList.remove('active'));
-    const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
-    checkInNavItems.forEach(n => n.classList.add('active'));
-
-    startWatchingPosition();
-
-    // --- จบโค้ดที่คัดลอกมา ---
-}
 
     // (นี่คือ auth.onAuthStateChanged ที่แก้ไขแล้ว)
 auth.onAuthStateChanged(async (user) => {
@@ -1180,7 +1263,7 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         const userDocRef = db.collection('users').doc(user.uid);
-        const userDoc = await userDocRef.get();
+        const userDoc = await userDocRef.get({ source: 'server' });
 
         if (userDoc.exists) {
             // --- 1. กรณี User เก่า ---
@@ -2252,7 +2335,7 @@ auth.onAuthStateChanged(async (user) => {
         // 5. เริ่มการรวบรวมข้อมูลสรุป
         const payrollSummary = [];
         for (const userDoc of usersSnapshot.docs) {
-            const user = userDoc.data();
+            const userDoc = await userDocRef.get({ source: 'server' });
             const userId = userDoc.id;
             
             // [แก้ไข] 1/3: Object 'summary' ที่มี 4 ช่อง OT
