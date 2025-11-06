@@ -614,6 +614,9 @@
                         <div class="card">
                             <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                                 <h3 class="font-semibold text-lg text-gray-800 mb-4">📈 สรุปข้อมูลพนักงาน</h3>
+                                <p class="text-xs text-yellow-600 font-medium mb-4 -mt-2 px-1">
+                                    * หมายเหตุ (รอแก้ไข): รอเเก้ไขฟังก์ชัน OT ตามจริง
+                                </p>
                                 <div class="p-4 bg-white rounded-xl border border-gray-200 space-y-4"> <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label for="payroll-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
@@ -1265,7 +1268,6 @@ auth.onAuthStateChanged(async (user) => {
         const userDoc = await userDocRef.get({ source: 'server' });
 
         if (userDoc.exists) {
-            // --- 1. กรณี User เก่า ---
 
             // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
             try {
@@ -2334,8 +2336,9 @@ auth.onAuthStateChanged(async (user) => {
         // 5. เริ่มการรวบรวมข้อมูลสรุป
         const payrollSummary = [];
         for (const userDoc of usersSnapshot.docs) {
-            const userDoc = await userDocRef.get({ source: 'server' });
+            // const userDoc = await userDocRef.get({ source: 'server' });
             const userId = userDoc.id;
+            const user = userDoc.data();
             
             // [แก้ไข] 1/3: Object 'summary' ที่มี 4 ช่อง OT
             let summary = {
