@@ -1020,33 +1020,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // [แก้ไข] กลับไปใช้ setPersistence(LOCAL) เพื่อสู้กับ ITP
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-      .then(() => {
-        
-        // ต้องเรียก getRedirectResult() หลังจากตั้งค่า Persistence แล้ว
-        return auth.getRedirectResult(); 
-
-      })
-      .then((result) => {
-        if (result.user) {
-          // ถ้า Login สำเร็จ, onAuthStateChanged จะทำงานต่ออัตโนมัติ
-          console.log("เข้าสู่ระบบผ่าน Redirect สำเร็จ (ด้วย Local Persistence)");
-        }
-      })
-      .catch((error) => {
-        // จัดการ Error ที่อาจเกิดขึ้น
-        if (error.code === 'auth/persistence-unavailable') {
-          console.error("Firebase Persistence Error: Local storage is not available in this environment.");
-          alert("เบราว์เซอร์ของคุณไม่อนุญาตให้จัดเก็บข้อมูล กรุณาปิดโหมด Private Browsing");
-        } else {
-          // Error จาก Missing state จะมาที่นี่
-          console.error("LINE Redirect/Persistence Error:", error.code, error.message);
-        }
-      });
-    // [จบส่วนที่แก้ไข]
-    // [จบส่วนที่แก้ไข]
-
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
         'sick': 'ลาป่วย (Sick Leave)', 
@@ -1285,88 +1258,114 @@ async function initializeApp(user, userData) {
         
     }
 
-    // (นี่คือ auth.onAuthStateChanged ที่แก้ไขแล้ว)
-auth.onAuthStateChanged(async (user) => {
-    loginPage.style.display = 'none';
-    appContainer.style.display = 'none';
-
-    if (user) {
-        currentUser = user;
-        const userDocRef = db.collection('users').doc(user.uid);
-        const userDoc = await userDocRef.get({ source: 'server' });
-
-        if (userDoc.exists) {
-
-            // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
-            try {
-                const functions = firebase.functions();
-                const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
-                await saveLineProfileImage({ photoURL: user.photoURL });
-            } catch (error) {
-                console.error("Error calling update profile image function:", error);
+        loadingSpinner.style.display = 'flex';
+        loginPage.style.display = 'none';
+        appContainer.style.display = 'none';
+        
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+          .then(() => {
+            // [2] เรียก getRedirectResult (เพื่อประมวลผลการเด้งกลับจาก LINE)
+            return auth.getRedirectResult(); 
+          })
+          .then((result) => {
+                        
+            if (result.user) {
+              console.log("เข้าสู่ระบบผ่าน Redirect สำเร็จ (ด้วย Local Persistence)");
             }
 
-            // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
-            const updatedUserDoc = await userDocRef.get();
-            await initializeApp(user, updatedUserDoc.data()); // ★ เรียกฟังก์ชันใหม่
+            auth.onAuthStateChanged(async (user) => {
+                loginPage.style.display = 'none';
+                appContainer.style.display = 'none';
 
-        } else {
-            // --- 2. กรณี User ใหม่ (แบบไม่ Reload) ★★★ ---
-            console.log("New user detected. Creating profile and initializing...");
-            try {
-                // (สร้างโปรไฟล์ใหม่)
-                const newUserProfile = {
-                    fullName: user.displayName || user.email || 'New User',
-                    email: user.email || null,
-                    profileImageUrl: user.photoURL || null,
-                    department: 'Unassigned',
-                    role: 'user',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
+                if (user) {
+                    // --- 1. กรณี User เข้าระบบสำเร็จ ---
+                    currentUser = user;
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    const userDoc = await userDocRef.get({ source: 'server' });
 
-                await userDocRef.set(newUserProfile);
+                    if (userDoc.exists) {
+                        // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
+                        try {
+                            const functions = firebase.functions();
+                            const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
+                            await saveLineProfileImage({ photoURL: user.photoURL });
+                        } catch (error) {
+                            console.error("Error calling update profile image function:", error);
+                        }
+                        // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
+                        const updatedUserDoc = await userDocRef.get();
+                        await initializeApp(user, updatedUserDoc.data()); // ★ เรียกฟังก์ชันใหม่
+                    } else {
+                        // --- 2. กรณี User ใหม่ (แบบไม่ Reload) ★★★ ---
+                        console.log("New user detected. Creating profile and initializing...");
+                        try {
+                            // (สร้างโปรไฟล์ใหม่)
+                            const newUserProfile = {
+                                fullName: user.displayName || user.email || 'New User',
+                                email: user.email || null,
+                                profileImageUrl: user.photoURL || null,
+                                department: 'Unassigned',
+                                role: 'user',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+                            await userDocRef.set(newUserProfile);
+                            // (เรียก initializeApp ทันทีโดยไม่ต้อง Reload)
+                            await initializeApp(user, newUserProfile); // ★ เรียกฟังก์ชันใหม่
+                        } catch (error) {
+                            console.error("Error creating new user profile:", error);
+                            alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
+                            auth.signOut();
+                            loginPage.style.display = 'flex';
+                        }
+                    }
+                } else {
+                    // --- 3. กรณี Logged out ---
+                    // (เรารู้แน่ๆ ว่า log out จริง เพราะเรารอ getRedirectResult แล้ว)
+                    stopWatchingPosition();
+                    currentUser = null;
+                    loginPage.style.display = 'flex';
 
-                // (เรียก initializeApp ทันทีโดยไม่ต้อง Reload)
-                await initializeApp(user, newUserProfile); // ★ เรียกฟังก์ชันใหม่
+                    // [เพิ่มส่วนนี้] ตรวจสอบ In-App Browser
+                    function isLineInAppBrowser() {
+                        const ua = navigator.userAgent;
+                        // ตรวจจับ User Agent ของ LINE
+                        return ua.indexOf("Line/") > -1;
+                    }
+                    const warningBox = document.getElementById('unsupported-browser-warning');
+                    const loginButton = document.getElementById('line-login-btn');
+                    if (warningBox && loginButton) {
+                        if (isLineInAppBrowser()) {
+                            warningBox.classList.remove('hidden'); // แสดงคำเตือน
+                            loginButton.disabled = true;           // ปิดปุ่ม Login
+                            loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            warningBox.classList.add('hidden');    // ซ่อนคำเตือน
+                            loginButton.disabled = false;          // เปิดปุ่ม Login
+                            loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+                }
+                
+                // [4] ซ่อน Spinner *หลังจาก* ตัดสินใจแล้ว (ไม่ว่าจะ login หรือ log out)
+                loadingSpinner.style.display = 'none';
+            });
+            // ★★★ จบส่วนที่ย้ายมา ★★★
 
-            } catch (error) {
-                console.error("Error creating new user profile:", error);
-                alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
-                auth.signOut();
-                loginPage.style.display = 'flex';
-            }
-        }
-    } else {
-        // --- 3. กรณี Logged out ---
-        stopWatchingPosition();
-        currentUser = null;
-        loginPage.style.display = 'flex';
-
-        // [เพิ่มส่วนนี้] ตรวจสอบ In-App Browser
-        function isLineInAppBrowser() {
-            const ua = navigator.userAgent;
-            // ตรวจจับ User Agent ของ LINE
-            return ua.indexOf("Line/") > -1;
-        }
-
-        const warningBox = document.getElementById('unsupported-browser-warning');
-        const loginButton = document.getElementById('line-login-btn');
-
-        if (warningBox && loginButton) {
-            if (isLineInAppBrowser()) {
-                warningBox.classList.remove('hidden'); // แสดงคำเตือน
-                loginButton.disabled = true;           // ปิดปุ่ม Login
-                loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+          })
+          .catch((error) => {
+            // [5] จัดการ Error และซ่อน Spinner
+            console.error("Firebase Persistence Error:", error.code, error.message);
+            if (error.code === 'auth/persistence-unavailable') {
+              console.error("Firebase Persistence Error: Local storage is not available in this environment.");
+              alert("เบราว์เซอร์ของคุณไม่อนุญาตให้จัดเก็บข้อมูล กรุณาปิดโหมด Private Browsing");
             } else {
-                warningBox.classList.add('hidden');    // ซ่อนคำเตือน
-                loginButton.disabled = false;          // เปิดปุ่ม Login
-                loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+              console.error("LINE Redirect/Persistence Error:", error.code, error.message);
             }
-        }
-    }
-    loadingSpinner.style.display = 'none';
-});
-    
+            // Fallback: show login page
+            loadingSpinner.style.display = 'none';
+            loginPage.style.display = 'flex';
+            appContainer.style.display = 'none';
+          });
     // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
     saveReportBtn.addEventListener('click', async () => {
@@ -3269,17 +3268,37 @@ auth.onAuthStateChanged(async (user) => {
       web_login: 'true'
     });
     
-    // [แก้ไข] บังคับให้ "ทุกอุปกรณ์" (ทั้ง PC และ Mobile) ใช้วิธี Redirect
+    // [เพิ่ม] ฟังก์ชันสำหรับเช็กว่าใช่มือถือหรือไม่ (เอากลับมา)
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // [แก้ไข] เอากลับไปใช้ Logic แยก PC / Mobile
     lineLoginBtn.addEventListener('click', () => {
       
-      // เราจะใช้วิธี Redirect เท่านั้น
-      auth.signInWithRedirect(provider).catch(e => {
-        
-        // Error ที่อาจเกิดขึ้น "ก่อน" ที่จะ Redirect
-        console.error("Redirect Login Error (Pre-flight):", e);
-        alert("เกิดข้อผิดพลาดในการเริ่ม Login: " + e.message);
+      if (isMobileDevice()) {
+        // --- สำหรับมือถือ (iOS) ---
+        // ใช้วิธี Redirect (ซึ่งเรายืนยันแล้วว่าเวิร์ก)
+        auth.signInWithRedirect(provider).catch(e => {
+          console.error("Redirect Login Error (Pre-flight):", e);
+          alert("เกิดข้อผิดพลาดในการเริ่ม Login (Mobile): " + e.message);
+        });
 
-      });
+      } else {
+        // --- สำหรับ Desktop (PC) ---
+        // ใช้วิธี Popup (แก้ปัญหาเด้งกลับหน้า Login)
+        auth.signInWithPopup(provider).catch(e => {
+          
+          if (e.code === 'auth/popup-blocked') {
+            alert('Pop-up ถูกบล็อก! กรุณาอนุญาต Pop-up สำหรับเว็บนี้');
+          } else if (e.code === 'auth/cancelled-popup-request') {
+            console.log('ผู้ใช้ปิดหน้าต่าง Login');
+          } else {
+            console.error("Popup Login Error (Desktop):", e);
+          }
+
+        });
+      }
     });
 
     const emailLoginBtn = document.getElementById('login-btn');
