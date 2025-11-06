@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบลงเวลาพนักงาน</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
@@ -120,13 +121,6 @@
 </head>
 <body class="antialiased">
 
-    <div id="loading-spinner" class="min-h-screen flex items-center justify-center bg-gray-50">
-        <svg class="animate-spin h-10 w-10 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-    </div>
-
     <div id="login-page" class="hidden page min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div class="w-full max-w-sm text-center">
             <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
@@ -143,6 +137,13 @@
             </div>
             <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
         </div>
+    </div>
+
+    <div id="loading-spinner" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <svg class="animate-spin h-10 w-10 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
     </div>
 
     <div id="app-container" class="hidden md:flex pb-24 md:pb-0">
@@ -1019,6 +1020,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // [แก้ไข] กลับไปใช้ setPersistence(LOCAL) เพื่อสู้กับ ITP
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .then(() => {
+        
+        // ต้องเรียก getRedirectResult() หลังจากตั้งค่า Persistence แล้ว
+        return auth.getRedirectResult(); 
+
+      })
+      .then((result) => {
+        if (result.user) {
+          // ถ้า Login สำเร็จ, onAuthStateChanged จะทำงานต่ออัตโนมัติ
+          console.log("เข้าสู่ระบบผ่าน Redirect สำเร็จ (ด้วย Local Persistence)");
+        }
+      })
+      .catch((error) => {
+        // จัดการ Error ที่อาจเกิดขึ้น
+        if (error.code === 'auth/persistence-unavailable') {
+          console.error("Firebase Persistence Error: Local storage is not available in this environment.");
+          alert("เบราว์เซอร์ของคุณไม่อนุญาตให้จัดเก็บข้อมูล กรุณาปิดโหมด Private Browsing");
+        } else {
+          // Error จาก Missing state จะมาที่นี่
+          console.error("LINE Redirect/Persistence Error:", error.code, error.message);
+        }
+      });
+    // [จบส่วนที่แก้ไข]
+    // [จบส่วนที่แก้ไข]
+
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
         'sick': 'ลาป่วย (Sick Leave)', 
@@ -1313,6 +1341,28 @@ auth.onAuthStateChanged(async (user) => {
         stopWatchingPosition();
         currentUser = null;
         loginPage.style.display = 'flex';
+
+        // [เพิ่มส่วนนี้] ตรวจสอบ In-App Browser
+        function isLineInAppBrowser() {
+            const ua = navigator.userAgent;
+            // ตรวจจับ User Agent ของ LINE
+            return ua.indexOf("Line/") > -1;
+        }
+
+        const warningBox = document.getElementById('unsupported-browser-warning');
+        const loginButton = document.getElementById('line-login-btn');
+
+        if (warningBox && loginButton) {
+            if (isLineInAppBrowser()) {
+                warningBox.classList.remove('hidden'); // แสดงคำเตือน
+                loginButton.disabled = true;           // ปิดปุ่ม Login
+                loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                warningBox.classList.add('hidden');    // ซ่อนคำเตือน
+                loginButton.disabled = false;          // เปิดปุ่ม Login
+                loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
     }
     loadingSpinner.style.display = 'none';
 });
@@ -3213,8 +3263,25 @@ auth.onAuthStateChanged(async (user) => {
     }); 
 
     const provider = new firebase.auth.OAuthProvider('oidc.line');
-    lineLoginBtn.addEventListener('click', () => { auth.signInWithPopup(provider).catch(e => console.error("Login Error:", e)); });
+
+    // [สำคัญ] บังคับให้ LINE Login เกิดขึ้นในเบราว์เซอร์ (แก้ปัญหา iOS "Missing initial state")
+    provider.setCustomParameters({
+      web_login: 'true'
+    });
     
+    // [แก้ไข] บังคับให้ "ทุกอุปกรณ์" (ทั้ง PC และ Mobile) ใช้วิธี Redirect
+    lineLoginBtn.addEventListener('click', () => {
+      
+      // เราจะใช้วิธี Redirect เท่านั้น
+      auth.signInWithRedirect(provider).catch(e => {
+        
+        // Error ที่อาจเกิดขึ้น "ก่อน" ที่จะ Redirect
+        console.error("Redirect Login Error (Pre-flight):", e);
+        alert("เกิดข้อผิดพลาดในการเริ่ม Login: " + e.message);
+
+      });
+    });
+
     const emailLoginBtn = document.getElementById('login-btn');
     const emailInput = document.querySelector('input[placeholder="อีเมล"]');
     const passwordInput = document.querySelector('input[placeholder="รหัสผ่าน"]');
