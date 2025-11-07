@@ -1420,15 +1420,15 @@ async function initializeApp(user, userData) {
                 if (userDoc.exists) {
                     // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
                     try {
-                        const functions = firebase.functions();
-                        
-                        // [แก้ไข BUG ที่ 2] แก้ไขการเรียก Cloud Function ที่ผิด
-                        // ของเดิม: functions.https.callable (ผิด)
-                        // ที่ถูก: functions.httpsCallable (ไม่มี .https)
-                        const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
-                        
-                        await saveLineProfileImage({ photoURL: user.photoURL });
-                    } catch (error) {
+                    // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
+                    const functions = firebase.app().functions('asia-southeast1'); 
+                    
+                    // [แก้ไข BUG ที่ 2] แก้ไขการเรียก Cloud Function ที่ผิด
+                    // ...
+                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
+                    
+                    await saveLineProfileImage({ photoURL: user.photoURL });
+                } catch (error) {
                         console.error("Error calling update profile image function:", error);
                         // (นี่อาจเป็นสาเหตุที่ทำให้เด้งกลับ ถ้าคุณยังไม่อัปเกรดแผน Blaze)
                     }
@@ -2216,7 +2216,15 @@ async function initializeApp(user, userData) {
         if (profilePic) {
             const placeholderLg = 'https://placehold.co/150x150/E2E8F0/475569?text=User';
             profilePic.onerror = () => { profilePic.src = placeholderLg; };
-            profilePic.src = userData.profileImageUrl || (currentUser && currentUser.photoURL) || placeholderLg;
+            
+            // [แก้ไข] เพิ่ม ?t=... เพื่อบังคับให้เบราว์เซอร์โหลดรูปใหม่ (Cache Busting)
+            let imageUrl = userData.profileImageUrl || (currentUser && currentUser.photoURL);
+            if (imageUrl) {
+                // เพิ่ม timestamp ต่อท้าย URL
+                profilePic.src = imageUrl + '?t=' + new Date().getTime();
+            } else {
+                profilePic.src = placeholderLg;
+            }
         }
         if (profileName) {
             profileName.textContent = userData.fullName || 'ชื่อผู้ใช้';
@@ -2675,7 +2683,7 @@ async function initializeApp(user, userData) {
                             <th scope="col" class="px-4 py-3">พนักงาน</th>
                             <th scope="col" class="px-2 py-3 text-center">ทำงาน (วัน)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชั่วโมงปกติ</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT (1.5x)</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT</th>
                             <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (1x)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (2x)</th>
                             <th scope="col" class="px-2 py-3 text-center">OT (3x)</th>
@@ -3574,8 +3582,21 @@ async function initializeApp(user, userData) {
         const profileName = document.getElementById('profile-page-name');
         const profileDepartment = document.getElementById('profile-page-department');
 
-        if (profilePic) {
-            profilePic.src = currentUser.photoURL || userData.profileImageUrl || 'https://placehold.co/150x150/E2E8F0/475569?text=User';
+       if (profilePic) {
+            const placeholderLg = 'https://placehold.co/150x150/E2E8F0/475569?text=User';
+            profilePic.onerror = () => { profilePic.src = placeholderLg; };
+            
+            // [ ★★★ แก้ไข ★★★ ]
+            // เพิ่ม ?t=... เพื่อบังคับให้เบราว์เซอร์โหลดรูปใหม่ (Cache Busting)
+            // ดึง URL จาก userData หรือ currentUser
+            let imageUrl = userData.profileImageUrl || (currentUser && currentUser.photoURL);
+            
+            if (imageUrl) {
+                // เพิ่ม timestamp ต่อท้าย URL
+                profilePic.src = imageUrl + '?t=' + new Date().getTime();
+            } else {
+                profilePic.src = placeholderLg;
+            }
         }
         if (profileName) {
             profileName.textContent = userData.fullName || 'ชื่อผู้ใช้';
