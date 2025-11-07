@@ -1148,6 +1148,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileEditDeptInput = document.getElementById('profile-edit-dept-input');
     const profileEditSaveBtn = document.getElementById('profile-edit-save-btn');
 
+    // (เพิ่มตัวแปรนี้ด้านบน) กำหนดค่าความแม่นยำสูงสุดที่ยอมรับได้ (เช่น 100 เมตร)
+    const MAX_ACCEPTABLE_ACCURACY = 180;
     // --- App State ---
     let currentUser = null;
     let watchId = null;
@@ -2079,31 +2081,30 @@ async function initializeApp(user, userData) {
     }
 
     checkinBtn.addEventListener('click', async () => {
-        if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
-        if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning"); 
-
-        if (selectedWorkType === 'on_site') {
-            if (!onsiteLocationInput.value.trim()) return showNotification("กรุณาระบุสถานที่ On-site", "warning"); 
-            if (!photoFile) return showNotification("กรุณาแนบรูปภาพเพื่อยืนยัน", "warning"); 
+        // 1. [แก้ไข] ย้ายการตรวจสอบ !latestPosition ขึ้นมาเป็นอันดับแรก
+        if (!latestPosition) {
+            showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
+            return; 
         }
+
+        if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
+
+        // [ลบ] ลบ if (selectedWorkType === 'on_site') ... ออกทั้งหมด
+        // เพราะเราจะไม่อนุญาต On-site อีกต่อไป
 
         const checkinSpan = checkinBtn.querySelector('span');
         checkinBtn.disabled = true;
         if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
 
+        // (ฟังก์ชัน proceedWithCheckin นี้ไม่ต้องแก้ไข)
         const proceedWithCheckin = async (finalWorkType) => {
             try {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
                 const now = new Date(); 
-                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; // [แก้ไข]
+                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
 
                 let photoUrl = null;
-                if (finalWorkType === 'on_site' && photoFile) {
-                    if (checkinSpan) checkinSpan.textContent = "กำลังอัปโหลดรูป...";
-                    const filePath = `checkin-photos/${currentUser.uid}/${docId}.jpg`;
-                    const fileSnapshot = await storage.ref(filePath).put(photoFile);
-                    photoUrl = await fileSnapshot.ref.getDownloadURL();
-                }
+                // [ลบ] ลบ if (finalWorkType === 'on_site' && photoFile) ... ออก
 
                 const workRecord = {
                     userId: currentUser.uid,
@@ -2112,8 +2113,8 @@ async function initializeApp(user, userData) {
                         timestamp: firebase.firestore.Timestamp.fromDate(now),
                         location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
                         accuracy: latestPosition.coords.accuracy,
-                        workType: finalWorkType, 
-                        onSiteDetails: finalWorkType === 'on_site' ? onsiteLocationInput.value.trim() : null,
+                        workType: finalWorkType, // จะเป็น 'in_factory' เท่านั้น
+                        onSiteDetails: null, // [แก้ไข] เป็น null เสมอ
                         photoUrl: photoUrl
                     },
                     status: "checked_in",
@@ -2141,24 +2142,27 @@ async function initializeApp(user, userData) {
 
             } catch (error) {
                 console.error("Check-in error:", error);
-                showNotification("เกิดข้อผิดพลาด: " + error.message, 'error'); 
+                showNotification("เกิดข้อผิดพลาด: " + error.message, 'error');
             } finally {
                 checkinBtn.disabled = false;
                 if (checkinSpan) checkinSpan.textContent = "Check In";
             }
         };
 
+        // [แก้ไข] แก้ไข logic การตรวจสอบ
         try {
             const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-            let workType = selectedWorkType; 
-
-            if (workType === 'in_factory' && distance > ALLOWED_RADIUS_METERS) {
-                showNotification(`อยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.) ไม่สามารถเช็คอิน 'ในโรงงาน' ได้`, 'error');
+            
+            // (★ นี่คือตรรกะที่รัดกุมที่สุด ★)
+            if (distance <= ALLOWED_RADIUS_METERS) {
+                // 1. ถ้าอยู่ในรัศมี -> อนุญาต
+                proceedWithCheckin('in_factory');
+            } else {
+                // 2. ถ้าอยู่นอกรัศมี -> บล็อก
+                showNotification(`อยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.) ไม่สามารถเช็คอินได้`, 'error');
                 checkinBtn.disabled = false; 
                 if (checkinSpan) checkinSpan.textContent = "Check In"; 
                 return; 
-            } else {
-                proceedWithCheckin(workType);
             }
 
         } catch (error) {
@@ -2210,7 +2214,27 @@ async function initializeApp(user, userData) {
     }
 
     function updateRealtimeLocationStatus(position) {
-        latestPosition = position;
+        
+        // 1. ตรวจสอบก่อนว่าค่าที่ได้มา "แม่นยำพอ" หรือไม่
+        if (position.coords.accuracy > MAX_ACCEPTABLE_ACCURACY) {
+            
+            // 2. ถ้าค่าเพี้ยน (เช่น 1800m) ให้อัปเดต UI
+            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
+            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
+            locationText.textContent = `กำลังปรับความแม่นยำ... (${position.coords.accuracy.toFixed(0)} ม.)`;
+            
+            // 3. "ปิด" ปุ่ม Check-in ไว้ (หรือปิดค้างไว้)
+            checkinBtn.disabled = true; 
+            return; // "ข้าม" ค่าที่เพี้ยนนี้ไป
+        }
+
+        // 4. ถ้าค่าแม่นยำ (เช่น 10-40m) "จึง" บันทึกเป็นค่าล่าสุด
+        latestPosition = position; 
+        
+        // 5. "เปิด" ปุ่มให้กดได้ (เฉพาะเมื่อได้ค่าที่แม่นยำ)
+        checkinBtn.disabled = false; 
+        
+        // 6. คำนวณและอัปเดต UI (โค้ดเดิมของคุณ)
         const distance = calculateDistance(position.coords.latitude, position.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
         if (distance <= ALLOWED_RADIUS_METERS) {
             locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-green-100 text-green-700";
@@ -3471,9 +3495,17 @@ async function initializeApp(user, userData) {
             
             // เริ่ม GPS อีกครั้ง เมื่อกลับมาหน้าลงเวลา
             if (pageId === 'check-in-out-page') {
+                latestPosition = null; // [เพิ่ม] ล้างค่าเก่าทิ้ง
+                checkinBtn.disabled = true; // [เพิ่ม] ปิดปุ่มไว้ก่อน
+                
+                // [เพิ่ม] รีเซ็ตข้อความสถานะ
+                locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-gray-100 text-gray-700";
+                locationIcon.innerHTML = ``; // ล้างไอคอน
+                locationText.textContent = 'กำลังตรวจสอบตำแหน่ง...';
+
                 startWatchingPosition();
             }
-
+            
             if (pageId === 'report-page') {
                 loadAllUsersForDropdown();
                 loadPendingLeaveRequests();
