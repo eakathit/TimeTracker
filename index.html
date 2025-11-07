@@ -981,14 +981,6 @@
             <h3 class="text-xl font-bold mb-6">แก้ไขโปรไฟล์</h3>
             
             <div class="space-y-4">
-                <div class="flex flex-col items-center">
-                    <img id="profile-edit-pic-preview" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md">
-                    <input type="file" id="profile-edit-pic-input" class="hidden" accept="image/*">
-                    <button id="profile-edit-pic-btn" class="mt-2 text-sm font-medium text-sky-600 hover:text-sky-800">
-                        เปลี่ยนรูปโปรไฟล์
-                    </button>
-                </div>
-
                 <div>
                     <label class="text-sm font-medium text-gray-600">ชื่อ-สกุล (ที่แสดงผล)</label>
                     <input type="text" id="profile-edit-name-input" placeholder="กรอกชื่อ-สกุล" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
@@ -1152,14 +1144,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileEditBtn = document.getElementById('profile-edit-btn');
     const profileEditCancelBtn = document.getElementById('profile-edit-cancel-btn');
     const profileEditOverlay = document.getElementById('profile-edit-overlay');
-    const profileEditPicBtn = document.getElementById('profile-edit-pic-btn');
-    const profileEditPicInput = document.getElementById('profile-edit-pic-input');
-    const profileEditPicPreview = document.getElementById('profile-edit-pic-preview');
     const profileEditNameInput = document.getElementById('profile-edit-name-input');
     const profileEditDeptInput = document.getElementById('profile-edit-dept-input');
     const profileEditSaveBtn = document.getElementById('profile-edit-save-btn');
-
-    let newProfilePicFile = null; // ตัวแปรเก็บไฟล์รูปใหม่
 
     // --- App State ---
     let currentUser = null;
@@ -1181,20 +1168,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // (วางโค้ดนี้ก่อน auth.onAuthStateChanged)
     function openProfileEditModal() {
-        if (!currentUserData) return; // ตรวจสอบว่ามีข้อมูล User
-        
-        // 1. เติมข้อมูลเดิมลงในฟอร์ม
-        profileEditNameInput.value = currentUserData.fullName || '';
-        profileEditDeptInput.value = currentUserData.department || '';
-        profileEditPicPreview.src = currentUserData.profileImageUrl || 'https://placehold.co/150x150/E2E8F0/475569?text=User';
+    if (!currentUserData) return; // ตรวจสอบว่ามีข้อมูล User
 
-        // 2. รีเซ็ตไฟล์ที่เลือก
-        newProfilePicFile = null;
-        profileEditPicInput.value = null;
+    // 1. เติมข้อมูลเดิมลงในฟอร์ม
+    profileEditNameInput.value = currentUserData.fullName || '';
+    profileEditDeptInput.value = currentUserData.department || '';
 
-        // 3. แสดง Modal
-        if (profileEditModal) profileEditModal.classList.remove('hidden');
-    }
+    // (ลบส่วนที่เกี่ยวกับ profileEditPicPreview.src, newProfilePicFile, profileEditPicInput.value ออก)
+
+    // 2. แสดง Modal
+    if (profileEditModal) profileEditModal.classList.remove('hidden');
+}
 
     // --- [เพิ่ม] ฟังก์ชันปิด Modal ---
     function closeProfileEditModal() {
@@ -1206,74 +1190,51 @@ document.addEventListener('DOMContentLoaded', function() {
     if (profileEditCancelBtn) profileEditCancelBtn.addEventListener('click', closeProfileEditModal);
     if (profileEditOverlay) profileEditOverlay.addEventListener('click', closeProfileEditModal);
 
-    // --- [เพิ่ม] Event Listener (ปุ่มเลือกรูป) ---
-    if (profileEditPicBtn) profileEditPicBtn.addEventListener('click', () => {
-        profileEditPicInput.click(); // สั่งให้ input file ทำงาน
-    });
-
-    // --- [เพิ่ม] Event Listener (เมื่อเลือกรูปแล้ว) ---
-    if (profileEditPicInput) profileEditPicInput.addEventListener('change', (event) => {
-        newProfilePicFile = event.target.files[0];
-        if (newProfilePicFile) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                // แสดงรูปตัวอย่าง (Preview)
-                profileEditPicPreview.src = e.target.result;
-            };
-            reader.readAsDataURL(newProfilePicFile);
-        }
-    });
-
     // --- [เพิ่ม] Event Listener (ปุ่มบันทึก) ---
     if (profileEditSaveBtn) profileEditSaveBtn.addEventListener('click', async () => {
-        if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
+    if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
 
-        const newName = profileEditNameInput.value.trim();
-        const newDept = profileEditDeptInput.value.trim();
+    const newName = profileEditNameInput.value.trim();
+    const newDept = profileEditDeptInput.value.trim();
 
-        if (!newName || !newDept) {
-            return showNotification("กรุณากรอกชื่อและแผนก", "warning");
-        }
+    if (!newName || !newDept) {
+        return showNotification("กรุณากรอกชื่อและแผนก", "warning");
+    }
 
-        profileEditSaveBtn.disabled = true;
-        profileEditSaveBtn.textContent = 'กำลังบันทึก...';
+    profileEditSaveBtn.disabled = true;
+    profileEditSaveBtn.textContent = 'กำลังบันทึก...';
 
-        try {
-            let updatedData = {
-                fullName: newName,
-                department: newDept
-            };
+    try {
+        // [ ★★★ แก้ไข ★★★ ]
+        // ข้อมูลที่จะอัปเดตมีแค่ 2 อย่างนี้เท่านั้น
+        let updatedData = {
+            fullName: newName,
+            department: newDept
+        };
 
-            // 1. ถ้ามีการเลือกรูปใหม่ ให้อัปโหลดก่อน
-            if (newProfilePicFile) {
-                showNotification("กำลังอัปโหลดรูปภาพ...", "success");
-                const filePath = `profile-pictures/${currentUser.uid}/profile.jpg`;
-                const fileSnapshot = await storage.ref(filePath).put(newProfilePicFile);
-                const photoUrl = await fileSnapshot.ref.getDownloadURL();
-                updatedData.profileImageUrl = photoUrl;
-            }
+        // (ลบส่วนที่เช็ก if (newProfilePicFile) ... และการอัปโหลด Storage ออกทั้งหมด)
 
-            // 2. อัปเดตข้อมูลลง Firestore
-            const userDocRef = db.collection('users').doc(currentUser.uid);
-            await userDocRef.update(updatedData);
+        // 2. อัปเดตข้อมูล (ชื่อ/แผนก) ลง Firestore
+        const userDocRef = db.collection('users').doc(currentUser.uid);
+        await userDocRef.update(updatedData);
 
-            // 3. อัปเดตข้อมูลในตัวแปร (Local State)
-            currentUserData = { ...currentUserData, ...updatedData };
-            
-            // 4. อัปเดตหน้าเว็บ UI ทันที
-            updateProfilePage(currentUserData);
+        // 3. อัปเดตข้อมูลในตัวแปร (Local State)
+        currentUserData = { ...currentUserData, ...updatedData };
 
-            showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
-            closeProfileEditModal();
+        // 4. อัปเดตหน้าเว็บ UI ทันที
+        updateProfilePage(currentUserData); // (ฟังก์ชันนี้ยังต้องเรียกใช้)
 
-        } catch (error) {
-            console.error("Error saving profile:", error);
-            showNotification("เกิดข้อผิดพลาดในการบันทึก: " + error.message, "error");
-        } finally {
-            profileEditSaveBtn.disabled = false;
-            profileEditSaveBtn.textContent = 'บันทึก';
-        }
-    });
+        showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
+        closeProfileEditModal();
+
+    } catch (error) {
+        console.error("Error saving profile:", error);
+        showNotification("เกิดข้อผิดพลาดในการบันทึก: " + error.message, "error");
+    } finally {
+        profileEditSaveBtn.disabled = false;
+        profileEditSaveBtn.textContent = 'บันทึก';
+    }
+});
 
 async function initializeApp(user, userData) {
         // --- นี่คือโค้ดทั้งหมดที่คัดลอกมาจาก if (userDoc.exists) ---
@@ -3416,6 +3377,12 @@ async function initializeApp(user, userData) {
     }); 
 
     const provider = new firebase.auth.GoogleAuthProvider();
+    
+    // [ ★★★ แก้ไข ★★★ ]
+    // บังคับให้ Google แสดงหน้าต่างเลือกบัญชีทุกครั้ง
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
     
     // (เราไม่ต้องการ .setCustomParameters สำหรับ Google)
     
