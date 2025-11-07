@@ -127,15 +127,10 @@
             <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
             <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
             
-            <button id="line-login-btn" class="bg-green-500 hover:bg-green-600 text-white w-full py-4 text-lg font-semibold rounded-xl transition-all">
-                เข้าสู่ระบบด้วย LINE
+            <button id="google-login-btn" class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full py-4 text-lg font-semibold rounded-xl transition-all flex items-center justify-center shadow-sm">
+                <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.108-11.283-7.481l-6.571,4.819C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                เข้าสู่ระบบด้วย Google
             </button>
-            <p class="text-gray-400 text-sm my-4">หรือ</p>
-            <div class="space-y-4">
-                <input type="text" placeholder="อีเมล" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                <input type="password" placeholder="รหัสผ่าน" class="w-full p-4 text-center border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-            </div>
-            <button id="login-btn" class="btn-primary w-full mt-8 py-4 text-lg">เข้าสู่ระบบ</button>
         </div>
     </div>
 
@@ -1258,114 +1253,118 @@ async function initializeApp(user, userData) {
         
     }
 
+        // [1] แสดง Spinner ก่อน
         loadingSpinner.style.display = 'flex';
         loginPage.style.display = 'none';
         appContainer.style.display = 'none';
+
+        // [2] ★★★ (แก้ไข) ย้าย onAuthStateChanged ออกมาอยู่ข้างนอก ★★★
+        // นี่คือ "ตัวฟัง" หลักของแอป ที่จะทำงานทันที
+        auth.onAuthStateChanged(async (user) => {
+            loginPage.style.display = 'none';
+            appContainer.style.display = 'none';
+
+            if (user) {
+                // --- 1. กรณี User เข้าระบบสำเร็จ ---
+                currentUser = user;
+                const userDocRef = db.collection('users').doc(user.uid);
+                const userDoc = await userDocRef.get({ source: 'server' });
+
+                if (userDoc.exists) {
+                    // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
+                    try {
+                        const functions = firebase.functions();
+                        
+                        // [แก้ไข BUG ที่ 2] แก้ไขการเรียก Cloud Function ที่ผิด
+                        // ของเดิม: functions.https.callable (ผิด)
+                        // ที่ถูก: functions.httpsCallable (ไม่มี .https)
+                        const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
+                        
+                        await saveLineProfileImage({ photoURL: user.photoURL });
+                    } catch (error) {
+                        console.error("Error calling update profile image function:", error);
+                        // (นี่อาจเป็นสาเหตุที่ทำให้เด้งกลับ ถ้าคุณยังไม่อัปเกรดแผน Blaze)
+                    }
+                    // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
+                    const updatedUserDoc = await userDocRef.get();
+                    await initializeApp(user, updatedUserDoc.data());
+                } else {
+                    // --- 2. กรณี User ใหม่ ---
+                    console.log("New user detected. Creating profile and initializing...");
+                    try {
+                        const newUserProfile = {
+                            fullName: user.displayName || user.email || 'New User',
+                            email: user.email || null,
+                            profileImageUrl: user.photoURL || null,
+                            department: 'Unassigned',
+                            role: 'user',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        await userDocRef.set(newUserProfile);
+                        await initializeApp(user, newUserProfile);
+                    } catch (error) {
+                        console.error("Error creating new user profile:", error);
+                        alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
+                        auth.signOut();
+                        loginPage.style.display = 'flex';
+                    }
+                }
+            } else {
+                // --- 3. กรณี Logged out ---
+                stopWatchingPosition();
+                currentUser = null;
+                loginPage.style.display = 'flex';
+
+                // (ส่วนนี้ OK - โค้ดสำหรับเตือน in-app browser ของ LINE)
+                function isLineInAppBrowser() {
+                    const ua = navigator.userAgent;
+                    return ua.indexOf("Line/") > -1;
+                }
+                const warningBox = document.getElementById('unsupported-browser-warning'); 
+                const loginButton = document.getElementById('line-login-btn');
+                if (warningBox && loginButton) {
+                    if (isLineInAppBrowser()) {
+                        warningBox.classList.remove('hidden'); 
+                        loginButton.disabled = true;           
+                        loginButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        warningBox.classList.add('hidden');    
+                        loginButton.disabled = false;          
+                        loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+                // (จบส่วนเตือน)
+            }
+            
+            // [3] ซ่อน Spinner *หลังจาก* onAuthStateChanged ทำงานเสร็จ
+            loadingSpinner.style.display = 'none';
+        });
         
+        // [4] ★★★ (แก้ไข) เรียกใช้ setPersistence และ getRedirectResult "แยกต่างหาก" ★★★
+        // โค้ดส่วนนี้จะ "ประมวลผล" การ Login (ถ้ามี) และผลลัพธ์ของมันจะถูก "ดักจับ" 
+        // โดย onAuthStateChanged (ที่อยู่ข้างบน) ซึ่งกำลังรอฟังอยู่แล้ว
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
           .then(() => {
-            // [2] เรียก getRedirectResult (เพื่อประมวลผลการเด้งกลับจาก LINE)
+            // เรียก getRedirectResult เพื่อประมวลผลการเด้งกลับจาก LINE/Google
             return auth.getRedirectResult(); 
           })
           .then((result) => {
-                        
             if (result.user) {
               console.log("เข้าสู่ระบบผ่าน Redirect สำเร็จ (ด้วย Local Persistence)");
             }
-
-            auth.onAuthStateChanged(async (user) => {
-                loginPage.style.display = 'none';
-                appContainer.style.display = 'none';
-
-                if (user) {
-                    // --- 1. กรณี User เข้าระบบสำเร็จ ---
-                    currentUser = user;
-                    const userDocRef = db.collection('users').doc(user.uid);
-                    const userDoc = await userDocRef.get({ source: 'server' });
-
-                    if (userDoc.exists) {
-                        // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
-                        try {
-                            const functions = firebase.functions();
-                            const saveLineProfileImage = functions.https.callable('saveLineProfileImage');
-                            await saveLineProfileImage({ photoURL: user.photoURL });
-                        } catch (error) {
-                            console.error("Error calling update profile image function:", error);
-                        }
-                        // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
-                        const updatedUserDoc = await userDocRef.get();
-                        await initializeApp(user, updatedUserDoc.data()); // ★ เรียกฟังก์ชันใหม่
-                    } else {
-                        // --- 2. กรณี User ใหม่ (แบบไม่ Reload) ★★★ ---
-                        console.log("New user detected. Creating profile and initializing...");
-                        try {
-                            // (สร้างโปรไฟล์ใหม่)
-                            const newUserProfile = {
-                                fullName: user.displayName || user.email || 'New User',
-                                email: user.email || null,
-                                profileImageUrl: user.photoURL || null,
-                                department: 'Unassigned',
-                                role: 'user',
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                            };
-                            await userDocRef.set(newUserProfile);
-                            // (เรียก initializeApp ทันทีโดยไม่ต้อง Reload)
-                            await initializeApp(user, newUserProfile); // ★ เรียกฟังก์ชันใหม่
-                        } catch (error) {
-                            console.error("Error creating new user profile:", error);
-                            alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
-                            auth.signOut();
-                            loginPage.style.display = 'flex';
-                        }
-                    }
-                } else {
-                    // --- 3. กรณี Logged out ---
-                    // (เรารู้แน่ๆ ว่า log out จริง เพราะเรารอ getRedirectResult แล้ว)
-                    stopWatchingPosition();
-                    currentUser = null;
-                    loginPage.style.display = 'flex';
-
-                    // [เพิ่มส่วนนี้] ตรวจสอบ In-App Browser
-                    function isLineInAppBrowser() {
-                        const ua = navigator.userAgent;
-                        // ตรวจจับ User Agent ของ LINE
-                        return ua.indexOf("Line/") > -1;
-                    }
-                    const warningBox = document.getElementById('unsupported-browser-warning');
-                    const loginButton = document.getElementById('line-login-btn');
-                    if (warningBox && loginButton) {
-                        if (isLineInAppBrowser()) {
-                            warningBox.classList.remove('hidden'); // แสดงคำเตือน
-                            loginButton.disabled = true;           // ปิดปุ่ม Login
-                            loginButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        } else {
-                            warningBox.classList.add('hidden');    // ซ่อนคำเตือน
-                            loginButton.disabled = false;          // เปิดปุ่ม Login
-                            loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                        }
-                    }
-                }
-                
-                // [4] ซ่อน Spinner *หลังจาก* ตัดสินใจแล้ว (ไม่ว่าจะ login หรือ log out)
-                loadingSpinner.style.display = 'none';
-            });
-            // ★★★ จบส่วนที่ย้ายมา ★★★
-
+            // ไม่ต้องทำอะไรต่อ ... onAuthStateChanged (ข้างบน) จะจัดการเอง
           })
           .catch((error) => {
-            // [5] จัดการ Error และซ่อน Spinner
             console.error("Firebase Persistence Error:", error.code, error.message);
             if (error.code === 'auth/persistence-unavailable') {
-              console.error("Firebase Persistence Error: Local storage is not available in this environment.");
               alert("เบราว์เซอร์ของคุณไม่อนุญาตให้จัดเก็บข้อมูล กรุณาปิดโหมด Private Browsing");
             } else {
-              console.error("LINE Redirect/Persistence Error:", error.code, error.message);
+              console.error("LINE/Google Redirect Error:", error.code, error.message);
             }
-            // Fallback: show login page
-            loadingSpinner.style.display = 'none';
-            loginPage.style.display = 'flex';
-            appContainer.style.display = 'none';
+            // ถ้า Error, onAuthStateChanged (ข้างบน) ก็จะยังคงทำงาน
+            // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
           });
+
     // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
     saveReportBtn.addEventListener('click', async () => {
@@ -3261,72 +3260,49 @@ async function initializeApp(user, userData) {
         }
     }); 
 
-    const provider = new firebase.auth.OAuthProvider('oidc.line');
-
-    // [สำคัญ] บังคับให้ LINE Login เกิดขึ้นในเบราว์เซอร์ (แก้ปัญหา iOS "Missing initial state")
-    provider.setCustomParameters({
-      web_login: 'true'
-    });
+    const provider = new firebase.auth.GoogleAuthProvider();
     
-    // [เพิ่ม] ฟังก์ชันสำหรับเช็กว่าใช่มือถือหรือไม่ (เอากลับมา)
+    // (เราไม่ต้องการ .setCustomParameters สำหรับ Google)
+    
+    // [คงไว้] 2. ฟังก์ชันตรวจสอบมือถือ (ยังจำเป็น)
     function isMobileDevice() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // [แก้ไข] เอากลับไปใช้ Logic แยก PC / Mobile
-    lineLoginBtn.addEventListener('click', () => {
-      
-      if (isMobileDevice()) {
-        // --- สำหรับมือถือ (iOS) ---
-        // ใช้วิธี Redirect (ซึ่งเรายืนยันแล้วว่าเวิร์ก)
-        auth.signInWithRedirect(provider).catch(e => {
-          console.error("Redirect Login Error (Pre-flight):", e);
-          alert("เกิดข้อผิดพลาดในการเริ่ม Login (Mobile): " + e.message);
-        });
+    // [แก้ไข] 3. ผูก Event กับปุ่ม Google ใหม่
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    
+    if (googleLoginBtn) { // (เพิ่ม if-check เพื่อความปลอดภัย)
+      googleLoginBtn.addEventListener('click', () => {
+        
+        if (isMobileDevice()) {
+          // --- สำหรับมือถือ (iOS/Android) ---
+          // ใช้วิธี Redirect (Google รับมือกับ iOS ได้ดี)
+          auth.signInWithRedirect(provider).catch(e => {
+            console.error("Redirect Login Error (Mobile):", e);
+            alert("เกิดข้อผิดพลาดในการเริ่ม Login (Mobile): " + e.message);
+          });
 
-      } else {
-        // --- สำหรับ Desktop (PC) ---
-        // ใช้วิธี Popup (แก้ปัญหาเด้งกลับหน้า Login)
-        auth.signInWithPopup(provider).catch(e => {
-          
-          if (e.code === 'auth/popup-blocked') {
-            alert('Pop-up ถูกบล็อก! กรุณาอนุญาต Pop-up สำหรับเว็บนี้');
-          } else if (e.code === 'auth/cancelled-popup-request') {
-            console.log('ผู้ใช้ปิดหน้าต่าง Login');
-          } else {
-            console.error("Popup Login Error (Desktop):", e);
-          }
+        } else {
+          // --- สำหรับ Desktop (PC) ---
+          // ใช้วิธี Popup (ทำงานได้ดีบน PC)
+          auth.signInWithPopup(provider).catch(e => {
+            
+            if (e.code === 'auth/popup-blocked') {
+              alert('Pop-up ถูกบล็อก! กรุณาอนุญาต Pop-up สำหรับเว็บนี้');
+            } else if (e.code === 'auth/cancelled-popup-request') {
+              console.log('ผู้ใช้ปิดหน้าต่าง Login');
+            } else {
+              console.error("Popup Login Error (Desktop):", e);
+            }
 
-        });
-      }
-    });
-
-    const emailLoginBtn = document.getElementById('login-btn');
-    const emailInput = document.querySelector('input[placeholder="อีเมล"]');
-    const passwordInput = document.querySelector('input[placeholder="รหัสผ่าน"]');
-
-    emailLoginBtn.addEventListener('click', () => {
-      const email = emailInput.value; 
-      const password = passwordInput.value;
-
-      if (!email || !password) {
-        return alert('กรุณากรอกอีเมล (ในช่องรหัสพนักงาน) และรหัสผ่าน');
-      }
-
-      emailLoginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
-      emailLoginBtn.disabled = true;
-
-      auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          // สำเร็จ
-        })
-        .catch((error) => {
-          console.error("Email login error:", error);
-          alert('เข้าระบบล้มเหลว: ' + error.message);
-          emailLoginBtn.textContent = 'เข้าสู่ระบบ';
-          emailLoginBtn.disabled = false;
-        });
-    });
+          });
+        }
+      });
+    }
+    
+    // [ลบ] 4. ลบ Event Listener ของ Email/Password เดิมออกแล้ว
+    // (เราได้ลบโค้ดส่วนนั้นออกไปแล้วในขั้นตอนการ "ลบโค้ดเดิม")
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3;
