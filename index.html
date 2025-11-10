@@ -1433,7 +1433,11 @@ async function initializeApp(user, userData) {
                 const userDoc = await userDocRef.get({ source: 'server' });
 
                 if (userDoc.exists) {
-                    // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
+                    
+                    // [!!!] ดึงข้อมูลดิบของ User เดิมมาเก็บไว้ก่อน
+                    let userData = userDoc.data();
+
+                    // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Google)
                     try {
                     // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
                     const functions = firebase.app().functions('asia-southeast1'); 
@@ -1442,14 +1446,24 @@ async function initializeApp(user, userData) {
                     // ...
                     const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
                     
-                    await saveLineProfileImage({ photoURL: user.photoURL });
+                    // [!!!] รับผลลัพธ์ (result) กลับมาจาก Function
+                    const result = await saveLineProfileImage({ photoURL: user.photoURL });
+                    
+                    // [!!!] อัปเดต userData ในเครื่องด้วย URL ใหม่จาก Server
+                    if (result && result.data && result.data.url) {
+                        userData.profileImageUrl = result.data.url;
+                    }
+
                 } catch (error) {
                         console.error("Error calling update profile image function:", error);
                         // (นี่อาจเป็นสาเหตุที่ทำให้เด้งกลับ ถ้าคุณยังไม่อัปเกรดแผน Blaze)
                     }
-                    // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
-                    const updatedUserDoc = await userDocRef.get();
-                    await initializeApp(user, updatedUserDoc.data());
+                    
+                    // [!!!] ลบ .get() ที่เป็นปัญหาทิ้ง
+                    // const updatedUserDoc = await userDocRef.get(); 
+                    
+                    // [!!!] ส่ง userData ที่อัปเดตแล้วไปแสดงผลเลย
+                    await initializeApp(user, userData);
                 } else {
                     // --- 2. กรณี User ใหม่ ---
                     console.log("New user detected. Creating profile and initializing...");
@@ -3527,29 +3541,14 @@ async function initializeApp(user, userData) {
     if (googleLoginBtn) { // (เพิ่ม if-check เพื่อความปลอดภัย)
       googleLoginBtn.addEventListener('click', () => {
         
-        if (isMobileDevice()) {
-          // --- สำหรับมือถือ (iOS/Android) ---
-          // ใช้วิธี Redirect (Google รับมือกับ iOS ได้ดี)
-          auth.signInWithRedirect(provider).catch(e => {
-            console.error("Redirect Login Error (Mobile):", e);
-            alert("เกิดข้อผิดพลาดในการเริ่ม Login (Mobile): " + e.message);
-          });
+        // [!!!] ลบ if (isMobileDevice()) ... else ... ทิ้ง
+        // เปลี่ยนมาใช้ signInWithRedirect เพียงอย่างเดียว
+        // เพื่อแก้ปัญหา Cross-Origin-Policy
+        auth.signInWithRedirect(provider).catch(e => {
+            console.error("Redirect Login Error:", e);
+            alert("เกิดข้อผิดพลาดในการเริ่ม Login: " + e.message);
+        });
 
-        } else {
-          // --- สำหรับ Desktop (PC) ---
-          // ใช้วิธี Popup (ทำงานได้ดีบน PC)
-          auth.signInWithPopup(provider).catch(e => {
-            
-            if (e.code === 'auth/popup-blocked') {
-              alert('Pop-up ถูกบล็อก! กรุณาอนุญาต Pop-up สำหรับเว็บนี้');
-            } else if (e.code === 'auth/cancelled-popup-request') {
-              console.log('ผู้ใช้ปิดหน้าต่าง Login');
-            } else {
-              console.error("Popup Login Error (Desktop):", e);
-            }
-
-          });
-        }
       });
     }
     
