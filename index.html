@@ -2191,7 +2191,6 @@ async function initializeApp(user, userData) {
             }
         }
 
-        // (ลบฟังก์ชัน proceedWithCheckin ที่เคยซ้อนอยู่ข้างในออกไป)
     });
 
     // [ ★ แก้ไข ★ ] แก้ไขฟังก์ชันบันทึกข้อมูล (อัปโหลดรูปและบันทึก On-site)
@@ -2238,9 +2237,9 @@ async function initializeApp(user, userData) {
             // [ ★ แก้ไข ★ ] อัปเดต workRecord ให้บันทึกข้อมูล On-site
             const workRecord = {
                 userId: currentUser.uid,
-                date: firebase.firestore.Timestamp.fromDate(now),
+                date: firebase.firestore.FieldValue.serverTimestamp(), // [!!!] แก้ไข
                 checkIn: {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // [!!!] แก้ไข
                     location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
                     accuracy: latestPosition.coords.accuracy,
                     workType: finalWorkType, // 'in_factory' หรือ 'on_site'
@@ -3404,8 +3403,6 @@ async function initializeApp(user, userData) {
 
             try {
                 const now = new Date();
-                // now.setHours(18, 0, 0, 0);
-
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
 
@@ -3415,17 +3412,16 @@ async function initializeApp(user, userData) {
                 }
                 const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
 
-                const { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, now);
-
                 const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
                 };
 
+                // [!!!] นี่คือเวอร์ชันที่แก้ไขแล้ว
+                // เราไม่บันทึก 'overtime' จากตรงนี้ (Server จะคำนวณเอง)
                 await workRecordRef.update({
                     checkOut: checkOutData,
-                    status: "completed", 
-                    overtime: { hours: overtimeHours } 
+                    status: "completed"
                 });
 
                 showNotification("บันทึกเวลาออกงานสำเร็จ!");
@@ -3434,13 +3430,15 @@ async function initializeApp(user, userData) {
                 summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-                if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-                }
+
+                // [!!!] นี่คือเวอร์ชันที่แก้ไขแล้ว
+                // (คำนวณชั่วโมง "คร่าวๆ" เพื่อแสดงบน UI)
+                const totalWorkHours = (now - checkinTime) / 3600000; 
+                summaryWorkHours.textContent = `${totalWorkHours.toFixed(2)} ชั่วโมง`;
 
             } catch (error) {
                 console.error("Check-out error:", error);
+                // [!!!] แก้ไข Error message ให้ตรง
                 showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
                 checkoutBtn.disabled = false;
                 if (checkoutSpan) checkoutSpan.textContent = "Check Out";
@@ -3453,9 +3451,7 @@ async function initializeApp(user, userData) {
 
             try {
                 const now = new Date();
-                // now.setHours(18, 0, 0, 0); 
-
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
+                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
 
                 const workRecordDoc = await workRecordRef.get();
@@ -3464,18 +3460,17 @@ async function initializeApp(user, userData) {
                 }
                 const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
 
-                const { regularWorkHours } = calculateWorkHours(checkinTime, now); 
-                const overtimeHours = 0; 
-
                 const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
                 };
 
+                // [!!!] นี่คือเวอร์ชันที่แก้ไขแล้ว
+                // เรา "จงใจ" บันทึก 0 เพื่อบอก Server ว่าไม่คิด OT
                 await workRecordRef.update({
                     checkOut: checkOutData,
                     status: "completed",
-                    overtime: { hours: overtimeHours } 
+                    overtime: { hours: 0 } 
                 });
 
                 showNotification("บันทึกเวลาออกงานสำเร็จ (ไม่คิด OT)"); 
@@ -3484,7 +3479,10 @@ async function initializeApp(user, userData) {
                 summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+
+                // [!!!] นี่คือเวอร์ชันที่แก้ไขแล้ว
+                const totalWorkHours = (now - checkinTime) / 3600000;
+                summaryWorkHours.textContent = `${totalWorkHours.toFixed(2)} ชั่วโมง`;
 
             } catch (error) {
                 console.error("Check-out without OT error:", error);
