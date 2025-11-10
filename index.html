@@ -1026,6 +1026,58 @@
     }
     
     </script>
+    <script>
+        /**
+         * ฟังก์ชันสำหรับบีบอัดรูปภาพที่ฝั่ง Client
+         * @param {File} file - ไฟล์รูปภาพต้นฉบับ
+         * @param {number} maxWidth - ความกว้างสูงสุด
+         * @param {number} maxHeight - ความสูงสูงสุด
+         * @param {number} quality - คุณภาพ (0.0 - 1.0)
+         * @returns {Promise<Blob>} - Blob ของรูปภาพที่ถูกบีบอัดแล้ว
+         */
+        function resizeImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                reject(new Error('Canvas to Blob conversion failed.'));
+                                return;
+                            }
+                            resolve(blob);
+                        }, file.type, quality);
+                    };
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -2080,98 +2132,154 @@ async function initializeApp(user, userData) {
         });
     }
 
+    // [ ★ แก้ไข ★ ] แก้ไข Logic การกดปุ่ม Check-in 
     checkinBtn.addEventListener('click', async () => {
-        // 1. [แก้ไข] ย้ายการตรวจสอบ !latestPosition ขึ้นมาเป็นอันดับแรก
+        // 1. ตรวจสอบ GPS และ User (เหมือนเดิม)
         if (!latestPosition) {
             showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
             return; 
         }
-
         if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error"); 
-
-        // [ลบ] ลบ if (selectedWorkType === 'on_site') ... ออกทั้งหมด
-        // เพราะเราจะไม่อนุญาต On-site อีกต่อไป
 
         const checkinSpan = checkinBtn.querySelector('span');
         checkinBtn.disabled = true;
-        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
+        if (checkinSpan) checkinSpan.textContent = "ตรวจสอบข้อมูล...";
 
-        // (ฟังก์ชัน proceedWithCheckin นี้ไม่ต้องแก้ไข)
-        const proceedWithCheckin = async (finalWorkType) => {
+        // 2. [ ★ แก้ไข ★ ] แยก Logic ระหว่าง On-site และ In-Factory
+        if (selectedWorkType === 'on_site') {
+            // --- 2A. กรณี On-site ---
+            const locationName = onsiteLocationInput.value.trim();
+            
+            // บังคับกรอกสถานที่
+            if (!locationName) {
+                showNotification("กรุณาระบุชื่อลูกค้า หรือสถานที่ On-site", "warning");
+                checkinBtn.disabled = false;
+                if (checkinSpan) checkinSpan.textContent = "Check In";
+                return;
+            }
+            // บังคับแนบรูป
+            if (!photoFile) {
+                showNotification("กรุณาแนบรูปภาพเพื่อยืนยัน On-site", "warning");
+                checkinBtn.disabled = false;
+                if (checkinSpan) checkinSpan.textContent = "Check In";
+                return;
+            }
+            
+            // ถ้าข้อมูลครบ ให้ Check-in ได้เลย
+            proceedWithCheckin('on_site');
+
+        } else {
+            // --- 2B. กรณี In-Factory (ในโรงงาน) ---
             try {
-                if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-                const now = new Date(); 
-                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
-
-                let photoUrl = null;
-                // [ลบ] ลบ if (finalWorkType === 'on_site' && photoFile) ... ออก
-
-                const workRecord = {
-                    userId: currentUser.uid,
-                    date: firebase.firestore.Timestamp.fromDate(now),
-                    checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(now),
-                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-                        accuracy: latestPosition.coords.accuracy,
-                        workType: finalWorkType, // จะเป็น 'in_factory' เท่านั้น
-                        onSiteDetails: null, // [แก้ไข] เป็น null เสมอ
-                        photoUrl: photoUrl
-                    },
-                    status: "checked_in",
-                    report: null,
-                    checkOut: null,
-                    overtime: null
-                };
-
-                await db.collection('work_records').doc(docId).set(workRecord);
-                showNotification("บันทึกเวลาเข้างานสำเร็จ!"); 
-                updateUIToCheckedIn();
-
-                const savedRecord = await db.collection('work_records').doc(docId).get();
-                if (savedRecord.exists) {
-                    const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
-                    summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
-                    summaryCheckinTime.classList.remove('text-gray-400');
-                    summaryCheckinTime.classList.add('text-green-600');
-                    summaryCheckoutTime.textContent = '-';
-                    summaryCheckoutTime.classList.add('text-gray-400');
-                    summaryCheckoutTime.classList.remove('text-red-500');
-                    summaryWorkHours.textContent = '-';
-                    summaryWorkHours.classList.add('text-gray-400');
+                const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+                
+                if (distance <= ALLOWED_RADIUS_METERS) {
+                    // อยู่ในรัศมี -> อนุญาต
+                    proceedWithCheckin('in_factory');
+                } else {
+                    // อยู่นอกรัศมี -> บล็อก
+                    showNotification(`อยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.) ไม่สามารถเช็คอินได้`, 'error');
+                    checkinBtn.disabled = false; 
+                    if (checkinSpan) checkinSpan.textContent = "Check In"; 
+                    return; 
                 }
-
             } catch (error) {
-                console.error("Check-in error:", error);
-                showNotification("เกิดข้อผิดพลาด: " + error.message, 'error');
-            } finally {
+                console.error("In-Factory Check-in error:", error);
+                showNotification("เกิดข้อพลาดพลาดในการตรวจสอบพื้นที่: " + error.message, 'error');
                 checkinBtn.disabled = false;
                 if (checkinSpan) checkinSpan.textContent = "Check In";
             }
-        };
+        }
 
-        // [แก้ไข] แก้ไข logic การตรวจสอบ
+        // (ลบฟังก์ชัน proceedWithCheckin ที่เคยซ้อนอยู่ข้างในออกไป)
+    });
+
+    // [ ★ แก้ไข ★ ] แก้ไขฟังก์ชันบันทึกข้อมูล (อัปโหลดรูปและบันทึก On-site)
+    const proceedWithCheckin = async (finalWorkType) => {
+        const checkinSpan = checkinBtn.querySelector('span'); // (ดึง checkinSpan มาใช้ที่นี่)
+
         try {
-            const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-            
-            // (★ นี่คือตรรกะที่รัดกุมที่สุด ★)
-            if (distance <= ALLOWED_RADIUS_METERS) {
-                // 1. ถ้าอยู่ในรัศมี -> อนุญาต
-                proceedWithCheckin('in_factory');
-            } else {
-                // 2. ถ้าอยู่นอกรัศมี -> บล็อก
-                showNotification(`อยู่นอกพื้นที่โรงงาน (${distance.toFixed(0)} ม.) ไม่สามารถเช็คอินได้`, 'error');
-                checkinBtn.disabled = false; 
-                if (checkinSpan) checkinSpan.textContent = "Check In"; 
-                return; 
+            if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
+            const now = new Date(); 
+            const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
+
+            let photoUrl = null;
+
+            // [ ★ แก้ไข ★ ] คืนชีพ Logic การอัปโหลดรูป
+            if (finalWorkType === 'on_site' && photoFile) {
+                try {
+                    if (checkinSpan) checkinSpan.textContent = "กำลังบีบอัดรูป...";
+                    
+                    // 1. บีบอัดรูป (เรียกใช้ฟังก์ชันใหม่)
+                    // (บีบอัดเหลือ 800x800px คุณภาพ 70%)
+                    const resizedBlob = await resizeImage(photoFile, 800, 800, 0.7);
+
+                    if (checkinSpan) checkinSpan.textContent = "กำลังอัปโหลดรูป...";
+
+                    // 2. อัปโหลดไปยัง Path ที่เราตั้งค่า Lifecycle ไว้
+                    const storagePath = `onsite_photos/${currentUser.uid}/${toLocalDateKey(now)}.jpg`;
+                    const snapshot = await storage.ref(storagePath).put(resizedBlob);
+                    
+                    // 3. เอา URL ของรูปที่อัปโหลดสำเร็จ
+                    photoUrl = await snapshot.ref.getDownloadURL();
+
+                } catch (uploadError) {
+                    console.error("Photo upload error:", uploadError);
+                    showNotification("เกิดข้อผิดพลาดในการอัปโหลดรูป: " + uploadError.message, 'error');
+                    // (สำคัญ) ถ้าอัปโหลดรูปไม่ผ่าน ต้องหยุดการ Check-in
+                    checkinBtn.disabled = false;
+                    if (checkinSpan) checkinSpan.textContent = "Check In";
+                    return; 
+                }
+            }
+
+            if (checkinSpan) checkinSpan.textContent = "บันทึกข้อมูล...";
+
+            // [ ★ แก้ไข ★ ] อัปเดต workRecord ให้บันทึกข้อมูล On-site
+            const workRecord = {
+                userId: currentUser.uid,
+                date: firebase.firestore.Timestamp.fromDate(now),
+                checkIn: {
+                    timestamp: firebase.firestore.Timestamp.fromDate(now),
+                    location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+                    accuracy: latestPosition.coords.accuracy,
+                    workType: finalWorkType, // 'in_factory' หรือ 'on_site'
+                    onSiteDetails: finalWorkType === 'on_site' ? onsiteLocationInput.value.trim() : null, // บันทึกสถานที่
+                    photoUrl: photoUrl // บันทึก URL รูป
+                },
+                status: "checked_in",
+                report: null,
+                checkOut: null,
+                overtime: null
+            };
+
+            // (ส่วนที่เหลือเหมือนเดิม)
+            await db.collection('work_records').doc(docId).set(workRecord);
+            showNotification("บันทึกเวลาเข้างานสำเร็จ!"); 
+            updateUIToCheckedIn();
+
+            const savedRecord = await db.collection('work_records').doc(docId).get();
+            if (savedRecord.exists) {
+                const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
+                summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
+                summaryCheckinTime.classList.remove('text-gray-400');
+                summaryCheckinTime.classList.add('text-green-600');
+                summaryCheckoutTime.textContent = '-';
+                summaryCheckoutTime.classList.add('text-gray-400');
+                summaryCheckoutTime.classList.remove('text-red-500');
+                summaryWorkHours.textContent = '-';
+                summaryWorkHours.classList.add('text-gray-400');
             }
 
         } catch (error) {
-            console.error("Initial Check-in error:", error);
-            showNotification("เกิดข้อผิดพลาดก่อนตรวจสอบพื้นที่: " + error.message, 'error');
+            console.error("Check-in error:", error);
+            showNotification("เกิดข้อผิดพลาด: " + error.message, 'error');
+        } finally {
+            // (ย้ายการคืนค่าปุ่มมาไว้ในนี้)
             checkinBtn.disabled = false;
             if (checkinSpan) checkinSpan.textContent = "Check In";
         }
-    });
+    };
 
     function updateProfilePage(userData) {
         const profilePic = document.getElementById('profile-page-pic');
