@@ -7,3 +7,4 @@ const firebaseConfig = {
     appId: "1:470557940763:web:6de43b02b5ba42fe46acbe",
     measurementId: "G-C83H28RLSY"
 };
+

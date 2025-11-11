@@ -1097,6 +1097,17 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+// [!!!] ประกาศตัวแปร functions ที่นี่ โดยไม่มี argument ใดๆ
+    const functions = firebase.functions(); 
+    
+    // [1] ตั้งค่า Emulator (ถ้าอยู่บน localhost)
+    if (location.hostname === "localhost") {
+        auth.useEmulator("http://localhost:9099");
+        functions.useEmulator("localhost", 5001); 
+        db.useEmulator("localhost", 8081);
+
+        console.log("🔥 Firebase Emulators Activated (Local Testing Mode)");
+    }
 
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
@@ -1394,7 +1405,7 @@ async function initializeApp(user, userData) {
             }
         }
         // --- จบส่วนตรวจสอบ Role ---
-
+        
         updateProfilePage(userData);
         await checkUserWorkStatus();
         
@@ -1442,9 +1453,8 @@ async function initializeApp(user, userData) {
                     // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
                     const functions = firebase.app().functions('asia-southeast1'); 
                     
-                    // [แก้ไข BUG ที่ 2] แก้ไขการเรียก Cloud Function ที่ผิด
-                    // ...
-                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
+                    // ใช้ callableFunctions ที่ถูกตั้งค่า Emulator แล้ว
+                    const saveLineProfileImage = callableFunctions.httpsCallable('saveLineProfileImage'); 
                     
                     // [!!!] รับผลลัพธ์ (result) กลับมาจาก Function
                     const result = await saveLineProfileImage({ photoURL: user.photoURL });
