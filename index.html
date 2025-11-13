@@ -26,7 +26,7 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 
     <style>
-        /* CSS ของคุณ (ไม่ต้องแก้ไข) */
+        /* CSS ของคุณ (ไม่ต้องแก้ไข) */ 
         :root {
             --bg-color: #F9FAFB;
             --card-bg: #FFFFFF;
@@ -1027,14 +1027,8 @@
     
     </script>
     <script>
-        /**
-         * ฟังก์ชันสำหรับบีบอัดรูปภาพที่ฝั่ง Client
-         * @param {File} file - ไฟล์รูปภาพต้นฉบับ
-         * @param {number} maxWidth - ความกว้างสูงสุด
-         * @param {number} maxHeight - ความสูงสูงสุด
-         * @param {number} quality - คุณภาพ (0.0 - 1.0)
-         * @returns {Promise<Blob>} - Blob ของรูปภาพที่ถูกบีบอัดแล้ว
-         */
+ 
+
         function resizeImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1097,17 +1091,6 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-// [!!!] ประกาศตัวแปร functions ที่นี่ โดยไม่มี argument ใดๆ
-    const functions = firebase.functions(); 
-    
-    // [1] ตั้งค่า Emulator (ถ้าอยู่บน localhost)
-    if (location.hostname === "localhost") {
-        auth.useEmulator("http://localhost:9099");
-        functions.useEmulator("localhost", 5001); 
-        db.useEmulator("localhost", 8081);
-
-        console.log("🔥 Firebase Emulators Activated (Local Testing Mode)");
-    }
 
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
@@ -1405,7 +1388,7 @@ async function initializeApp(user, userData) {
             }
         }
         // --- จบส่วนตรวจสอบ Role ---
-        
+
         updateProfilePage(userData);
         await checkUserWorkStatus();
         
@@ -1453,8 +1436,8 @@ async function initializeApp(user, userData) {
                     // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
                     const functions = firebase.app().functions('asia-southeast1'); 
                     
-                    // ใช้ callableFunctions ที่ถูกตั้งค่า Emulator แล้ว
-                    const saveLineProfileImage = callableFunctions.httpsCallable('saveLineProfileImage'); 
+                    // [!!!] แก้ไขบรรทัดนี้
+                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage');
                     
                     // [!!!] รับผลลัพธ์ (result) กลับมาจาก Function
                     const result = await saveLineProfileImage({ photoURL: user.photoURL });
@@ -3551,9 +3534,8 @@ async function initializeApp(user, userData) {
     if (googleLoginBtn) { // (เพิ่ม if-check เพื่อความปลอดภัย)
       googleLoginBtn.addEventListener('click', () => {
         
-        // [!!!] ลบ if (isMobileDevice()) ... else ... ทิ้ง
-        // เปลี่ยนมาใช้ signInWithRedirect เพียงอย่างเดียว
-        // เพื่อแก้ปัญหา Cross-Origin-Policy
+        // [!!!] ตรวจสอบให้แน่ใจว่าคุณใช้ .signInWithRedirect
+        // ไม่ใช่ .signInWithPopup
         auth.signInWithRedirect(provider).catch(e => {
             console.error("Redirect Login Error:", e);
             alert("เกิดข้อผิดพลาดในการเริ่ม Login: " + e.message);
