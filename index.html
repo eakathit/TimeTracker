@@ -1028,7 +1028,6 @@
     </script>
     <script>
  
-
         function resizeImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1075,22 +1074,31 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful!');
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        });
-    }
+    // if ('serviceWorker' in navigator) {
+    //     window.addEventListener('load', () => {
+    //         navigator.serviceWorker.register('/sw.js')
+    //             .then(registration => {
+    //                 console.log('ServiceWorker registration successful!');
+    //             })
+    //             .catch(err => {
+    //                 console.log('ServiceWorker registration failed: ', err);
+    //             });
+    //     });
+    // }
     
     // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    const functions = firebase.app().functions('asia-southeast1');
+
+    if (location.hostname === "localhost") {
+        // auth.useEmulator("http://localhost:9099");
+        functions.useEmulator("localhost", 5001); // [!!!] ตอนนี้มันจะเชื่อมต่อ Emulator ถูกต้อง
+        db.useEmulator("localhost", 8081);
+        console.log("🔥 Firebase Emulators Activated (Local Testing Mode)");
+    }
 
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
@@ -1126,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navItems = document.querySelectorAll('.nav-item');
     const timeElement = document.getElementById('current-time');
 
-    // --- UI Elements for Report Page ---
+    // --- UI Elements for Report Page 
     const saveReportBtn = document.getElementById('save-report-btn');
     const workTypeSelectedText = document.getElementById('work-type-selected-text');
     const projectSelectedText = document.getElementById('project-selected-text');
@@ -1434,7 +1442,6 @@ async function initializeApp(user, userData) {
                     // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Google)
                     try {
                     // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
-                    const functions = firebase.app().functions('asia-southeast1'); 
                     
                     // [!!!] แก้ไขบรรทัดนี้
                     const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage');
