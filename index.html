@@ -988,8 +988,16 @@
 
                 <div>
                     <label class="text-sm font-medium text-gray-600">ฝ่าย / แผนก</label>
-                    <input type="text" id="profile-edit-dept-input" placeholder="กรอกฝ่ายหรือแผนก" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                </div>
+                    
+                    <select id="profile-edit-dept-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                        <option value="">-- เลือกฝ่าย/แผนก --</option>
+                        <option value="เมคคาทรอนิกส์">เมคคาทรอนิกส์</option>
+                        <option value="ไฟฟ้า">ไฟฟ้า</option>
+                        <option value="ออกแบบ (Design)">ออกแบบ (Design)</option>
+                        <option value="บัญชี">บัญชี</option>
+                        <option value="HR">HR</option>
+                    </select>
+                    </div>
 
                 <div class="flex justify-end space-x-3 pt-4">
                     <button id="profile-edit-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
@@ -4780,24 +4788,26 @@ async function handleDeleteCalendarRule(type, dateString, buttonElement) {
     }
 }
 
-    // --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
-// [ปรับปรุง] --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
-// (แทนที่ฟังก์ชันเดิม)
-// --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
-    // [ปรับปรุง] --- 1. ฟังก์ชันดึงใบลาที่ 'pending' มาแสดง ---
-    // (แทนที่ฟังก์ชันเดิม)
-    async function loadPendingLeaveRequests() {
+async function loadPendingLeaveRequests() {
         const listContainer = document.getElementById('leave-approval-list');
         const loadingMsg = document.getElementById('leave-loading-msg');
         
         if (!listContainer || !loadingMsg) return;
 
-        listContainer.innerHTML = ''; // ล้างของเก่า
+        listContainer.innerHTML = ''; 
         loadingMsg.textContent = 'กำลังโหลดรายการ...';
-        listContainer.appendChild(loadingMsg); // ใส่ "กำลังโหลด" กลับเข้าไป
+        listContainer.appendChild(loadingMsg); 
 
         try {
-            // (ใช้ตัวแปร db ที่คุณประกาศไว้แล้ว)
+            // [ ★ 1. ดึงข้อมูล User ทั้งหมดมาเก็บใน Map ก่อน ★ ]
+            const userMap = new Map();
+            const usersSnapshot = await db.collection('users').get();
+            usersSnapshot.forEach(doc => {
+                userMap.set(doc.id, doc.data());
+            });
+
+
+            // [ ★ 2. ดึงใบลา (เหมือนเดิม) ★ ]
             const querySnapshot = await db.collection('leave_requests')
                                           .where('status', '==', 'pending')
                                           .orderBy('submittedAt', 'asc')
@@ -4814,41 +4824,41 @@ async function handleDeleteCalendarRule(type, dateString, buttonElement) {
                 const leave = doc.data();
                 const docId = doc.id;
 
-                // แปลง Timestamp เป็นวันที่อ่านง่าย
+                // [ ★ 3. ค้นหาชื่อและรูปปัจจุบันจาก Map ★ ]
+                const user = userMap.get(leave.userId);
+                // (ถ้าหา user ไม่เจอจริงๆ ให้ใช้ชื่อเก่าที่บันทึกมาแทน)
+                const displayName = user ? user.fullName : leave.userName;
+                const displayPhoto = user ? user.profileImageUrl : leave.userPhoto;
+
+                
+                // ... (โค้ดแปลงวันที่ เหมือนเดิม) ...
                 const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
                 const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
-
-                // [ใหม่] สร้างข้อความแสดงผลวันที่/เวลา
                 let dateInfoText = '';
                 if (leave.durationType === 'hourly' && leave.startTime && leave.endTime) {
-                    // สำหรับลารายชั่วโมง: "3/11/2568 (09:30 - 10:30)"
                     dateInfoText = `${startDate} (${leave.startTime} - ${leave.endTime})`;
                 } else {
-                    // สำหรับลาเต็มวัน (แบบเดิม): "3/11/2568 ถึง 3/11/2568"
                     dateInfoText = `${startDate} ถึง ${endDate}`;
                 }
 
 
-                // [แก้ไข] เพิ่ม class="leave-request-card" เข้าไป
                 const cardHTML = `
-                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm leave-request-card">
+                <div class="... leave-request-card">
                     <div class="flex items-start gap-3">
-                        <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                        <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
                         <div>
-                            <p class="font-semibold">${leave.userName}</p>
+                            <p class="font-semibold">${displayName}</p> 
                             <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
-                            
                             <p class="text-sm text-gray-500 font-medium">${dateInfoText}</p>
-
                         </div>
                     </div>
                     <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg">${leave.reason}</p>
                     
                     <div class="flex justify-end gap-3 mt-4">
-                        <button data-id="${docId}" class="reject-leave-btn text-sm font-semibold text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
+                        <button data-id="${docId}" class="reject-leave-btn ...">
                             ไม่อนุมัติ
                         </button>
-                        <button data-id="${docId}" class="approve-leave-btn text-sm font-semibold text-white bg-green-500 px-4 py-2 rounded-lg hover:bg-green-600">
+                        <button data-id="${docId}" class="approve-leave-btn ...">
                             อนุมัติ
                         </button>
                     </div>
