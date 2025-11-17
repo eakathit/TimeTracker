@@ -1,16 +1,12 @@
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  const domain = url.hostname;
-  
-  if (
-    domain === 'localhost' || // [!!!] ต้องมีบรรทัดนี้
-    domain.endsWith('cloudfunctions.net') ||
-    domain.endsWith('firebasestorage.googleapis.com') ||
-    domain.endsWith('timetracker-f1e11.web.app') || 
-    domain.endsWith('accounts.google.com')
-  ) {
-    return; // ปล่อยผ่าน
+
+  // [เพิ่ม] ถ้า Request นี้กำลังยิงไปที่ Cloud Functions (มี cloudfunctions.net)
+  // ให้ "return" (ปล่อยผ่านไปเลย) ห้าม Service Worker ยุ่ง
+  if (url.hostname === '127.0.0.1' || url.hostname.endsWith('cloudfunctions.net')) {
+    return;
   }
 
+  // Request อื่นๆ (เช่น โหลดหน้าเว็บ, รูปภาพ) ก็ทำตามปกติ
   event.respondWith(fetch(event.request));
 });
