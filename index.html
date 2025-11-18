@@ -1283,9 +1283,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 1. เติมข้อมูลเดิมลงในฟอร์ม
     profileEditNameInput.value = currentUserData.fullName || '';
-    profileEditDeptInput.value = currentUserData.department || '';
-
-    // (ลบส่วนที่เกี่ยวกับ profileEditPicPreview.src, newProfilePicFile, profileEditPicInput.value ออก)
+    
+    // [แก้ไข] ตรวจสอบ 'Unassigned' เพื่อแสดง Placeholder
+    const currentDept = currentUserData.department;
+    if (currentDept && currentDept !== 'Unassigned') {
+        profileEditDeptInput.value = currentDept;
+    } else {
+        profileEditDeptInput.value = ''; // ตั้งเป็นค่าว่าง ("") เพื่อให้แสดง "-- เลือกฝ่าย/แผนก --"
+    }
 
     // 2. แสดง Modal
     if (profileEditModal) profileEditModal.classList.remove('hidden');
@@ -3194,6 +3199,7 @@ async function initializeApp(user, userData) {
         const summaryOtEl = document.getElementById('profile-summary-ot');
         const summaryDaysEl = document.getElementById('profile-summary-days');
 
+        // รีเซ็ตค่าหน้าจอ
         summaryHoursEl.textContent = '-';
         summaryOtEl.textContent = '-';
         summaryDaysEl.textContent = '-';
@@ -3202,9 +3208,9 @@ async function initializeApp(user, userData) {
         try {
             let startDate, endDate;
             const now = new Date();
-            
             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
+            // กำหนดช่วงเวลาตามที่เลือก
             if (selectedRange === "7") {
                 startDate = new Date(todayStart);
                 startDate.setDate(todayStart.getDate() - 6); 
@@ -3217,6 +3223,7 @@ async function initializeApp(user, userData) {
                 endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
             }
 
+            // ดึงข้อมูล Work Records
             const recordsSnapshot = await db.collection('work_records')
                 .where('userId', '==', currentUser.uid)
                 .where('date', '>=', startDate)
@@ -3224,15 +3231,13 @@ async function initializeApp(user, userData) {
                 .orderBy('date', 'desc')
                 .get();
 
-                // [ ★ เพิ่มส่วนนี้ ★ ]
-            // ดึงคำขอ OT ทั้งหมดในช่วงเวลาเดียวกัน
+            // ดึงข้อมูล OT Requests
             const otRequestsSnapshot = await db.collection('ot_requests')
                 .where('userId', '==', currentUser.uid)
                 .where('date', '>=', startDate)
                 .where('date', '<=', endDate)
                 .get();
 
-            // สร้าง Map เพื่อให้ค้นหา OT ได้ง่าย
             const otRequestsMap = new Map();
             otRequestsSnapshot.forEach(doc => {
                 const dateKey = toLocalDateKey(doc.data().date.toDate());
@@ -3254,7 +3259,8 @@ async function initializeApp(user, userData) {
             let totalRegularHours = 0;
             let totalOtHours = 0;
             let totalDays = recordsSnapshot.size;
-            let accumulatorTotalWorkHours = 0;
+            // เปลี่ยนตัวแปรสะสมเป็น Regular Hours แทน Total Actual Hours
+            let accumulatorRegularWorkHours = 0; 
 
             recordsSnapshot.forEach(doc => {
                 const record = doc.data();
@@ -3262,41 +3268,43 @@ async function initializeApp(user, userData) {
                 const report = record.report;
 
                 const dateKey = toLocalDateKey(checkinTime);
-                const otRequest = otRequestsMap.get(dateKey);
+                // const otRequest = otRequestsMap.get(dateKey); // (ไม่ได้ใช้ในส่วนแสดงผลหลัก แต่เตรียมไว้ถ้าจำเป็น)
                 
-                let checkoutTime, regularWorkHours = 0, overtimeHours = 0, totalWorkHours = 0;
+                let checkoutTime;
+                let regularWorkHours = 0;
+                let overtimeHours = 0;
+                
+                // ตัวแปรสำหรับแสดงผล (ถ้ายังไม่ Checkout ให้เป็น '-')
+                let checkoutTimeStr = '-';
 
                 if (record.status === 'completed') {
                     checkoutTime = record.checkOut.timestamp.toDate();
+                    checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
                     
+                    // 1. ดึงยอด OT รวมที่บันทึกไว้ใน Database (ซึ่งรวม OT อัตโนมัติ + OT ที่ขอเพิ่มแล้ว)
                     overtimeHours = record.overtime?.hours || 0; 
                     
-                    let workDurationMillis = checkoutTime - checkinTime;
-                    if (workDurationMillis < 0) workDurationMillis = 0;
-                    const lunchStart = new Date(checkinTime); lunchStart.setHours(12, 0, 0, 0);
-                    const lunchEnd = new Date(checkinTime); lunchEnd.setHours(13, 0, 0, 0);
-                    if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
-                        workDurationMillis -= 3600000; 
-                    }
-
-                    totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
-                    
-                    regularWorkHours = totalWorkHours - overtimeHours;
-                    if (regularWorkHours < 0) regularWorkHours = 0;
+                    // 2. คำนวณชั่วโมงงานปกติ (Regular Hours) โดยใช้ฟังก์ชันกลาง
+                    // ฟังก์ชันนี้จะตัดเวลาเลิกงานที่ 17:30 และหักพักเที่ยงให้
+                    const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
+                    regularWorkHours = timeCalc.regularWorkHours;
                 }
 
+                // สะสมยอดรวม
                 totalRegularHours += regularWorkHours;
                 totalOtHours += overtimeHours;
-                accumulatorTotalWorkHours += totalWorkHours;
+                accumulatorRegularWorkHours += regularWorkHours;
 
+                // ส่วนของการ์ดแสดงผลแต่ละวัน
                 historyHtml += `
                 <div class="flex space-x-4">
                     <div class="flex flex-col items-center">
-                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center sleading-none">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center leading-none">
                             <span class="text-xs text-sky-600 font-medium">${checkinTime.toLocaleDateString('th-TH', { month: 'short' })}</span>
                             <span class="text-xl font-bold text-sky-700">${checkinTime.getDate()}</span>
                         </div>
-                        <div class="flex-1 w-px bg-gray-200 my-2"></div> </div>
+                        <div class="flex-1 w-px bg-gray-200 my-2"></div> 
+                    </div>
                     
                     <div class="flex-1 card !p-4 !shadow-sm mb-4">
                         <div class="flex justify-between items-start">
@@ -3305,18 +3313,18 @@ async function initializeApp(user, userData) {
                                 <p class="text-sm text-gray-500 font-medium">
                                     <span class="text-green-600">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
                                     <span> → </span>
-                                    <span class="text-red-500">${checkoutTime ? checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-'}</span>
+                                    <span class="text-red-500">${checkoutTimeStr}</span>
                                 </p>
                             </div>
                         </div>
 
                         <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานรวม">
-                            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium text-gray-700">${totalWorkHours.toFixed(2)} ชม.</span>
-                        </div>
+                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ (ไม่รวม OT)">
+                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
+                            </div>
 
-                            <div class="flex items-center gap-1.5" title="Overtime">
+                            <div class="flex items-center gap-1.5" title="Overtime รวม">
                                 <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                             </div>
@@ -3370,7 +3378,8 @@ async function initializeApp(user, userData) {
             
             container.innerHTML = historyHtml;
 
-            summaryHoursEl.textContent = `${accumulatorTotalWorkHours.toFixed(2)}`;
+            // อัปเดต Summary ด้านบน
+            summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
             summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
             summaryDaysEl.textContent = `${totalDays} วัน`;
 
