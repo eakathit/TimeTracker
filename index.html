@@ -2397,13 +2397,22 @@ async function initializeApp(user, userData) {
                 updateUIToCompleted(); 
                 
                 const checkoutTime = data.checkOut.timestamp.toDate();
-                const { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
+                
+                // 1. คำนวณตามสูตรปกติก่อน
+                let { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
+
+                // ✨ [เพิ่มใหม่] ถ้าใน Database มีบันทึกค่า OT ไว้ (เช่น 0) ให้ใช้ค่านั้นแทนการคำนวณ
+                if (data.overtime && typeof data.overtime.hours === 'number') {
+                    overtimeHours = data.overtime.hours;
+                }
 
                 summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
 
                 summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+                
+                // แสดงผล OT ตามค่าจริง (ถ้าเป็น 0 ก็จะไม่เข้าเงื่อนไขนี้)
                 if (overtimeHours > 0) {
                     summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
                 }
@@ -3445,6 +3454,8 @@ async function initializeApp(user, userData) {
             try {
                 const now = new Date();
                 // now.setHours(18, 0, 0, 0);
+                // ✨ [แก้ไขเพื่อเทส] บังคับเวลาปัจจุบันเป็น 19:30 (เพื่อให้เงื่อนไข >= 18 เป็นจริง)
+        currentTime.setHours(19, 30, 0, 0); 
 
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
@@ -3493,7 +3504,8 @@ async function initializeApp(user, userData) {
 
             try {
                 const now = new Date();
-                // now.setHours(18, 0, 0, 0); 
+                
+                now.setHours(18, 0, 0, 0); 
 
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
@@ -3535,13 +3547,15 @@ async function initializeApp(user, userData) {
         };
 
         const currentTime = new Date();
-        // currentTime.setHours(18, 0, 0, 0);
+        currentTime.setHours(18, 0, 0, 0);
 
-        if (currentTime.getHours() >= 18) { // ตั้งค่าตามจริง (>= 18 คือ 18:00 เป็นต้นไป)
+        if (currentTime.getHours() >= 18) { 
              showConfirmDialog(
-                "ขณะนี้เป็นเวลา OT คุณยืนยันที่จะลงเวลาออกและบันทึก OT หรือไม่?",
-                proceedWithCheckout,         
-                proceedWithCheckoutWithoutOT 
+                "ขณะนี้เลยเวลาเลิกงานแล้ว ต้องการบันทึกเวลานี้เป็น OT หรือไม่?", // ข้อความใหม่
+                proceedWithCheckout,          // ฟังก์ชันถ้ากดปุ่มขวา
+                proceedWithCheckoutWithoutOT, // ฟังก์ชันถ้ากดปุ่มซ้าย
+                "บันทึกเวลา OT",                  // ข้อความปุ่มขวา (สีฟ้า)
+                "ไม่ลงเวลา OT"        // ข้อความปุ่มซ้าย (สีเทา)
             );
         } else {
             proceedWithCheckout();
@@ -4735,50 +4749,51 @@ const openLeaveModal = () => {
 
     // --- Function to show confirmation dialog ---
 // Added optional onCancel parameter
-function showConfirmDialog(message, onConfirm, onCancel = null) {
+// [แก้ไข] เพิ่ม parameter: okText, cancelText
+function showConfirmDialog(message, onConfirm, onCancel = null, okText = "ตกลง", cancelText = "ยกเลิก") {
     const confirmModal = document.getElementById('confirm-modal');
     const overlay = document.getElementById('confirm-overlay');
     const msgElement = document.getElementById('confirm-message');
     const okBtn = document.getElementById('confirm-ok-btn');
     const cancelBtn = document.getElementById('confirm-cancel-btn');
 
-    if (!confirmModal || !msgElement || !okBtn || !cancelBtn || !overlay) {
-         console.error("Confirmation modal elements not found!");
-         return; // Exit if elements are missing
-    }
+    if (!confirmModal || !msgElement || !okBtn || !cancelBtn || !overlay) return;
 
     msgElement.textContent = message;
+    
+    // [เพิ่มใหม่] เปลี่ยนข้อความปุ่ม
+    okBtn.textContent = okText;
+    cancelBtn.textContent = cancelText;
 
-    // --- Event Listeners (ensure removal on close) ---
+    // ... (ส่วน Event Listener เหมือนเดิม ไม่ต้องแก้) ...
     const handleConfirm = () => {
         closeDialog();
-        if (typeof onConfirm === 'function') {
-            onConfirm(); // Call OK callback
-        }
+        if (typeof onConfirm === 'function') onConfirm();
     };
 
     const handleCancel = () => {
         closeDialog();
-        if (typeof onCancel === 'function') {
-            onCancel(); // Call Cancel callback if provided
-        }
+        if (typeof onCancel === 'function') onCancel();
     };
 
     const closeDialog = () => {
         confirmModal.classList.add('hidden');
-        // Remove specific listeners to prevent duplicates
         okBtn.removeEventListener('click', handleConfirm);
         cancelBtn.removeEventListener('click', handleCancel);
-        overlay.removeEventListener('click', handleCancel); // Also close on overlay click
+        overlay.removeEventListener('click', handleCancel);
+        
+        // [เพิ่มใหม่] คืนค่าข้อความปุ่มเป็นค่าเริ่มต้น (เผื่อใช้ที่อื่น)
+        setTimeout(() => {
+            okBtn.textContent = "ตกลง";
+            cancelBtn.textContent = "ยกเลิก";
+        }, 300);
     };
-    // --- End Event Listeners ---
 
-    // Add listeners
     okBtn.addEventListener('click', handleConfirm);
     cancelBtn.addEventListener('click', handleCancel);
     overlay.addEventListener('click', handleCancel);
 
-    confirmModal.classList.remove('hidden'); // Show Modal
+    confirmModal.classList.remove('hidden');
 }
 
     // 3. [เพิ่ม] ฟังก์ชันสำหรับค้นหาข้อมูลเมื่อคลิกปุ่ม
