@@ -3644,18 +3644,28 @@ async function initializeApp(user, userData) {
                 document.getElementById('employee-summary-container-admin').innerHTML = '<p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>';
                 document.getElementById('summary-pagination-controls').innerHTML = '';
             }
-            
+
+            // [ ★★★ นี่คือบล็อกที่เพิ่มเข้ามา ★★★ ]
             if (pageId === 'admin-dashboard-page') {
+                // โหลดรายชื่อ User ลงใน dropdowns
                 loadAllUsersForDropdown();
+                
+                // โหลดใบลาที่รออนุมัติ
                 loadPendingLeaveRequests(); 
-                loadPendingOtRequests(); // <--- ตัวนี้คือที่ขาดไป
+                
+                // โหลด OT ที่รออนุมัติ (นี่คือฟังก์ชันที่ขาดไป)
+                loadPendingOtRequests(); 
+
+                // ตั้งค่าวันที่เริ่มต้นในช่อง "แก้ไขข้อมูล"
                 if (!editDateSelect.value) {
                     editDateSelect.value = new Date().toISOString().split('T')[0];
                 }
+                
+                // ล้างข้อมูลเก่าในตารางสรุป
                 document.getElementById('employee-summary-container-admin').innerHTML = '<p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>';
                 document.getElementById('summary-pagination-controls').innerHTML = '';
             }
-
+            
             // [แก้ไข] เรียกฟังก์ชันโหลดปฏิทิน และตรวจสอบสิทธิ์ Admin
             if (pageId === 'calendar-page') {
                 loadCalendarData(currentDisplayDate);
@@ -4942,7 +4952,7 @@ async function loadPendingLeaveRequests() {
             // [ ★ 2. ดึงใบลา (เหมือนเดิม) ★ ]
             const querySnapshot = await db.collection('leave_requests')
                                           .where('status', '==', 'pending')
-                                          .orderBy('submittedAt', 'asc')
+                                          // .orderBy('submittedAt', 'asc')
                                           .get();
 
             if (querySnapshot.empty) {
@@ -5101,7 +5111,7 @@ async function loadAllUsersForDropdown() {
             // 3. เรียงลำดับ (ต้องสร้าง Index ใน Firestore ถ้า Query ซับซ้อน)
             // ถ้าใช้แค่ filter เดียว ให้เรียงตาม submittedAt
             if (!statusFilter || !userFilter) {
-                query = query.orderBy('submittedAt', 'desc');
+                // query = query.orderBy('submittedAt', 'desc');
             }
             // (หมายเหตุ: ถ้าใช้ filter 2 ช่องพร้อมกัน อาจต้องสร้าง Composite Index ใน Firebase)
 
@@ -5283,7 +5293,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
     }
 }
 
-    // ฟังก์ชันเปิด Modal ขอ OT (ฝั่ง User)
+    // ฟังก์ชันเปิด Modal ขอ OT (ฝั่ง User) (เวอร์ชันแก้ไข: ใช้วิธี format วันที่/เวลา ที่ปลอดภัยกว่า)
     const openOtModal = async () => {
         if (!currentUser) return;
         const today = toLocalDateKey(new Date());
@@ -5298,10 +5308,18 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             
             const checkoutTime = workRecordDoc.data().checkOut.timestamp.toDate();
             
+            // [ ★ แก้ไข ★ ] ใช้วิธีดึงค่าและ .padStart(2, '0') เพื่อให้ได้ YYYY-MM-DD
+            const year = checkoutTime.getFullYear();
+            const month = (checkoutTime.getMonth() + 1).toString().padStart(2, '0');
+            const day = checkoutTime.getDate().toString().padStart(2, '0');
+            
+            // [ ★ แก้ไข ★ ] ใช้วิธีดึงค่าและ .padStart(2, '0') เพื่อให้ได้ HH:mm
+            const hours = checkoutTime.getHours().toString().padStart(2, '0');
+            const minutes = checkoutTime.getMinutes().toString().padStart(2, '0');
+            
             // เติมข้อมูลลง Modal
-            otRequestDate.value = toLocalDateKey(checkoutTime);
-            // ใช้ 'en-CA' เพื่อให้ได้ Format 'HH:mm' ที่ input[type=time] ต้องการ
-            otStartTime.value = checkoutTime.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' }); 
+            otRequestDate.value = `${year}-${month}-${day}`;
+            otStartTime.value = `${hours}:${minutes}`;
             otEndTime.value = '';
             otReason.value = '';
             
@@ -5322,7 +5340,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
     cancelOtBtn.addEventListener('click', closeOtModal);
     otOverlay.addEventListener('click', closeOtModal);
 
-    // Event Listener สำหรับปุ่ม "ส่งคำขอ OT"
+    // Event Listener สำหรับปุ่ม "ส่งคำขอ OT" (เวอร์ชันแก้ไข: ตรวจสอบทุกช่อง)
     submitOtBtn.addEventListener('click', async () => {
         if (!currentUser || !currentUserData) return;
 
@@ -5331,8 +5349,9 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         const reason = otReason.value.trim();
         const dateStr = otRequestDate.value;
 
-        if (!endTimeStr || !reason) {
-            showNotification('กรุณากรอกเวลาสิ้นสุดและเหตุผล', 'warning');
+        // [ ★ แก้ไข ★ ] ตรวจสอบทุกช่อง (date, start, end, reason)
+        if (!dateStr || !startTimeStr || !endTimeStr || !reason) {
+            showNotification('กรุณากรอกข้อมูล วันที่, เวลาเริ่มต้น, เวลาสิ้นสุด และเหตุผล', 'warning');
             return;
         }
         
@@ -5374,8 +5393,6 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         }
     });
 
-    // --- Logic สำหรับ Admin Dashboard (คัดลอก/ดัดแปลงจากฟังก์ชันใบลา) ---
-
     // 1. การสลับแท็บ (Pending/History)
     const otTabNav = document.getElementById('ot-tab-nav');
     if (otTabNav) {
@@ -5404,14 +5421,18 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         });
     }
 
-    // 2. โหลดรายการ OT ที่ "รออนุมัติ"
+    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไขแล้ว)
+    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไข: ป้องกัน NaN)
     async function loadPendingOtRequests() {
         const listContainer = document.getElementById('ot-approval-list');
-        const loadingMsg = document.getElementById('ot-loading-msg');
-        
-        if (!listContainer || !loadingMsg) return;
-
+        let loadingMsg = document.getElementById('ot-loading-msg');
+        if (!listContainer) return;
         listContainer.innerHTML = ''; 
+        if (!loadingMsg) {
+            loadingMsg = document.createElement('p');
+            loadingMsg.id = 'ot-loading-msg';
+            loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
+        }
         loadingMsg.textContent = 'กำลังโหลดรายการ...';
         listContainer.appendChild(loadingMsg); 
 
@@ -5422,31 +5443,36 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
 
             const querySnapshot = await db.collection('ot_requests')
                                           .where('status', '==', 'pending')
-                                          .orderBy('submittedAt', 'asc')
+                                          // .orderBy('submittedAt', 'asc') // (ปิดไว้ก่อน กัน Error เรื่อง Index)
                                           .get();
 
             if (querySnapshot.empty) {
                 loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
                 return;
             }
-
             listContainer.innerHTML = ''; 
 
             querySnapshot.forEach(doc => {
                 const ot = doc.data();
                 const docId = doc.id;
-
                 const user = userMap.get(ot.userId);
                 const displayName = user ? user.fullName : ot.userName;
                 const displayPhoto = user ? user.profileImageUrl : ot.userPhoto;
-                
                 const otDate = ot.date.toDate().toLocaleDateString('th-TH');
-                const timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
-                
-                // คำนวณชั่วโมง OT
-                const [startH, startM] = ot.startTime.split(':').map(Number);
-                const [endH, endM] = ot.endTime.split(':').map(Number);
-                const otDurationHours = (endH + endM/60) - (startH + startM/60);
+
+                // [ ★ แก้ไข ★ ] ตรวจสอบข้อมูลก่อนคำนวณและแสดงผล
+                let timeInfoText = '';
+                let otDurationText = '(ข้อมูลไม่สมบูรณ์)';
+
+                if (ot.startTime && ot.endTime) {
+                    timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
+                    const [startH, startM] = ot.startTime.split(':').map(Number);
+                    const [endH, endM] = ot.endTime.split(':').map(Number);
+                    const otDurationHours = (endH + endM/60) - (startH + startM/60);
+                    otDurationText = `(${otDurationHours.toFixed(1)} ชม.)`;
+                } else {
+                    timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
+                }
 
                 const cardHTML = `
                 <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm ot-request-card">
@@ -5454,11 +5480,11 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                         <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
                         <div>
                             <p class="font-semibold">${displayName}</p> 
-                            <p class="text-sm font-medium text-orange-700">ขออนุมัติ OT (${otDurationHours.toFixed(1)} ชม.)</p>
+                            <p class="text-sm font-medium text-orange-700">ขออนุมัติ OT ${otDurationText}</p>
                             <p class="text-sm text-gray-500 font-medium">${timeInfoText}</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason}</p>
+                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason || '(ไม่มีเหตุผล)'}</p>
                     
                     <div class="flex justify-end gap-3 mt-4">
                         <button data-id="${docId}" class="reject-ot-btn text-sm font-medium text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
@@ -5476,22 +5502,32 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         } catch (error) {
             console.error("Error loading OT requests:", error);
             loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+            if (error.code === 'failed-precondition') {
+                loadingMsg.textContent = 'ต้องสร้าง Index! (ดู Console F12)';
+            }
         }
     }
 
-    // 3. โหลด "ประวัติ" OT ทั้งหมด
+    // 3. โหลด "ประวัติ" OT ทั้งหมด (เวอร์ชันแก้ไขบั๊ก)
     async function loadOtHistory() {
         const listContainer = document.getElementById('ot-history-list');
+        
+        // 1. ค้นหา loadingMsg ที่อยู่ใน HTML
         let loadingMsg = document.getElementById('ot-history-loading-msg'); 
         
         if (!listContainer) return;
+
+        // 2. เคลียร์การ์ดเก่า
+        listContainer.innerHTML = ''; 
+
+        // 3. สร้าง loadingMsg ถ้าไม่มี
         if (!loadingMsg) {
             loadingMsg = document.createElement('p');
             loadingMsg.id = 'ot-history-loading-msg';
             loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
         }
 
-        listContainer.innerHTML = ''; 
+        // 4. แสดง "กำลังโหลด..."
         loadingMsg.textContent = 'กำลังโหลดประวัติ...';
         listContainer.appendChild(loadingMsg);
 
@@ -5504,17 +5540,19 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             if (statusFilter) query = query.where('status', '==', statusFilter);
             if (userFilter) query = query.where('userId', '==', userFilter);
             
-            if (!statusFilter || !userFilter) {
-                query = query.orderBy('submittedAt', 'desc');
-            }
+            // if (!statusFilter || !userFilter) { // (ปิดไว้ก่อน กัน Error เรื่อง Index)
+            //     query = query.orderBy('submittedAt', 'desc');
+            // }
 
             const querySnapshot = await query.get();
 
             if (querySnapshot.empty) {
+                // 5. ถ้าไม่เจอ:
                 loadingMsg.textContent = 'ไม่พบประวัติ OT ตามเงื่อนไข';
                 return;
             }
-
+            
+            // 6. ถ้าเจอ:
             listContainer.innerHTML = ''; 
 
             querySnapshot.forEach(doc => {
@@ -5561,10 +5599,14 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         } catch (error) {
             console.error("Error loading OT history:", error);
             loadingMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+
+            if (error.code === 'failed-precondition') {
+                loadingMsg.textContent = 'ต้องสร้าง Index! (ดู Console F12)';
+            }
         }
     }
 
-    // 4. ฟังก์ชัน "อนุมัติ/ไม่อนุมัติ" OT (เวอร์ชันอัปเดต work_records)
+    // 4. ฟังก์ชัน "อนุมัติ/ไม่อนุมัติ" OT (เวอร์ชันแก้ไข: ป้องกัน NaN)
     async function handleOtApproval(docId, newStatus, buttonElement) {
         if (!docId) return;
 
@@ -5579,42 +5621,47 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         }
 
         try {
-            // [ ★ แก้ไข ★ ]
-            // 1. ดึงข้อมูลคำขอ OT ก่อน เพื่อเอา workRecordDocId และเวลา
             const otRequestRef = db.collection('ot_requests').doc(docId);
             const otDoc = await otRequestRef.get();
             if (!otDoc.exists) throw new Error("ไม่พบคำขอ OT");
             
             const otData = otDoc.data();
 
-            // 2. อัปเดตเอกสาร ot_requests (เหมือนเดิม)
+            // 1. อัปเดตเอกสาร ot_requests (เหมือนเดิม)
             await otRequestRef.update({
                 status: newStatus,
                 approvedBy: currentUserData.fullName
             });
 
-            // [ ★ เพิ่มส่วนนี้ ★ ]
-            // 3. ถ้าสถานะเป็น "approved" ให้อัปเดต work_records ด้วย
+            // 2. ถ้าสถานะเป็น "approved" ให้อัปเดต work_records ด้วย
             if (newStatus === 'approved') {
-                // อ้างอิงถึงเอกสาร work_records จาก ID ที่เก็บไว้
-                const workRecordRef = db.collection('work_records').doc(otData.workRecordDocId);
+                
+                // [ ★ แก้ไข ★ ] ตรวจสอบว่ามีข้อมูลครบหรือไม่
+                if (otData.workRecordDocId && otData.startTime && otData.endTime)
+                {
+                    const workRecordRef = db.collection('work_records').doc(otData.workRecordDocId);
 
-                // 4. คำนวณชั่วโมง OT ที่อนุมัติ
-                const [startH, startM] = otData.startTime.split(':').map(Number);
-                const [endH, endM] = otData.endTime.split(':').map(Number);
-                // คำนวณเป็นชั่วโมง (เช่น 18:30 - 17:30 = 1.0)
-                const otDurationHours = (endH + endM/60) - (startH + startM/60);
+                    const [startH, startM] = otData.startTime.split(':').map(Number);
+                    const [endH, endM] = otData.endTime.split(':').map(Number);
+                    const otDurationHours = (endH + endM/60) - (startH + startM/60);
 
-                // 5. อัปเดต 'work_records' โดยการ "บวกเพิ่ม"
-                if (otDurationHours > 0) {
-                    // ใช้ FieldValue.increment() เพื่อบวกเพิ่มจากค่าเดิม (เช่น 0 + 1.0)
-                    await workRecordRef.update({
-                        'overtime.hours': firebase.firestore.FieldValue.increment(otDurationHours)
-                    });
+                    if (otDurationHours > 0) {
+                        await workRecordRef.update({
+                            'overtime.hours': firebase.firestore.FieldValue.increment(otDurationHours)
+                        });
+                    }
+                } else {
+                    // ถ้าข้อมูลไม่ครบ (เช่น รายการที่ NaN) ให้แค่แจ้งเตือน แต่ปล่อยผ่าน
+                    console.warn(`ไม่สามารถคำนวณ OT สำหรับ ${docId} ได้ เพราะข้อมูลไม่ครบ`);
+                    showNotification(`อนุมัติสำเร็จ (แต่คำนวณ OT ไม่ได้เพราะข้อมูลเก่า)`, 'warning');
                 }
             }
             
-            showNotification(`อัปเดตสถานะ OT สำเร็จ`, 'success');
+            if (newStatus === 'rejected') {
+                 showNotification(`ปฏิเสธคำขอ OT สำเร็จ`, 'success');
+            } else {
+                 showNotification(`อนุมัติ OT สำเร็จ`, 'success');
+            }
 
             // --- โค้ดส่วน UI (เหมือนเดิม) ---
             if (cardElement) {
@@ -5622,7 +5669,6 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                 cardElement.style.transform = 'scale(0.95)';
                 setTimeout(() => {
                     cardElement.remove();
-                    // ตรวจสอบว่ามีรายการเหลือหรือไม่
                     const listContainer = document.getElementById('ot-approval-list');
                     if (listContainer && listContainer.children.length === 0) {
                         let loadingMsg = document.getElementById('ot-loading-msg');
@@ -5636,7 +5682,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                     }
                 }, 300);
             } else {
-                await loadPendingOtRequests(); // โหลดซ้ำถ้าหาการ์ดไม่เจอ
+                await loadPendingOtRequests(); 
             }
 
         } catch (error) {
