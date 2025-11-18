@@ -103,7 +103,7 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
         }
-        
+
         /* CSS สำหรับ Modal แก้ไข */
         #edit-modal.hidden {
             display: none;
@@ -216,10 +216,10 @@
                         <span class="text-2xl font-semibold mt-2">Check Out</span>
                     </button>
 
-                    <button id="request-ot-btn" class="hidden w-full max-w-xs mt-4 py-3 bg-orange-500 text-white rounded-lg font-semibold shadow-md hover:bg-orange-600 transition-all">
-                        <svg class="w-6 h-6 inline-block -mt-1 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>ขออนุมัติ OT (หลังเลิกงาน)</span>
-                    </button>
+                  <button id="request-ot-btn" class="hidden w-full max-w-xs mt-4 py-3 bg-transparent border-2 border-sky-500 text-sky-600 rounded-lg font-semibold hover:bg-sky-500 hover:text-white transition-all">
+        <svg class="w-6 h-6 inline-block -mt-1 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        <span>Request OT</span>
+    </button>
                 </div>
 
                 <div class="card space-y-4">
@@ -1062,7 +1062,7 @@
     <div id="ot-request-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
         <div id="ot-overlay" class="absolute inset-0 bg-black opacity-50"></div>
         <div class="card relative z-10 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-6">ขออนุมัติ OT (หลังเลิกงาน)</h3>
+            <h3 class="text-xl font-bold mb-6">Request OT</h3>
             <div class="space-y-4">
                 <div>
                     <label class="text-sm font-medium text-gray-600">วันที่ (อัตโนมัติ)</label>
@@ -1074,17 +1074,17 @@
                         <input type="time" id="ot-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl bg-gray-100" readonly>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด OT (โดยประมาณ)</label>
-                        <input type="time" id="ot-end-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                        <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด OT</label>
+                        <input type="time" id="ot-end-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
                     </div>
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-600">เหตุผล / งานที่ทำ</label>
-                    <textarea id="ot-reason" rows="3" placeholder="เช่น ประกอบตู้คอนโทรลต่อ, แก้ไขโปรแกรม..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+                    <textarea id="ot-reason" rows="3" placeholder="เช่น ประกอบตู้คอนโทรลต่อ, แก้ไขโปรแกรม..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button id="cancel-ot-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
-                    <button id="submit-ot-btn" class="py-2 px-5 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600">ส่งคำขอ</button>
+                    <button id="submit-ot-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ส่งคำขอ</button>
                 </div>
             </div>
         </div>
@@ -1929,6 +1929,12 @@ async function initializeApp(user, userData) {
         const leaveHistorySearchBtn = document.getElementById('leave-history-search-btn');
         if (leaveHistorySearchBtn) {
             leaveHistorySearchBtn.addEventListener('click', loadLeaveHistory);
+        }
+
+        // ผูก Event ปุ่มค้นหาประวัติ OT
+        const otHistorySearchBtn = document.getElementById('ot-history-search-btn');
+        if (otHistorySearchBtn) {
+            otHistorySearchBtn.addEventListener('click', loadOtHistory);
         }
 
         const leaveTabNav = document.getElementById('leave-tab-nav');
@@ -3248,6 +3254,7 @@ async function initializeApp(user, userData) {
             let totalRegularHours = 0;
             let totalOtHours = 0;
             let totalDays = recordsSnapshot.size;
+            let accumulatorTotalWorkHours = 0;
 
             recordsSnapshot.forEach(doc => {
                 const record = doc.data();
@@ -3257,7 +3264,7 @@ async function initializeApp(user, userData) {
                 const dateKey = toLocalDateKey(checkinTime);
                 const otRequest = otRequestsMap.get(dateKey);
                 
-                let checkoutTime, regularWorkHours = 0, overtimeHours = 0;
+                let checkoutTime, regularWorkHours = 0, overtimeHours = 0, totalWorkHours = 0;
 
                 if (record.status === 'completed') {
                     checkoutTime = record.checkOut.timestamp.toDate();
@@ -3271,7 +3278,8 @@ async function initializeApp(user, userData) {
                     if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
                         workDurationMillis -= 3600000; 
                     }
-                    const totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
+
+                    totalWorkHours = Math.max(0, workDurationMillis / (1000 * 60 * 60));
                     
                     regularWorkHours = totalWorkHours - overtimeHours;
                     if (regularWorkHours < 0) regularWorkHours = 0;
@@ -3279,6 +3287,7 @@ async function initializeApp(user, userData) {
 
                 totalRegularHours += regularWorkHours;
                 totalOtHours += overtimeHours;
+                accumulatorTotalWorkHours += totalWorkHours;
 
                 historyHtml += `
                 <div class="flex space-x-4">
@@ -3302,10 +3311,11 @@ async function initializeApp(user, userData) {
                         </div>
 
                         <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
-                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
-                            </div>
+                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานรวม">
+                            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-medium text-gray-700">${totalWorkHours.toFixed(2)} ชม.</span>
+                        </div>
+
                             <div class="flex items-center gap-1.5" title="Overtime">
                                 <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
@@ -3360,7 +3370,7 @@ async function initializeApp(user, userData) {
             
             container.innerHTML = historyHtml;
 
-            summaryHoursEl.textContent = `${totalRegularHours.toFixed(2)}`;
+            summaryHoursEl.textContent = `${accumulatorTotalWorkHours.toFixed(2)}`;
             summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
             summaryDaysEl.textContent = `${totalDays} วัน`;
 
@@ -4997,14 +5007,13 @@ async function loadPendingLeaveRequests() {
                     <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg">${leave.reason}</p>
                     
                     <div class="flex justify-end gap-3 mt-4">
-                        <button data-id="${docId}" class="reject-leave-btn ...">
+                        <button data-id="${docId}" class="reject-leave-btn text-sm font-medium text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
                             ไม่อนุมัติ
                         </button>
-                        <button data-id="${docId}" class="approve-leave-btn ...">
+                        <button data-id="${docId}" class="approve-leave-btn text-sm font-medium text-green-600 px-4 py-2 rounded-lg hover:bg-green-50">
                             อนุมัติ
                         </button>
                     </div>
-                </div>
                 `;
                 listContainer.innerHTML += cardHTML;
             });
@@ -5244,7 +5253,8 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             approvedBy: currentUserData.fullName
         });
         
-        showNotification(`อัปเดตสถานะเป็น "${newStatus}" สำเร็จ`, 'success');
+        const statusText = newStatus === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
+        showNotification(`${statusText}ใบลาสำเร็จ`, 'success');
 
         // 3. ถ้าหาการ์ดเจอ ให้ซ่อนและลบออก
         if (cardElement) {
@@ -5291,6 +5301,36 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             buttonElement.disabled = false;
         }
     }
+}
+
+    // [ ★★★ เพิ่มส่วนนี้ ★★★ ]
+// ผูก Event Listener สำหรับการอนุมัติ OT
+const otListContainer = document.getElementById('ot-approval-list');
+if (otListContainer) {
+    otListContainer.addEventListener('click', (event) => {
+
+        const approveBtn = event.target.closest('.approve-ot-btn');
+        const rejectBtn = event.target.closest('.reject-ot-btn');
+
+        if (approveBtn) {
+            // กดปุ่มอนุมัติ
+            const docId = approveBtn.dataset.id;
+            if (!docId) return; 
+
+            approveBtn.disabled = true; 
+            approveBtn.textContent = 'กำลังบันทึก...';
+            handleOtApproval(docId, 'approved', approveBtn); 
+        }
+        else if (rejectBtn) {
+            // กดปุ่มไม่อนุมัติ
+            const docId = rejectBtn.dataset.id;
+            if (!docId) return; 
+
+            rejectBtn.disabled = true;
+            rejectBtn.textContent = 'กำลังบันทึก...';
+            handleOtApproval(docId, 'rejected', rejectBtn);
+        }
+    });
 }
 
     // ฟังก์ชันเปิด Modal ขอ OT (ฝั่ง User) (เวอร์ชันแก้ไข: ใช้วิธี format วันที่/เวลา ที่ปลอดภัยกว่า)
@@ -5421,18 +5461,26 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
         });
     }
 
-    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไขแล้ว)
-    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไข: ป้องกัน NaN)
+    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไข: ป้องกัน NaN และ บั๊ก loading)
     async function loadPendingOtRequests() {
         const listContainer = document.getElementById('ot-approval-list');
+        
+        // 1. ค้นหา loadingMsg ที่อยู่ใน HTML
         let loadingMsg = document.getElementById('ot-loading-msg');
-        if (!listContainer) return;
+        
+        if (!listContainer) return; // ออกถ้าไม่เจอ Container
+
+        // 2. เคลียร์เฉพาะ "การ์ด" เก่า, แต่ "เก็บ" loadingMsg ไว้
         listContainer.innerHTML = ''; 
+
+        // 3. ตรวจสอบ: ถ้า loadingMsg ไม่มี (เช่น ถูกลบไป) ให้สร้างขึ้นมาใหม่
         if (!loadingMsg) {
             loadingMsg = document.createElement('p');
             loadingMsg.id = 'ot-loading-msg';
             loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
         }
+
+        // 4. แสดงข้อความ "กำลังโหลด..." และเพิ่มกลับเข้าไปใน Container
         loadingMsg.textContent = 'กำลังโหลดรายการ...';
         listContainer.appendChild(loadingMsg); 
 
@@ -5447,9 +5495,12 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                                           .get();
 
             if (querySnapshot.empty) {
+                // 5. ถ้าไม่เจอ: เปลี่ยนข้อความใน loadingMsg (จะไม่ถูกลบ)
                 loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
                 return;
             }
+
+            // 6. ถ้าเจอ: เคลียร์ Container (ลบ loadingMsg) แล้วเริ่มสร้างการ์ด
             listContainer.innerHTML = ''; 
 
             querySnapshot.forEach(doc => {
@@ -5466,6 +5517,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
 
                 if (ot.startTime && ot.endTime) {
                     timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
+                    // คำนวณชั่วโมง OT
                     const [startH, startM] = ot.startTime.split(':').map(Number);
                     const [endH, endM] = ot.endTime.split(':').map(Number);
                     const otDurationHours = (endH + endM/60) - (startH + startM/60);
@@ -5473,6 +5525,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                 } else {
                     timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
                 }
+
 
                 const cardHTML = `
                 <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm ot-request-card">
@@ -5501,14 +5554,17 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
 
         } catch (error) {
             console.error("Error loading OT requests:", error);
+            // 7. ถ้า Error: เปลี่ยนข้อความใน loadingMsg
             loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+            
+            // (ถ้ามี Error เรื่อง Index ให้เปิด Console ดู)
             if (error.code === 'failed-precondition') {
                 loadingMsg.textContent = 'ต้องสร้าง Index! (ดู Console F12)';
             }
         }
     }
 
-    // 3. โหลด "ประวัติ" OT ทั้งหมด (เวอร์ชันแก้ไขบั๊ก)
+    // 3. โหลด "ประวัติ" OT ทั้งหมด (เวอร์ชันแก้ไข: ป้องกัน NaN และ บั๊ก loading)
     async function loadOtHistory() {
         const listContainer = document.getElementById('ot-history-list');
         
@@ -5540,7 +5596,8 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
             if (statusFilter) query = query.where('status', '==', statusFilter);
             if (userFilter) query = query.where('userId', '==', userFilter);
             
-            // if (!statusFilter || !userFilter) { // (ปิดไว้ก่อน กัน Error เรื่อง Index)
+            // [ ★ แก้ไข ★ ] (ปิดไว้ก่อน กัน Error เรื่อง Index)
+            // if (!statusFilter || !userFilter) {
             //     query = query.orderBy('submittedAt', 'desc');
             // }
 
@@ -5574,7 +5631,13 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                         statusColorClass = 'bg-yellow-100 text-yellow-800';
                 }
                 
-                const timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
+                // [ ★ แก้ไข ★ ] ตรวจสอบข้อมูลก่อนแสดงผล
+                let timeInfoText = '';
+                if (ot.startTime && ot.endTime) {
+                    timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
+                } else {
+                    timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
+                }
 
                 const cardHTML = `
                 <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -5589,7 +5652,7 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
                             <p class="text-sm text-gray-500 font-medium">${timeInfoText}</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason}</p>
+                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason || '(ไม่มีเหตุผล)'}</p>
                     ${ot.status !== 'pending' ? `<p class="text-xs text-gray-400 mt-2 text-right">จัดการโดย: ${ot.approvedBy || 'N/A'}</p>` : ''}
                 </div>
                 `;
@@ -5643,15 +5706,23 @@ async function handleLeaveApproval(docId, newStatus, buttonElement) {
 
                     const [startH, startM] = otData.startTime.split(':').map(Number);
                     const [endH, endM] = otData.endTime.split(':').map(Number);
-                    const otDurationHours = (endH + endM/60) - (startH + startM/60);
+                    
+                    // [ ★ แก้ไข ★ ] ตรวจสอบ NaN อีกชั้นก่อนคำนวณ
+                    if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
+                        const otDurationHours = (endH + endM/60) - (startH + startM/60);
 
-                    if (otDurationHours > 0) {
-                        await workRecordRef.update({
-                            'overtime.hours': firebase.firestore.FieldValue.increment(otDurationHours)
-                        });
+                        if (otDurationHours > 0) {
+                            await workRecordRef.update({
+                                'overtime.hours': firebase.firestore.FieldValue.increment(otDurationHours)
+                            });
+                        }
+                    } else {
+                        // ถ้าข้อมูลเป็น NaN (เช่น "abc".split(':') )
+                         console.warn(`ไม่สามารถคำนวณ OT สำหรับ ${docId} ได้ เพราะเวลา (Time) ผิดพลาด`);
+                         showNotification(`อนุมัติสำเร็จ (แต่คำนวณ OT ไม่ได้เพราะข้อมูลเวลาเสีย)`, 'warning');
                     }
                 } else {
-                    // ถ้าข้อมูลไม่ครบ (เช่น รายการที่ NaN) ให้แค่แจ้งเตือน แต่ปล่อยผ่าน
+                    // ถ้าข้อมูลไม่ครบ (เช่น startTime เป็น null)
                     console.warn(`ไม่สามารถคำนวณ OT สำหรับ ${docId} ได้ เพราะข้อมูลไม่ครบ`);
                     showNotification(`อนุมัติสำเร็จ (แต่คำนวณ OT ไม่ได้เพราะข้อมูลเก่า)`, 'warning');
                 }
