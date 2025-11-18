@@ -16,6 +16,8 @@
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.png" type="image/png">
     <meta name="theme-color" content="#38BDF8">
@@ -1028,15 +1030,26 @@
 </div>
 
 <div id="profile-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="profile-edit-overlay" class="absolute inset-0 bg-black opacity-50"></div>
-        <div class="card relative z-10 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-6">แก้ไขโปรไฟล์</h3>
+    <div id="profile-edit-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+    <div class="card relative z-10 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-6">แก้ไขโปรไฟล์</h3>
             
-            <div class="space-y-4">
-                <div>
-                    <label class="text-sm font-medium text-gray-600">ชื่อ-สกุล (ที่แสดงผล)</label>
-                    <input type="text" id="profile-edit-name-input" placeholder="กรอกชื่อ-สกุล" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+        <div class="space-y-4">
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">รูปโปรไฟล์</label>
+                <div class="mt-2 flex items-center gap-4">
+                    <img id="profile-edit-pic-preview" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md">
+                    <input type="file" id="profile-edit-pic-input" class="hidden" accept="image/*">
+                    <button type="button" onclick="document.getElementById('profile-edit-pic-input').click()" class="py-2 px-4 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        เปลี่ยนรูป
+                    </button>
                 </div>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-600">ชื่อ-สกุล (ที่แสดงผล)</label>
+                <input type="text" id="profile-edit-name-input" placeholder="กรอกชื่อ-สกุล" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+            </div>
 
                 <div>
                     <label class="text-sm font-medium text-gray-600">ฝ่าย / แผนก</label>
@@ -1267,6 +1280,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let photoFile = null;
     let controlsInitialized = false;
     let currentUserData = null; 
+    let newProfilePicFile = null;
     // [เพิ่มใหม่] ตัวแปรสำหรับเก็บเดือนที่ดูอยู่
     let currentDisplayDate = new Date();
     
@@ -1277,23 +1291,71 @@ document.addEventListener('DOMContentLoaded', function() {
         users: new Map() // Map(userId -> userData)
     };
 
+    // [ ★ 3.2 เพิ่มโค้ดส่วนนี้ทั้งหมด ★ ]
+    const profileEditPicInput = document.getElementById('profile-edit-pic-input');
+    const profileEditPicPreview = document.getElementById('profile-edit-pic-preview');
+
+    if (profileEditPicInput) {
+        profileEditPicInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 1. แสดงพรีวิวทันที
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                profileEditPicPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // 2. ตั้งค่าการบีบอัด
+            const options = {
+                maxSizeMB: 0.2, // บีบให้เหลือไม่เกิน 0.2MB (200KB)
+                maxWidthOrHeight: 500, // ย่อรูปเหลือ 500x500
+                useWebWorker: true
+            };
+
+            try {
+                console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+                // เรียกใช้ Library ที่เราเพิ่มเข้ามาในขั้นตอนที่ 1
+                const compressedFile = await imageCompression(file, options);
+                console.log(`Compressed size: ${(compressedFile.size / 1024).toFixed(2)} KB`);
+                
+                // 3. เก็บไฟล์ที่บีบอัดแล้วไว้ในตัวแปร
+                newProfilePicFile = compressedFile; 
+
+            } catch (error) {
+                console.error("Image compression error:", error);
+                showNotification("เกิดข้อผิดพลาดในการบีบอัดรูป", "error");
+                newProfilePicFile = null;
+            }
+        });
+    }
+
     // (วางโค้ดนี้ก่อน auth.onAuthStateChanged)
     function openProfileEditModal() {
-    if (!currentUserData) return; // ตรวจสอบว่ามีข้อมูล User
+        if (!currentUserData) return; // ตรวจสอบว่ามีข้อมูล User
 
-    // 1. เติมข้อมูลเดิมลงในฟอร์ม
-    profileEditNameInput.value = currentUserData.fullName || '';
-    profileEditDeptInput.value = currentUserData.department || '';
+        // 1. เติมข้อมูลเดิมลงในฟอร์ม
+        profileEditNameInput.value = currentUserData.fullName || '';
+        profileEditDeptInput.value = currentUserData.department || '';
 
-    // (ลบส่วนที่เกี่ยวกับ profileEditPicPreview.src, newProfilePicFile, profileEditPicInput.value ออก)
+        // 1.1 รีเซ็ตค่าไฟล์ใหม่
+        newProfilePicFile = null;
+        if(profileEditPicInput) profileEditPicInput.value = null; // ล้างค่าไฟล์ที่เลือกค้างไว้
+        // 1.2 แสดงรูปโปรไฟล์ปัจจุบัน
+        if(profileEditPicPreview) profileEditPicPreview.src = currentUserData.profileImageUrl || 'https://placehold.co/150x150/E2E8F0/475569?text=User';
 
-    // 2. แสดง Modal
-    if (profileEditModal) profileEditModal.classList.remove('hidden');
-}
+        // 2. แสดง Modal
+        if (profileEditModal) profileEditModal.classList.remove('hidden');
+    }
 
     // --- [เพิ่ม] ฟังก์ชันปิด Modal ---
     function closeProfileEditModal() {
         if (profileEditModal) profileEditModal.classList.add('hidden');
+        // รีเซ็ตค่า
+        newProfilePicFile = null;
+        if(profileEditPicInput) profileEditPicInput.value = null;
+        if(profileEditPicPreview) profileEditPicPreview.src = 'https://placehold.co/150x150/E2E8F0/475569?text=User'; // รีเซ็ตเป็น placeholder
     }
 
     // --- [เพิ่ม] ผูก Event Listener (ปุ่มเปิด/ปิด Modal) ---
@@ -1316,16 +1378,29 @@ document.addEventListener('DOMContentLoaded', function() {
     profileEditSaveBtn.textContent = 'กำลังบันทึก...';
 
     try {
-        // [ ★★★ แก้ไข ★★★ ]
-        // ข้อมูลที่จะอัปเดตมีแค่ 2 อย่างนี้เท่านั้น
         let updatedData = {
             fullName: newName,
             department: newDept
+            // เราจะเพิ่ม profileImageUrl ที่นี่ ถ้ามีการอัปโหลด
         };
 
-        // (ลบส่วนที่เช็ก if (newProfilePicFile) ... และการอัปโหลด Storage ออกทั้งหมด)
+        // 1. ตรวจสอบว่ามีไฟล์รูปใหม่ (ที่ถูกบีบอัดแล้ว) หรือไม่
+        if (newProfilePicFile) {
+            
+            // 1.1 สร้าง Path ที่เก็บไฟล์ (ตั้งชื่อไฟล์ตายตัวเพื่อ "อัปโหลดทับ")
+            const storageRef = storage.ref(`profile_images/${currentUser.uid}/profile.jpg`);
+            
+            // 1.2 อัปโหลดไฟล์ที่ "บีบอัดแล้ว"
+            const uploadTask = await storageRef.put(newProfilePicFile);
+            
+            // 1.3 ดึง URL ของไฟล์ที่อัปโหลดเสร็จ
+            const downloadURL = await uploadTask.ref.getDownloadURL();
+            
+            // 1.4 เพิ่ม URL ลงในข้อมูลที่จะอัปเดต
+            updatedData.profileImageUrl = downloadURL;
+        }
 
-        // 2. อัปเดตข้อมูล (ชื่อ/แผนก) ลง Firestore
+        // 2. อัปเดตข้อมูล (ชื่อ/แผนก/และรูปภาพ ถ้ามี) ลง Firestore
         const userDocRef = db.collection('users').doc(currentUser.uid);
         await userDocRef.update(updatedData);
 
