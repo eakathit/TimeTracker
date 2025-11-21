@@ -3455,7 +3455,7 @@ async function initializeApp(user, userData) {
                 const now = new Date();
                 // now.setHours(18, 0, 0, 0);
                 // ✨ [แก้ไขเพื่อเทส] บังคับเวลาปัจจุบันเป็น 19:30 (เพื่อให้เงื่อนไข >= 18 เป็นจริง)
-        currentTime.setHours(19, 30, 0, 0); 
+                // currentTime.setHours(19, 30, 0, 0); 
 
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
@@ -3504,8 +3504,8 @@ async function initializeApp(user, userData) {
 
             try {
                 const now = new Date();
-                
-                now.setHours(18, 0, 0, 0); 
+
+                // now.setHours(18, 0, 0, 0); 
 
                 const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
@@ -3547,7 +3547,8 @@ async function initializeApp(user, userData) {
         };
 
         const currentTime = new Date();
-        currentTime.setHours(18, 0, 0, 0);
+        
+        // currentTime.setHours(18, 0, 0, 0);
 
         if (currentTime.getHours() >= 18) { 
              showConfirmDialog(
