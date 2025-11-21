@@ -5542,11 +5542,21 @@ if (otListContainer) {
 
                 if (ot.startTime && ot.endTime) {
                     timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
-                    // คำนวณชั่วโมง OT
+                    
+                    // แยกชั่วโมงและนาที
                     const [startH, startM] = ot.startTime.split(':').map(Number);
                     const [endH, endM] = ot.endTime.split(':').map(Number);
-                    const otDurationHours = (endH + endM/60) - (startH + startM/60);
+                    
+                    // 1. แปลงเวลาทั้งหมดเป็นหน่วย "นาที" เพื่อให้คำนวณง่าย
+                    const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
+                    // 2. คำนวณ OT ตามกฎ "นับทุก 30 นาที" (เศษปัดทิ้ง)
+                    // สูตร: (นาทีรวม หาร 30) ปัดเศษทิ้ง แล้วคูณ 0.5
+                    const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
+
+                    // แสดงผล (จะลงท้ายด้วย .0 หรือ .5 เสมอ)
                     otDurationText = `(${otDurationHours.toFixed(1)} ชม.)`;
+
                 } else {
                     timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
                 }
