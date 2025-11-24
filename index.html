@@ -135,7 +135,7 @@
         </svg>
     </div>
 
-    <div id="app-container" class="hidden md:flex pb-24 md:pb-0">
+    <div id="app-container" class="hidden md:flex pb-24 md:pb-0" style="display: none;">
         
         <aside class="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 bg-white border-r border-gray-200 p-4 z-20">
             <div class="flex items-center gap-2 mb-8 px-2">
@@ -1407,216 +1407,153 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function initializeApp(user, userData) {
-        // --- นี่คือโค้ดทั้งหมดที่คัดลอกมาจาก if (userDoc.exists) ---
-        
-        currentUserData = userData;
-        
-        document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
-        // (เพิ่มใหม่) ดึงปุ่มจาก Sidebar
-        const reportNavButtonSidebar = document.getElementById('report-or-admin-nav-sidebar');
-        const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
-        // 1. ปุ่มที่ 2 (รายงาน) - ตั้งค่าให้เป็น "รายงาน" เสมอ
-        const reportNavButton = document.getElementById('report-or-admin-nav');
-        if (reportNavButton) {
-            const navIcon = reportNavButton.querySelector('svg');
-            const navText = reportNavButton.querySelector('span');
-            const reportIconSvg = `
-                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-            `;
-            reportNavButton.dataset.page = 'report-page';
-            navText.textContent = 'รายงาน';
-            navIcon.innerHTML = reportIconSvg;
+    console.log("Initializing App...");
+    currentUserData = userData;
+
+    // 1. อัปเดตข้อมูลพื้นฐานบน UI
+    document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+    updateProfilePage(userData);
+
+    // --- จัดการ Logic ของปุ่ม Navigation (Admin vs User) ---
+    const reportNavButtonSidebar = document.getElementById('report-or-admin-nav-sidebar');
+    const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
+    const reportNavButton = document.getElementById('report-or-admin-nav');
+    const thirdNavButton = document.getElementById('calendar-or-admin-nav');
+
+    // ไอคอนสำหรับปุ่ม Dashboard (Admin)
+    const dashboardIconSvg_BottomNav = `
+    <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+    </svg>`;
+    const dashboardIconSvg_Sidebar = `
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+    </svg>`;
+
+    // ไอคอนสำหรับปุ่ม Calendar (User)
+    const calendarIconSvg_BottomNav = `
+    <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+    </svg>`;
+    const calendarIconSvg_Sidebar = `
+    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+    </svg>`;
+
+    // ตั้งค่าปุ่มเมนูตาม Role
+    if (currentUserData && currentUserData.role === 'admin') {
+        // [FIX] ใช้ outerHTML แทน innerHTML เพื่อเปลี่ยนแค่ SVG โดยไม่ลบ Text
+        if (thirdNavButtonSidebar) {
+            thirdNavButtonSidebar.dataset.page = 'admin-dashboard-page';
+            thirdNavButtonSidebar.querySelector('span').textContent = 'Dashboard';
+            const oldIcon = thirdNavButtonSidebar.querySelector('svg');
+            if (oldIcon) oldIcon.outerHTML = dashboardIconSvg_Sidebar;
         }
-
-        // (เพิ่มใหม่) อัปเดตปุ่มที่ 2 ของ Sidebar
-        if (reportNavButtonSidebar) {
-            const navIcon = reportNavButtonSidebar.querySelector('svg');
-            const navText = reportNavButtonSidebar.querySelector('span');
-            const reportIconSvg = `
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-            `;
-            reportNavButtonSidebar.dataset.page = 'report-page';
-            navText.textContent = 'รายงาน';
-            navIcon.innerHTML = reportIconSvg;
+        if (thirdNavButton) {
+            thirdNavButton.dataset.page = 'admin-dashboard-page';
+            thirdNavButton.querySelector('span').textContent = 'Dashboard';
+            const oldIcon = thirdNavButton.querySelector('svg');
+            if (oldIcon) oldIcon.outerHTML = dashboardIconSvg_BottomNav;
         }
-
-        // 2. ปุ่มที่ 3 (ปฏิทิน/Dashboard) - เปลี่ยนตาม Role
-        const thirdNavButton = document.getElementById('calendar-or-admin-nav');
-        // (โค้ดเดิมที่ดึง sidebar)
-        // const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
-
-        // ( ★★★ เพิ่มใหม่ ★★★ )
-        // ไอคอนสำหรับ Bottom Nav (w-7 h-7)
-        const dashboardIconSvg_BottomNav = `
-        <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-        </svg>
-        `;
-        const calendarIconSvg_BottomNav = `
-        <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        `;
-        
-        // ไอคอนสำหรับ Sidebar (w-6 h-6)
-        const dashboardIconSvg_Sidebar = `
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-        </svg>
-        `;
-        const calendarIconSvg_Sidebar = `
-        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        `;
-
-        if (currentUserData && currentUserData.role === 'admin') {
-            // --- 1. ตั้งค่า Sidebar ---
-            if (thirdNavButtonSidebar) {
-                const navIcon = thirdNavButtonSidebar.querySelector('svg');
-                const navText = thirdNavButtonSidebar.querySelector('span');
-                thirdNavButtonSidebar.dataset.page = 'admin-dashboard-page';
-                navText.textContent = 'Dashboard';
-                navIcon.innerHTML = dashboardIconSvg_Sidebar;
-            }
-            // --- 2. ( ★★★ ที่แก้ไข ★★★ ) ตั้งค่า Bottom Nav Bar ---
-            if (thirdNavButton) {
-                const navIcon = thirdNavButton.querySelector('svg');
-                const navText = thirdNavButton.querySelector('span');
-                thirdNavButton.dataset.page = 'admin-dashboard-page';
-                navText.textContent = 'Dashboard';
-                navIcon.innerHTML = dashboardIconSvg_BottomNav;
-            }
-        } else {
-            // --- 1. ตั้งค่า Sidebar ---
-            if (thirdNavButtonSidebar) {
-                const navIcon = thirdNavButtonSidebar.querySelector('svg');
-                const navText = thirdNavButtonSidebar.querySelector('span');
-                thirdNavButtonSidebar.dataset.page = 'calendar-page';
-                navText.textContent = 'ปฏิทิน';
-                navIcon.innerHTML = calendarIconSvg_Sidebar;
-            }
-            // --- 2. ( ★★★ ที่แก้ไข ★★★ ) ตั้งค่า Bottom Nav Bar ---
-            if (thirdNavButton) {
-                const navIcon = thirdNavButton.querySelector('svg');
-                const navText = thirdNavButton.querySelector('span');
-                thirdNavButton.dataset.page = 'calendar-page';
-                navText.textContent = 'ปฏิทิน';
-                navIcon.innerHTML = calendarIconSvg_BottomNav;
-            }
+    } else {
+        if (thirdNavButtonSidebar) {
+            thirdNavButtonSidebar.dataset.page = 'calendar-page';
+            thirdNavButtonSidebar.querySelector('span').textContent = 'ปฏิทิน';
+            const oldIcon = thirdNavButtonSidebar.querySelector('svg');
+            if (oldIcon) oldIcon.outerHTML = calendarIconSvg_Sidebar;
         }
-        // --- จบส่วนตรวจสอบ Role ---
-
-        updateProfilePage(userData);
-        await checkUserWorkStatus();
-        
-        await loadDailyLeaveNotifications();
-
-        initializeControls();
-        await populateDropdownOptions();
-
-        appContainer.style.display = 'block';
-        showPage('check-in-out-page');
-
-        const allNavItems = document.querySelectorAll('.nav-item');
-        allNavItems.forEach(n => n.classList.remove('active'));
-        const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
-        checkInNavItems.forEach(n => n.classList.add('active'));
-
-        startWatchingPosition();
-        
+        if (thirdNavButton) {
+            thirdNavButton.dataset.page = 'calendar-page';
+            thirdNavButton.querySelector('span').textContent = 'ปฏิทิน';
+            const oldIcon = thirdNavButton.querySelector('svg');
+            if (oldIcon) oldIcon.outerHTML = calendarIconSvg_BottomNav;
+        }
     }
 
-        // [1] แสดง Spinner ก่อน
-        loadingSpinner.style.display = 'flex';
-        loginPage.style.display = 'none';
-        appContainer.style.display = 'none';
+    // 2. แสดงหน้าจอหลักทันที
+    appContainer.style.display = 'block';
+    // ลบ style none ที่เราใส่ไว้ใน HTML ออก (เผื่อกรณี CSS class ทำงานต่อ)
+    appContainer.style.removeProperty('display'); 
+    
+    loadingSpinner.style.display = 'none';
+    showPage('check-in-out-page');
 
-        // [2] ★★★ (แก้ไข) ย้าย onAuthStateChanged ออกมาอยู่ข้างนอก ★★★
-        // นี่คือ "ตัวฟัง" หลักของแอป ที่จะทำงานทันที
+    // ตั้งค่า Active Menu
+    const allNavItems = document.querySelectorAll('.nav-item');
+    allNavItems.forEach(n => n.classList.remove('active'));
+    const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
+    checkInNavItems.forEach(n => n.classList.add('active'));
+
+    // เริ่มต้นระบบ GPS และ Controls
+    initializeControls();
+    startWatchingPosition();
+
+    // 3. โหลดข้อมูลเบื้องหลัง (Parallel)
+    try {
+        await Promise.all([
+            checkUserWorkStatus(),
+            loadDailyLeaveNotifications(),
+            populateDropdownOptions()
+        ]);
+        console.log("Background data loaded successfully");
+    } catch (error) {
+        console.error("Error loading background data:", error);
+    }
+}
         auth.onAuthStateChanged(async (user) => {
-            loginPage.style.display = 'none';
-            appContainer.style.display = 'none';
+    // ซ่อนหน้า Login ทันทีที่รู้ว่ามี User (หรือไม่มี) เพื่อเตรียมเปลี่ยนหน้า
+    loginPage.style.display = 'none';
+    
+    if (user) {
+        // --- กรณี User เข้าระบบสำเร็จ ---
+        console.log("User authenticated:", user.uid);
+        currentUser = user;
+        
+        const userDocRef = db.collection('users').doc(user.uid);
+        
+        // ดึงข้อมูล User ครั้งเดียว
+        const userDoc = await userDocRef.get({ source: 'server' }); // ใช้ server เพื่อความชัวร์ในครั้งแรก
 
-            if (user) {
-                // --- 1. กรณี User เข้าระบบสำเร็จ ---
-                currentUser = user;
-                const userDocRef = db.collection('users').doc(user.uid);
-                const userDoc = await userDocRef.get({ source: 'server' });
-
-                if (userDoc.exists) {
-                    // (เรียกฟังก์ชันเช็ครูปโปรไฟล์ Line)
-                    try {
-                    // [แก้ไข] ระบุ Region ของ Function ให้ถูกต้อง
-                    const functions = firebase.app().functions('asia-southeast1'); 
-                    
-                    // [แก้ไข BUG ที่ 2] แก้ไขการเรียก Cloud Function ที่ผิด
-                    // ...
-                    const saveLineProfileImage = functions.httpsCallable('saveLineProfileImage'); 
-                    
-                    await saveLineProfileImage({ photoURL: user.photoURL });
-                } catch (error) {
-                        console.error("Error calling update profile image function:", error);
-                        // (นี่อาจเป็นสาเหตุที่ทำให้เด้งกลับ ถ้าคุณยังไม่อัปเกรดแผน Blaze)
-                    }
-                    // (ดึงข้อมูลล่าสุด แล้วเรียก initializeApp)
-                    const updatedUserDoc = await userDocRef.get();
-                    await initializeApp(user, updatedUserDoc.data());
-                } else {
-                    // --- 2. กรณี User ใหม่ ---
-                    console.log("New user detected. Creating profile and initializing...");
-                    try {
-                        const newUserProfile = {
-                            fullName: user.displayName || user.email || 'New User',
-                            email: user.email || null,
-                            profileImageUrl: user.photoURL || null,
-                            department: 'Unassigned',
-                            role: 'user',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-                        await userDocRef.set(newUserProfile);
-                        await initializeApp(user, newUserProfile);
-                    } catch (error) {
-                        console.error("Error creating new user profile:", error);
-                        alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
-                        auth.signOut();
-                        loginPage.style.display = 'flex';
-                    }
-                }
-            } else {
-                // --- 3. กรณี Logged out ---
-                stopWatchingPosition();
-                currentUser = null;
+        if (userDoc.exists) {
+            // [แก้ไข] ตัดส่วน saveLineProfileImage ออก เพราะไม่ได้ใช้ LINE แล้ว
+            // [แก้ไข] ส่งข้อมูลที่ดึงมาได้ (userDoc.data()) ไปใช้เลย ไม่ต้องดึงซ้ำ
+            await initializeApp(user, userDoc.data());
+        } else {
+            // --- กรณี User ใหม่ (สร้างโปรไฟล์ครั้งแรก) ---
+            console.log("Creating new user profile...");
+            try {
+                const newUserProfile = {
+                    fullName: user.displayName || user.email || 'New User',
+                    email: user.email || null,
+                    profileImageUrl: user.photoURL || null,
+                    department: 'Unassigned',
+                    role: 'user',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await userDocRef.set(newUserProfile);
+                await initializeApp(user, newUserProfile);
+                
+            } catch (error) {
+                console.error("Error creating new user profile:", error);
+                alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
+                auth.signOut();
                 loginPage.style.display = 'flex';
-
-                // (ส่วนนี้ OK - โค้ดสำหรับเตือน in-app browser ของ LINE)
-                function isLineInAppBrowser() {
-                    const ua = navigator.userAgent;
-                    return ua.indexOf("Line/") > -1;
-                }
-                const warningBox = document.getElementById('unsupported-browser-warning'); 
-                const loginButton = document.getElementById('line-login-btn');
-                if (warningBox && loginButton) {
-                    if (isLineInAppBrowser()) {
-                        warningBox.classList.remove('hidden'); 
-                        loginButton.disabled = true;           
-                        loginButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    } else {
-                        warningBox.classList.add('hidden');    
-                        loginButton.disabled = false;          
-                        loginButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                    }
-                }
-                // (จบส่วนเตือน)
+                loadingSpinner.style.display = 'none';
             }
-            
-            // [3] ซ่อน Spinner *หลังจาก* onAuthStateChanged ทำงานเสร็จ
-            loadingSpinner.style.display = 'none';
-        });
+        }
+    } else {
+        // --- กรณี Logged out ---
+        console.log("User logged out");
+        stopWatchingPosition();
+        currentUser = null;
+        
+        // แสดงหน้า Login และซ่อน Spinner
+        appContainer.style.display = 'none';
+        loginPage.style.display = 'flex';
+        loadingSpinner.style.display = 'none';
+    }
+});
         
         // โค้ดส่วนนี้จะ "ประมวลผล" การ Login (ถ้ามี) และผลลัพธ์ของมันจะถูก "ดักจับ" 
         // โดย onAuthStateChanged (ที่อยู่ข้างบน) ซึ่งกำลังรอฟังอยู่แล้ว
