@@ -5834,7 +5834,9 @@ if (otListContainer) {
                     
                     // [ ★ แก้ไข ★ ] ตรวจสอบ NaN อีกชั้นก่อนคำนวณ
                     if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
-                        const otDurationHours = (endH + endM/60) - (startH + startM/60);
+                        
+                        const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+                        const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
 
                         if (otDurationHours > 0) {
                             await workRecordRef.update({
