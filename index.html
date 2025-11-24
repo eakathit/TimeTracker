@@ -226,19 +226,46 @@
                     </div>
                     
                     <div id="onsite-details-form" class="hidden pt-4 border-t border-gray-100 space-y-4">
-                        <input id="onsite-location-input" type="text" placeholder="ระบุชื่อลูกค้า หรือสถานที่..." class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600 mb-2">แนบรูปภาพเพื่อยืนยืน</label>
-                            <div class="flex items-center space-x-4">
-                                <input type="file" id="photo-upload-input" class="hidden" accept="image/*" capture="user">
-                                <button id="take-photo-btn" class="w-full flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:bg-gray-50">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span>ถ่ายรูป</span>
-                                </button>
-                            </div>
-                            <img id="photo-preview" src="" class="hidden mt-4 rounded-xl max-h-40 mx-auto"/>
-                        </div>
-                    </div>
+    <h3 class="font-semibold text-center mb-2 text-gray-700">เลือกบทบาทของคุณ</h3>
+    
+    <div class="flex gap-3">
+        <button id="role-member-btn" class="flex-1 py-3 bg-white border-2 border-sky-500 text-sky-600 rounded-xl font-bold hover:bg-sky-50 transition-all active-role">
+            📷 สแกน QR <br><span class="text-xs font-normal">(สมาชิก)</span>
+        </button>
+        <button id="role-leader-btn" class="flex-1 py-3 bg-white border-2 border-gray-300 text-gray-500 rounded-xl font-bold hover:bg-gray-50 transition-all">
+            👑 สร้างห้อง <br><span class="text-xs font-normal">(หัวหน้าทีม)</span>
+        </button>
+    </div>
+
+    <div id="member-section" class="space-y-3">
+        <div id="reader" class="w-full rounded-xl overflow-hidden bg-black hidden"></div>
+        <button id="start-scan-btn" class="w-full btn-primary py-3 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            เปิดกล้องสแกน QR
+        </button>
+        <p id="scan-status" class="text-center text-sm text-gray-500">กดปุ่มเพื่อเริ่มสแกน</p>
+    </div>
+
+    <div id="leader-section" class="hidden space-y-3">
+        <input id="room-project-input" type="text" placeholder="ชื่อโครงการ / Project No." class="w-full p-3 border border-gray-300 rounded-xl">
+        <input id="room-location-input" type="text" placeholder="ชื่อสถานที่ / ลูกค้า" class="w-full p-3 border border-gray-300 rounded-xl">
+        
+        <button id="create-room-btn" class="w-full btn-primary py-3">สร้างห้อง Check-in</button>
+
+        <div id="room-qr-container" class="hidden flex flex-col items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
+            <p class="text-sm font-bold text-gray-600 mb-2">QR Code สำหรับทีม</p>
+            <div id="qrcode" class="mb-4"></div>
+            <p class="text-xs text-gray-400 mb-2">ให้สมาชิกสแกนเพื่อ Check-in</p>
+            
+            <div class="w-full border-t pt-2">
+                <p class="text-xs font-bold text-gray-500 mb-2">สมาชิกที่เข้าร่วม:</p>
+                <ul id="room-members-list" class="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto w-full text-center">
+                    <li class="text-gray-400 italic">รอสมาชิกสแกน...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
                     <div class="pt-4 border-t border-gray-100">
                          <h3 class="font-semibold mb-3">สถานะตำแหน่งปัจจุบัน</h3>
@@ -1135,6 +1162,9 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
@@ -1222,7 +1252,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const workTypeButtons = document.querySelectorAll('.work-type-btn');
     const onsiteDetailsForm = document.getElementById('onsite-details-form');
     const onsiteLocationInput = document.getElementById('onsite-location-input');
-    const takePhotoBtn = document.getElementById('take-photo-btn');
     const photoUploadInput = document.getElementById('photo-upload-input');
     const photoPreview = document.getElementById('photo-preview');
     const summaryCheckinTime = document.getElementById('summary-checkin-time');
@@ -1311,6 +1340,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const otEndTime = document.getElementById('ot-end-time');
     const otReason = document.getElementById('ot-reason');
     
+        let html5QrCode;
+        let currentRoomId = null;
+        let roomUnsubscribe = null; // สำหรับยกเลิกการฟัง Realtime update
+
+        // --- 1. การสลับ Role (Member / Leader) ---
+        const roleMemberBtn = document.getElementById('role-member-btn');
+        const roleLeaderBtn = document.getElementById('role-leader-btn');
+        const memberSection = document.getElementById('member-section');
+        const leaderSection = document.getElementById('leader-section');
+
+        // CSS Class สำหรับปุ่มที่ถูกเลือก/ไม่ถูกเลือก
+        const activeClass = ['border-sky-500', 'text-sky-600', 'bg-sky-50'];
+        const inactiveClass = ['border-gray-300', 'text-gray-500', 'bg-white'];
+
     // (เพิ่มตัวแปรนี้ด้านบน) กำหนดค่าความแม่นยำสูงสุดที่ยอมรับได้ (เช่น 100 เมตร)
     const MAX_ACCEPTABLE_ACCURACY = 180;
     // --- App State ---
@@ -1681,22 +1724,6 @@ async function initializeApp(user, userData) {
         });
     });
 
-    takePhotoBtn.addEventListener('click', () => {
-        photoUploadInput.click();
-    });
-
-    photoUploadInput.addEventListener('change', (event) => {
-        photoFile = event.target.files[0];
-        if (photoFile) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                photoPreview.src = e.target.result;
-                photoPreview.classList.remove('hidden');
-            };
-            reader.readAsDataURL(photoFile);
-        }
-    });
-
     const populateDropdownOptions = async () => {
         const db = firebase.firestore();
         const configs = [
@@ -1738,7 +1765,7 @@ async function initializeApp(user, userData) {
         }
     };
 
-    const initializeControls = () => {
+    function initializeControls() {
         if (controlsInitialized) return;
         
         const db = firebase.firestore();
@@ -6287,6 +6314,252 @@ if (otListContainer) {
         reportDateInput.addEventListener('change', loadReportForSelectedDate);
     }
 
+    function switchRole(role) {
+    if (role === 'member') {
+        memberSection.classList.remove('hidden');
+        leaderSection.classList.add('hidden');
+        
+        roleMemberBtn.classList.add(...activeClass);
+        roleMemberBtn.classList.remove(...inactiveClass);
+        roleLeaderBtn.classList.remove(...activeClass);
+        roleLeaderBtn.classList.add(...inactiveClass);
+        
+        // ปิดปุ่ม Check In หลัก เพราะสมาชิกจะ Check in ผ่าน QR
+        document.getElementById('checkin-btn').classList.add('hidden'); 
+    } else {
+        memberSection.classList.add('hidden');
+        leaderSection.classList.remove('hidden');
+        
+        roleLeaderBtn.classList.add(...activeClass);
+        roleLeaderBtn.classList.remove(...inactiveClass);
+        roleMemberBtn.classList.remove(...activeClass);
+        roleMemberBtn.classList.add(...inactiveClass);
+
+        // Leader สร้างห้องแล้วถือว่า Check-in เลย หรือกดปุ่มสร้างห้อง
+        document.getElementById('checkin-btn').classList.add('hidden');
+    }
+}
+
+if(roleMemberBtn) roleMemberBtn.addEventListener('click', () => switchRole('member'));
+if(roleLeaderBtn) roleLeaderBtn.addEventListener('click', () => switchRole('leader'));
+
+
+// --- 2. Logic ฝั่ง Leader (สร้างห้อง) ---
+const createRoomBtn = document.getElementById('create-room-btn');
+const roomQrContainer = document.getElementById('room-qr-container');
+const roomMembersList = document.getElementById('room-members-list');
+
+if(createRoomBtn) {
+    createRoomBtn.addEventListener('click', async () => {
+        const project = document.getElementById('room-project-input').value;
+        const locationName = document.getElementById('room-location-input').value;
+
+        if (!project || !locationName) {
+            alert("กรุณากรอกชื่อโครงการและสถานที่");
+            return;
+        }
+        
+        console.log("Current User Status:", currentUser); 
+        
+        if (!currentUser) {
+            alert("คุณยังไม่ได้เข้าสู่ระบบ หรือ Session หมดอายุ");
+            return;
+        }
+
+        if(!latestPosition) {
+             alert("กรุณารอสัญญาณ GPS สักครู่...");
+             return;
+        }
+
+        createRoomBtn.disabled = true;
+        createRoomBtn.textContent = "กำลังสร้างห้อง...";
+
+        try {
+            // 1. สร้าง Room ID
+            const roomId = `ROOM_${currentUser.uid}_${Date.now()}`;
+            const roomData = {
+                roomId: roomId,
+                leaderId: currentUser.uid,
+                leaderName: currentUserData.fullName,
+                project: project,
+                locationName: locationName,
+                gpsLocation: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                isActive: true,
+                members: [] // เก็บ uid ของคนที่มาจอย
+            };
+
+            // 2. บันทึกลง Firestore Collection ใหม่ 'onsite_rooms'
+            await db.collection('onsite_rooms').doc(roomId).set(roomData);
+
+            // 3. Leader ทำการ Check-in ตัวเองอัตโนมัติ
+            await performCheckIn(roomId, project, locationName, 'leader');
+
+            // 4. สร้าง QR Code
+            document.getElementById('qrcode').innerHTML = ""; // เคลียร์ของเก่า
+            new QRCode(document.getElementById("qrcode"), {
+                text: roomId,
+                width: 180,
+                height: 180
+            });
+
+            // 5. แสดง UI
+            createRoomBtn.classList.add('hidden'); // ซ่อนปุ่มสร้าง
+            roomQrContainer.classList.remove('hidden');
+            
+            // 6. ฟังการเปลี่ยนแปลงสมาชิกในห้อง (Realtime)
+            listenToRoomMembers(roomId);
+
+        } catch (error) {
+            console.error("Error creating room:", error);
+            alert("เกิดข้อผิดพลาด: " + error.message);
+            createRoomBtn.disabled = false;
+            createRoomBtn.textContent = "สร้างห้อง Check-in";
+        }
+    });
+}
+
+function listenToRoomMembers(roomId) {
+    roomUnsubscribe = db.collection('onsite_rooms').doc(roomId)
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                const members = data.members || [];
+                
+                // อัปเดตรายชื่อสมาชิกที่หน้าจอ Leader
+                if (members.length === 0) {
+                    roomMembersList.innerHTML = '<li class="text-gray-400 italic">รอสมาชิกสแกน...</li>';
+                } else {
+                    // ดึงชื่อจาก users collection (แบบง่ายอาจจะเก็บชื่อใน array members เลยก็ได้ แต่ที่นี่สมมติเก็บแค่ uid)
+                    // เพื่อความง่าย แนะนำให้เก็บ {uid, name} ใน members array ตอนจอย
+                    roomMembersList.innerHTML = members.map(m => 
+                        `<li class="text-green-600 font-medium">✓ ${m.name}</li>`
+                    ).join('');
+                }
+            }
+        });
+}
+
+
+// --- 3. Logic ฝั่ง Member (Scan QR) ---
+const startScanBtn = document.getElementById('start-scan-btn');
+
+if(startScanBtn) {
+    startScanBtn.addEventListener('click', () => {
+        const html5QrCode = new Html5Qrcode("reader");
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            // หยุดสแกนเมื่อเจอ QR
+            html5QrCode.stop().then(() => {
+                document.getElementById('reader').classList.add('hidden');
+                document.getElementById('scan-status').textContent = "สแกนสำเร็จ! กำลังตรวจสอบ...";
+                joinRoom(decodedText); // decodedText คือ roomId
+            }).catch(err => {
+                console.log("Stop failed ", err);
+            });
+        };
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        // เปิดกล้อง
+        document.getElementById('reader').classList.remove('hidden');
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+        .catch(err => {
+            alert("ไม่สามารถเปิดกล้องได้: " + err);
+        });
+    });
+}
+
+async function joinRoom(roomId) {
+    if(!currentUser) return;
+
+    try {
+        // 1. ตรวจสอบว่าห้องมีอยู่จริงและยัง Active อยู่
+        const roomRef = db.collection('onsite_rooms').doc(roomId);
+        const roomDoc = await roomRef.get();
+
+        if (!roomDoc.exists || !roomDoc.data().isActive) {
+            alert("ห้องนี้ปิดไปแล้ว หรือรหัสไม่ถูกต้อง");
+            document.getElementById('scan-status').textContent = "กดปุ่มเพื่อเริ่มสแกนใหม่";
+            return;
+        }
+
+        const roomData = roomDoc.data();
+
+        // 2. ตรวจสอบระยะห่างกับ Leader (Optional: ป้องกันการส่งรูป QR ให้กัน)
+        // หากต้องการเข้มงวด ให้เช็ค distance ระหว่าง latestPosition กับ roomData.gpsLocation
+        
+        // 3. ทำการ Check-in
+        await performCheckIn(roomId, roomData.project, roomData.locationName, 'member');
+
+        // 4. อัปเดตชื่อลงในรายชื่อสมาชิกของห้อง
+        await roomRef.update({
+            members: firebase.firestore.FieldValue.arrayUnion({
+                uid: currentUser.uid,
+                name: currentUserData.fullName
+            })
+        });
+
+        alert(`เข้าร่วมกลุ่ม "${roomData.project}" สำเร็จ!`);
+        // รีเฟรชหน้าหรือเปลี่ยนสถานะ UI
+        location.reload(); // หรือ updateUIToCheckedIn()
+
+    } catch (error) {
+        console.error("Join room error:", error);
+        alert("เกิดข้อผิดพลาดในการเข้าร่วม: " + error.message);
+    }
+}
+
+
+// --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
+async function performCheckIn(roomId, project, locationName, role) {
+    const now = new Date();
+    const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
+
+    const workRecord = {
+        userId: currentUser.uid,
+        date: firebase.firestore.Timestamp.fromDate(now),
+        checkIn: {
+            timestamp: firebase.firestore.Timestamp.fromDate(now),
+            location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+            accuracy: latestPosition.coords.accuracy,
+            
+            // ระบุประเภทงานเป็น Group Onsite
+            workType: 'onsite_group', 
+            
+            // เก็บข้อมูลห้องไว้ด้วย
+            roomId: roomId,
+            onSiteDetails: `${locationName} (Group: ${project})`,
+            photoUrl: null // ไม่ต้องใช้รูปเพราะมี Leader ยืนยันแล้ว
+        },
+        status: "checked_in",
+        report: null, // ยังไม่มีรายงาน
+        checkOut: null,
+        overtime: null
+    };
+
+    await db.collection('work_records').doc(docId).set(workRecord);
+    
+    // อัปเดต UI หลักให้เป็น Checked In
+    updateUIToCheckedIn();
+    showNotification("บันทึกเวลาเข้างานเรียบร้อย");
+}
+
+// เพิ่ม Logic การกดปุ่ม On-site ใน Event Listener เดิม
+workTypeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        // ... (code เดิมที่เปลี่ยนสีปุ่ม) ...
+        
+        if (selectedWorkType === 'on_site') {
+            document.getElementById('onsite-details-form').classList.remove('hidden');
+            
+            // Default เลือกเป็น Member
+            switchRole('member');
+        } else {
+            document.getElementById('onsite-details-form').classList.add('hidden');
+            document.getElementById('checkin-btn').classList.remove('hidden'); // แสดงปุ่ม Checkin ปกติ
+        }
+    });
+});
 
 });
 
