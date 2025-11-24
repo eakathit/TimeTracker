@@ -6173,16 +6173,21 @@ if (otListContainer) {
                     }
 
                     // สถานะและการแสดงผล
+                    // สถานะและการแสดงผล
                     let statusBadge = '';
                     let statusBorder = '';
+                    
+                    // [แก้ไข] เพิ่ม class: inline-block, w-24 (กว้างคงที่), text-center (จัดกลาง)
+                    const badgeBaseClass = "inline-block w-24 text-center text-xs font-semibold px-2 py-1 rounded-full";
+
                     if (data.status === 'pending') {
-                        statusBadge = '<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">รออนุมัติ</span>';
+                        statusBadge = `<span class="${badgeBaseClass} bg-yellow-100 text-yellow-800">รออนุมัติ</span>`;
                         statusBorder = 'border-l-4 border-yellow-400';
                     } else if (data.status === 'approved') {
-                        statusBadge = '<span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">อนุมัติแล้ว</span>';
+                        statusBadge = `<span class="${badgeBaseClass} bg-green-100 text-green-800">อนุมัติแล้ว</span>`;
                         statusBorder = 'border-l-4 border-green-500';
                     } else if (data.status === 'rejected') {
-                        statusBadge = '<span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">ไม่อนุมัติ</span>';
+                        statusBadge = `<span class="${badgeBaseClass} bg-red-100 text-red-800">ไม่อนุมัติ</span>`;
                         statusBorder = 'border-l-4 border-red-500';
                     }
 
