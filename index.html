@@ -9,12 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.png" type="image/png">
@@ -1087,12 +1081,12 @@
             <div class="space-y-4">
                 <div>
                     <label class="text-sm font-medium text-gray-600">วันที่ (อัตโนมัติ)</label>
-                    <input type="date" id="ot-request-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl bg-gray-100" readonly>
+                    <input type="date" id="ot-request-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-gray-100" readonly>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-medium text-gray-600">เวลาเริ่มต้น OT</label>
-                        <input type="time" id="ot-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl bg-gray-100" readonly>
+                        <input type="time" id="ot-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-gray-100" readonly>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด OT</label>
@@ -1141,6 +1135,13 @@
         </div>
     </div>
 
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="firebase-config.js"></script>
     <script>
     // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
@@ -2886,7 +2887,7 @@ async function initializeApp(user, userData) {
                             <th scope="col" class="px-4 py-3">พนักงาน</th>
                             <th scope="col" class="px-2 py-3 text-center">ทำงาน (วัน)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชั่วโมงปกติ</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT (1.5x)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (1x)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (2x)</th>
                             <th scope="col" class="px-2 py-3 text-center">OT (3x)</th>
@@ -6215,7 +6216,6 @@ if (otListContainer) {
             }
         });
     }
-
     // 4. โหลดประวัติ OT ของฉัน
     if(btnMyOtHistory) {
         btnMyOtHistory.addEventListener('click', async () => {
