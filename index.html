@@ -20,7 +20,7 @@
     <link rel="icon" href="icons/icon-192.png" type="image/png">
     <meta name="theme-color" content="#38BDF8">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TimeTracker">
     <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -275,9 +275,15 @@
             </div>
 
             <div id="report-page" class="page space-y-6">
-                <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
-                <div class="card space-y-4">
-                    <h3 class="font-semibold">กรอกข้อมูลรายงาน</h3>
+    <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
+    <div class="card space-y-4">
+        
+        <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <label class="text-sm font-bold text-gray-700">📅 เลือกวันที่ของรายงาน</label>
+            <input type="date" id="report-date-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none font-medium text-gray-700">
+            <p class="text-xs text-gray-500 mt-1">* เลือกวันที่ย้อนหลังได้หากลืมบันทึก</p>
+        </div>
+        <h3 class="font-semibold">กรอกข้อมูลรายงาน</h3>
                     <div>
                         <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
                         <div id="work-type-dropdown" class="relative mt-1">
@@ -1227,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- UI Elements for Report Page ---
     const saveReportBtn = document.getElementById('save-report-btn');
+    const reportDateInput = document.getElementById('report-date-input');
     const workTypeSelectedText = document.getElementById('work-type-selected-text');
     const projectSelectedText = document.getElementById('project-selected-text');
     const durationSelectedText = document.getElementById('duration-selected-text');
@@ -1637,74 +1644,90 @@ async function initializeApp(user, userData) {
     // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
     saveReportBtn.addEventListener('click', async () => {
-        if (!currentUser) {
-            return alert("กรุณาเข้าสู่ระบบก่อนบันทึกรายงาน");
-        }
+        if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
+
+        const selectedDateStr = reportDateInput.value; // รับค่าวันที่จาก Input
+        if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
 
         const workType = workTypeSelectedText.textContent;
         const project = projectSelectedText.textContent;
         const duration = durationSelectedText.textContent;
         let timeRange = duration;
 
-        if (workType.includes('เลือกประเภทงาน...')) {
-            return alert("กรุณาเลือกประเภทงาน");
-        }
-        if (project.includes('เลือกโครงการ...')) {
-            return alert("กรุณาเลือกโครงการ");
-        }
-        if (duration.includes('เลือกระยะเวลา...')) {
-            return alert("กรุณาเลือกระยะเวลาการทำงาน");
-        }
+        // Validation
+        if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
+        if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
+        if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
 
         if (duration === 'กำหนดเวลา') {
-            const startTime = customTimeStartInput.value;
-            const endTime = customTimeEndInput.value;
-            if (!startTime || !endTime) {
-                return alert("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด");
+            if (!customTimeStartInput.value || !customTimeEndInput.value) {
+                return alert("กรุณากรอกเวลา");
             }
-            timeRange = `${startTime} - ${endTime}`;
+            timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
         }
         
         saveReportBtn.disabled = true;
         saveReportBtn.textContent = 'กำลังบันทึก...';
         
         try {
-            const today = toLocalDateKey(new Date());
-            // [เปลี่ยน] ใช้ ID ของ work_records
-            const workRecordDocId = `${currentUser.uid}_${today}`;
+            // ใช้ selectedDateStr แทน new Date()
+            const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
             const workRecordRef = db.collection('work_records').doc(workRecordDocId);
             
-            // 1. ตรวจสอบก่อนว่า Check-in แล้วหรือยัง
             const doc = await workRecordRef.get();
-            if (!doc.exists) {
-                saveReportBtn.disabled = false;
-                saveReportBtn.textContent = 'บันทึกข้อมูล';
-                return alert("คุณยังไม่ได้ Check-in วันนี้ กรุณา Check-in ก่อนส่งรายงาน");
+            
+            // กรณีที่ 1: มีการ Check-in วันนั้นแล้ว -> อัปเดต report ใส่เข้าไป
+            if (doc.exists) {
+                await workRecordRef.update({
+                    report: {
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        workType: workType,
+                        project: project,
+                        duration: timeRange
+                    }
+                });
+            } 
+            // กรณีที่ 2: ลืม Check-in ด้วย (ไม่มี Record เลย)
+            else {
+                // คุณต้องตัดสินใจว่าจะยอมให้สร้าง Record ใหม่ที่มีแต่ Report หรือไม่
+                // ถ้าเอาแบบง่ายสุดคือยอมให้สร้าง โดยไม่มีข้อมูล GPS Check-in
+                const confirmCreate = confirm(`ไม่พบข้อมูลการลงเวลาในวันที่ ${selectedDateStr}\nคุณต้องการสร้างรายงานโดยไม่มีเวลาเข้า-ออกงาน หรือไม่?`);
+                
+                if (!confirmCreate) {
+                    saveReportBtn.disabled = false;
+                    saveReportBtn.textContent = 'บันทึกข้อมูล';
+                    return;
+                }
+
+                // สร้าง Record ใหม่ (Backdate)
+                await workRecordRef.set({
+                    userId: currentUser.uid,
+                    date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
+                    status: "no_checkin_report_only", // สถานะพิเศษ
+                    checkIn: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${selectedDateStr}T08:30:00`)), // เวลาสมมติ
+                        workType: "backdate_report",
+                        location: null // ไม่มีพิกัด
+                    },
+                    report: {
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        workType: workType,
+                        project: project,
+                        duration: timeRange
+                    }
+                });
             }
 
-            // 2. สร้าง Object ข้อมูลรายงาน (ไม่ต้องมี userId, userName)
-            const reportData = {
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                workType: workType,
-                project: project,
-                duration: timeRange
-            };
-
-            // 3. [เปลี่ยน] อัปเดตข้อมูลเข้าไปใน work_records โดยใช้ field 'report'
-            await workRecordRef.update({
-                report: reportData
-            });
-
             showNotification('บันทึกรายงานสำเร็จ!');
-            resetReportForm();
-            loadSentReports(); // โหลดรายงานที่ส่งแล้ว (ฟังก์ชันนี้ก็ถูกแก้ไขแล้ว)
+            // รีเฟรช UI
+            loadReportForSelectedDate(); 
             
         } catch (error) {
             console.error("Error saving report: ", error);
-            alert('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+            alert('เกิดข้อผิดพลาด: ' + error.message);
         } finally {
             saveReportBtn.disabled = false;
-            saveReportBtn.textContent = 'บันทึกข้อมูล';
+            // คืนค่าข้อความปุ่มตามสถานะ (ทำผ่าน loadReportForSelectedDate ได้)
         }
     });
 
@@ -3739,7 +3762,8 @@ async function initializeApp(user, userData) {
                 loadAllUsersForDropdown();
                 loadPendingLeaveRequests();
                 if (!editDateSelect.value) {
-                    editDateSelect.value = new Date().toISOString().split('T')[0];
+                    reportDateInput.value = new Date().toISOString().split('T')[0];
+                    loadReportForSelectedDate();
                 }
                 document.getElementById('employee-summary-container-admin').innerHTML = '<p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>';
                 document.getElementById('summary-pagination-controls').innerHTML = '';
@@ -6247,6 +6271,78 @@ if (otListContainer) {
             }
         });
     }
+
+    // ฟังก์ชันโหลดข้อมูลรายงานตามวันที่เลือก (ฉบับสมบูรณ์)
+    // ฟังก์ชันโหลดข้อมูลรายงาน (ฉบับใช้ปุ่มสีฟ้าเดิม)
+    async function loadReportForSelectedDate() {
+        if (!currentUser) return;
+        
+        const selectedDate = reportDateInput.value;
+        if (!selectedDate) return;
+
+        const docId = `${currentUser.uid}_${selectedDate}`;
+        
+        // สถานะกำลังโหลด
+        saveReportBtn.textContent = 'กำลังตรวจสอบข้อมูล...';
+        saveReportBtn.disabled = true;
+
+        try {
+            const doc = await db.collection('work_records').doc(docId).get();
+            
+            resetReportForm();
+
+            // ★★★ บังคับใช้ Class เดิม (ปุ่มสีฟ้า) เสมอ ไม่ว่าจะสถานะไหน ★★★
+            saveReportBtn.className = 'btn-primary w-full py-3 text-base';
+
+            if (doc.exists && doc.data().report) {
+                // --- กรณีมีรายงานแล้ว (โหมดแก้ไข) ---
+                const report = doc.data().report;
+                
+                // คืนค่าข้อมูลลงในฟอร์ม
+                workTypeSelectedText.textContent = report.workType || 'เลือกประเภทงาน...';
+                if (report.workType) workTypeSelectedText.classList.remove('text-gray-500');
+                
+                projectSelectedText.textContent = report.project || 'เลือกโครงการ...';
+                if (report.project) projectSelectedText.classList.remove('text-gray-500');
+                
+                // คืนค่าระยะเวลา
+                const standardDurations = ['ทั้งวัน (08:30 - 17:30)', 'ครึ่งวันเช้า (08:30 - 12:00)', 'ครึ่งวันบ่าย (13:00 - 17:30)'];
+                if (report.duration && !standardDurations.includes(report.duration)) {
+                    durationSelectedText.textContent = 'กำหนดเวลา';
+                    durationSelectedText.classList.remove('text-gray-500');
+                    customTimeInputs.classList.remove('hidden');
+                    
+                    const times = report.duration.split(' - ');
+                    if (times.length === 2) {
+                        customTimeStartInput.value = times[0];
+                        customTimeEndInput.value = times[1];
+                    }
+                } else {
+                    durationSelectedText.textContent = report.duration || 'เลือกระยะเวลา...';
+                    if (report.duration) durationSelectedText.classList.remove('text-gray-500');
+                }
+
+                // ★ เปลี่ยนแค่ข้อความ (Style ปุ่มยังคงเป็นสีฟ้าเหมือนเดิม) ★
+                saveReportBtn.textContent = 'บันทึกการแก้ไข'; 
+
+            } else {
+                // --- กรณีสร้างใหม่ ---
+                saveReportBtn.textContent = 'บันทึกข้อมูล';
+            }
+
+        } catch (error) {
+            console.error("Error loading report:", error);
+            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
+        } finally {
+            saveReportBtn.disabled = false;
+        }
+    }
+    
+    // เพิ่ม Event Listener เมื่อเปลี่ยนวันที่ 
+    if (reportDateInput) {
+        reportDateInput.addEventListener('change', loadReportForSelectedDate);
+    }
+
 
 });
 
