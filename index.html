@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบลงเวลาพนักงาน</title>
-    <script src="https://cdn.tailwindcss.com"></script>
 
+    <link href="style.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1610,7 +1610,6 @@ async function initializeApp(user, userData) {
             loadingSpinner.style.display = 'none';
         });
         
-        // [4] ★★★ (แก้ไข) เรียกใช้ setPersistence และ getRedirectResult "แยกต่างหาก" ★★★
         // โค้ดส่วนนี้จะ "ประมวลผล" การ Login (ถ้ามี) และผลลัพธ์ของมันจะถูก "ดักจับ" 
         // โดย onAuthStateChanged (ที่อยู่ข้างบน) ซึ่งกำลังรอฟังอยู่แล้ว
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
@@ -2380,36 +2379,57 @@ async function initializeApp(user, userData) {
     }
 
     function updateRealtimeLocationStatus(position) {
+        // 1. ตรวจสอบว่าเป็นมือถือหรือไม่
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // 1. ตรวจสอบก่อนว่าค่าที่ได้มา "แม่นยำพอ" หรือไม่
+        // [Config] ถ้าอยากให้ PC กดเช็คอินได้แม้ไม่แม่นยำ ให้แก้ตรงนี้เป็น true
+        const ALLOW_PC_ANYWAY = false; 
+
+        // กรณีความแม่นยำไม่เพียงพอ (ค่าที่ได้มาเพี้ยนเกินค่าที่ตั้งไว้)
         if (position.coords.accuracy > MAX_ACCEPTABLE_ACCURACY) {
             
-            // 2. ถ้าค่าเพี้ยน (เช่น 1800m) ให้อัปเดต UI
-            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
-            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
-            locationText.textContent = `กำลังปรับความแม่นยำ... (${position.coords.accuracy.toFixed(0)} ม.)`;
-            
-            // 3. "ปิด" ปุ่ม Check-in ไว้ (หรือปิดค้างไว้)
-            checkinBtn.disabled = true; 
-            return; // "ข้าม" ค่าที่เพี้ยนนี้ไป
+            if (!isMobile) {
+                // --- กรณีเป็น PC/Desktop (UX ใหม่) ---
+                if (ALLOW_PC_ANYWAY) {
+                    // แบบ A: ยอมให้กดได้ แต่ขึ้นเตือนสีส้ม
+                    locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-orange-100 text-orange-800 border border-orange-200";
+                    locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />`; // ไอคอนคอมพิวเตอร์
+                    locationText.innerHTML = `<b>ใช้งานผ่าน PC</b> (ความแม่นยำต่ำ: ${position.coords.accuracy.toFixed(0)} ม.)`;
+                    
+                    latestPosition = position; // ยอมรับค่านี้
+                    checkinBtn.disabled = false; // เปิดปุ่ม
+                } else {
+                    // แบบ B: ไม่ให้กด (UX แนะนำ) แต่เปลี่ยนข้อความให้ชัดเจน ไม่ค้าง
+                    locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-gray-100 text-gray-600 border border-gray-200";
+                    locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
+                    locationText.innerHTML = `GPS บน PC ไม่แม่นยำ (${position.coords.accuracy.toFixed(0)} ม.)<br><span class="text-xs">กรุณาใช้มือถือเพื่อความถูกต้อง</span>`;
+                    
+                    checkinBtn.disabled = true; // ปิดปุ่ม
+                }
+            } else {
+                // --- กรณีเป็นมือถือ (แสดงผลแบบเดิม: กำลังปรับ...) ---
+                locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
+                locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
+                locationText.textContent = `กำลังปรับความแม่นยำ... (${position.coords.accuracy.toFixed(0)} ม.)`;
+                
+                checkinBtn.disabled = true; 
+            }
+            return; 
         }
 
-        // 4. ถ้าค่าแม่นยำ (เช่น 10-40m) "จึง" บันทึกเป็นค่าล่าสุด
+        // --- กรณีค่าแม่นยำ (GPS ปกติ) ---
         latestPosition = position; 
-        
-        // 5. "เปิด" ปุ่มให้กดได้ (เฉพาะเมื่อได้ค่าที่แม่นยำ)
         checkinBtn.disabled = false; 
         
-        // 6. คำนวณและอัปเดต UI (โค้ดเดิมของคุณ)
         const distance = calculateDistance(position.coords.latitude, position.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
         if (distance <= ALLOWED_RADIUS_METERS) {
             locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-green-100 text-green-700";
             locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
             locationText.textContent = `ในพื้นที่โรงงาน (รัศมี ${position.coords.accuracy.toFixed(0)} เมตร)`;
         } else {
-            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
-            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>`;
-            locationText.textContent = `นอกพื้นที่ (ระยะห่าง ${distance.toFixed(0)} ม.)`;
+            locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-red-50 text-red-600 border border-red-100";
+            locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>`;
+            locationText.textContent = `อยู่นอกพื้นที่ (ห่าง ${distance.toFixed(0)} ม.)`;
         }
     }
     
