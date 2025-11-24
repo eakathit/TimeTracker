@@ -1221,13 +1221,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const functions = firebase.app().functions('asia-southeast1');
 
-    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-        auth.useEmulator("http://127.0.0.1:9099");
-        functions.useEmulator("127.0.0.1", 5001); 
-        db.useEmulator("127.0.0.1", 8081);
-        console.log("🔥 Firebase Emulators Activated (Local Testing Mode)");
-    }
-
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
         'sick': 'ลาป่วย (Sick Leave)', 
@@ -6509,7 +6502,6 @@ async function joinRoom(roomId) {
     }
 }
 
-
 // --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
 async function performCheckIn(roomId, project, locationName, role) {
     const now = new Date();
@@ -6546,20 +6538,38 @@ async function performCheckIn(roomId, project, locationName, role) {
 
 // เพิ่ม Logic การกดปุ่ม On-site ใน Event Listener เดิม
 workTypeButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        // ... (code เดิมที่เปลี่ยนสีปุ่ม) ...
-        
-        if (selectedWorkType === 'on_site') {
-            document.getElementById('onsite-details-form').classList.remove('hidden');
+        button.addEventListener('click', () => {
+            // 1. เปลี่ยนสีปุ่ม (เหมือนเดิม)
+            workTypeButtons.forEach(btn => {
+                btn.classList.remove('bg-sky-500', 'text-white', 'shadow');
+                btn.classList.add('text-gray-600');
+            });
+            button.classList.add('bg-sky-500', 'text-white', 'shadow');
             
-            // Default เลือกเป็น Member
-            switchRole('member');
-        } else {
-            document.getElementById('onsite-details-form').classList.add('hidden');
-            document.getElementById('checkin-btn').classList.remove('hidden'); // แสดงปุ่ม Checkin ปกติ
-        }
+            // 2. อัปเดตตัวแปร selectedWorkType
+            selectedWorkType = button.dataset.workType;
+
+            // 3. Logic การแสดงผล (แก้ไขใหม่)
+            if (selectedWorkType === 'on_site') {
+                // แสดงฟอร์ม QR
+                document.getElementById('onsite-details-form').classList.remove('hidden');
+                
+                // *** [แก้ไข] สั่งซ่อนทั้งปุ่ม Check In และ Check Out เสมอเมื่อเข้าโหมด On-site ***
+                document.getElementById('checkin-btn').classList.add('hidden');
+                document.getElementById('checkout-btn').classList.add('hidden');
+                document.getElementById('request-ot-btn').classList.add('hidden'); // ซ่อนปุ่ม OT ด้วยถ้ามี
+
+                // เริ่มต้นที่โหมด Member
+                switchRole('member');
+            } else {
+                // ซ่อนฟอร์ม QR
+                document.getElementById('onsite-details-form').classList.add('hidden');
+                
+                // *** [แก้ไข] ให้เช็คสถานะล่าสุดเพื่อโชว์ปุ่มที่ถูกต้อง (เข้า หรือ ออก) ***
+                checkUserWorkStatus(); 
+            }
+        });
     });
-});
 
 });
 
