@@ -1,12 +1,23 @@
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // [เพิ่ม] ถ้า Request นี้กำลังยิงไปที่ Cloud Functions (มี cloudfunctions.net)
-  // ให้ "return" (ปล่อยผ่านไปเลย) ห้าม Service Worker ยุ่ง
-  if (url.hostname === '127.0.0.1' || url.hostname.endsWith('cloudfunctions.net')) {
-    return;
+  // 1. รายชื่อ Domain ของ Firebase ที่ห้าม Service Worker ไปยุ่งเด็ดขาด
+  // (รวม Firestore, Auth, Storage, Cloud Functions)
+  if (
+    url.hostname.includes('googleapis.com') || 
+    url.hostname.includes('firebaseio.com') ||
+    url.hostname.includes('cloudfunctions.net') ||
+    url.hostname === '127.0.0.1'
+  ) {
+    return; // ปล่อยผ่านไปเลย ให้ Browser จัดการเอง (สำคัญมาก!)
   }
 
-  // Request อื่นๆ (เช่น โหลดหน้าเว็บ, รูปภาพ) ก็ทำตามปกติ
-  event.respondWith(fetch(event.request));
+  // 2. อนุญาตให้ Cache เฉพาะไฟล์ที่อยู่ใน Origin เดียวกัน (เช่น index.html, style.css)
+  if (url.origin === location.origin) {
+     event.respondWith(fetch(event.request));
+     return;
+  }
+
+  // 3. กรณีอื่นๆ ที่เหลือ ให้ปล่อยผ่านเช่นกัน
+  return;
 });

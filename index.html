@@ -135,7 +135,7 @@
         </svg>
     </div>
 
-    <div id="app-container" class="hidden md:flex pb-24 md:pb-0" style="display: none;">
+    <div id="app-container" class="flex flex-col md:flex-row pb-24 md:pb-0" style="display: none;">
         
         <aside class="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 bg-white border-r border-gray-200 p-4 z-20">
             <div class="flex items-center gap-2 mb-8 px-2">
@@ -1200,6 +1200,7 @@
     
     </script>
 <script>
+
 document.addEventListener('DOMContentLoaded', function() {
 
     if ('serviceWorker' in navigator) {
@@ -1218,8 +1219,26 @@ document.addEventListener('DOMContentLoaded', function() {
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
     const functions = firebase.app().functions('asia-southeast1');
+    const storage = firebase.storage(); 
+    
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        console.log("🔧 Running in Development Mode (Using Emulators)");
+        
+        // Auth: Port 9099 (ตรงตามรูป)
+        auth.useEmulator("http://127.0.0.1:9099");
+        
+        // Firestore: Port 8081 (★★★ แก้ตรงนี้จาก 8080 เป็น 8081 ★★★)
+        db.useEmulator("127.0.0.1", 8081);
+        
+        // Functions: Port 5001 (ตรงตามรูป)
+        functions.useEmulator("127.0.0.1", 5001);
+
+        // Storage: Port 9199 (เพิ่มอันนี้ตามรูป เพื่อให้โหลดรูปได้)
+        storage.useEmulator("127.0.0.1", 9199); 
+    } else {
+        console.log("🚀 Running in Production Mode (Real Database)");
+    }
 
     const LEAVE_TYPE_MAP = { 
         'annual': 'ลาพักร้อน (Annual Leave)', 
@@ -1227,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'personal': 'ลากิจ (Personal Leave)',
         'maternity': 'ลาคลอด (Maternity Leave)' // เพิ่มบรรทัดนี้
     };
-    const storage = firebase.storage(); 
+    
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
     const ALLOWED_RADIUS_METERS = 200;
 
@@ -1507,7 +1526,7 @@ async function initializeApp(user, userData) {
     }
 
     // 2. แสดงหน้าจอหลักทันที
-    appContainer.style.display = 'block';
+    //appContainer.style.display = 'block';
     // ลบ style none ที่เราใส่ไว้ใน HTML ออก (เผื่อกรณี CSS class ทำงานต่อ)
     appContainer.style.removeProperty('display'); 
     
@@ -1537,27 +1556,34 @@ async function initializeApp(user, userData) {
     }
 }
         auth.onAuthStateChanged(async (user) => {
-    // ซ่อนหน้า Login ทันทีที่รู้ว่ามี User (หรือไม่มี) เพื่อเตรียมเปลี่ยนหน้า
+    // 1. ซ่อน Login และแสดง Loading ระหว่างรอ
     loginPage.style.display = 'none';
-    
-    if (user) {
-        // --- กรณี User เข้าระบบสำเร็จ ---
-        console.log("User authenticated:", user.uid);
-        currentUser = user;
-        
-        const userDocRef = db.collection('users').doc(user.uid);
-        
-        // ดึงข้อมูล User ครั้งเดียว
-        const userDoc = await userDocRef.get({ source: 'server' }); // ใช้ server เพื่อความชัวร์ในครั้งแรก
+    loadingSpinner.style.display = 'flex'; // โชว์ loading รอไว้ก่อน
 
-        if (userDoc.exists) {
-            // [แก้ไข] ตัดส่วน saveLineProfileImage ออก เพราะไม่ได้ใช้ LINE แล้ว
-            // [แก้ไข] ส่งข้อมูลที่ดึงมาได้ (userDoc.data()) ไปใช้เลย ไม่ต้องดึงซ้ำ
-            await initializeApp(user, userDoc.data());
-        } else {
-            // --- กรณี User ใหม่ (สร้างโปรไฟล์ครั้งแรก) ---
-            console.log("Creating new user profile...");
+    // เพิ่ม Try-Catch เพื่อป้องกันจอขาวหากเกิด Error
+    try {
+        if (user) {
+            console.log("User authenticated:", user.uid);
+            currentUser = user;
+            
+            const userDocRef = db.collection('users').doc(user.uid);
+            
+            // [แก้ไข] ลบ { source: 'server' } ออก เพื่อให้โหลดจาก Cache ได้ถ้าเน็ตไม่ดี (ลดโอกาสเกิด AbortError)
+            // หรือถ้าอยากบังคับ Server จริงๆ ให้ใช้ try-catch ซ้อนอีกชั้น
+            let userDoc;
             try {
+                userDoc = await userDocRef.get(); 
+            } catch (err) {
+                console.warn("Load user failed, retrying...", err);
+                // ถ้าโหลดไม่ได้จริงๆ ให้ลองโหลดอีกครั้งหรือใช้ค่าว่าง
+                userDoc = await userDocRef.get({ source: 'cache' }); 
+            }
+
+            if (userDoc && userDoc.exists) {
+                await initializeApp(user, userDoc.data());
+            } else {
+                // --- กรณี User ใหม่ ---
+                console.log("Creating new user profile...");
                 const newUserProfile = {
                     fullName: user.displayName || user.email || 'New User',
                     email: user.email || null,
@@ -1569,25 +1595,27 @@ async function initializeApp(user, userData) {
                 
                 await userDocRef.set(newUserProfile);
                 await initializeApp(user, newUserProfile);
-                
-            } catch (error) {
-                console.error("Error creating new user profile:", error);
-                alert("เกิดข้อผิดพลาดในการลงทะเบียนผู้ใช้ใหม่: " + error.message);
-                auth.signOut();
-                loginPage.style.display = 'flex';
-                loadingSpinner.style.display = 'none';
             }
+        } else {
+            // --- กรณี Logged out ---
+            console.log("User logged out");
+            stopWatchingPosition();
+            currentUser = null;
+            
+            // แสดงหน้า Login
+            appContainer.style.display = 'none'; // ซ่อนหน้าหลัก
+            loginPage.style.display = 'flex';    // โชว์หน้า Login
+            loadingSpinner.style.display = 'none'; // ซ่อน Loading
         }
-    } else {
-        // --- กรณี Logged out ---
-        console.log("User logged out");
-        stopWatchingPosition();
-        currentUser = null;
+
+    } catch (error) {
+        // ★★★ ดักจับ Error ตรงนี้ เพื่อไม่ให้จอขาว ★★★
+        console.error("Critical Init Error:", error);
+        alert("เกิดข้อผิดพลาดในการเริ่มระบบ: " + error.message + "\n(กด OK เพื่อรีโหลด)");
         
-        // แสดงหน้า Login และซ่อน Spinner
-        appContainer.style.display = 'none';
-        loginPage.style.display = 'flex';
-        loadingSpinner.style.display = 'none';
+        // ถ้า Error ให้ถอยกลับไปหน้า Login หรือรีโหลด
+        auth.signOut();
+        window.location.reload();
     }
 });
         
