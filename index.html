@@ -1172,7 +1172,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="firebase-config.js"></script>
+    <script src="firebase-config.js?v=1.1"></script>
     <script>
     // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
     function toLocalISOString(date) {
@@ -6562,6 +6562,7 @@ async function performCheckIn(roomId, project, locationName, role) {
             
             // เก็บข้อมูลห้องไว้ด้วย
             roomId: roomId,
+            leaderId: roomData.leaderId,
             onSiteDetails: `${locationName} (Group: ${project})`,
             photoUrl: null // ไม่ต้องใช้รูปเพราะมี Leader ยืนยันแล้ว
         },
@@ -6612,6 +6613,38 @@ workTypeButtons.forEach(button => {
             }
         });
     });
+
+    // ตัวอย่างฟังก์ชันเมื่อ Leader กดปุ่ม "ส่งรายงานกลุ่ม"
+async function submitGroupReport(roomId, reportData) {
+    // 1. ดึงข้อมูลห้องเพื่อเอารายชื่อสมาชิก
+    const roomDoc = await db.collection('onsite_rooms').doc(roomId).get();
+    const members = roomDoc.data().members || [];
+
+    // 2. เตรียมข้อมูล Report
+    const reportPayload = {
+        workType: reportData.workType, // เช่น "ติดตั้งระบบไฟ"
+        project: reportData.project,   // เช่น "Project A"
+        duration: "ทั้งวัน (08:30 - 17:30)",
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        submittedBy: "Leader" // ระบุว่าหัวหน้าทำให้
+    };
+
+    // 3. วนลูปอัปเดตให้ทุกคนในลิสต์ (รวมถึงตัว Leader เองด้วย)
+    const batch = db.batch(); // ใช้ Batch เพื่อความเร็วและชัวร์
+    const dateKey = toLocalDateKey(new Date()); // ฟังก์ชันแปลงวันที่เป็น YYYY-MM-DD
+
+    members.forEach(member => {
+        const docId = `${member.uid}_${dateKey}`;
+        const ref = db.collection('work_records').doc(docId);
+        
+        // สั่งอัปเดตเฉพาะส่วน report
+        batch.update(ref, { report: reportPayload });
+    });
+
+    // 4. ยิงขึ้น Database ทีเดียว
+    await batch.commit();
+    alert("บันทึกรายงานให้สมาชิก " + members.length + " คน เรียบร้อยแล้ว!");
+}
 
 });
 
