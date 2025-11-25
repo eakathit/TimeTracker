@@ -6032,53 +6032,59 @@ if (otListContainer) {
                 notificationBadge.textContent = notifications.length;
                 notificationBadge.classList.remove('hidden');
 
+                    // --- เริ่มส่วนที่แก้ไข (เวอร์ชันคงดีไซน์เดิม + รูปโปรไฟล์) ---
                 notifications.forEach(leave => {
-                    // ใช้ LEAVE_TYPE_MAP ที่มีอยู่แล้วในโค้ด
                     const leaveTypeText = LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType;
                     
-                    // [NEW] กำหนดสีและไอคอนตามประเภทการลา
-                    let colorClass = 'bg-red-50 text-red-800 border-red-200'; // Default: Annual (พักร้อน)
-                    let statusIcon = `
-                        <svg class="w-5 h-5 flex-shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
-                        </svg>
-                    `;
-                    
-                    if (leave.leaveType === 'sick') { // ลาป่วย
-                         colorClass = 'bg-yellow-50 text-yellow-800 border-yellow-200';
-                         statusIcon = `
-                            <svg class="w-5 h-5 flex-shrink-0 text-yellow-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                              <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
-                            </svg>
-                        `;
-                    } else if (leave.leaveType === 'personal') { // ลากิจ
-                        colorClass = 'bg-indigo-50 text-indigo-800 border-indigo-200';
-                        statusIcon = `
-                            <svg class="w-5 h-5 flex-shrink-0 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                            </svg>
-                        `;
+                    // กำหนดสีพื้นหลังและขอบตามประเภทการลา (คง Theme เดิมไว้)
+                    let colorClass = 'bg-red-50 border-red-200'; // Default: Annual (พักร้อน)
+                    let badgeClass = 'bg-red-100 text-red-700';
+
+                    if (leave.leaveType === 'sick') { 
+                         colorClass = 'bg-yellow-50 border-yellow-200';
+                         badgeClass = 'bg-yellow-100 text-yellow-800';
+                    } else if (leave.leaveType === 'personal') { 
+                        colorClass = 'bg-blue-50 border-blue-200';
+                        badgeClass = 'bg-blue-100 text-blue-800';
+                    } else if (leave.leaveType === 'maternity') {
+                        colorClass = 'bg-pink-50 border-pink-200';
+                        badgeClass = 'bg-pink-100 text-pink-800';
                     }
 
-                    // แสดงช่วงวันที่
-                    const dateInfo = leave.startDate.toDate().toLocaleDateString('th-TH') === leave.endDate.toDate().toLocaleDateString('th-TH')
-                        ? leave.startDate.toDate().toLocaleDateString('th-TH')
-                        : `${leave.startDate.toDate().toLocaleDateString('th-TH')} - ${leave.endDate.toDate().toLocaleDateString('th-TH')}`;
-                        
-                    // [UPDATED] ปรับโครงสร้าง HTML: ลบ User ID ออก, จัด Head ใหม่, เพิ่ม class สำหรับการแสดงผลเหตุผล
+                    // จัดการวันที่ให้แสดงผลสวยงาม
+                    const isSameDay = leave.startDate.toDate().toLocaleDateString('th-TH') === leave.endDate.toDate().toLocaleDateString('th-TH');
+                    const dateInfo = isSameDay
+                        ? leave.startDate.toDate().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+                        : `${leave.startDate.toDate().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} - ${leave.endDate.toDate().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}`;
+
+                    // รูปโปรไฟล์ (ถ้าไม่มีใช้ Placeholder)
+                    const userAvatar = leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User';
+
+                    // HTML Template
                     listHTML += `
-                        <div class="p-3 rounded-lg border shadow-sm ${colorClass}">
-                            <div class="flex items-start space-x-2">
-                                ${statusIcon}
-                                <div class="flex-1">
-                                    <p class="text-sm font-bold truncate">${leave.userName}</p>
-                                    <p class="text-xs font-medium">${leaveTypeText}</p>
-                                    <p class="text-xs text-gray-500">${dateInfo}</p>
+                        <div class="p-3 mb-3 rounded-xl border shadow-sm ${colorClass} transition-all hover:shadow-md">
+                            <div class="flex items-start gap-3">
+                                <img src="${userAvatar}" 
+                                     alt="${leave.userName}"
+                                     class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0">
+                                
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-800 truncate">${leave.userName}</p>
+                                            <p class="text-xs font-medium text-gray-600 mt-0.5">
+                                                ${leaveTypeText}
+                                            </p>
+                                        </div>
+                                        <span class="text-[10px] bg-white/60 px-2 py-1 rounded-lg text-gray-500 font-medium border border-gray-100">
+                                            ${dateInfo}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-2 pt-2 border-t border-black/5">
+                                        <p class="text-xs text-gray-600 italic truncate">"${leave.reason}"</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="mt-2 pt-2 border-t border-current border-opacity-30">
-                                <p class="text-xs text-gray-700 whitespace-pre-wrap">${leave.reason}</p>
                             </div>
                         </div>
                     `;
