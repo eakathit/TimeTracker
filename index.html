@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบลงเวลาพนักงาน</title>
 
-    <link href="style.css?v=1.1" rel="stylesheet">
+    <link href="style.css?v=1.3" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
@@ -118,7 +118,7 @@
     <div id="login-page" class="hidden page min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
         <div class="w-full max-w-sm text-center">
             <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
+            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับสู่</h1>
             <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
             
             <button id="google-login-btn" class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full py-4 text-lg font-semibold rounded-xl transition-all flex items-center justify-center shadow-sm">
@@ -220,7 +220,7 @@
                     <div>
                         <h3 class="font-semibold mb-3">ประเภทการทำงาน</h3>
                         <div id="work-type-selector" class="flex bg-gray-100 rounded-xl p-1">
-                            <button data-work-type="in_factory" class="work-type-btn flex-1 p-2 rounded-lg bg-sky-500 text-white shadow">ในโรงงาน</button>
+                            <button data-work-type="in_factory" class="work-type-btn flex-1 p-2 rounded-lg bg-sky-500 text-white shadow">Factory</button>
                             <button data-work-type="on_site" class="work-type-btn flex-1 p-2 rounded-lg text-gray-600">On-site</button>
                         </div>
                     </div>
@@ -1172,7 +1172,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="firebase-config.js?v=1.1"></script>
+    <script src="firebase-config.js?v=1.3"></script>
     <script>
     // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
     function toLocalISOString(date) {
@@ -1204,14 +1204,15 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful!');
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister()
+                .then(function() {
+                    console.log("Service Worker ถูกลบออกแล้ว!");
+                    // ลบเสร็จแล้ว ให้รีโหลดหน้าจออัตโนมัติ 1 ครั้งเพื่อให้ได้ของใหม่ทันที
+                    // window.location.reload(); 
                 });
+            }
         });
     }
     
@@ -3514,133 +3515,123 @@ async function initializeApp(user, userData) {
     }
 
     checkoutBtn.addEventListener('click', async () => {
-        if (!currentUser) {
-            return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
-        }
-        if (!latestPosition) {
-            return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
-        }
+        if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
+        if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS...", "warning");
+        
         const checkoutSpan = checkoutBtn.querySelector('span'); 
 
+        // ฟังก์ชัน A: บันทึกแบบ "มี OT"
         const proceedWithCheckout = async () => {
             checkoutBtn.disabled = true; 
-            if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก..."; 
+            if (checkoutSpan) checkoutSpan.textContent = "บันทึก (มี OT)..."; 
 
             try {
                 const now = new Date();
-                // now.setHours(18, 0, 0, 0);
-                // ✨ [แก้ไขเพื่อเทส] บังคับเวลาปัจจุบันเป็น 19:30 (เพื่อให้เงื่อนไข >= 18 เป็นจริง)
-                // currentTime.setHours(19, 30, 0, 0); 
+                // const now = new Date(); now.setHours(18, 4, 0, 0); // ปลดบรรทัดนี้ถ้าจะ Test เวลา 18:04
 
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                 const workRecordRef = db.collection('work_records').doc(docId);
-
                 const workRecordDoc = await workRecordRef.get();
-                if (!workRecordDoc.exists) {
-                    throw new Error("ไม่พบข้อมูลการเข้างานของวันนี้");
-                }
+                
+                if (!workRecordDoc.exists) throw new Error("ไม่พบข้อมูลเข้างาน");
                 const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
 
+                // คำนวณเวลา
                 const { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, now);
 
-                const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
-                };
-
                 await workRecordRef.update({
-                    checkOut: checkOutData,
+                    checkOut: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(now),
+                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
+                    },
                     status: "completed", 
-                    overtime: { hours: overtimeHours } 
+                    overtime: { hours: overtimeHours } // บันทึกค่า OT ที่คำนวณได้ (เช่น 0.5)
                 });
 
-                showNotification("บันทึกเวลาออกงานสำเร็จ!");
+                showNotification(`บันทึกสำเร็จ! (งาน ${regularWorkHours.toFixed(2)} ชม. + OT ${overtimeHours} ชม.)`);
                 updateUIToCompleted(); 
-
+                
+                // อัปเดตหน้าจอ
                 summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
                 summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-                if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-                }
+                if (overtimeHours > 0) summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
 
             } catch (error) {
-                console.error("Check-out error:", error);
-                showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
+                console.error(error);
+                showNotification("Error: " + error.message, 'error');
                 checkoutBtn.disabled = false;
                 if (checkoutSpan) checkoutSpan.textContent = "Check Out";
             }
         };
 
+        // ฟังก์ชัน B: บันทึกแบบ "ไม่เอา OT" (ตัดเวลาที่ 17:30)
         const proceedWithCheckoutWithoutOT = async () => {
             checkoutBtn.disabled = true; 
-            if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก..."; 
+            if (checkoutSpan) checkoutSpan.textContent = "บันทึก (ไม่มี OT)..."; 
 
             try {
                 const now = new Date();
-
-                // now.setHours(18, 0, 0, 0); 
-
-                const docId = `${currentUser.uid}_${now.toISOString().split('T')[0]}`;
-                const workRecordRef = db.collection('work_records').doc(docId);
-
-                const workRecordDoc = await workRecordRef.get();
-                if (!workRecordDoc.exists) {
-                    throw new Error("ไม่พบข้อมูลการเข้างานของวันนี้");
+                
+                // [แก้ไขสำคัญ] สร้างเวลาสมมติว่าเป็น 17:30 เพื่อให้คำนวณชั่วโมงงานปกติได้ถูกต้อง
+                // (ป้องกันปัญหา Regular = 8.12 แต่ OT = 0)
+                const cappedTime = new Date(now);
+                if (now.getHours() >= 18) {
+                    cappedTime.setHours(17, 30, 0, 0);
                 }
+
+                const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
+                const workRecordRef = db.collection('work_records').doc(docId);
+                const workRecordDoc = await workRecordRef.get();
+                
+                if (!workRecordDoc.exists) throw new Error("ไม่พบข้อมูลเข้างาน");
                 const checkinTime = workRecordDoc.data().checkIn.timestamp.toDate();
 
-                const { regularWorkHours } = calculateWorkHours(checkinTime, now); 
-                const overtimeHours = 0; 
-
-                const checkOutData = {
-                    timestamp: firebase.firestore.Timestamp.fromDate(now),
-                    location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
-                };
-
+                // คำนวณโดยใช้เวลาที่ถูกตัด (Capped Time) หรือเวลาจริงถ้ายังไม่ถึง OT
+                const { regularWorkHours } = calculateWorkHours(checkinTime, cappedTime); 
+                
                 await workRecordRef.update({
-                    checkOut: checkOutData,
+                    checkOut: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(now), // เวลาออกจริง
+                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude)
+                    },
                     status: "completed",
-                    overtime: { hours: overtimeHours } 
+                    overtime: { hours: 0 } // บังคับ OT เป็น 0
                 });
 
-                showNotification("บันทึกเวลาออกงานสำเร็จ (ไม่คิด OT)"); 
+                showNotification("บันทึกสำเร็จ (ไม่นับ OT)"); 
                 updateUIToCompleted();
 
                 summaryCheckoutTime.textContent = now.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
+                // แสดงเวลาทำงานปกติที่ถูกต้อง (เช่น 8.05 ชม.)
                 summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
 
             } catch (error) {
-                console.error("Check-out without OT error:", error);
-                showNotification("เกิดข้อผิดพลาดในการบันทึกเวลาออก: " + error.message, 'error');
+                console.error(error);
+                showNotification("Error: " + error.message, 'error');
                 checkoutBtn.disabled = false;
                 if (checkoutSpan) checkoutSpan.textContent = "Check Out";
             }
         };
 
         const currentTime = new Date();
-        
-        // currentTime.setHours(18, 0, 0, 0);
+        // currentTime.setHours(18, 4, 0, 0); // ปลดบรรทัดนี้ถ้าจะ Test Popup
 
         if (currentTime.getHours() >= 18) { 
              showConfirmDialog(
-                "ขณะนี้เลยเวลาเลิกงานแล้ว ต้องการบันทึกเวลานี้เป็น OT หรือไม่?", // ข้อความใหม่
-                proceedWithCheckout,          // ฟังก์ชันถ้ากดปุ่มขวา
-                proceedWithCheckoutWithoutOT, // ฟังก์ชันถ้ากดปุ่มซ้าย
-                "บันทึกเวลา OT",                  // ข้อความปุ่มขวา (สีฟ้า)
-                "ไม่ลงเวลา OT"        // ข้อความปุ่มซ้าย (สีเทา)
+                "ขณะนี้เลยเวลาเลิกงานแล้ว ต้องการบันทึกเวลานี้เป็น OT หรือไม่?", 
+                proceedWithCheckout,          // ปุ่มขวา (สีฟ้า) -> ไปฟังก์ชัน A
+                proceedWithCheckoutWithoutOT, // ปุ่มซ้าย (สีเทา) -> ไปฟังก์ชัน B
+                "บันทึกเวลา OT",              
+                "ไม่ลงเวลา OT"        
             );
         } else {
             proceedWithCheckout();
         }
-    }); 
+    });
 
     const provider = new firebase.auth.GoogleAuthProvider();
-    
-    // [ ★★★ แก้ไข ★★★ ]
     // บังคับให้ Google แสดงหน้าต่างเลือกบัญชีทุกครั้ง
     provider.setCustomParameters({
       prompt: 'select_account'
@@ -3865,42 +3856,47 @@ async function initializeApp(user, userData) {
         }
     }
 
-function calculateWorkHours(checkinTime, checkoutTime) {
-    let workDurationMillis = checkoutTime - checkinTime;
-    if (workDurationMillis < 0) workDurationMillis = 0;
+    function calculateWorkHours(checkinTime, checkoutTime) {
+        let workDurationMillis = checkoutTime - checkinTime;
+        if (workDurationMillis < 0) workDurationMillis = 0;
 
-    const lunchStart = new Date(checkinTime);
-    lunchStart.setHours(12, 0, 0, 0);
-    const lunchEnd = new Date(checkinTime);
-    lunchEnd.setHours(13, 0, 0, 0);
-    
-    if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
-        workDurationMillis -= 3600000; 
-    }
-
-    let overtimeHours = 0;
-    const otStartThreshold = new Date(checkoutTime);
-    otStartThreshold.setHours(18, 0, 0, 0);
-
-    const normalEndThreshold = new Date(checkoutTime);
-    normalEndThreshold.setHours(17, 30, 0, 0);
-
-    if (checkoutTime >= otStartThreshold) {
-        const otMillis = checkoutTime - normalEndThreshold;
-        if (otMillis > 0) {
-            const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
-            overtimeHours = otBlocks * 0.5;
+        // หักเวลาพักเที่ยง 1 ชั่วโมง
+        const lunchStart = new Date(checkinTime);
+        lunchStart.setHours(12, 0, 0, 0);
+        const lunchEnd = new Date(checkinTime);
+        lunchEnd.setHours(13, 0, 0, 0);
+        
+        if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
+            workDurationMillis -= 3600000; 
         }
+
+        let overtimeHours = 0;
+        // เกณฑ์เริ่มนับ OT คือ 18:00
+        const otStartThreshold = new Date(checkoutTime);
+        otStartThreshold.setHours(18, 0, 0, 0);
+
+        // เกณฑ์จบเวลางานปกติคือ 17:30
+        const normalEndThreshold = new Date(checkoutTime);
+        normalEndThreshold.setHours(17, 30, 0, 0);
+
+        if (checkoutTime >= otStartThreshold) {
+            // คำนวณ OT จาก 17:30 (เช่นเลิก 18:04 -> คิดจาก 17:30 = 34 นาที)
+            const otMillis = checkoutTime - normalEndThreshold;
+            if (otMillis > 0) {
+                // หาร 30 นาที แล้วปัดเศษทิ้ง (34/30 = 1.13 -> 1 block)
+                const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
+                overtimeHours = otBlocks * 0.5; // 1 * 0.5 = 0.5 ชม.
+            }
+        }
+
+        const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
+        const regularWorkHours = totalWorkHours - overtimeHours;
+
+        return {
+            regularWorkHours: Math.max(0, regularWorkHours), 
+            overtimeHours: overtimeHours
+        };
     }
-
-    const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
-    const regularWorkHours = totalWorkHours - overtimeHours;
-
-    return {
-        regularWorkHours: Math.max(0, regularWorkHours), 
-        overtimeHours
-    };
-}
 
     
     // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
@@ -6434,7 +6430,7 @@ if(createRoomBtn) {
             await db.collection('onsite_rooms').doc(roomId).set(roomData);
 
             // 3. Leader ทำการ Check-in ตัวเองอัตโนมัติ
-            await performCheckIn(roomId, project, locationName, 'leader');
+            await performCheckIn(roomId, project, locationName, 'leader', currentUser.uid);
 
             // 4. สร้าง QR Code
             document.getElementById('qrcode').innerHTML = ""; // เคลียร์ของเก่า
@@ -6530,7 +6526,7 @@ async function joinRoom(roomId) {
         // หากต้องการเข้มงวด ให้เช็ค distance ระหว่าง latestPosition กับ roomData.gpsLocation
         
         // 3. ทำการ Check-in
-        await performCheckIn(roomId, roomData.project, roomData.locationName, 'member');
+        await performCheckIn(roomId, roomData.project, roomData.locationName, 'member', roomData.leaderId);
 
         // 4. อัปเดตชื่อลงในรายชื่อสมาชิกของห้อง
         await roomRef.update({
@@ -6551,7 +6547,9 @@ async function joinRoom(roomId) {
 }
 
 // --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
-async function performCheckIn(roomId, project, locationName, role) {
+// --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
+// [แก้ไข] เพิ่ม parameter 'leaderId' ต่อท้าย
+async function performCheckIn(roomId, project, locationName, role, leaderId) {
     const now = new Date();
     const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
 
@@ -6568,7 +6566,7 @@ async function performCheckIn(roomId, project, locationName, role) {
             
             // เก็บข้อมูลห้องไว้ด้วย
             roomId: roomId,
-            leaderId: roomData.leaderId,
+            leaderId: leaderId, // [แก้ไข] ใช้ค่าจาก parameter แทน roomData.leaderId
             onSiteDetails: `${locationName} (Group: ${project})`,
             photoUrl: null // ไม่ต้องใช้รูปเพราะมี Leader ยืนยันแล้ว
         },
