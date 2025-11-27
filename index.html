@@ -2629,7 +2629,7 @@ async function initializeApp(user, userData) {
                             if (latestRecord.checkOut) {
                                 checkOutTime = latestRecord.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                                 
-                                // --- [START FIX] แก้ไขการแสดงผล OT ในหน้า Admin List ---
+                                // --- [จุดสำคัญ] แก้ไขการแสดงผล OT ในหน้าเว็บ ---
                                 const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(latestRecord.checkIn.timestamp.toDate(), latestRecord.checkOut.timestamp.toDate());
                                 workHours = regularWorkHours.toFixed(2) + ' ชม.';
                                 
@@ -2641,7 +2641,7 @@ async function initializeApp(user, userData) {
                                     finalOt = calculatedOt;
                                 }
                                 overtime = finalOt.toFixed(1) + ' ชม.'; 
-                                // --- [END FIX] ---
+                                // -----------------------------------------
                             }
                         }
                     } else {
@@ -2678,7 +2678,6 @@ async function initializeApp(user, userData) {
             container.innerHTML = resultsHTML;
 
             if (totalPages > 1) {
-                // (ส่วน Pagination คงเดิม...)
                 const prevButton = document.createElement('button');
                 prevButton.textContent = '◀';
                 prevButton.className = `px-3 py-1 text-sm rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-sky-500 text-white hover:bg-sky-600'}`;
@@ -3015,14 +3014,12 @@ async function initializeApp(user, userData) {
             const endDate = new Date(endDateString);
             endDate.setHours(23, 59, 59, 999);
 
-            // --- Step 1: ดึงข้อมูลปฏิทินและใบลาที่อนุมัติแล้ว ---
+            // --- Step 1: ดึงข้อมูลปฏิทินและใบลา (เหมือนเดิม) ---
             const holidayMap = new Map();
             const workingSaturdayMap = new Map();
-            // Map สำหรับเก็บใบลาที่อนุมัติแล้ว: Map<userId_dateKey, leaveObject>
             const approvedLeaveMap = new Map(); 
 
             try {
-                // ดึงวันหยุดและเสาร์ทำงาน
                 const calendarDoc = await db.collection('system_settings').doc('calendar_rules').get();
                 if (calendarDoc.exists) {
                     const data = calendarDoc.data();
@@ -3030,7 +3027,6 @@ async function initializeApp(user, userData) {
                     (data.workingSaturdays || []).forEach(dateStr => workingSaturdayMap.set(dateStr, true));
                 }
                 
-                // ดึงใบลาที่ได้รับการอนุมัติในช่วงวันที่ที่เลือก
                 const approvedLeaveSnapshot = await db.collection('leave_requests')
                     .where('status', '==', 'approved')
                     .where('startDate', '<=', endDate) 
@@ -3042,53 +3038,36 @@ async function initializeApp(user, userData) {
                     const leaveTypeDisplay = LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType;
                     
                     if (leave.durationType === 'hourly') {
-                        // Logic สำหรับการลารายชั่วโมง/นาที (จะมีการลาเพียงวันเดียว)
                         const dateKey = leave.startDate.toDate().toISOString().split('T')[0];
                         const key = `${leave.userId}_${dateKey}`;
-                        
                         approvedLeaveMap.set(key, { 
                             type: leaveTypeDisplay, 
                             durationType: 'hourly',
-                            startTime: leave.startTime, // HH:MM
-                            endTime: leave.endTime      // HH:MM
+                            startTime: leave.startTime,
+                            endTime: leave.endTime
                         });
-                        
                     } else {
-                        // Logic เดิมสำหรับการลาเต็มวัน (ไล่หลายวันได้)
                         const start = leave.startDate.toDate();
                         const end = leave.endDate.toDate();
-
-                        // *** START FIX: UTC-AWARE LOOP FOR DATE RANGE ***
-                        // 1. สร้าง Date Object ที่เริ่มต้นเที่ยงคืนของวันที่ลา (UTC)
                         const current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
                         const final = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
                         
-                        // 2. วนซ้ำทีละวันโดยใช้ UTC Date components
                         while (current.getTime() <= final.getTime()) {
-                            
-                            // 3. สร้าง dateKey ด้วย UTC Date components (YYYY-MM-DD)
-                            // การใช้ getUTC... จะให้วันที่ที่ถูกต้องตามที่ผู้ใช้เลือก (4 และ 5)
                             const y = current.getUTCFullYear();
                             const m = (current.getUTCMonth() + 1).toString().padStart(2, '0');
                             const d = current.getUTCDate().toString().padStart(2, '0');
                             const dateKey = `${y}-${m}-${d}`;
-
                             const key = `${leave.userId}_${dateKey}`;
-                            
-                            // 4. บันทึกเข้า Map
                             approvedLeaveMap.set(key, { type: leaveTypeDisplay, durationType: 'full_day' });
-                            
-                            // 5. เลื่อนไปวันถัดไปใน UTC
                             current.setUTCDate(current.getUTCDate() + 1);
                         }
                     }
                 });
-
             } catch (e) {
-                console.warn("Could not load calendar rules or approved leaves for export:", e);
+                console.warn("Could not load calendar rules or approved leaves:", e);
             }
 
-            // --- Step 2: ดึง User ทั้งหมด (เหมือนเดิม) ---
+            // --- Step 2: ดึง User (เหมือนเดิม) ---
             const usersSnapshot = await db.collection('users').orderBy('fullName').get();
             let filteredUsers = [];
             usersSnapshot.forEach(doc => {
@@ -3106,7 +3085,7 @@ async function initializeApp(user, userData) {
                  return;
             }
 
-            // --- Step 3 & 4: ดึงและจัดเรียง work_records (เหมือนเดิม) ---
+            // --- Step 3 & 4: ดึง work_records (เหมือนเดิม) ---
             const recordsSnapshot = await db.collection('work_records')
                                          .where('date', '>=', startDate)
                                          .where('date', '<=', endDate)
@@ -3116,7 +3095,7 @@ async function initializeApp(user, userData) {
             recordsSnapshot.forEach(doc => {
                 const record = doc.data();
                 const docId = doc.id;
-                const dateString = docId.substring(docId.indexOf('_') + 1);// ดึง YYYY-MM-DD จาก USERID_YYYY-MM-DD
+                const dateString = docId.substring(docId.indexOf('_') + 1);
                 const userId = record.userId;
 
                 if (!recordsMap.has(userId)) {
@@ -3125,7 +3104,7 @@ async function initializeApp(user, userData) {
                 recordsMap.get(userId).set(dateString, record);
             });
 
-            // --- Step 5: สร้าง Headers (เหมือนเดิม) ---
+            // --- Step 5: Headers (เหมือนเดิม) ---
             const dataForExcel = [
                 ["ชื่อพนักงาน", "แผนก", "วันที่", "ประเภทวัน", "สถานะ", "เวลาเข้า", "เวลาออก", "ชั่วโมงปกติ", "ชั่วโมง OT", "ประเภทงาน", "รายละเอียด On-site", "รายงาน: ประเภท", "รายงาน: โครงการ", "รายงาน: ระยะเวลา"]
             ];
@@ -3133,10 +3112,8 @@ async function initializeApp(user, userData) {
             const localDateFormatter = new Intl.DateTimeFormat('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const localTimeFormatter = new Intl.DateTimeFormat('th-TH', { hour: '2-digit', minute: '2-digit' });
 
-            // --- Step 6: Loop ตามวัน ---
+            // --- Step 6: Loop ---
             for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-                
-                // *** FIX: สร้าง dateKey จาก Local Date components เพื่อให้ตรงกับวันที่ใน Map ***
                 const y = day.getFullYear();
                 const m = (day.getMonth() + 1).toString().padStart(2, '0');
                 const d = day.getDate().toString().padStart(2, '0');
@@ -3144,38 +3121,22 @@ async function initializeApp(user, userData) {
                 const dayOfWeek = day.getDay();
                 
                 let dayType = "วันทำงาน";
-                if (holidayMap.has(dateKey)) {
-                    dayType = "วันหยุดนักขัตฤกษ์";
-                } else if (dayOfWeek === 0) {
-                    dayType = "วันอาทิตย์";
-                } else if (dayOfWeek === 6 && !workingSaturdayMap.has(dateKey)) {
-                    dayType = "วันเสาร์ (หยุด)";
-                } else if (dayOfWeek === 6 && workingSaturdayMap.has(dateKey)) {
-                    dayType = "วันเสาร์ (ทำงาน)";
-                }
+                if (holidayMap.has(dateKey)) dayType = "วันหยุดนักขัตฤกษ์";
+                else if (dayOfWeek === 0) dayType = "วันอาทิตย์";
+                else if (dayOfWeek === 6 && !workingSaturdayMap.has(dateKey)) dayType = "วันเสาร์ (หยุด)";
+                else if (dayOfWeek === 6 && workingSaturdayMap.has(dateKey)) dayType = "วันเสาร์ (ทำงาน)";
 
-                // --- Step 7: Loop ตาม User ---
                 for (const user of filteredUsers) {
-                    
                     const record = recordsMap.get(user.id)?.get(dateKey) || null;
                     const approvedLeave = approvedLeaveMap.get(`${user.id}_${dateKey}`);
 
-                    let statusText = "";
-                    let checkInTime = "-";
-                    let checkOutTime = "-";
-                    let regularWorkHours = 0;
-                    let overtimeHours = 0;
-                    let workTypeInfo = "-";
-                    let onSiteDetails = "-";
-                    let reportType = "-";
-                    let reportProject = "-";
-                    let reportDuration = "-";
+                    let statusText = "", checkInTime = "-", checkOutTime = "-";
+                    let regularWorkHours = 0, overtimeHours = 0;
+                    let workTypeInfo = "-", onSiteDetails = "-", reportType = "-", reportProject = "-", reportDuration = "-";
 
                     if (record) {
-                        // --- Case 1: มีข้อมูล Check In/Out ---
                         const report = record.report || {};
                         const checkinDate = record.checkIn.timestamp.toDate();
-                        
                         checkInTime = localTimeFormatter.format(checkinDate);
                         workTypeInfo = record.checkIn.workType === 'in_factory' ? 'ในโรงงาน' : 'On-site';
                         onSiteDetails = record.checkIn.onSiteDetails || '-';
@@ -3183,7 +3144,6 @@ async function initializeApp(user, userData) {
                         reportProject = report.project || '-';
                         reportDuration = report.duration || '-';
 
-                        // 1.1 ตรวจสอบสถานะ Check In/Out
                         if (record.status === 'checked_in') {
                             statusText = 'กำลังทำงาน';
                         } else if (record.status === 'completed') {
@@ -3191,44 +3151,35 @@ async function initializeApp(user, userData) {
                             if (record.checkOut) {
                                 const checkoutDate = record.checkOut.timestamp.toDate();
                                 checkOutTime = localTimeFormatter.format(checkoutDate);
+                                
+                                // --- [จุดสำคัญ] แก้ไข Logic คำนวณ OT สำหรับ Excel ---
                                 const hours = calculateWorkHours(checkinDate, checkoutDate);
                                 regularWorkHours = hours.regularWorkHours;
-                                overtimeHours = record.overtime?.hours || 0;
+                                
+                                // ถ้า DB มีค่า > 0 ให้ใช้, ถ้าเป็น 0 ให้ใช้ค่าคำนวณ (Fallback)
+                                if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                                    overtimeHours = record.overtime.hours;
+                                } else {
+                                    overtimeHours = hours.overtimeHours;
+                                }
+                                // -------------------------------------------------
                             }
                         }
                         
-                        // 1.2 [ใหม่] ตรวจสอบการมาสาย
                         const checkInMinutes = checkinDate.getHours() * 60 + checkinDate.getMinutes();
-                        const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
+                        const LATE_THRESHOLD_MINUTES = 8 * 60 + 30;
                         
                         if (dayType === "วันทำงาน" && checkInMinutes > LATE_THRESHOLD_MINUTES) {
-                            statusText = 'มาสาย'; // สถานะเริ่มต้นหากมาสายจริง
-
-                            // 1.3 [ใหม่] Logic Override: ตรวจสอบ Partial Leave
+                            statusText = 'มาสาย';
                             if (approvedLeave && approvedLeave.durationType === 'hourly') {
-                                const leaveEndHour = parseInt(approvedLeave.endTime.split(':')[0]);
-                                const leaveEndMinute = parseInt(approvedLeave.endTime.split(':')[1]);
-                                const leaveEndMinutes = leaveEndHour * 60 + leaveEndMinute;
-                                
-                                // ถ้าเวลา Check In อยู่ที่หรือหลังเวลาสิ้นสุดการลา
-                                if (checkInMinutes >= leaveEndMinutes) {
-                                     // ถือว่าการมาสายถูกคลุมด้วยใบลา
-                                    statusText = `ลา: ${approvedLeave.type.replace(/\s*\(.*\)\s*/g, '')} (ชั่วโมง)`;
-                                }
+                                const [eh, em] = approvedLeave.endTime.split(':').map(Number);
+                                if (checkInMinutes >= eh * 60 + em) statusText = `ลา: ${approvedLeave.type} (ชม.)`;
                             }
                         }
-
-
                     } else {
-                        // --- Case 2: ไม่มีข้อมูล Check In/Out ---
-                        
-                        // 2.1 [ใหม่] Logic Override: ตรวจสอบ Full Day Leave หรือ Hourly Leave
                         if (approvedLeave) {
                              let leaveText = approvedLeave.type.replace(/\s*\(.*\)\s*/g, '');
-                            if (approvedLeave.durationType === 'hourly') {
-                                // แสดงเวลาลาในคอลัมน์สถานะ
-                                leaveText += ` (${approvedLeave.startTime} - ${approvedLeave.endTime})`;
-                            }
+                            if (approvedLeave.durationType === 'hourly') leaveText += ` (${approvedLeave.startTime} - ${approvedLeave.endTime})`;
                             statusText = `ลา: ${leaveText}`;
                         } else if (dayType === "วันทำงาน" || dayType === "วันเสาร์ (ทำงาน)") {
                             statusText = "ไม่ได้ลงเวลา"; 
@@ -3237,25 +3188,13 @@ async function initializeApp(user, userData) {
                         }
                     }
 
-                    // --- Step 9: เพิ่มข้อมูลลง Excel ---
                     dataForExcel.push([
-                        user.fullName,
-                        user.department,
-                        localDateFormatter.format(day),
-                        dayType,
-                        statusText,
-                        checkInTime,
-                        checkOutTime,
-                        regularWorkHours.toFixed(2),
-                        overtimeHours.toFixed(1),
-                        workTypeInfo,
-                        onSiteDetails,
-                        reportType,
-                        reportProject,
-                        reportDuration
+                        user.fullName, user.department, localDateFormatter.format(day), dayType, statusText,
+                        checkInTime, checkOutTime, regularWorkHours.toFixed(2), overtimeHours.toFixed(1),
+                        workTypeInfo, onSiteDetails, reportType, reportProject, reportDuration
                     ]);
-                } // จบ Loop User
-            } // จบ Loop วันที่
+                }
+            }
 
             if (dataForExcel.length <= 1) {
                  alert('ไม่พบข้อมูลที่จะ Export ตามเงื่อนไขที่เลือก');
@@ -3269,8 +3208,8 @@ async function initializeApp(user, userData) {
             XLSX.writeFile(wb, fileName);
 
         } catch (error) {
-            console.error("Error exporting employee summary to Excel:", error);
-            alert("เกิดข้อผิดพลาดระหว่างการ Export ข้อมูล: " + error.message);
+            console.error("Error exporting excel:", error);
+            alert("เกิดข้อผิดพลาด: " + error.message);
         }
     }
 
