@@ -2551,7 +2551,6 @@ async function initializeApp(user, userData) {
             let allUsersData = {};
              usersSnapshot.forEach(doc => {
                  const userData = doc.data();
-                 const fullName = (userData.fullName || '').toLowerCase();
                  if (!userIdFilter || doc.id === userIdFilter) {
                         allUsersData[doc.id] = { ...userData, workRecords: [] };
                      }
@@ -2570,11 +2569,11 @@ async function initializeApp(user, userData) {
             const recordsSnapshot = await workRecordsQuery.get();
 
             recordsSnapshot.forEach(doc => {
-            const record = doc.data();
-            if (allUsersData[record.userId]) {
-                allUsersData[record.userId].workRecords.push(record);
-            }
-        });
+                const record = doc.data();
+                if (allUsersData[record.userId]) {
+                    allUsersData[record.userId].workRecords.push(record);
+                }
+            });
 
             let filteredUserIds = Object.keys(allUsersData);
 
@@ -2629,9 +2628,20 @@ async function initializeApp(user, userData) {
                             statusColor = 'bg-red-500';
                             if (latestRecord.checkOut) {
                                 checkOutTime = latestRecord.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                                const { regularWorkHours, overtimeHours } = calculateWorkHours(latestRecord.checkIn.timestamp.toDate(), latestRecord.checkOut.timestamp.toDate());
+                                
+                                // --- [START FIX] แก้ไขการแสดงผล OT ในหน้า Admin List ---
+                                const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(latestRecord.checkIn.timestamp.toDate(), latestRecord.checkOut.timestamp.toDate());
                                 workHours = regularWorkHours.toFixed(2) + ' ชม.';
-                                overtime = (latestRecord.overtime?.hours || 0).toFixed(1) + ' ชม.'; 
+                                
+                                // Logic: ถ้า DB มีค่า > 0 ให้ใช้ DB, ถ้าไม่ ให้ใช้ค่าคำนวณ
+                                let finalOt = 0;
+                                if (latestRecord.overtime && typeof latestRecord.overtime.hours === 'number' && latestRecord.overtime.hours > 0) {
+                                    finalOt = latestRecord.overtime.hours;
+                                } else {
+                                    finalOt = calculatedOt;
+                                }
+                                overtime = finalOt.toFixed(1) + ' ชม.'; 
+                                // --- [END FIX] ---
                             }
                         }
                     } else {
@@ -2668,6 +2678,7 @@ async function initializeApp(user, userData) {
             container.innerHTML = resultsHTML;
 
             if (totalPages > 1) {
+                // (ส่วน Pagination คงเดิม...)
                 const prevButton = document.createElement('button');
                 prevButton.textContent = '◀';
                 prevButton.className = `px-3 py-1 text-sm rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-sky-500 text-white hover:bg-sky-600'}`;
@@ -2695,7 +2706,6 @@ async function initializeApp(user, userData) {
     }
 
     // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
-    // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
     async function fetchPayrollData(startDate, endDate) {
         
         // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
@@ -2714,24 +2724,23 @@ async function initializeApp(user, userData) {
             (calendarDoc.data().workingSaturdays || []).forEach(d => workingSaturdayMap.set(d, true));
         }
 
-        // 3. ประมวลผลใบลาที่อนุมัติแล้ว (สร้าง Map เพื่อให้ค้นหาเร็ว)
+        // 3. ประมวลผลใบลาที่อนุมัติแล้ว
         const approvedLeaveMap = new Map();
         for (const doc of approvedLeaveSnapshot.docs) {
             const leave = doc.data();
             const start = leave.startDate.toDate();
             const end = leave.endDate.toDate();
             
-            // วนลูปทุกวันในใบลา (กรณีลาหลายวัน)
             for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                if (d < startDate || d > endDate) continue; // นับเฉพาะวันที่อยู่ในช่วงที่เลือก
-                const dateKey = toLocalDateKey(new Date(d)); // ใช้วันที่ที่ปรับโซนเวลาแล้ว
+                if (d < startDate || d > endDate) continue;
+                const dateKey = toLocalDateKey(new Date(d));
                 const key = `${leave.userId}_${dateKey}`;
                 approvedLeaveMap.set(key, leave);
             }
         }
 
-        // 4. ประมวลผลเวลาทำงาน (สร้าง Map ซ้อน Map)
-        const recordsMap = new Map(); // Map<userId, Map<dateKey, record>>
+        // 4. ประมวลผลเวลาทำงาน
+        const recordsMap = new Map();
         recordsSnapshot.forEach(doc => {
             const record = doc.data();
             const dateKey = toLocalDateKey(record.date.toDate());
@@ -2744,111 +2753,89 @@ async function initializeApp(user, userData) {
         // 5. เริ่มการรวบรวมข้อมูลสรุป
         const payrollSummary = [];
         for (const userDoc of usersSnapshot.docs) {
-            // const userDoc = await userDocRef.get({ source: 'server' });
             const userId = userDoc.id;
             const user = userDoc.data();
             
-            // [แก้ไข] 1/3: Object 'summary' ที่มี 4 ช่อง OT
             let summary = {
                 userId: userId,
                 fullName: user.fullName || 'N/A',
                 department: user.department || 'N/A',
                 employeeType: user.employeeType || 'N/A',
                 totalRegularHours: 0,
-                // totalOT: 0, (ลบออกแล้ว)
-
-                // เพิ่ม 4 ตัวนี้แทนครับ:
-                total_OT_1_5x: 0,       // สำหรับ OT วันทำงาน (1.5x)
-                total_Holiday_1x: 0,    // สำหรับ ทำงานวันหยุด (1x - รายเดือน)
-                total_Holiday_2x: 0,    // สำหรับ ทำงานวันหยุด (2x - รายวัน)
-                total_OT_3x: 0,         // สำหรับ OT วันหยุด (3x)
-
+                total_OT_1_5x: 0,       
+                total_Holiday_1x: 0,    
+                total_Holiday_2x: 0,    
+                total_OT_3x: 0,         
                 totalLateDays: 0,
                 totalLeaveDays: 0,
                 totalAbsentDays: 0,
-                totalWorkDays: 0 // จำนวนวันที่มาทำงานจริง
+                totalWorkDays: 0 
             };
 
             const userRecords = recordsMap.get(userId) || new Map();
 
-            // วนลูปทุกวันใน "ช่วงวันที่ที่เลือก"
             for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-                const dateKey = toLocalDateKey(new Date(day)); // ใช้วันที่ที่ปรับโซนเวลาแล้ว
+                const dateKey = toLocalDateKey(new Date(day));
                 const dayOfWeek = day.getDay();
                 
-                // ตรวจสอบว่าเป็น "วันทำงาน" หรือไม่
                 const isHoliday = holidayMap.has(dateKey);
                 const isWorkingSat = workingSaturdayMap.has(dateKey);
                 const isWeekend = (dayOfWeek === 0 || (dayOfWeek === 6 && !isWorkingSat));
-                const isWorkingDay = !isHoliday && !isWeekend; // คือวันที่ต้องมาทำงาน
+                const isWorkingDay = !isHoliday && !isWeekend; 
 
                 const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
                 const record = userRecords.get(dateKey);
 
-                // [แก้ไข] 2/3: Logic การนับชั่วโมง (The Bug Fix)
                 if (leave) {
-                    // --- 1. ถ้ามีใบลาก่อน ---
                     if (leave.durationType !== 'hourly') {
                         summary.totalLeaveDays++;
                     }
-                
                 } else if (record) {
-                    // --- 2. [ใหม่] ถ้า "ไม่ลา" และ "มีบันทึกการทำงาน" (record) ---
-                    
-                    // 2.1. นับว่าเป็นวันทำงาน
                     summary.totalWorkDays++;
 
-                    // 2.2. คำนวณชั่วโมง (เฉพาะวันที่ทำงานเสร็จ)
                     if (record.status === 'completed' && record.checkOut) {
                         const checkinTime = record.checkIn.timestamp.toDate();
                         const checkoutTime = record.checkOut.timestamp.toDate();
                         
-                        // ดึงค่า ชม. ปกติ และ ชม. OT ที่คำนวณไว้
-                        const { regularWorkHours } = calculateWorkHours(checkinTime, checkoutTime);
-                        const otHoursToday = (record.overtime?.hours || 0);
+                        // --- [START FIX] คำนวณใหม่ถ้า DB เป็น 0 ---
+                        const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(checkinTime, checkoutTime);
+                        
+                        let otHoursToday = 0;
+                        if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                            otHoursToday = record.overtime.hours;
+                        } else {
+                            otHoursToday = calculatedOt; // ใช้ค่าคำนวณถ้า DB เป็น 0
+                        }
+                        // --- [END FIX] ---
 
-                        // 2.3. [ย้ายมาไว้ข้างใน] แยกประเภทวัน
                         if (isWorkingDay) {
-                            // ---- ถ้าเป็น "วันทำงานปกติ" (จ-ศ) ----
                             summary.totalRegularHours += regularWorkHours;
                             summary.total_OT_1_5x += otHoursToday;
-                        
                         } else {
-                            // ---- ถ้าเป็น "วันหยุด" (อาทิตย์, วันหยุดที่เพิ่ม) ----
                             if (user.employeeType === 'monthly') {
-                                summary.total_Holiday_1x += regularWorkHours; // 1x
-                            } else { // 'daily'
-                                summary.total_Holiday_2x += regularWorkHours; // 2x
+                                summary.total_Holiday_1x += regularWorkHours; 
+                            } else { 
+                                summary.total_Holiday_2x += regularWorkHours; 
                             }
-                            // OT ที่เกิดขึ้นในวันหยุด นับเป็น 3x
                             summary.total_OT_3x += otHoursToday;
                         }
                     }
 
-                    // 2.4. เช็คมาสาย (นับเฉพาะเมื่อมาทำงาน)
                     const checkinTime = record.checkIn.timestamp.toDate();
                     const checkInMinutes = checkinTime.getHours() * 60 + checkinTime.getMinutes();
-                    const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
+                    const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; 
                     
-                    // [แก้ไข] เช็คสาย "เฉพาะในวันทำงานปกติ" เท่านั้น
                     if (isWorkingDay && checkInMinutes > LATE_THRESHOLD_MINUTES) {
                         summary.totalLateDays++;
                     }
 
                 } else if (isWorkingDay) {
-                    // --- 3. [ใหม่] ถ้า "ไม่ลา" และ "ไม่มีบันทึก" และ "เป็นวันทำงาน" ---
-                    // (คือขาดงาน)
-                    // [แก้ไข] 3/3: นับขาดงานสำหรับทุกคน
                     summary.totalAbsentDays++;
-                
                 }
-                // --- 4. (ไม่ต้องมี else) ---
-                // (ถ้า "ไม่ลา", "ไม่มีบันทึก" และ "เป็นวันหยุด" = ไม่ต้องทำอะไร)
-                
-            } // จบการวนลูปตามวัน
+            } 
 
             payrollSummary.push(summary);
-        } // จบการวนลูปตามพนักงาน
+        } 
 
         return payrollSummary;
     }
@@ -3353,7 +3340,6 @@ async function initializeApp(user, userData) {
             const report = record.report;
 
             // const dateKey = toLocalDateKey(checkinTime); // (ไม่ได้ใช้ บรรทัดนี้ comment ไว้ได้)
-
             let checkoutTime;
             let regularWorkHours = 0;
             let overtimeHours = 0;
