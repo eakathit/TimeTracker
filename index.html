@@ -2,19 +2,17 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTracker Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTracker</title>
 
-    <link href="style.css?v=1.4" rel="stylesheet">
+    <link href="style.css?v=1.3" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.png" type="image/png">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="theme-color" content="#38BDF8">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,893 +20,1162 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 
     <style>
-        /* Modern Premium Palette */
+        /* CSS ของคุณ (ไม่ต้องแก้ไข) */
         :root {
-            --bg-color: #F8FAFC; /* Slate 50 */
+            --bg-color: #F9FAFB;
             --card-bg: #FFFFFF;
-            
-            /* Premium Indigo Gradient */
-            --primary-color: #4F46E5; /* Indigo 600 */
-            --primary-gradient: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
-            --primary-light: #EEF2FF; /* Indigo 50 */
-            
-            /* Status Colors */
-            --success-color: #10B981; /* Emerald 500 */
-            --success-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            --danger-color: #EF4444; /* Red 500 */
-            --danger-gradient: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-            
-            --text-primary: #1E293B; /* Slate 800 */
-            --text-secondary: #64748B; /* Slate 500 */
-            --border-color: #E2E8F0; /* Slate 200 */
+            --primary-color: #38BDF8; /* Light Blue */
+            --primary-hover: #0EA5E9;
+            --secondary-color: #34D399; /* Mint Green */
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
         }
-
         body {
             font-family: 'Prompt', 'Inter', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
         }
-
-        /* Modern Card Styling */
         .card {
             background-color: var(--card-bg);
-            border-radius: 24px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06); /* Soft Shadow */
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 1.5rem;
-            border: 1px solid rgba(255,255,255,0.5);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .card:hover {
-            box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Gradient Buttons */
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            border-radius: 16px;
-            padding: 0.85rem 1.5rem;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
             transition: all 0.3s ease;
-            border: none;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
         }
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+            background-color: var(--primary-hover);
         }
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        /* Page Animations */
         .page { display: none; }
-        .page.active { display: block; animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        
-        @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(20px); }
+        .page.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .bottom-nav { box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08); }
+        
+        /* (แก้ไข) ทำให้ Active State เดิมใช้กับ .bottom-nav เท่านั้น */
+        .bottom-nav .nav-item.active svg { color: var(--primary-color); }
+        .bottom-nav .nav-item.active span { color: var(--primary-color); font-weight: 600; }
 
-        /* Glassmorphism Bottom Nav */
-        .bottom-nav { 
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(226, 232, 240, 0.6);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.02);
-            padding-bottom: env(safe-area-inset-bottom);
-            height: calc(4.5rem + env(safe-area-inset-bottom));
-        }
-        
-        .bottom-nav .nav-item {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .bottom-nav .nav-item.active svg { 
-            color: var(--primary-color);
-            transform: translateY(-2px);
-            filter: drop-shadow(0 4px 6px rgba(79, 70, 229, 0.2));
-        }
-        .bottom-nav .nav-item.active span { 
-            color: var(--primary-color); 
-            font-weight: 600; 
-        }
-        
-        /* Modern Sidebar */
-        aside {
-            background-color: white;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-        }
+        /* (เพิ่มใหม่) Active State สำหรับ Sidebar (เมนูข้าง) */
         aside .nav-item.active {
-            background-color: var(--primary-light);
+            background-color: #F0F9FF; /* เทียบเท่า bg-sky-50 */
             color: var(--primary-color);
-            border-right: 3px solid var(--primary-color);
+        }
+        aside .nav-item.active span {
+            font-weight: 600;
+        }
+        
+        .checkin-btn-anim { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
         }
 
-        /* Check-in Button Animation */
-        .checkin-btn-anim { animation: pulse-blue 2.5s infinite; }
-        @keyframes pulse-blue {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
-            70% { transform: scale(1.02); box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        .checkout-btn-anim {
+            animation: pulse-red 2s infinite;
         }
 
-        .checkout-btn-anim { animation: pulse-red 2.5s infinite; }
         @keyframes pulse-red {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            70% { transform: scale(1.02); box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        .completed-btn-anim {
+            animation: pulse-green 2s infinite;
         }
 
-        .completed-btn-anim { animation: pulse-green 2.5s infinite; }
         @keyframes pulse-green {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { transform: scale(1.02); box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
         }
 
-        /* Inputs & Forms */
-        input[type="text"], input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"], select, textarea {
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            transition: all 0.2s;
-            background-color: #F8FAFC;
+        /* CSS สำหรับ Modal แก้ไข */
+        #edit-modal.hidden {
+            display: none;
         }
-        input:focus, select:focus, textarea:focus {
-            background-color: #FFFFFF;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-            outline: none;
+        /* CSS สำหรับ Modal ยืนยัน */
+        #confirm-modal.hidden {
+             display: none;
         }
-
-        /* Modals with Blur */
-        #modal-overlay, #confirm-overlay, #leave-overlay, #profile-edit-overlay, #ot-overlay, .modal-overlay {
-            backdrop-filter: blur(4px);
-            background-color: rgba(15, 23, 42, 0.4);
+        /* CSS สำหรับฟอร์ม Plan ที่ซ่อนไว้ */
+        #plan-new-form.hidden {
+             display: none;
         }
-
-        /* Hide Scrollbar but allow scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Custom Gradients for specific buttons */
-        .bg-gradient-primary { background: var(--primary-gradient); }
-        .bg-gradient-danger { background: var(--danger-gradient); }
-        .bg-gradient-success { background: var(--success-gradient); }
-
-        /* Helpers */
-        .text-primary-custom { color: var(--primary-color); }
-        .bg-primary-light { background-color: var(--primary-light); }
+        
     </style>
 </head>
-<body class="antialiased text-slate-800">
+<body class="antialiased">
 
-    <!-- Login Page -->
-    <div id="login-page" class="hidden page min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
-        <!-- Background Decoration -->
-        <div class="absolute top-[-10%] right-[-10%] w-64 h-64 bg-indigo-200 rounded-full blur-[80px] opacity-40"></div>
-        <div class="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-blue-200 rounded-full blur-[80px] opacity-40"></div>
-
-        <div class="w-full max-w-sm text-center relative z-10">
-            <div class="bg-white p-8 rounded-[32px] shadow-premium">
-                <div class="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/30">
-                    <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                </div>
-                <h1 class="text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับ</h1>
-                <p class="text-slate-500 mb-8 font-medium">ระบบบันทึกเวลาทำงานอัจฉริยะ</p>
-                
-                <button id="google-login-btn" class="group relative w-full flex items-center justify-center py-4 px-4 border border-slate-200 hover:border-slate-300 bg-white rounded-2xl transition-all duration-200 hover:shadow-md hover:bg-slate-50">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-4">
-                       <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.108-11.283-7.481l-6.571,4.819C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-                    </div>
-                    <span class="text-slate-600 font-bold group-hover:text-slate-800">เข้าสู่ระบบด้วย Google</span>
-                </button>
-            </div>
-            <p class="mt-6 text-slate-400 text-xs">© 2024 TimeTracker Pro System</p>
+    <div id="login-page" class="hidden page min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+        <div class="w-full max-w-sm text-center">
+            <svg class="w-20 h-20 mx-auto text-sky-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
+            <p class="text-gray-500 mb-8">ลงชื่อเข้าใช้ระบบบันทึกเวลา</p>
+            
+            <button id="google-login-btn" class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full py-4 text-lg font-semibold rounded-xl transition-all flex items-center justify-center shadow-sm">
+                <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.108-11.283-7.481l-6.571,4.819C9.656,39.663,16.318,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                เข้าสู่ระบบด้วย Google
+            </button>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" class="min-h-screen flex flex-col items-center justify-center bg-slate-50 z-50">
-        <div class="relative">
-            <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-            <div class="mt-4 text-indigo-600 font-medium animate-pulse">กำลังโหลด...</div>
-        </div>
+    <div id="loading-spinner" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <svg class="animate-spin h-10 w-10 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
     </div>
 
-    <div id="app-container" class="flex flex-col md:flex-row pb-24 md:pb-0 h-screen overflow-hidden" style="display: none;">
+    <div id="app-container" class="flex flex-col md:flex-row pb-24 md:pb-0" style="display: none;">
         
-        <!-- Sidebar (Desktop) -->
-        <aside class="hidden md:flex flex-col w-72 h-screen fixed top-0 left-0 bg-white border-r border-slate-200 p-6 z-20 shadow-sm">
-            <div class="flex items-center gap-3 mb-10 px-2">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white shadow-md">
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                </div>
-                <h1 class="text-xl font-bold text-slate-800 tracking-tight">TimeTracker</h1>
+        <aside class="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 bg-white border-r border-gray-200 p-4 z-20">
+            <div class="flex items-center gap-2 mb-8 px-2">
+                <svg class="w-10 h-10 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                <h1 class="text-xl font-bold text-gray-800">TimeTracker</h1>
             </div>
             
-            <nav class="flex flex-col space-y-1.5 flex-1">
-                <a href="#" class="nav-item flex items-center gap-3.5 p-3.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all group" data-page="check-in-out-page">
-                    <svg class="w-6 h-6 group-hover:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="font-semibold group-hover:text-slate-900 transition-colors">ลงเวลาเข้างาน</span>
+            <nav class="flex flex-col space-y-2">
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="check-in-out-page">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="font-medium">ลงเวลา</span>
                 </a>
                 
-                <a href="#" id="report-or-admin-nav-sidebar" class="nav-item flex items-center gap-3.5 p-3.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all group" data-page="report-page">
-                    <svg class="w-6 h-6 group-hover:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="font-semibold group-hover:text-slate-900 transition-colors">รายงานประจำวัน</span>
+                <a href="#" id="report-or-admin-nav-sidebar" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="report-page">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="font-medium">รายงาน</span>
                 </a>
 
-                <a href="#" id="calendar-or-admin-nav-sidebar" class="nav-item flex items-center gap-3.5 p-3.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all group" data-page="calendar-page">
-                    <svg class="w-6 h-6 group-hover:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <a href="#" id="calendar-or-admin-nav-sidebar" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="calendar-page">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    <span class="font-semibold group-hover:text-slate-900 transition-colors">ปฏิทินงาน</span>
+                    <span class="font-medium">ปฏิทิน</span>
                 </a>
 
-                <a href="#" class="nav-item flex items-center gap-3.5 p-3.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all group" data-page="profile-page">
-                    <svg class="w-6 h-6 group-hover:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span class="font-semibold group-hover:text-slate-900 transition-colors">โปรไฟล์ของฉัน</span>
+                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="profile-page">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span class="font-medium">โปรไฟล์</span>
                 </a>
             </nav>
         </aside>
         
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1 h-screen overflow-y-auto bg-[#F8FAFC] scroll-smooth">
-            <div class="max-w-3xl mx-auto p-4 md:p-8 space-y-6 pb-28 md:pb-8">
+        <main id="main-content" class="p-4 md:p-6 md:ml-64 flex-1 h-screen overflow-y-auto">
         
-                <!-- Page: Check In / Out -->
-                <div id="check-in-out-page" class="page space-y-6">
-                    <!-- Header -->
-                    <div class="flex justify-between items-end relative">
-                        <div>
-                            <p class="text-slate-500 text-sm font-medium mb-1">ยินดีต้อนรับกลับ,</p>
-                            <h2 id="user-display-name" class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight"></h2>
-                        </div>
-                        
-                        <button id="notification-bell-btn" class="relative p-2.5 rounded-full bg-white text-slate-500 shadow-sm border border-slate-100 hover:bg-slate-50 hover:text-indigo-600 transition-all">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.405L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span id="notification-badge" class="hidden absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm border-2 border-white">0</span>
-                        </button>
-
-                        <!-- Notification Modal -->
-                        <div id="notification-modal" class="hidden absolute right-0 top-16 w-80 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl z-50 border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-                            <div class="p-4 border-b border-slate-100/50">
-                                <h3 class="font-bold text-slate-800">การแจ้งเตือนวันนี้</h3>
-                            </div>
-                            <div id="notification-list" class="max-h-80 overflow-y-auto p-4 space-y-3 no-scrollbar">
-                                <p id="no-notifications-msg" class="text-center text-slate-400 text-sm">วันนี้ไม่มีการแจ้งเตือน</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Main Action Card -->
-                    <div class="card text-center relative overflow-hidden group">
-                        <!-- BG Decoration -->
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-indigo-500"></div>
-                        
-                        <div class="relative z-10 py-4">
-                            <p class="text-slate-400 text-sm font-medium uppercase tracking-wide">เวลาปัจจุบัน</p>
-                            <p id="current-time" class="text-6xl md:text-7xl font-bold text-slate-800 my-6 font-mono tracking-tighter"></p>
-                            
-                            <!-- Check In Button -->
-                            <button id="checkin-btn" class="relative group/btn mx-auto w-56 h-56 rounded-full flex flex-col items-center justify-center transition-all duration-500 checkin-btn-anim">
-                                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full shadow-[0_20px_50px_rgba(79,70,229,0.3)] group-hover/btn:shadow-[0_20px_60px_rgba(79,70,229,0.5)] transition-all duration-500"></div>
-                                <div class="relative z-10 flex flex-col items-center">
-                                    <svg class="w-20 h-20 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    <span class="text-2xl font-bold text-white mt-3 tracking-wide drop-shadow-sm">Check In</span>
-                                    <span class="text-indigo-100 text-sm mt-1">ลงเวลาเข้างาน</span>
-                                </div>
-                            </button>
-
-                            <!-- Check Out Button -->
-                            <button id="checkout-btn" class="hidden relative group/btn mx-auto w-56 h-56 rounded-full flex flex-col items-center justify-center transition-all duration-500 checkout-btn-anim">
-                                <div class="absolute inset-0 bg-gradient-to-br from-rose-500 to-red-600 rounded-full shadow-[0_20px_50px_rgba(239,68,68,0.3)] group-hover/btn:shadow-[0_20px_60px_rgba(239,68,68,0.5)] transition-all duration-500"></div>
-                                <div class="relative z-10 flex flex-col items-center">
-                                    <svg class="w-20 h-20 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                    <span class="text-2xl font-bold text-white mt-3 tracking-wide drop-shadow-sm">Check Out</span>
-                                    <span class="text-rose-100 text-sm mt-1">ลงเวลาออกงาน</span>
-                                </div>
-                            </button>
-
-                            <!-- OT Request Button -->
-                            <button id="request-ot-btn" class="hidden mx-auto mt-8 py-3 px-6 bg-white border border-indigo-100 text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 hover:border-indigo-200 transition-all shadow-sm flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                                <span>ขออนุมัติ OT</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Work Status & Location -->
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="card p-5">
-                            <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                สถานที่ทำงาน
-                            </h3>
-                            <div id="work-type-selector" class="flex bg-slate-100 rounded-xl p-1.5 gap-1">
-                                <button data-work-type="in_factory" class="work-type-btn flex-1 py-2.5 rounded-lg bg-white text-indigo-600 shadow-sm font-semibold transition-all text-sm">Factory</button>
-                                <button data-work-type="on_site" class="work-type-btn flex-1 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200/50 transition-all text-sm font-medium">On-site</button>
-                            </div>
-                            
-                            <!-- Onsite Details Form -->
-                            <div id="onsite-details-form" class="hidden mt-4 pt-4 border-t border-slate-100 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <button id="role-member-btn" class="flex flex-col items-center justify-center p-4 bg-indigo-50 border-2 border-indigo-500 text-indigo-700 rounded-xl transition-all active-role">
-                                        <svg class="w-6 h-6 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                                        <span class="font-bold text-sm">สแกน QR</span>
-                                        <span class="text-xs opacity-70">สำหรับสมาชิก</span>
-                                    </button>
-                                    <button id="role-leader-btn" class="flex flex-col items-center justify-center p-4 bg-white border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 transition-all">
-                                        <svg class="w-6 h-6 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                        <span class="font-bold text-sm">สร้างห้อง</span>
-                                        <span class="text-xs opacity-70">สำหรับหัวหน้า</span>
-                                    </button>
-                                </div>
-
-                                <div id="member-section" class="space-y-3">
-                                    <div id="reader" class="w-full rounded-2xl overflow-hidden bg-black hidden border-4 border-slate-800"></div>
-                                    <button id="start-scan-btn" class="w-full btn-primary flex items-center justify-center gap-2">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                        เปิดกล้องสแกน
-                                    </button>
-                                    <p id="scan-status" class="text-center text-xs text-slate-400">กดปุ่มเพื่อเริ่มสแกน QR Code ของหัวหน้าทีม</p>
-                                </div>
-
-                                <div id="leader-section" class="hidden space-y-3">
-                                    <input id="room-project-input" type="text" placeholder="ชื่อโครงการ / Project No." class="w-full">
-                                    <input id="room-location-input" type="text" placeholder="ชื่อสถานที่ / ลูกค้า" class="w-full">
-                                    
-                                    <button id="create-room-btn" class="w-full btn-primary">สร้างห้อง Check-in</button>
-
-                                    <div id="room-qr-container" class="hidden flex flex-col items-center bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300 mt-4">
-                                        <p class="text-sm font-bold text-slate-700 mb-4">QR Code สำหรับทีม</p>
-                                        <div id="qrcode" class="p-2 bg-white rounded-lg shadow-sm"></div>
-                                        <p class="text-xs text-slate-400 mt-4">ให้สมาชิกสแกนเพื่อ Check-in</p>
-                                        
-                                        <div class="w-full mt-4 border-t border-slate-200 pt-3">
-                                            <p class="text-xs font-bold text-slate-500 mb-2">สมาชิกที่เข้าร่วม:</p>
-                                            <ul id="room-members-list" class="text-sm text-slate-700 space-y-1.5 text-center">
-                                                <li class="text-slate-400 italic text-xs">รอสมาชิกสแกน...</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Location Status -->
-                        <div id="location-status" class="flex items-center p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-slate-600 transition-colors">
-                            <div id="location-icon" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mr-4 text-slate-400 shrink-0">
-                                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            </div>
-                            <span id="location-text" class="text-sm font-medium">กำลังตรวจสอบตำแหน่ง...</span>
-                        </div>
-                    </div>
-
-                    <!-- Summary Today -->
-                    <div class="card bg-gradient-to-br from-slate-800 to-slate-900 text-white !border-none !shadow-lg">
-                        <h3 class="font-semibold mb-4 text-slate-200 flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                            สรุปวันนี้
-                        </h3>
-                        <div id="summary-card-content" class="grid grid-cols-3 gap-2 text-center divide-x divide-slate-700">
-                            <div>
-                                <span class="text-xs text-slate-400 block mb-1">เข้างาน</span>
-                                <span id="summary-checkin-time" class="text-lg font-bold text-emerald-400">-</span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-slate-400 block mb-1">ออกงาน</span>
-                                <span id="summary-checkout-time" class="text-lg font-bold text-rose-400">-</span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-slate-400 block mb-1">ชั่วโมง</span>
-                                <span id="summary-work-hours" class="text-lg font-bold text-blue-400">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Page: Report -->
-                <div id="report-page" class="page space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800">รายงานประจำวัน</h2>
-                    
-                    <div class="card space-y-5">
-                        <!-- Date Picker -->
-                        <div class="p-4 bg-amber-50/50 border border-amber-100 rounded-xl flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            </div>
-                            <div class="w-full">
-                                <label class="text-xs font-bold text-amber-800 uppercase tracking-wide">เลือกวันที่</label>
-                                <input type="date" id="report-date-input" class="w-full mt-1 p-0 border-none bg-transparent font-semibold text-slate-800 focus:ring-0 text-lg">
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <!-- Work Type -->
-                            <div>
-                                <label class="text-sm font-medium text-slate-600 mb-1.5 block">ประเภทงาน</label>
-                                <div id="work-type-dropdown" class="relative">
-                                    <button id="work-type-btn" type="button" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all hover:bg-white hover:border-indigo-300">
-                                        <span id="work-type-selected-text" class="text-slate-500">เลือกประเภทงาน...</span>
-                                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                    <div id="work-type-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                                        <div class="p-2 border-b border-slate-50">
-                                            <input id="work-type-search" type="text" placeholder="ค้นหา..." class="w-full p-2 border border-slate-200 rounded-lg text-sm">
-                                        </div>
-                                        <div id="work-type-options" class="max-h-60 overflow-y-auto p-1.5 space-y-1"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Project -->
-                            <div>
-                                <label class="text-sm font-medium text-slate-600 mb-1.5 block">โครงการ</label>
-                                <div id="project-dropdown" class="relative">
-                                    <button id="project-btn" type="button" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all hover:bg-white hover:border-indigo-300">
-                                        <span id="project-selected-text" class="text-slate-500">เลือกโครงการ...</span>
-                                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                    <div id="project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                                        <div class="p-2 border-b border-slate-50">
-                                            <input id="project-search" type="text" placeholder="ค้นหา..." class="w-full p-2 border border-slate-200 rounded-lg text-sm">
-                                        </div>
-                                        <div id="project-options" class="max-h-60 overflow-y-auto p-1.5 space-y-1"></div>
-                                    </div>
-                                </div>
-                                <div class="mt-2 text-xs text-indigo-500 font-medium flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    ใส่ "FAC" สำหรับงานทั่วไปที่ไม่ใช่ Project
-                                </div>
-                            </div>
-
-                            <!-- Duration -->
-                            <div>
-                                <label class="text-sm font-medium text-slate-600 mb-1.5 block">ระยะเวลา</label>
-                                <div id="duration-dropdown" class="relative">
-                                    <button id="duration-btn" type="button" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all hover:bg-white hover:border-indigo-300">
-                                        <span id="duration-selected-text" class="text-slate-500">เลือกระยะเวลา...</span>
-                                        <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                    <div id="duration-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                                        <div id="duration-options" class="p-1.5 space-y-1">
-                                            <div class="duration-option p-2.5 rounded-lg hover:bg-indigo-50 text-slate-700 cursor-pointer text-sm">ทั้งวัน (08:30 - 17:30)</div>
-                                            <div class="duration-option p-2.5 rounded-lg hover:bg-indigo-50 text-slate-700 cursor-pointer text-sm">ครึ่งวันเช้า (08:30 - 12:00)</div>
-                                            <div class="duration-option p-2.5 rounded-lg hover:bg-indigo-50 text-slate-700 cursor-pointer text-sm">ครึ่งวันบ่าย (13:00 - 17:30)</div>
-                                            <div class="duration-option p-2.5 rounded-lg hover:bg-indigo-50 text-slate-700 cursor-pointer text-sm font-medium text-indigo-600">กำหนดเวลาเอง</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-500 uppercase">เริ่ม</label>
-                                        <input type="time" id="custom-time-start-input" class="w-full mt-1 bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-500 uppercase">สิ้นสุด</label>
-                                        <input type="time" id="custom-time-end-input" class="w-full mt-1 bg-white">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button id="save-report-btn" class="btn-primary w-full mt-4 text-lg shadow-lg shadow-indigo-200">
-                            บันทึกรายงาน
-                        </button>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <h3 class="font-semibold text-lg text-slate-700 mb-3 ml-1">รายงานที่ส่งแล้ว</h3>
-                        <div id="sent-reports-container" class="space-y-3">
-                            <!-- JS populated -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Page: Calendar -->
-                <div id="calendar-page" class="page space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-2xl font-bold text-slate-800">ปฏิทิน</h2>
-                        <button id="show-leave-form-btn" class="py-2 px-4 bg-white border border-indigo-100 text-indigo-600 rounded-xl font-semibold shadow-sm hover:bg-indigo-50 transition-all text-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            ยื่นใบลา
-                        </button>
-                    </div>
-                    
-                    <div class="card !p-6">
-                        <!-- Calendar Header -->
-                        <div class="flex justify-between items-center mb-6">
-                            <button id="cal-prev-month" class="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <h3 id="cal-month-year" class="text-lg font-bold text-slate-800"></h3>
-                            <button id="cal-next-month" class="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                        </div>
-                        
-                        <!-- Days Header -->
-                        <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                            <span class="text-xs font-bold text-red-400">อา</span>
-                            <span class="text-xs font-bold text-slate-400">จ</span>
-                            <span class="text-xs font-bold text-slate-400">อ</span>
-                            <span class="text-xs font-bold text-slate-400">พ</span>
-                            <span class="text-xs font-bold text-slate-400">พฤ</span>
-                            <span class="text-xs font-bold text-slate-400">ศ</span>
-                            <span class="text-xs font-bold text-indigo-400">ส</span>
-                        </div>
-                        
-                        <!-- Calendar Grid -->
-                        <div id="cal-grid" class="grid grid-cols-7 gap-1">
-                            <!-- JS populated -->
-                        </div>
-
-                        <!-- Details Section -->
-                        <div id="cal-details-container" class="mt-6 pt-6 border-t border-slate-100 min-h-[100px]">
-                            <p class="text-center text-slate-400 text-sm mt-4">เลือกวันที่เพื่อดูรายละเอียด</p>
-                        </div>
-                    </div> 
-                </div>
-
-                <!-- Page: Profile -->
-                <div id="profile-page" class="page space-y-6">
-                    <div class="card !p-0 overflow-hidden">
-                        <!-- Profile Cover/Header -->
-                        <div class="bg-gradient-to-r from-indigo-600 to-blue-500 h-32 relative">
-                            <button id="profile-edit-btn" class="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" /></svg>
-                            </button>
-                        </div>
-                        
-                        <div class="px-6 pb-6 relative">
-                            <div class="flex flex-col items-center -mt-12 mb-4">
-                                <div class="p-1.5 bg-white rounded-full shadow-md">
-                                    <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" class="w-24 h-24 rounded-full object-cover bg-slate-100">
-                                </div>
-                                <h2 id="profile-page-name" class="text-xl font-bold text-slate-800 mt-3">กำลังโหลด...</h2>
-                                <span id="profile-page-department" class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-semibold mt-1">...</span>
-                            </div>
-
-                            <!-- Quick Stats -->
-                            <div class="grid grid-cols-3 gap-3 mb-6">
-                                <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                                    <p class="text-xs text-slate-500 font-medium mb-1">ชั่วโมงงาน</p>
-                                    <p id="profile-summary-hours" class="text-xl font-bold text-slate-800">-</p> 
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                                    <p class="text-xs text-slate-500 font-medium mb-1">OT รวม</p>
-                                    <p id="profile-summary-ot" class="text-xl font-bold text-indigo-600">-</p> 
-                                </div>
-                                <div class="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                                    <p class="text-xs text-slate-500 font-medium mb-1">วันทำงาน</p>
-                                    <p id="profile-summary-days" class="text-xl font-bold text-emerald-600">-</p> 
-                                </div>
-                            </div>
-
-                            <!-- History Buttons -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <button id="btn-my-leave-history" class="py-3 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 hover:text-indigo-600 transition flex items-center justify-center gap-2 shadow-sm">
-                                    <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                    เช็ควันลา
-                                </button>
-                                <button id="btn-my-ot-history" class="py-3 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 hover:text-orange-600 transition flex items-center justify-center gap-2 shadow-sm">
-                                    <svg class="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    เช็ค OT
-                                </button>
-                            </div>
-                        </div>
-                    </div> 
-
-                    <!-- Work History List -->
+            <div id="check-in-out-page" class="page space-y-6">
+                <div class="flex justify-between items-center relative">
                     <div>
-                        <div class="flex justify-between items-end mb-4 px-1">
-                             <h3 class="font-bold text-lg text-slate-800">ประวัติการทำงาน</h3>
-                             <div class="relative">
-                                <select id="history-range-select" class="appearance-none bg-white border border-slate-200 text-slate-600 text-xs font-bold py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm">
-                                    <option value="7">7 วันล่าสุด</option>
-                                    <option value="this_month">เดือนนี้</option>
-                                    <option value="last_month">เดือนที่แล้ว</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                                    <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                </div>
-                            </div>
+                        <p class="text-gray-500">ยินดีต้อนรับสู่</p>
+                        <h2 id="user-display-name" class="text-2xl font-bold"></h2>
+                    </div>
+                    
+                    <button id="notification-bell-btn" class="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.405L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                            0
+                        </span>
+                    </button>
+
+                    <div id="notification-modal" class="hidden absolute right-0 top-14 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-200">
+                        <div class="p-4 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-800">การแจ้งเตือนวันนี้</h3>
                         </div>
-                       
-                        <div id="work-history-container" class="space-y-4">
-                            <!-- JS populated -->
+                        <div id="notification-list" class="max-h-80 overflow-y-auto p-4 space-y-3">
+                            <p id="no-notifications-msg" class="text-center text-gray-500 text-sm">วันนี้ไม่มีพนักงานลา</p>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="card text-center">
+                    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
+                    <p id="current-time" class="text-5xl font-bold my-4"></p>
+                    
+                    <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="text-2xl font-semibold mt-2">Check In</span>
+                    </button>
+
+                    <button id="checkout-btn" class="hidden w-48 h-48 bg-red-500 text-white checkout-btn-anim rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-red-600 transition-all duration-300">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span class="text-2xl font-semibold mt-2">Check Out</span>
+                    </button>
+
+                  <button id="request-ot-btn" class="hidden w-full max-w-xs mt-4 py-3 bg-transparent border-2 border-sky-500 text-sky-600 rounded-lg font-semibold hover:bg-sky-500 hover:text-white transition-all">
+        <svg class="w-6 h-6 inline-block -mt-1 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        <span>Request OT</span>
+    </button>
+                </div>
+
+                <div class="card space-y-4">
+                    <div>
+                        <h3 class="font-semibold mb-3">ประเภทการทำงาน</h3>
+                        <div id="work-type-selector" class="flex bg-gray-100 rounded-xl p-1">
+                            <button data-work-type="in_factory" class="work-type-btn flex-1 p-2 rounded-lg bg-sky-500 text-white shadow">Factory</button>
+                            <button data-work-type="on_site" class="work-type-btn flex-1 p-2 rounded-lg text-gray-600">On-site</button>
+                        </div>
+                    </div>
+                    
+                    <div id="onsite-details-form" class="hidden pt-4 border-t border-gray-100 space-y-4">
+    <h3 class="font-semibold text-center mb-2 text-gray-700">เลือกบทบาทของคุณ</h3>
+    
+    <div class="flex gap-3">
+        <button id="role-member-btn" class="flex-1 py-3 bg-white border-2 border-sky-500 text-sky-600 rounded-xl font-bold hover:bg-sky-50 transition-all active-role">
+            📷 สแกน QR <br><span class="text-xs font-normal">(สมาชิก)</span>
+        </button>
+        <button id="role-leader-btn" class="flex-1 py-3 bg-white border-2 border-gray-300 text-gray-500 rounded-xl font-bold hover:bg-gray-50 transition-all">
+            👑 สร้างห้อง <br><span class="text-xs font-normal">(หัวหน้าทีม)</span>
+        </button>
+    </div>
+
+    <div id="member-section" class="space-y-3">
+        <div id="reader" class="w-full rounded-xl overflow-hidden bg-black hidden"></div>
+        <button id="start-scan-btn" class="w-full btn-primary py-3 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            เปิดกล้องสแกน QR
+        </button>
+        <p id="scan-status" class="text-center text-sm text-gray-500">กดปุ่มเพื่อเริ่มสแกน</p>
+    </div>
+
+    <div id="leader-section" class="hidden space-y-3">
+        <input id="room-project-input" type="text" placeholder="ชื่อโครงการ / Project No." class="w-full p-3 border border-gray-300 rounded-xl">
+        <input id="room-location-input" type="text" placeholder="ชื่อสถานที่ / ลูกค้า" class="w-full p-3 border border-gray-300 rounded-xl">
+        
+        <button id="create-room-btn" class="w-full btn-primary py-3">สร้างห้อง Check-in</button>
+
+        <div id="room-qr-container" class="hidden flex flex-col items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
+            <p class="text-sm font-bold text-gray-600 mb-2">QR Code สำหรับทีม</p>
+            <div id="qrcode" class="mb-4"></div>
+            <p class="text-xs text-gray-400 mb-2">ให้สมาชิกสแกนเพื่อ Check-in</p>
+            
+            <div class="w-full border-t pt-2">
+                <p class="text-xs font-bold text-gray-500 mb-2">สมาชิกที่เข้าร่วม:</p>
+                <ul id="room-members-list" class="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto w-full text-center">
+                    <li class="text-gray-400 italic">รอสมาชิกสแกน...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+                    <div class="pt-4 border-t border-gray-100">
+                         <h3 class="font-semibold mb-3">สถานะตำแหน่งปัจจุบัน</h3>
+                         <div id="location-status" class="flex items-center p-3 rounded-xl bg-gray-100 text-gray-700">
+                            <svg id="location-icon" class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+                            <span id="location-text" class="font-medium">กำลังตรวจสอบตำแหน่ง...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="font-semibold mb-3">สรุปการทำงานวันนี้</h3>
+                    <div id="summary-card-content" class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Check-in:</span>
+                            <span id="summary-checkin-time" class="font-medium text-gray-400">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Check-out:</span>
+                            <span id="summary-checkout-time" class="font-medium text-gray-400">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">ชั่วโมงทำงาน:</span>
+                            <span id="summary-work-hours" class="font-medium text-gray-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="report-page" class="page space-y-6">
+    <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
+    <div class="card space-y-4">
+        
+        <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <label class="text-sm font-bold text-gray-700">📅 เลือกวันที่ของรายงาน</label>
+            <input type="date" id="report-date-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none font-medium text-gray-700">
+            <p class="text-xs text-gray-500 mt-1">* เลือกวันที่ย้อนหลังได้หากลืมบันทึก</p>
+        </div>
+        <h3 class="font-semibold">กรอกข้อมูลรายงาน</h3>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
+                        <div id="work-type-dropdown" class="relative mt-1">
+                            
+                            <button id="work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                <span id="work-type-selected-text" class="text-gray-500">เลือกประเภทงาน...</span>
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <div id="work-type-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                <div class="p-2 border-b border-gray-100">
+                                    <input id="work-type-search" type="text" placeholder="ค้นหาประเภทงาน..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                                </div>
+                                
+                                <div id="work-type-options" class="max-h-60 overflow-y-auto p-1">
+                        </div>
+                            </div>
                         </div>
                     </div>
 
-                    <button id="logout-btn" class="w-full py-4 rounded-2xl bg-rose-50 text-rose-600 font-bold hover:bg-rose-100 transition mt-8 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        ออกจากระบบ
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">โครงการ</label>
+                        
+                        <div class="mt-2 p-3 bg-violet-50 border border-violet-200 rounded-lg text-sm text-violet-800 flex items-start space-x-3">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
+                            <div>
+                                <b>Project No. :</b> หากทำงานที่ไม่ใช่งาน Project ให้ใส่ <b>FAC</b><br>
+                                <i>(ตัวอย่างเลขโปรเจ็ค: H1-0554 → 1554, SI2303 → 2303)</i>
+                            </div>
+                        </div>
+
+                        <div id="project-dropdown" class="relative mt-2">
+                            <button id="project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                <span id="project-selected-text" class="text-gray-500">เลือกโครงการ...</span>
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <div id="project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                <div class="p-2 border-b border-gray-100">
+                                    <input id="project-search" type="text" placeholder="ค้นหาโครงการ..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                                </div>
+                                <div id="project-options" class="max-h-60 overflow-y-auto p-1">
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">ระยะเวลาการทำงาน</label>
+                        
+                        <div id="duration-dropdown" class="relative mt-1">
+                            <button id="duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                <span id="duration-selected-text" class="text-gray-500">เลือกระยะเวลา...</span>
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <div id="duration-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                <div id="duration-options" class="p-1">
+                                    <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ทั้งวัน (08:30 - 17:30)</div>
+                                    <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันเช้า (08:30 - 12:00)</div>
+                                    <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันบ่าย (13:00 - 17:30)</div>
+                                    <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">กำหนดเวลา</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
+    <div>
+        <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+        <input type="time" id="custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
+    </div>
+    <div>
+        <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+        <input type="time" id="custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
+    </div>
+</div>
+                    </div>
+                    <button id="save-report-btn" class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="font-semibold text-lg">รายงานที่ส่งวันนี้</h3>
+                    <div id="sent-reports-container" class="space-y-3">
+                        <p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่ได้ส่งรายงานวันนี้</p>
+                    </div>
+                </div>
+            </div>
+            
+           <div id="admin-dashboard-page" class="page space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-sky-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Admin Dashboard</span>
+                    </h2>
+                    <p class="text-gray-500 mt-1">ภาพรวมและจัดการข้อมูลระบบ</p>
+                </div>
+
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                    <div class="space-y-8">
+                        <div class="card">
+                            <h3 class="font-semibold text-lg text-gray-800 mb-4">⚙️ จัดการข้อมูลระบบ</h3>
+                            <button id="admin-go-to-calendar-btn" class="w-full flex items-center justify-center text-sm font-medium text-violet-600 p-3 mb-4 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors">
+                                <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span>ดูปฏิทิน (วางแผน/วันหยุด)</span>
+                            </button>
+                             
+                             <div class="space-y-6">
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h4 class="font-semibold text-gray-700 mb-3">จัดการประเภทงาน</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" id="add-work-type-input" placeholder="เพิ่มประเภทงานใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                            <button id="add-work-type-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="relative w-full">
+                                                <button id="delete-work-type-select-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-left flex justify-between items-center focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                                    <span id="delete-work-type-selected-text" class="text-gray-500">เลือกประเภทงานที่จะลบ...</span>
+                                                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                                </button>
+                                                <div id="delete-work-type-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                                    <div id="delete-work-type-options" class="max-h-40 overflow-y-auto p-1"></div>
+                                                </div>
+                                            </div>
+                                            <button id="delete-work-type-btn" class="bg-red-500 text-white font-semibold p-3 rounded-lg hover:bg-red-600 transition-colors flex-shrink-0">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h4 class="font-semibold text-gray-700 mb-3">จัดการโครงการ</h4>
+                                    <div class="space-y-3">
+                                         <div class="flex items-center space-x-2">
+                                            <input type="text" id="add-project-input" placeholder="เพิ่มโครงการใหม่..." class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                            <button id="add-project-btn" class="bg-sky-500 text-white font-semibold p-3 rounded-lg hover:bg-sky-600 transition-colors flex-shrink-0">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <div class="relative w-full">
+                                                <button id="delete-project-select-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-lg text-left flex justify-between items-center focus:ring-2 focus:ring-red-400 focus:outline-none text-sm">
+                                                    <span id="delete-project-selected-text" class="text-gray-500">เลือกโครงการที่จะลบ...</span>
+                                                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                                </button>
+                                                <div id="delete-project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                                                    <div id="delete-project-options" class="max-h-40 overflow-y-auto p-1"></div>
+                                                </div>
+                                            </div>
+                                            <button id="delete-project-btn" class="bg-red-500 text-white font-semibold p-3 rounded-lg hover:bg-red-600 transition-colors flex-shrink-0">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h4 class="font-semibold text-gray-700 mb-3">🗓️ จัดการวันหยุด/วันทำงาน</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
+                                            <input type="date" id="admin-calendar-date-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button id="add-holiday-btn" class="flex items-center justify-center gap-2 w-full p-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                                                <span>เพิ่มเป็นวันหยุด</span>
+                                            </button>
+                                            <button id="add-working-saturday-btn" class="flex items-center justify-center gap-2 w-full p-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors text-sm">
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                                <span>เพิ่มเป็นเสาร์ทำงาน</span>
+                                            </button>
+                                        </div>
+                                        <div class="pt-3 border-t border-gray-200">
+                                            <button id="toggle-holiday-list-btn" class="w-full text-sm font-medium text-sky-600 p-2 rounded-lg hover:bg-sky-50 border border-sky-200 bg-sky-50 mb-3 transition-colors">
+                                                แสดงรายการที่บันทึกไว้
+                                            </button>
+                                            <div id="holiday-list-wrapper" class="hidden">
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <h5 class="text-sm font-semibold text-gray-600 mb-2">วันหยุด (คลิกเพื่อลบ)</h5>
+                                                        <div id="holiday-list-display" class="space-y-2 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                                                            <p class="text-xs text-center text-gray-400">...</p>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h5 class="text-sm font-semibold text-gray-600 mb-2">เสาร์ทำงาน (คลิกเพื่อลบ)</h5>
+                                                        <div id="worksat-list-display" class="space-y-2 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                                                            <p class="text-xs text-center text-gray-400">...</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h3 class="font-semibold text-lg text-gray-800 mb-4">🗓️ จัดการใบลา</h3>
+                                    <div class="border-b border-gray-200">
+                                        <nav id="leave-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                            <a href="#" data-target="leave-pending-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-semibold border-sky-500 text-sky-600" aria-current="page">
+                                                รออนุมัติ
+                                            </a>
+                                            <a href="#" data-target="leave-history-content" class="leave-tab-btn whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                                                ประวัติทั้งหมด
+                                            </a>
+                                        </nav>
+                                    </div>
+                                    <div class="mt-4">
+                                        <div id="leave-pending-content" class="leave-tab-content space-y-4 max-h-96 overflow-y-auto">
+                                            <div id="leave-approval-list" class="space-y-4">
+                                                <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลดรายการ...</p>
+                                            </div>
+                                        </div>
+                                        <div id="leave-history-content" class="leave-tab-content hidden">
+                                            <div class="space-y-3 mb-4 p-4 bg-white rounded-xl border border-gray-200"> <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label for="leave-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                                                        <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">ทั้งหมด</option>
+                                                            <option value="pending">รออนุมัติ</option>
+                                                            <option value="approved">อนุมัติแล้ว</option>
+                                                            <option value="rejected">ไม่อนุมัติ</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label for="leave-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
+                                                        <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">พนักงานทั้งหมด</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <button id="leave-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+                                                    ค้นหาประวัติ
+                                                </button>
+                                            </div>
+                                            <div id="leave-history-list" class="space-y-4 max-h-96 overflow-y-auto">
+                                                <p id="leave-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <h3 class="font-semibold text-lg text-gray-800 mb-4">⏱️ จัดการคำขอ OT</h3>
+                                    
+                                    <div class="border-b border-gray-200">
+                                        <nav id="ot-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
+                                            <a href="#" data-target="ot-pending-content" class="ot-tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-semibold border-orange-500 text-orange-600" aria-current="page">
+                                                รออนุมัติ
+                                            </a>
+                                            <a href="#" data-target="ot-history-content" class="ot-tab-btn whitespace-nowrap py-3 px-1 border-b-2 border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700">
+                                                ประวัติทั้งหมด
+                                            </a>
+                                        </nav>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div id="ot-pending-content" class="ot-tab-content space-y-4 max-h-96 overflow-y-auto">
+                                            <div id="ot-approval-list" class="space-y-4">
+                                                <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลดรายการ...</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="ot-history-content" class="ot-tab-content hidden">
+                                            <div class="space-y-3 mb-4 p-4 bg-white rounded-xl border border-gray-200">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label for="ot-history-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                                                        <select id="ot-history-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">ทั้งหมด</option>
+                                                            <option value="pending">รออนุมัติ</option>
+                                                            <option value="approved">อนุมัติแล้ว</option>
+                                                            <option value="rejected">ไม่อนุมัติ</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label for="ot-history-user-filter" class="text-xs font-medium text-gray-600">พนักงาน</label>
+                                                        <select id="ot-history-user-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                            <option value="">พนักงานทั้งหมด</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <button id="ot-history-search-btn" class="w-full sm:w-auto px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+                                                    ค้นหาประวัติ OT
+                                                </button>
+                                            </div>
+                                            <div id="ot-history-list" class="space-y-4 max-h-96 overflow-y-auto">
+                                                <p id="ot-history-loading-msg" class="text-center text-gray-400 text-sm py-4">กรุณากด "ค้นหาประวัติ OT"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-8">
+                        <div class="card">
+                            <h3 class="font-semibold text-lg text-gray-800 mb-4">📊 ข้อมูลสรุปและรายงาน</h3>
+                            <div class="space-y-6">
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                     <div class="flex justify-between items-start mb-3">
+                                        <h4 class="font-semibold text-gray-700">สรุปข้อมูลรายโครงการ (รายเดือน)</h4>
+                                        <button id="export-project-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                                            <span>Export Excel</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-sm font-medium text-gray-600">เลือกเดือน</label>
+                                            <input type="month" id="project-summary-month" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-sm font-medium text-gray-600">เลือกโครงการ</label>
+                                            <select id="project-summary-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                                <option value="">เลือกโครงการ...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="project-summary-results" class="mt-4 pt-4 border-t border-gray-200 max-h-96 overflow-y-auto">
+                                         <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h4 class="font-semibold text-gray-700">ข้อมูลเวลาทำงานของพนักงาน</h4>
+                                        <button id="export-employee-summary-btn" class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                                            <span>Export Excel</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="space-y-4 mb-6 p-4 bg-white rounded-xl border border-gray-200"> <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div>
+                                                <label for="summary-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
+                                                <input type="date" id="summary-start-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                            </div>
+                                            <div>
+                                                <label for="summary-end-date" class="text-xs font-medium text-gray-600">วันที่สิ้นสุด</label>
+                                                <input type="date" id="summary-end-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                            </div>
+                                            <div>
+                                                <label for="summary-employee-select" class="text-xs font-medium text-gray-600">เลือกพนักงาน</label>
+                                                <select id="summary-employee-select" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                    <option value="">พนักงานทั้งหมด</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="summary-status-filter" class="text-xs font-medium text-gray-600">สถานะ</label>
+                                                <select id="summary-status-filter" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                                    <option value="">ทั้งหมด</option>
+                                                    <option value="checked_in">กำลังทำงาน</option>
+                                                    <option value="completed">สิ้นสุดการทำงาน</option>
+                                                    <option value="not_checked_in">ยังไม่เข้างาน</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                         <button id="apply-summary-filters-btn" class="w-full sm:w-auto mt-3 px-5 py-2 bg-sky-500 text-white text-sm font-semibold rounded-lg hover:bg-sky-600">
+                                            แสดงข้อมูล
+                                        </button>
+                                    </div>
+                                    <div id="employee-summary-container-admin" class="space-y-3 max-h-[60vh] overflow-y-auto">
+                                        <p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>
+                                    </div>
+                                     <div id="summary-pagination-controls" class="mt-4 flex justify-center items-center space-x-2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <h3 class="font-semibold text-lg text-gray-800 mb-4">📈 สรุปข้อมูลพนักงาน</h3>
+                                <p class="text-xs text-yellow-600 font-medium mb-4 -mt-2 px-1">
+                                    * หมายเหตุ (รอแก้ไข): รอเเก้ไขฟังก์ชัน OT ตามจริง
+                                </p>
+                                <div class="p-4 bg-white rounded-xl border border-gray-200 space-y-4"> <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="payroll-start-date" class="text-xs font-medium text-gray-600">วันที่เริ่มต้น</label>
+                                            <input type="date" id="payroll-start-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                        </div>
+                                        <div>
+                                            <label for="payroll-end-date" class="text-xs font-medium text-gray-600">วันที่สิ้นสุด</label>
+                                            <input type="date" id="payroll-end-date" class="w-full mt-1 p-2 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none text-sm">
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <button id="generate-payroll-summary-btn" class="flex-1 btn-primary !py-2 !text-sm">
+                                            แสดงข้อมูลสรุป
+                                        </button>
+                                        <button id="export-payroll-summary-btn" class="flex-1 text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"></path></svg>
+                                            <span>Export to Excel</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="payroll-summary-results-container" class="mt-4 pt-4 border-t border-gray-200 max-h-[60vh] overflow-y-auto">
+                                     <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูลสรุป"</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="font-semibold text-lg text-gray-800 mb-4">📝 แก้ไขข้อมูลการลงเวลา</h3>
+                            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">เลือกพนักงาน</label>
+                                    <select id="edit-user-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                        <option value="">กำลังโหลดพนักงาน...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">เลือกวันที่</label>
+                                    <input type="date" id="edit-date-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                                </div>
+                                <button id="search-record-btn" class="btn-primary w-full py-3 text-base">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                                    ค้นหาข้อมูล
+                                </button>
+                                <div id="search-results-container" class="mt-4 pt-4 border-t border-gray-200">
+                                    <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกพนักงานและวันที่</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+
+            <div id="calendar-page" class="page space-y-6">
+                
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">ปฏิทินการทำงาน</h2>
+                    <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
+                        + ยื่นใบลา
                     </button>
                 </div>
-
-                <!-- Admin Dashboard (Placeholder structure to maintain logic) -->
-                <div id="admin-dashboard-page" class="page space-y-6">
-                    <h2 class="text-2xl font-bold text-slate-800">ผู้ดูแลระบบ</h2>
-                    <div class="card">
-                        <p class="text-slate-500">ส่วนจัดการสำหรับ Admin (โครงสร้างเดิม)</p>
-                        <!-- Keep original IDs for admin logic -->
-                        <div id="admin-controls-placeholder" class="mt-4">
-                             <!-- Admin elements will be injected/manipulated by JS here if needed, or simply use existing structure -->
-                             <button id="admin-go-to-calendar-btn" class="btn-primary w-full mb-4">จัดการปฏิทิน</button>
-                             <!-- Add other admin IDs hidden or visible as needed -->
-                             <input type="text" id="add-work-type-input" class="hidden">
-                             <button id="add-work-type-btn" class="hidden"></button>
-                             <!-- ... (Other admin elements matching your JS logic) ... -->
-                             <!-- Note: For full admin UI update, similar premium styling should be applied to admin sections -->
-                        </div>
+                
+                <div class="card">
+                    <div class="flex justify-between items-center mb-4">
+                        <button id="cal-prev-month" class="p-2 rounded-full hover:bg-gray-100">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h3 id="cal-month-year" class="text-xl font-semibold"></h3>
+                        <button id="cal-next-month" class="p-2 rounded-full hover:bg-gray-100">
+                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
                     </div>
-                </div>
+                    
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-500 mb-2">
+                        <span>อา</span>
+                        <span>จ</span>
+                        <span>อ</span>
+                        <span>พ</span>
+                        <span>พฤ</span>
+                        <span>ศ</span>
+                        <span>ส</span>
+                    </div>
+                    
+                    <div id="cal-grid" class="grid grid-cols-7 gap-1">
+                        </div>
 
+                    <div id="cal-details-container" class="mt-4 pt-4 border-t border-gray-100 space-y-4">
+                        <p class="text-center text-gray-400 text-sm">คลิกวันที่เพื่อดูรายละเอียด</p>
+                    </div>
+                    
+                </div> 
             </div>
+
+           <div id="profile-page" class="page space-y-6">
+    
+    <div class="card !p-5">
+        <div class="flex justify-between items-start">
+            <div class="flex items-center space-x-4 flex-1 min-w-0">
+                <img id="profile-page-pic" src="https://placehold.co/150x150/E2E8F0/475569?text=User" alt="รูปโปรไฟล์" class="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md flex-shrink-0">
+                <div class="overflow-hidden flex-1">
+                     <h2 id="profile-page-name" class="text-2xl font-bold text-gray-800 truncate">กำลังโหลด...</h2>
+                     <p id="profile-page-department" class="text-gray-500 font-medium">...</p>
+                </div>
+                <button id="profile-edit-btn" class="ml-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-5 pt-4 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-600 mb-3">สรุปข้อมูล (ตามช่วงวันที่เลือก)</h3>
+            
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="bg-sky-50 p-3 rounded-xl border border-sky-100">
+                    <p class="text-xs text-sky-700 font-semibold">ชั่วโมงปกติ</p>
+                    <p id="profile-summary-hours" class="text-2xl font-bold text-sky-600 mt-1">-</p> 
+                </div>
+                
+                <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                    <p class="text-xs text-orange-700 font-semibold">OT รวม</p>
+                    <p id="profile-summary-ot" class="text-2xl font-bold text-orange-600 mt-1">-</p> 
+                </div>
+                
+                <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                    <p class="text-xs text-green-700 font-semibold">จำนวนวัน</p>
+                    <p id="profile-summary-days" class="text-2xl font-bold text-green-600 mt-1">-</p> 
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100">
+                <button id="btn-my-leave-history" class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors">
+                    <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </span>
+                    <span class="font-semibold text-gray-700 text-sm">เช็คสถานะใบลา</span>
+                </button>
+                
+                <button id="btn-my-ot-history" class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors">
+                    <span class="bg-orange-100 text-orange-600 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </span>
+                    <span class="font-semibold text-gray-700 text-sm">เช็คสถานะ OT</span>
+                </button>
+            </div>
+
+        </div>
+    </div> 
+
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+             <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
+             
+             <div class="relative inline-block shadow-sm rounded-lg">
+                <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
+                    <option value="7">7 วันล่าสุด</option>
+                    <option value="this_month">เดือนนี้</option>
+                    <option value="last_month">เดือนที่แล้ว</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+       
+        <div id="work-history-container"></div>
+    </div>
+
+    <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        <span>ออกจากระบบ</span>
+    </button>
+</div>
+
         </main>
         
-        <!-- Bottom Nav (Mobile) -->
-        <nav class="fixed bottom-0 left-0 right-0 bottom-nav flex justify-around items-center md:hidden z-30">
-            <a href="#" class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-slate-400 active" data-page="check-in-out-page">
-                <svg class="w-6 h-6 mb-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-[10px] font-medium">ลงเวลา</span>
+        <nav class="fixed bottom-0 left-0 right-0 bg-white h-20 flex justify-around items-center border-t border-gray-200 bottom-nav md:hidden">
+            <a href="#" class="nav-item text-center text-gray-500 active" data-page="check-in-out-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs">ลงเวลา</span>
             </a>
             
-            <a href="#" id="report-or-admin-nav" class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-slate-400" data-page="report-page">
-                <svg class="w-6 h-6 mb-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                <span class="text-[10px] font-medium">รายงาน</span>
+            <a href="#" id="report-or-admin-nav" class="nav-item text-center text-gray-500" data-page="report-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-xs">รายงาน</span>
             </a>
 
-            <a href="#" id="calendar-or-admin-nav" class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-slate-400" data-page="calendar-page">
-                 <svg class="w-6 h-6 mb-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <a href="#" id="calendar-or-admin-nav" class="nav-item text-center text-gray-500" data-page="calendar-page">
+                 <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
-                <span class="text-[10px] font-medium">ปฏิทิน</span>
+                <span class="text-xs">ปฏิทิน</span>
             </a>
 
-            <a href="#" class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-slate-400" data-page="profile-page">
-                <svg class="w-6 h-6 mb-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                <span class="text-[10px] font-medium">โปรไฟล์</span>
+            <a href="#" class="nav-item text-center text-gray-500" data-page="profile-page">
+                <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="text-xs">โปรไฟล์</span>
             </a>
         </nav>
     </div>
 
-    <!-- Notifications Toast -->
-    <div id="notification" class="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 bg-slate-800 text-white py-3 px-5 rounded-2xl shadow-2xl text-sm transition-all duration-500 opacity-0 -translate-y-full max-w-[90vw]">
-        <span id="notification-icon" class="text-emerald-400"></span>
-        <p id="notification-message" class="font-medium">แจ้งเตือน</p>
-    </div>
+    <div id="notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg text-sm transition-all duration-500 opacity-0 translate-y-10">
+    <span id="notification-icon">
+        </span>
+    <p id="notification-message">บันทึกเวลาสำเร็จ!</p>
+</div>
     
-    <!-- Modals (Structure kept, styled updated via global CSS) -->
-    
-    <!-- Edit Modal -->
     <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="modal-overlay" class="absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            <h3 class="text-xl font-bold mb-6 text-slate-800">แก้ไขข้อมูล</h3>
+        <div id="modal-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="card relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold mb-4">แก้ไขข้อมูลการลงเวลา</h3>
+            
             <input type="hidden" id="edit-doc-id">
+            
             <div class="space-y-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เวลาเข้างาน</label>
-                    <input type="datetime-local" id="edit-checkin-time" class="w-full mt-1">
+                    <label class="text-sm font-medium text-gray-600">เวลา Check-in</label>
+                    <input type="datetime-local" id="edit-checkin-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เวลาออกงาน</label>
-                    <input type="datetime-local" id="edit-checkout-time" class="w-full mt-1">
+                    <label class="text-sm font-medium text-gray-600">เวลา Check-out</label>
+                    <input type="datetime-local" id="edit-checkout-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
                 
-                <hr class="border-slate-100 my-2">
+                <hr class="my-4">
+                <h4 class="font-semibold">ข้อมูลรายงาน</h4>
                 
-                <!-- Admin specific inputs (need to ensure IDs match JS logic) -->
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">On-site Details</label>
-                    <input type="text" id="edit-onsite-details" class="w-full mt-1">
-                </div>
-                
-                <!-- Hidden structure for Admin dropdowns to prevent JS errors -->
-                <div class="hidden">
-                    <button id="edit-modal-work-type-btn"><span id="edit-modal-work-type-selected-text"></span></button>
-                    <div id="edit-modal-work-type-panel"><input id="edit-modal-work-type-search"><div id="edit-modal-work-type-options"></div></div>
-                    
-                    <button id="edit-modal-project-btn"><span id="edit-modal-project-selected-text"></span></button>
-                    <div id="edit-modal-project-panel"><input id="edit-modal-project-search"><div id="edit-modal-project-options"></div></div>
-                    
-                    <button id="edit-modal-duration-btn"><span id="edit-modal-duration-selected-text"></span></button>
-                    <div id="edit-modal-duration-panel"><div id="edit-modal-duration-options"></div></div>
-                    
-                    <div id="edit-modal-custom-time-inputs"><input id="edit-modal-custom-time-start-input"><input id="edit-modal-custom-time-end-input"></div>
+                    <label class="text-sm font-medium text-gray-600">สถานที่ On-site (ถ้ามี)</label>
+                    <input type="text" id="edit-onsite-details" placeholder="เช่น บ. A, ไซต์งาน B" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4">
-                    <button id="cancel-edit-btn" class="py-2.5 px-5 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200 transition">ยกเลิก</button>
-                    <button id="save-edit-btn" class="btn-primary py-2.5 px-6 rounded-xl">บันทึก</button>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">ประเภทงาน</label>
+                    <div class="relative mt-1">
+                        <button id="edit-modal-work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <span id="edit-modal-work-type-selected-text" class="text-gray-500">เลือกประเภทงาน...</span>
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="edit-modal-work-type-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                            <div class="p-2 border-b border-gray-100">
+                                <input id="edit-modal-work-type-search" type="text" placeholder="ค้นหาประเภทงาน..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                            </div>
+                            <div id="edit-modal-work-type-options" class="max-h-40 overflow-y-auto p-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-600">โครงการ</label>
+                    <div class="relative mt-1">
+                        <button id="edit-modal-project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <span id="edit-modal-project-selected-text" class="text-gray-500">เลือกโครงการ...</span>
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="edit-modal-project-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                            <div class="p-2 border-b border-gray-100">
+                                <input id="edit-modal-project-search" type="text" placeholder="ค้นหาโครงการ..." class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-sky-400 focus:outline-none">
+                            </div>
+                            <div id="edit-modal-project-options" class="max-h-40 overflow-y-auto p-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-600">ระยะเวลาการทำงาน</label>
+                    <div class="relative mt-1">
+                        <button id="edit-modal-duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                            <span id="edit-modal-duration-selected-text" class="text-gray-500">เลือกระยะเวลา...</span>
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="edit-modal-duration-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                            <div id="edit-modal-duration-options" class="p-1">
+                                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ทั้งวัน (08:30 - 17:30)</div>
+                                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันเช้า (08:30 - 12:00)</div>
+                                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ครึ่งวันบ่าย (13:00 - 17:30)</div>
+                                <div class="duration-option p-2 rounded-lg hover:bg-sky-50 cursor-pointer">กำหนดเวลา</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="edit-modal-custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+                            <input type="time" id="edit-modal-custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+                            <input type="time" id="edit-modal-custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button id="cancel-edit-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                    <button id="save-edit-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">บันทึกการแก้ไข</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="confirm-overlay" class="absolute inset-0"></div>
-        <div class="bg-white rounded-3xl p-6 relative z-10 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 text-center">
-            <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            </div>
-            <h3 id="confirm-title" class="text-lg font-bold text-slate-800 mb-2">ยืนยันการทำรายการ</h3>
-            <p id="confirm-message" class="text-slate-500 mb-6">คุณแน่ใจหรือไม่ที่จะดำเนินการต่อ?</p>
-            <div class="flex gap-3">
-                <button id="confirm-cancel-btn" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition">ยกเลิก</button>
-                <button id="confirm-ok-btn" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">ตกลง</button>
+        <div id="confirm-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="card relative z-10 w-full max-w-sm">
+            <h3 id="confirm-title" class="text-lg font-semibold mb-2">ยืนยันการดำเนินการ</h3>
+            <p id="confirm-message" class="text-sm text-gray-600 mb-6">คุณแน่ใจหรือไม่?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirm-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                <button id="confirm-ok-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ตกลง</button>
             </div>
         </div>
     </div>
 
-    <!-- Leave Request Modal -->
-    <div id="leave-request-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="leave-overlay" class="absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md animate-in zoom-in-95 duration-200">
-            <h3 class="text-xl font-bold mb-6 text-slate-800">แบบฟอร์มขอลาหยุด</h3>
-            <div class="space-y-4">
+    <div id="leave-request-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
+    <div id="leave-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+    <div class="card relative z-10 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-6">ยื่นเรื่องขออนุมัติลา</h3>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">ประเภทการลา</label>
+                <select id="leave-type-select" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    <option value="">-- เลือกประเภทการลา --</option>
+                    <option value="annual">ลาพักร้อน (Annual Leave)</option>
+                    <option value="sick">ลาป่วย (Sick Leave)</option>
+                    <option value="personal">ลากิจ (Personal Leave)</option>
+                    <option value="maternity">ลาคลอด (Maternity Leave)</option> </select>
+            </div>
+            
+            <div>
+                <label class="text-sm font-medium text-gray-600">ระยะเวลา</label>
+                <select id="leave-duration-type" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                    <option value="full_day">เต็มวัน (Full Day)</option>
+                    <option value="hourly">รายชั่วโมง (Hourly)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">ประเภทการลา</label>
-                    <select id="leave-type-select" class="w-full mt-1">
-                        <option value="">-- เลือกประเภท --</option>
-                        <option value="annual">ลาพักร้อน</option>
-                        <option value="sick">ลาป่วย</option>
-                        <option value="personal">ลากิจ</option>
-                        <option value="maternity">ลาคลอด</option>
-                    </select>
+                    <label class="text-sm font-medium text-gray-600">วันที่ลา</label>
+                    <input type="date" id="leave-start-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
-                
+                <div id="leave-end-date-wrapper">
+                    <label class="text-sm font-medium text-gray-600">วันที่สิ้นสุด</label>
+                    <input type="date" id="leave-end-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
+                </div>
+            </div>
+
+            <div id="leave-hourly-inputs-wrapper" class="hidden grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">รูปแบบ</label>
-                    <select id="leave-duration-type" class="w-full mt-1">
-                        <option value="full_day">เต็มวัน</option>
-                        <option value="hourly">รายชั่วโมง</option>
-                    </select>
+                    <label class="text-sm font-medium text-gray-600">เวลาเริ่มต้น</label>
+                    <input type="time" id="leave-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เริ่มวันที่</label>
-                        <input type="date" id="leave-start-date" class="w-full mt-1">
-                    </div>
-                    <div id="leave-end-date-wrapper">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">ถึงวันที่</label>
-                        <input type="date" id="leave-end-date" class="w-full mt-1">
-                    </div>
-                </div>
-
-                <div id="leave-hourly-inputs-wrapper" class="hidden grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เวลาเริ่ม</label>
-                        <input type="time" id="leave-start-time" class="w-full mt-1 bg-white">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เวลาสิ้นสุด</label>
-                        <input type="time" id="leave-end-time" class="w-full mt-1 bg-white">
-                    </div>
-                </div>
-
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เหตุผล</label>
-                    <textarea id="leave-reason" rows="3" class="w-full mt-1" placeholder="ระบุเหตุผล..."></textarea>
+                    <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด</label>
+                    <input type="time" id="leave-end-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl">
                 </div>
+            </div>
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <button id="cancel-leave-btn" class="py-2.5 px-5 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200">ยกเลิก</button>
-                    <button id="submit-leave-btn" class="btn-primary py-2.5 px-6 rounded-xl">ส่งคำขอ</button>
-                </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">เหตุผลประกอบการลา</label>
+                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม. (9:30-10:30)..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button id="cancel-leave-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                <button id="submit-leave-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ส่งใบลา</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- OT Request Modal -->
-    <div id="ot-request-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="ot-overlay" class="absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md animate-in zoom-in-95 duration-200">
-            <h3 class="text-xl font-bold mb-6 text-slate-800">ขออนุมัติ OT</h3>
+<div id="profile-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div id="profile-edit-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="card relative z-10 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-6">แก้ไขโปรไฟล์</h3>
+            
             <div class="space-y-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">วันที่</label>
-                    <input type="date" id="ot-request-date" class="w-full mt-1 bg-slate-100 text-slate-500" readonly>
+                    <label class="text-sm font-medium text-gray-600">ชื่อ-สกุล (ที่แสดงผล)</label>
+                    <input type="text" id="profile-edit-name-input" placeholder="กรอกชื่อ-สกุล" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">เริ่ม</label>
-                        <input type="time" id="ot-start-time" class="w-full mt-1 bg-slate-100" readonly>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">สิ้นสุด</label>
-                        <input type="time" id="ot-end-time" class="w-full mt-1">
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">รายละเอียดงาน</label>
-                    <textarea id="ot-reason" rows="3" class="w-full mt-1" placeholder="ระบุงานที่ทำ..."></textarea>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button id="cancel-ot-btn" class="py-2.5 px-5 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200">ยกเลิก</button>
-                    <button id="submit-ot-btn" class="btn-primary py-2.5 px-6 rounded-xl">ส่งคำขอ</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Profile Edit Modal -->
-    <div id="profile-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div id="profile-edit-overlay" class="absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md animate-in zoom-in-95 duration-200">
-            <h3 class="text-xl font-bold mb-6 text-slate-800">แก้ไขข้อมูลส่วนตัว</h3>
-            <div class="space-y-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">ชื่อ-นามสกุล</label>
-                    <input type="text" id="profile-edit-name-input" class="w-full mt-1">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">แผนก</label>
-                    <select id="profile-edit-dept-input" class="w-full mt-1">
-                        <option value="">-- เลือกแผนก --</option>
+                    <label class="text-sm font-medium text-gray-600">ฝ่าย / แผนก</label>
+                    
+                    <select id="profile-edit-dept-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
+                        <option value="">-- เลือกฝ่าย/แผนก --</option>
                         <option value="Mechanic">Mechanic</option>
                         <option value="Electrical">Electrical</option>
                         <option value="Design">Design</option>
                         <option value="Accounting">Accounting</option>
                         <option value="HR">HR</option>
                     </select>
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <button id="profile-edit-cancel-btn" class="py-2.5 px-5 bg-slate-100 text-slate-600 rounded-xl font-semibold hover:bg-slate-200">ยกเลิก</button>
-                    <button id="profile-edit-save-btn" class="btn-primary py-2.5 px-6 rounded-xl">บันทึก</button>
+                    </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button id="profile-edit-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                    <button id="profile-edit-save-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">บันทึก</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- History Modals -->
+    <div id="ot-request-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
+        <div id="ot-overlay" class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="card relative z-10 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-6">Request OT</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-600">วันที่ (อัตโนมัติ)</label>
+                    <input type="date" id="ot-request-date" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-gray-100" readonly>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">เวลาเริ่มต้น OT</label>
+                        <input type="time" id="ot-start-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none bg-gray-100" readonly>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">เวลาสิ้นสุด OT</label>
+                        <input type="time" id="ot-end-time" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-600">เหตุผล / งานที่ทำ</label>
+                    <textarea id="ot-reason" rows="3" placeholder="เช่น ประกอบตู้คอนโทรลต่อ, แก้ไขโปรแกรม..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button id="cancel-ot-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300">ยกเลิก</button>
+                    <button id="submit-ot-btn" class="py-2 px-5 bg-sky-500 text-white rounded-lg font-semibold hover:bg-sky-600">ส่งคำขอ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="my-leave-history-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md h-[70vh] flex flex-col animate-in zoom-in-95 duration-200">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                <h3 class="text-lg font-bold text-slate-800">ประวัติการลา</h3>
-                <button class="close-modal-btn p-2 rounded-full hover:bg-slate-100 text-slate-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
+        <div class="card relative z-10 w-full max-w-md max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                <h3 class="text-lg font-bold">สถานะการลาของฉัน</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="my-leave-list-container" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+            <div id="my-leave-list-container" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <p class="text-center text-gray-400 mt-4">กำลังโหลด...</p>
+            </div>
         </div>
     </div>
 
     <div id="my-ot-history-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="modal-overlay absolute inset-0"></div>
-        <div class="card relative z-10 w-full max-w-md h-[70vh] flex flex-col animate-in zoom-in-95 duration-200">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-                <h3 class="text-lg font-bold text-slate-800">ประวัติการขอ OT</h3>
-                <button class="close-modal-btn p-2 rounded-full hover:bg-slate-100 text-slate-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
+        <div class="card relative z-10 w-full max-w-md max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                <h3 class="text-lg font-bold">สถานะคำขอ OT ของฉัน</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="my-ot-list-container" class="flex-1 overflow-y-auto space-y-3 pr-1 no-scrollbar"></div>
+            <div id="my-ot-list-container" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <p class="text-center text-gray-400 mt-4">กำลังโหลด...</p>
+            </div>
         </div>
     </div>
-    <!-- Scripts (External & Logic) -->
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script> -->
+
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
     <script src="firebase-config.js?v=1.3"></script>
     <script>
-
-        function toLocalISOString(date) {
+    // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
+    function toLocalISOString(date) {
         if (!date) return ''; // สำหรับ handle ค่า null เช่น checkout ที่ยังไม่เกิด
 
         const d = new Date(date);
@@ -952,13 +1219,15 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            // สั่งให้ Browser โหลดไฟล์ sw.js มาทำงาน
-            navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            }, function(err) {
-                console.log('ServiceWorker registration failed: ', err);
-            });
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister()
+                .then(function() {
+                    console.log("Service Worker ถูกลบออกแล้ว!");
+                    // ลบเสร็จแล้ว ให้รีโหลดหน้าจออัตโนมัติ 1 ครั้งเพื่อให้ได้ของใหม่ทันที
+                    // window.location.reload(); 
+                });
+            }
         });
     }
     
@@ -3445,6 +3714,7 @@ if (exportPayrollBtn) {
       });
     }
     
+    // [ลบ] 4. ลบ Event Listener ของ Email/Password เดิมออกแล้ว
     // (เราได้ลบโค้ดส่วนนั้นออกไปแล้วในขั้นตอนการ "ลบโค้ดเดิม")
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -3469,6 +3739,7 @@ if (exportPayrollBtn) {
             e.preventDefault();
             const pageId = item.dataset.page;
 
+            // ✨ [เพิ่มส่วนที่ 1] ✨
             // หยุด GPS ทันที ถ้าไปหน้าอื่นที่ไม่ใช่หน้าลงเวลา
             if (pageId !== 'check-in-out-page') {
                 stopWatchingPosition();
