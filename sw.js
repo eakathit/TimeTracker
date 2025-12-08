@@ -1,4 +1,4 @@
-const CACHE_NAME = "timetracker-v1.7"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v1.9"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -41,24 +41,47 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // 1. ถ้าเป็น Firestore/API หรือ Auth ให้โหลดสดเสมอ (Network Only)
+  // 1. (เหมือนเดิม) ถ้าเป็น API/Firestore/Auth ให้โหลดสดเสมอ
   if (
       url.hostname.includes("firestore") || 
       url.hostname.includes("googleapis") || 
-      url.hostname.includes("firebaseapp") || // เพิ่ม: ดัก domain หลักของ Firebase
+      url.hostname.includes("firebaseapp") || 
       url.pathname.includes("api") ||
-      url.pathname.includes("/__/auth/")      // เพิ่ม: ดัก path ของระบบ Login (สำคัญมาก)
+      url.pathname.includes("/__/auth/")
   ) {
-    return; // ปล่อยให้ Browser จัดการ (ปกติจะเป็น Network First)
+    return; 
   }
 
-  // 2. ถ้าเป็นไฟล์ Static ให้ใช้ Cache First (ถ้ามีในเครื่องใช้เลย ถ้าไม่มีค่อยโหลด)
+  // 2. (เพิ่มใหม่) ถ้าเป็นการเปิดหน้าเว็บ (HTML) ให้ใช้ Network First (โหลดสดก่อน ถ้าไม่ได้ค่อยเอา Cache)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone()); // อัปเดต Cache ด้วยของใหม่
+            return networkResponse;
+          });
+        })
+        .catch(() => {
+          return caches.match(event.request); // ถ้าเน็ตหลุด ค่อยใช้ของเก่า
+        })
+    );
+    return;
+  }
+
+  // 3. (เหมือนเดิม) ถ้าเป็นไฟล์ Static (รูป, css, js) ให้ใช้ Cache First
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(event.request);
+      return fetch(event.request).then((networkResponse) => {
+          // (Optional) บรรทัดนี้จะช่วย Cache ไฟล์ใหม่ๆ ที่ไม่อยู่ใน ASSETS_TO_CACHE อัตโนมัติ
+          return caches.open(CACHE_NAME).then((cache) => {
+             cache.put(event.request, networkResponse.clone());
+             return networkResponse;
+          });
+      });
     })
   );
 });
