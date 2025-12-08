@@ -1,4 +1,4 @@
-const CACHE_NAME = "timetracker-v1.6"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v1.7"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -41,8 +41,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // 1. ถ้าเป็น Firestore/API ให้โหลดสดเสมอ (Network Only)
-  if (url.hostname.includes("firestore") || url.hostname.includes("googleapis") || url.pathname.includes("api")) {
+  // 1. ถ้าเป็น Firestore/API หรือ Auth ให้โหลดสดเสมอ (Network Only)
+  if (
+      url.hostname.includes("firestore") || 
+      url.hostname.includes("googleapis") || 
+      url.hostname.includes("firebaseapp") || // เพิ่ม: ดัก domain หลักของ Firebase
+      url.pathname.includes("api") ||
+      url.pathname.includes("/__/auth/")      // เพิ่ม: ดัก path ของระบบ Login (สำคัญมาก)
+  ) {
     return; // ปล่อยให้ Browser จัดการ (ปกติจะเป็น Network First)
   }
 
