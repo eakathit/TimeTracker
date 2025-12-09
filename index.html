@@ -267,6 +267,14 @@ aside .nav-item {
                 <span class="font-medium text-sm">Dashboard</span>
             </a>
 
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="timesheet-management-page">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+    <span class="font-medium text-sm">Timesheet Mgmt</span>
+</a>
+
             <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 <span class="font-medium text-sm">Employees</span>
@@ -870,6 +878,84 @@ aside .nav-item {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="timesheet-management-page" class="page space-y-6">
+
+    <div class="border-b border-gray-200 bg-white -mx-6 px-6 sticky top-0 z-10">
+        
+        <nav class="-mb-px flex gap-10" aria-label="Tabs">
+            
+            <button class="ts-tab-btn whitespace-nowrap py-4 border-b-2 font-semibold text-sm transition-all border-sky-500 text-sky-600 hover:text-sky-700" data-target="ts-timeline-content">
+                Timeline
+            </button>
+
+            <button class="ts-tab-btn whitespace-nowrap py-4 border-b-2 font-medium text-sm transition-all border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="ts-timesheet-content">
+                Timesheet
+            </button>
+
+            <button class="whitespace-nowrap py-4 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 cursor-pointer">
+                Summary
+            </button>
+            
+            <button class="whitespace-nowrap py-4 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 cursor-pointer">
+                Custom Export
+            </button>
+        </nav>
+    </div>  
+    
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Timesheet Management</h2>
+            <p class="text-gray-500 text-sm">ตรวจสอบเวลาเข้า-ออกงาน และสรุปผล</p>
+        </div>
+        <button id="refresh-timeline-btn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium shadow-sm transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh
+        </button>
+    </div>
+
+    <div id="ts-timeline-content" class="ts-tab-content space-y-4">
+        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-200">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-gray-600">ประจำวันที่:</span>
+                <input type="date" id="timeline-date-picker" class="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+            <div class="text-xs text-gray-400">
+                <span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span>เข้างาน
+                <span class="inline-block w-2 h-2 rounded-full bg-pink-500 ml-2 mr-1"></span>ออกงาน
+            </div>
+        </div>
+
+        <div id="timeline-list-container" class="space-y-3">
+            <p class="text-center text-gray-400 py-8">กำลังโหลดข้อมูล Timeline...</p>
+        </div>
+    </div>
+
+    <div id="ts-timesheet-content" class="ts-tab-content hidden space-y-4">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 text-center">
+            <img src="https://cdn-icons-png.flaticon.com/512/2666/2666505.png" class="w-16 h-16 mx-auto opacity-50 mb-3">
+            <h3 class="text-lg font-bold text-gray-700">Timesheet Summary</h3>
+            <p class="text-sm text-gray-500 mb-4">ดูสรุปเวลาทำงาน ขาด ลา มาสาย เป็นรายเดือน</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 text-left">
+                <div>
+                    <label class="text-xs font-medium text-gray-500">เริ่ม</label>
+                    <input type="date" id="ts-summary-start" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-gray-500">สิ้นสุด</label>
+                    <input type="date" id="ts-summary-end" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                </div>
+                <div class="flex items-end">
+                    <button id="ts-summary-load-btn" class="w-full bg-sky-500 text-white p-2 rounded-lg text-sm hover:bg-sky-600">โหลดข้อมูล</button>
+                </div>
+            </div>
+            <div id="ts-summary-result" class="overflow-x-auto">
+                <p class="text-sm text-gray-400">กรุณาเลือกช่วงเวลา</p>
             </div>
         </div>
     </div>
@@ -1523,6 +1609,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const otEndTime = document.getElementById('ot-end-time');
     const otReason = document.getElementById('ot-reason');
     
+    // --- Timeline & Timesheet Management Logic ---
+    const timelineDatePicker = document.getElementById('timeline-date-picker');
+    const timelineContainer = document.getElementById('timeline-list-container');
+    const refreshTimelineBtn = document.getElementById('refresh-timeline-btn');
+    const tsTabBtns = document.querySelectorAll('.ts-tab-btn');
+    const tsTabContents = document.querySelectorAll('.ts-tab-content');
+
         let html5QrCode;
         let currentRoomId = null;
         let roomUnsubscribe = null; // สำหรับยกเลิกการฟัง Realtime update
@@ -6893,6 +6986,200 @@ async function submitGroupReport(roomId, reportData) {
     // 4. ยิงขึ้น Database ทีเดียว
     await batch.commit();
     alert("บันทึกรายงานให้สมาชิก " + members.length + " คน เรียบร้อยแล้ว!");
+}
+
+    // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+if(timelineDatePicker) {
+    const todayISO = new Date().toISOString().split('T')[0];
+    timelineDatePicker.value = todayISO;
+}
+
+// 2. ฟังก์ชันสลับ Tab
+// 2. ฟังก์ชันสลับ Tab (แก้ไข: ไม่มีพื้นหลัง มีแค่เส้นใต้)
+tsTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        
+        // 2.1 รีเซ็ตทุกปุ่มให้เป็นสถานะ Inactive (สีเทา, ขอบใส)
+        tsTabBtns.forEach(b => {
+            // ลบ Class Active
+            b.classList.remove('border-sky-500', 'text-sky-600');
+            // เพิ่ม Class Inactive
+            b.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        });
+
+        // 2.2 ตั้งค่าปุ่มที่กดให้เป็น Active (สีฟ้า, ขอบฟ้า)
+        // ลบ Class Inactive
+        btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+        // เพิ่ม Class Active
+        btn.classList.add('border-sky-500', 'text-sky-600');
+
+        // 2.3 แสดง/ซ่อน เนื้อหา
+        tsTabContents.forEach(c => {
+            if(c.id === target) {
+                c.classList.remove('hidden');
+                // เพิ่ม Animation เล็กน้อยตอนสลับ
+                c.classList.add('animate-fade-in'); 
+            } else {
+                c.classList.add('hidden');
+                c.classList.remove('animate-fade-in');
+            }
+        });
+    });
+});
+
+// 3. ฟังก์ชันโหลดข้อมูล Timeline (หัวใจหลัก)
+async function loadTimelineData() {
+    if(!timelineContainer) return;
+    
+    timelineContainer.innerHTML = '<div class="flex justify-center py-8"><svg class="animate-spin h-8 w-8 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
+
+    const selectedDateStr = timelineDatePicker.value;
+    const selectedDate = new Date(selectedDateStr);
+    selectedDate.setHours(0,0,0,0);
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(selectedDate.getDate() + 1);
+
+    try {
+        // ดึงข้อมูล 2 ส่วนพร้อมกัน: Users ทั้งหมด และ Records ของวันนี้
+        const [usersSnapshot, recordsSnapshot] = await Promise.all([
+            db.collection('users').orderBy('fullName').get(),
+            db.collection('work_records')
+              .where('date', '>=', selectedDate)
+              .where('date', '<', nextDay)
+              .get()
+        ]);
+
+        // Map Records ให้เข้าถึงง่ายด้วย userId
+        const recordsMap = {};
+        recordsSnapshot.forEach(doc => {
+            recordsMap[doc.data().userId] = doc.data();
+        });
+
+        let html = '';
+
+        if (usersSnapshot.empty) {
+            timelineContainer.innerHTML = '<p class="text-center text-gray-400">ไม่พบข้อมูลพนักงาน</p>';
+            return;
+        }
+
+        usersSnapshot.forEach(doc => {
+            const user = doc.data();
+            const userId = doc.id;
+            const record = recordsMap[userId];
+
+            // Default Values (กรณีไม่มาทำงาน)
+            let checkInTime = '--:--';
+            let checkOutTime = '--:--';
+            let statusBadge = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-500 text-xs">Absent</span>';
+            let checkInColor = 'text-gray-300';
+            let checkOutColor = 'text-gray-300';
+            let locationIcon = ''; // ไม่แสดงไอคอนถ้ายังไม่เข้างาน
+
+            if (record) {
+                // มีข้อมูลการลงเวลา
+                const cin = record.checkIn.timestamp.toDate();
+                checkInTime = cin.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                checkInColor = 'text-blue-500';
+
+                // Check Late Condition (สายถ้าเข้าหลัง 08:30)
+                const lateThreshold = new Date(cin);
+                lateThreshold.setHours(8, 30, 0, 0);
+                
+                if (cin > lateThreshold) {
+                    statusBadge = '<span class="px-2 py-1 rounded bg-orange-100 text-orange-600 text-xs font-bold">Late</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-1 rounded bg-green-100 text-green-600 text-xs font-bold">On Time</span>';
+                }
+
+                if (record.checkOut) {
+                    const cout = record.checkOut.timestamp.toDate();
+                    checkOutTime = cout.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    checkOutColor = 'text-pink-500';
+                }
+
+                // Location Icon Logic
+                if (record.checkIn.workType === 'in_factory') {
+                    // ไอคอนโรงงาน/GPS
+                    locationIcon = `<div class="tooltip" title="Factory (GPS)"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>`;
+                } else {
+                    // ไอคอน On-site
+                    locationIcon = `<div class="tooltip" title="On-Site"><svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
+                }
+            }
+
+            // HTML Structure (เลียนแบบ Timeline ในรูป)
+            html += `
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                
+                <div class="flex flex-col items-center w-16 border-r border-gray-100 pr-4">
+                    <svg class="w-5 h-5 ${checkInColor} mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="text-sm font-bold text-gray-700">${checkInTime}</span>
+                    <span class="text-[10px] text-gray-400">IN</span>
+                </div>
+
+                <div class="flex-1 flex items-center gap-3 pl-4">
+                    <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                    <div>
+                        <p class="font-bold text-gray-800 text-sm">${user.fullName || 'Unknown'}</p>
+                        <p class="text-xs text-gray-500">${user.department || 'Employee'}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:block">${statusBadge}</div>
+                    
+                    ${locationIcon}
+
+                    <div class="flex flex-col items-center w-16 border-l border-gray-100 pl-4">
+                        <svg class="w-5 h-5 ${checkOutColor} mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span class="text-sm font-bold text-gray-700">${checkOutTime}</span>
+                        <span class="text-[10px] text-gray-400">OUT</span>
+                    </div>
+                </div>
+
+            </div>
+            `;
+        });
+
+        timelineContainer.innerHTML = html;
+
+    } catch (error) {
+        console.error("Error loading timeline:", error);
+        timelineContainer.innerHTML = '<p class="text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+    }
+}
+
+// 4. ผูก Event Listener
+if(refreshTimelineBtn) {
+    refreshTimelineBtn.addEventListener('click', loadTimelineData);
+}
+if(timelineDatePicker) {
+    timelineDatePicker.addEventListener('change', loadTimelineData);
+}
+
+// 5. เชื่อมต่อเมนู Sidebar ให้เปิดหน้านี้ และโหลดข้อมูล
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        if (item.dataset.page === 'timesheet-management-page') {
+            loadTimelineData(); // โหลดข้อมูลทันทีเมื่อกดเข้ามา
+        }
+    });
+});
+
+// 6. Logic สำหรับ Tab Timesheet (Summary) - Reusing existing function concept
+const tsSummaryLoadBtn = document.getElementById('ts-summary-load-btn');
+if(tsSummaryLoadBtn) {
+    tsSummaryLoadBtn.addEventListener('click', async () => {
+       // ตรงนี้คุณสามารถ reuse ฟังก์ชัน loadEmployeeSummary ที่มีอยู่ได้ 
+       // หรือเขียน logic ดึงข้อมูลมาแสดงเป็นตาราง Table ง่ายๆ ตรงนี้ครับ
+       const start = document.getElementById('ts-summary-start').value;
+       const end = document.getElementById('ts-summary-end').value;
+       if(!start || !end) return alert("กรุณาเลือกวัน");
+       
+       // ตัวอย่างการเรียกใช้ (ถ้าคุณอยาก reuse ของเดิม ให้ copy logic มาแปะ)
+       alert("ฟังก์ชันนี้จะแสดงสรุปตั้งแต่วันที่ " + start + " ถึง " + end);
+    });
 }
 
 });
