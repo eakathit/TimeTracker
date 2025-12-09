@@ -100,21 +100,52 @@
     /* ไม่ต้องกำหนด shadow ที่นี่ เราจะใช้ Tailwind class แทน */
 }
 
-/* Active State สำหรับเมนูแบบ Icon อย่างเดียว */
 .nav-item {
-    transition: all 0.3s ease;
-    color: #94A3B8; /* สีเทาปกติ (Gray-400) */
-}
+            transition: all 0.2s ease-in-out;
+            color: #64748B; /* Slate-500: เข้มขึ้นกว่าเดิม อ่านง่ายขึ้น */
+            font-weight: 500; /* เพิ่มความหนานิดหน่อย */
+        }
 
-/* เมื่อ Active ให้เปลี่ยนสี Icon เป็นสีฟ้า และขยายขนาดนิดหน่อย */
-.nav-item.active {
-    color: var(--primary-color); /* สีฟ้า */
-    transform: translateY(-2px); /* ลอยขึ้นเล็กน้อย */
-}
+        /* 2. สไตล์เฉพาะ Sidebar ในคอมพิวเตอร์ (จอใหญ่กว่า 768px) */
+        @media (min-width: 768px) {
+            /* ปรับระยะห่างปุ่มให้ดูไม่อึดอัด */
+            aside .nav-item {
+                padding: 12px 16px; 
+                margin-bottom: 8px;
+                border-radius: 12px; /* มุมโค้งมน */
+            }
 
-.nav-item.active svg {
-    filter: drop-shadow(0 4px 6px rgba(56, 189, 248, 0.4)); /* เงาสีฟ้าเรืองแสง */
-}
+            /* ตอนเอาเมาส์ชี้ */
+            aside .nav-item:hover {
+                background-color: #F8FAFC; /* พื้นหลังสีเทาจางๆ */
+                color: #334155; /* ตัวหนังสือเข้มขึ้น */
+                transform: translateX(4px); /* ขยับขวาเล็กน้อยให้รู้ว่าชี้อยู่ */
+            }
+
+            /* ตอนเลือกเมนูนั้นอยู่ (Active) */
+            aside .nav-item.active {
+                background-color: #E0F2FE; /* Sky-50: พื้นหลังสีฟ้าอ่อน */
+                color: #0284C7; /* Sky-600: สีฟ้าเข้ม ชัดเจน */
+                font-weight: 600; /* ตัวหนา */
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* เงาบางๆ ให้ดูมีมิติ */
+                transform: none; /* ไม่ต้องลอยขึ้นเหมือนมือถือ */
+            }
+            
+            aside .nav-item.active svg {
+                filter: none; /* ลบเงาเรืองแสงแบบมือถือออก เพื่อความสะอาดตาในคอม */
+            }
+        }
+
+        /* 3. สไตล์เฉพาะเมนูมือถือ (คงความ Minimal ไว้ตามที่คุณชอบ) */
+        @media (max-width: 767px) {
+            .nav-item.active {
+                color: var(--primary-color);
+                transform: translateY(-2px);
+            }
+            .nav-item.active svg {
+                filter: drop-shadow(0 4px 6px rgba(56, 189, 248, 0.4));
+            }
+        }
 
 /* ปรับระยะขอบล่างของ Content ให้ไม่โดนเมนูบัง */
 #main-content {
