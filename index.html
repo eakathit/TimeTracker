@@ -939,10 +939,6 @@ aside .nav-item {
             <h2 class="text-2xl font-bold text-gray-800">Timesheet Management</h2>
             <p class="text-gray-500 text-sm">ตรวจสอบเวลาเข้า-ออกงาน และสรุปผล</p>
         </div>
-        <button id="refresh-timeline-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium shadow-sm transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            Refresh
-        </button>
     </div>
 
     <div id="ts-timeline-content" class="ts-tab-content space-y-4">
@@ -962,27 +958,73 @@ aside .nav-item {
         </div>
     </div>
 
-    <div id="ts-timesheet-content" class="ts-tab-content hidden space-y-4">
-        <div class="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-sm">
-            <img src="https://cdn-icons-png.flaticon.com/512/2666/2666505.png" class="w-16 h-16 mx-auto opacity-50 mb-3">
-            <h3 class="text-lg font-bold text-gray-700">Timesheet Summary</h3>
-            <p class="text-sm text-gray-500 mb-4">ดูสรุปเวลาทำงาน ขาด ลา มาสาย เป็นรายเดือน</p>
+    <div id="ts-timesheet-content" class="ts-tab-content hidden space-y-6">
+    
+    <div class="max-w-7xl mx-auto space-y-4">
+        <div class="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 text-left">
-                <div>
-                    <label class="text-xs font-medium text-gray-500">เริ่ม</label>
-                    <input type="date" id="ts-summary-start" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input type="text" id="ts-search-input" placeholder="ค้นหาชื่อ, รหัส..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 w-full sm:w-64 text-sm">
                 </div>
-                <div>
-                    <label class="text-xs font-medium text-gray-500">สิ้นสุด</label>
-                    <input type="date" id="ts-summary-end" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
+                
+                <div class="flex items-center gap-2">
+                    <input type="date" id="ts-filter-start" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <span class="text-gray-400">-</span>
+                    <input type="date" id="ts-filter-end" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
-                <div class="flex items-end">
-                    <button id="ts-summary-load-btn" class="w-full bg-sky-500 text-white p-2 rounded-lg text-sm hover:bg-sky-600 transition-colors">โหลดข้อมูล</button>
-                </div>
+                
+                <button id="ts-apply-filter-btn" class="bg-sky-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-sky-600 transition-colors shadow-sm whitespace-nowrap">
+                    แสดงข้อมูล
+                </button>
             </div>
-            <div id="ts-summary-result" class="overflow-x-auto">
-                <p class="text-sm text-gray-400">กรุณาเลือกช่วงเวลา</p>
+
+            <div class="flex gap-2">
+                <button id="ts-export-btn" class="flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm hover:bg-green-100 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="-mx-4 md:-mx-6 bg-white border-t border-b border-gray-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
+                    <tr>
+                        <th class="px-6 py-4 whitespace-nowrap">พนักงาน</th>
+                        <th class="px-6 py-4 whitespace-nowrap">วันที่</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">กะงาน (Shift)</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">เข้างาน</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">ออกงาน</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">ชม. ทำงาน</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">OT</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-center">สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody id="ts-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-400">
+                            กรุณากด "แสดงข้อมูล" เพื่อดูตารางเวลา
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+            <span class="text-xs text-gray-500" id="ts-record-count">แสดง 0 รายการ</span>
+            <div class="flex gap-2">
+                <button class="p-1 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50" disabled>
+                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                </button>
+                <button class="p-1 rounded hover:bg-gray-200 text-gray-500 disabled:opacity-50" disabled>
+                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                </button>
             </div>
         </div>
     </div>
@@ -7206,6 +7248,183 @@ if(tsSummaryLoadBtn) {
        alert("ฟังก์ชันนี้จะแสดงสรุปตั้งแต่วันที่ " + start + " ถึง " + end);
     });
 }
+
+    // --- Timesheet Table Logic ---
+    
+    // 1. ตั้งค่าเริ่มต้น
+    const tsFilterStart = document.getElementById('ts-filter-start');
+    const tsFilterEnd = document.getElementById('ts-filter-end');
+    const tsApplyBtn = document.getElementById('ts-apply-filter-btn');
+    
+    if(tsFilterStart && tsFilterEnd) {
+        // Default: วันที่ 1 ถึง ปัจจุบัน ของเดือนนี้
+        const date = new Date();
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        tsFilterStart.value = firstDay.toISOString().split('T')[0];
+        tsFilterEnd.value = date.toISOString().split('T')[0];
+    }
+
+    // 2. ฟังก์ชันโหลดข้อมูลตาราง
+    async function loadTimesheetTable() {
+        const tbody = document.getElementById('ts-table-body');
+        const recordCount = document.getElementById('ts-record-count');
+        const startDateStr = tsFilterStart.value;
+        const endDateStr = tsFilterEnd.value;
+        const searchTerm = document.getElementById('ts-search-input').value.toLowerCase();
+
+        if(!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400"><div class="flex justify-center items-center gap-2"><svg class="animate-spin h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังโหลดข้อมูล...</div></td></tr>';
+
+        try {
+            const startDate = new Date(startDateStr); startDate.setHours(0,0,0,0);
+            const endDate = new Date(endDateStr); endDate.setHours(23,59,59,999);
+
+            // ดึงข้อมูล Users และ Work Records
+            const [usersSnapshot, recordsSnapshot] = await Promise.all([
+                db.collection('users').get(),
+                db.collection('work_records')
+                  .where('date', '>=', startDate)
+                  .where('date', '<=', endDate)
+                  .orderBy('date', 'desc') // เรียงจากล่าสุดไปเก่า
+                  .get()
+            ]);
+
+            // Map User Data
+            const usersMap = {};
+            usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data());
+
+            let html = '';
+            let count = 0;
+
+            if (recordsSnapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">ไม่พบข้อมูลในช่วงเวลานี้</td></tr>';
+                if(recordCount) recordCount.textContent = `แสดง 0 รายการ`;
+                return;
+            }
+
+            recordsSnapshot.forEach(doc => {
+                const record = doc.data();
+                const user = usersMap[record.userId];
+                const userName = user ? user.fullName : 'Unknown User';
+                
+                // Search Filter (กรองชื่อ)
+                if (searchTerm && !userName.toLowerCase().includes(searchTerm)) {
+                    return;
+                }
+
+                count++;
+
+                // Format Data
+                const dateObj = record.date.toDate();
+                const dateStr = dateObj.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+                const dayName = dateObj.toLocaleDateString('th-TH', { weekday: 'short' });
+                
+                const checkInTime = record.checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                let checkOutTime = '-';
+                let workHours = '-';
+                let otHours = '-';
+                let statusBadge = '';
+                let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-100'; // Default row style
+
+                // Calculate Late (สมมติ 08:30)
+                const lateThreshold = new Date(record.checkIn.timestamp.toDate());
+                lateThreshold.setHours(8, 30, 0, 0);
+                const isLate = record.checkIn.timestamp.toDate() > lateThreshold;
+
+                if (record.status === 'completed' && record.checkOut) {
+                    checkOutTime = record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    
+                    // คำนวณชั่วโมง (ใช้ฟังก์ชันเดิมที่มี)
+                    const calcs = calculateWorkHours(record.checkIn.timestamp.toDate(), record.checkOut.timestamp.toDate());
+                    workHours = calcs.regularWorkHours.toFixed(2);
+                    
+                    // Logic OT (เหมือนเดิม)
+                    let otVal = calcs.overtimeHours;
+                    if(record.overtime && record.overtime.hours > 0) otVal = record.overtime.hours;
+                    otHours = otVal > 0 ? `<span class="text-orange-600 font-bold">${otVal.toFixed(1)}</span>` : '-';
+
+                    // Status Badge
+                    if (isLate) {
+                        statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">สาย</span>`;
+                    } else {
+                        statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">ปกติ</span>`;
+                    }
+
+                } else {
+                    // ยังไม่ Check out หรือลืม
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">กำลังทำงาน</span>`;
+                    // ถ้าข้ามวันแล้วยังไม่ check out อาจจะไฮไลท์สีแดง
+                    const now = new Date();
+                    if (now.getDate() !== dateObj.getDate() && record.status === 'checked_in') {
+                         statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Missing Out</span>`;
+                         rowClass = 'bg-red-50 hover:bg-red-100 border-b border-red-100'; // Highlight row
+                    }
+                }
+
+                // สร้าง HTML Row
+                html += `
+                <tr class="${rowClass}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                <img class="h-8 w-8 rounded-full object-cover" src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" alt="">
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">${userName}</div>
+                                <div class="text-xs text-gray-500">${user?.department || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${dateStr}</div>
+                        <div class="text-xs text-gray-500">${dayName}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                        08:30 - 17:30
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm ${isLate ? 'text-red-600 font-semibold' : 'text-gray-900'}">
+                        ${checkInTime}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                        ${checkOutTime}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 font-medium">
+                        ${workHours}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                        ${otHours}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        ${statusBadge}
+                    </td>
+                </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            if(recordCount) recordCount.textContent = `แสดง ${count} รายการ`;
+
+        } catch (error) {
+            console.error("Error loading timesheet table:", error);
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+        }
+    }
+
+    // 3. ผูก Event Listener
+    if(tsApplyBtn) tsApplyBtn.addEventListener('click', loadTimesheetTable);
+    
+    // โหลดข้อมูลเมื่อกด Tab "Timesheet"
+    const timesheetTabBtn = document.querySelector('.ts-tab-btn[data-target="ts-timesheet-content"]');
+    if(timesheetTabBtn) {
+        timesheetTabBtn.addEventListener('click', () => {
+            // โหลดเฉพาะถ้าตารางยังว่างอยู่ (หรือจะโหลดใหม่ทุกครั้งก็ได้)
+            const tbody = document.getElementById('ts-table-body');
+            // if(tbody && tbody.children.length <= 1) { 
+                loadTimesheetTable();
+            // }
+        });
+    }
 
 });
 
