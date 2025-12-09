@@ -204,6 +204,34 @@ aside .nav-item {
     margin-bottom: 2px !important; /* ลดช่องว่างระหว่างเมนูในกลุ่มเดียวกัน */
 }
 
+.full-width-header {
+        /* 1. ดึงขอบซ้าย-ขวา ให้เต็มจอ (เหมือนเดิม) */
+        width: calc(100% + 2rem);
+        margin-left: -1rem;
+        margin-right: -1rem;
+        
+        /* 2. [เพิ่มใหม่] ดึงขอบบนขึ้นไปให้สุดจอ (ทับ Padding ด้านบน) */
+        margin-top: -1rem; 
+    }
+
+    /* 3. [เพิ่มใหม่] กำหนดระยะห่างเมนู (Gap) แก้ปัญหาตัวหนังสือติดกัน */
+    .full-width-header nav {
+        display: flex;
+        gap: 2.5rem; /* ระยะห่างประมาณ 40px (ปรับเลขนี้ได้ถ้าอยากให้ห่างมาก/น้อย) */
+    }
+
+    /* สำหรับจอคอมพิวเตอร์ (PC/iPad) */
+    @media (min-width: 768px) {
+        .full-width-header {
+            width: calc(100% + 3rem);
+            margin-left: -1.5rem;
+            margin-right: -1.5rem;
+            
+            /* ดึงขอบบนขึ้นไปเยอะกว่ามือถือ (เพราะ Padding คอมเยอะกว่า) */
+            margin-top: -1.5rem; 
+        }
+    }
+
     </style>
 </head>
 <body class="antialiased">
@@ -885,10 +913,9 @@ aside .nav-item {
 
     <div id="timesheet-management-page" class="page space-y-6">
 
-    <div class="border-b border-gray-200 bg-white -mx-6 px-6 sticky top-0 z-10">
+    <div class="full-width-header border-b border-gray-200 bg-white px-4 md:px-6 sticky top-0 z-10">
         
         <nav class="-mb-px flex gap-10" aria-label="Tabs">
-            
             <button class="ts-tab-btn whitespace-nowrap py-4 border-b-2 font-semibold text-sm transition-all border-sky-500 text-sky-600 hover:text-sky-700" data-target="ts-timeline-content">
                 Timeline
             </button>
@@ -907,26 +934,26 @@ aside .nav-item {
         </nav>
     </div>  
     
-    <div class="flex justify-between items-center">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-2">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Timesheet Management</h2>
             <p class="text-gray-500 text-sm">ตรวจสอบเวลาเข้า-ออกงาน และสรุปผล</p>
         </div>
-        <button id="refresh-timeline-btn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium shadow-sm transition-all">
+        <button id="refresh-timeline-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm font-medium shadow-sm transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             Refresh
         </button>
     </div>
 
     <div id="ts-timeline-content" class="ts-tab-content space-y-4">
-        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-200">
+        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
             <div class="flex items-center gap-2">
                 <span class="text-sm font-bold text-gray-600">ประจำวันที่:</span>
                 <input type="date" id="timeline-date-picker" class="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
             </div>
-            <div class="text-xs text-gray-400">
-                <span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span>เข้างาน
-                <span class="inline-block w-2 h-2 rounded-full bg-pink-500 ml-2 mr-1"></span>ออกงาน
+            <div class="text-xs text-gray-400 flex gap-2">
+                <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-1"></span>เข้างาน</div>
+                <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-pink-500 mr-1"></span>ออกงาน</div>
             </div>
         </div>
 
@@ -936,7 +963,7 @@ aside .nav-item {
     </div>
 
     <div id="ts-timesheet-content" class="ts-tab-content hidden space-y-4">
-        <div class="bg-white p-4 rounded-xl border border-gray-200 text-center">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 text-center shadow-sm">
             <img src="https://cdn-icons-png.flaticon.com/512/2666/2666505.png" class="w-16 h-16 mx-auto opacity-50 mb-3">
             <h3 class="text-lg font-bold text-gray-700">Timesheet Summary</h3>
             <p class="text-sm text-gray-500 mb-4">ดูสรุปเวลาทำงาน ขาด ลา มาสาย เป็นรายเดือน</p>
@@ -951,7 +978,7 @@ aside .nav-item {
                     <input type="date" id="ts-summary-end" class="w-full border border-gray-300 rounded-lg p-2 text-sm">
                 </div>
                 <div class="flex items-end">
-                    <button id="ts-summary-load-btn" class="w-full bg-sky-500 text-white p-2 rounded-lg text-sm hover:bg-sky-600">โหลดข้อมูล</button>
+                    <button id="ts-summary-load-btn" class="w-full bg-sky-500 text-white p-2 rounded-lg text-sm hover:bg-sky-600 transition-colors">โหลดข้อมูล</button>
                 </div>
             </div>
             <div id="ts-summary-result" class="overflow-x-auto">
@@ -960,7 +987,6 @@ aside .nav-item {
         </div>
     </div>
 </div>
-
 
             <div id="calendar-page" class="page space-y-6">
                 
@@ -6993,40 +7019,39 @@ if(timelineDatePicker) {
     const todayISO = new Date().toISOString().split('T')[0];
     timelineDatePicker.value = todayISO;
 }
+if (tsTabBtns) {
+    tsTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.target;
+            
+            // รีเซ็ตทุกปุ่มให้เป็นสถานะ "ไม่ได้เลือก" (สีเทา, ไม่มีเส้นใต้)
+            tsTabBtns.forEach(b => {
+                // ลบ Class ที่ทำให้อักษรฟ้าและมีเส้นใต้
+                b.classList.remove('border-sky-500', 'text-sky-600');
+                // ลบ Class พื้นหลังสีฟ้าออก (เผื่อมีค้างอยู่)
+                b.classList.remove('bg-sky-50'); 
+                
+                // ใส่ Class สีเทา
+                b.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            });
 
-// 2. ฟังก์ชันสลับ Tab
-// 2. ฟังก์ชันสลับ Tab (แก้ไข: ไม่มีพื้นหลัง มีแค่เส้นใต้)
-tsTabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const target = btn.dataset.target;
-        
-        // 2.1 รีเซ็ตทุกปุ่มให้เป็นสถานะ Inactive (สีเทา, ขอบใส)
-        tsTabBtns.forEach(b => {
-            // ลบ Class Active
-            b.classList.remove('border-sky-500', 'text-sky-600');
-            // เพิ่ม Class Inactive
-            b.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-        });
+            // ตั้งค่าปุ่มที่กดให้เป็น "เลือกแล้ว" (สีฟ้า, มีเส้นใต้, ไม่มีพื้นหลัง)
+            btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            btn.classList.add('border-sky-500', 'text-sky-600');
 
-        // 2.2 ตั้งค่าปุ่มที่กดให้เป็น Active (สีฟ้า, ขอบฟ้า)
-        // ลบ Class Inactive
-        btn.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-        // เพิ่ม Class Active
-        btn.classList.add('border-sky-500', 'text-sky-600');
-
-        // 2.3 แสดง/ซ่อน เนื้อหา
-        tsTabContents.forEach(c => {
-            if(c.id === target) {
-                c.classList.remove('hidden');
-                // เพิ่ม Animation เล็กน้อยตอนสลับ
-                c.classList.add('animate-fade-in'); 
-            } else {
-                c.classList.add('hidden');
-                c.classList.remove('animate-fade-in');
-            }
+            // แสดงเนื้อหาที่เลือก
+            tsTabContents.forEach(c => {
+                if(c.id === target) {
+                    c.classList.remove('hidden');
+                    c.classList.add('animate-fade-in'); 
+                } else {
+                    c.classList.add('hidden');
+                    c.classList.remove('animate-fade-in');
+                }
+            });
         });
     });
-});
+}
 
 // 3. ฟังก์ชันโหลดข้อมูล Timeline (หัวใจหลัก)
 async function loadTimelineData() {
