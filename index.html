@@ -187,6 +187,23 @@
              display: none;
         }
         
+        /* หัวข้อหมวดหมู่เมนู (MY PORTAL, MANAGEMENT) */
+.nav-group-title {
+    padding: 0 1rem;       /* px-4 */
+    margin-top: 1.5rem;    /* mt-6 */
+    margin-bottom: 0.5rem; /* mb-2 */
+    font-size: 0.75rem;    /* text-xs */
+    font-weight: 600;      /* font-semibold */
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* tracking-wider */
+    color: #94A3B8;        /* text-slate-400 */
+}
+
+/* ปรับระยะห่าง Link ปกติเล็กน้อย */
+aside .nav-item {
+    margin-bottom: 2px !important; /* ลดช่องว่างระหว่างเมนูในกลุ่มเดียวกัน */
+}
+
     </style>
 </head>
 <body class="antialiased">
@@ -213,36 +230,70 @@
 
     <div id="app-container" class="flex flex-col md:flex-row pb-24 md:pb-0" style="display: none;">
         
-        <aside class="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 bg-white border-r border-gray-200 p-4 z-20">
-            <div class="flex items-center gap-2 mb-8 px-2">
-                <svg class="w-10 h-10 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-                <h1 class="text-xl font-bold text-gray-800">TimeTracker</h1>
-            </div>
+        <aside class="hidden md:flex flex-col w-64 h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20">
+    
+    <div class="flex items-center gap-2 h-16 px-6 border-b border-gray-100">
+        <svg class="w-8 h-8 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+        <h1 class="text-lg font-bold text-gray-800">TimeTracker</h1>
+    </div>
+    
+    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        
+        <p class="nav-group-title mt-0">My Portal</p> <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all active" data-page="check-in-out-page">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="font-medium text-sm">Time Attendance</span>
+        </a>
+        
+        <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="calendar-page">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <span class="font-medium text-sm">Calendar</span>
+        </a>
+
+        <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="report-page">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span class="font-medium text-sm">Report</span>
+        </a>
+
+        <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="profile-page">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <span class="font-medium text-sm">Profile</span>
+        </a>
+
+        <div id="admin-menu-group" class="hidden"> 
+            <p class="nav-group-title">Management</p>
+
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="admin-dashboard-page">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                <span class="font-medium text-sm">ภาพรวม (Dashboard)</span>
+            </a>
+
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span class="font-medium text-sm">พนักงาน (Employees)</span>
+            </a>
+        </div>
+
+        <div id="system-menu-group" class="hidden">
+            <p class="nav-group-title">Administration</p>
             
-            <nav class="flex flex-col space-y-2">
-                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="check-in-out-page">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="font-medium">ลงเวลา</span>
-                </a>
-                
-                <a href="#" id="report-or-admin-nav-sidebar" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="report-page">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="font-medium">รายงาน</span>
-                </a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="font-medium text-sm">ตั้งค่า (Settings)</span>
+            </a>
+        </div>
 
-                <a href="#" id="calendar-or-admin-nav-sidebar" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="calendar-page">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="font-medium">ปฏิทิน</span>
-                </a>
-
-                <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100" data-page="profile-page">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span class="font-medium">โปรไฟล์</span>
-                </a>
-            </nav>
-        </aside>
+    </nav>
+    
+    <div class="p-4 border-t border-gray-100">
+        <div class="flex items-center gap-3">
+            <img id="sidebar-user-pic" src="https://placehold.co/100x100" class="w-9 h-9 rounded-full object-cover border border-gray-200">
+            <div class="flex-1 min-w-0">
+                <p id="sidebar-user-name" class="text-sm font-bold text-gray-700 truncate">Loading...</p>
+                <p id="sidebar-user-role" class="text-xs text-gray-400 truncate">User</p>
+            </div>
+        </div>
+    </div>
+</aside>
         
         <main id="main-content" class="p-4 md:p-6 md:ml-64 flex-1 h-screen overflow-y-auto">
         
@@ -1583,108 +1634,99 @@ async function initializeApp(user, userData) {
     console.log("Initializing App...");
     currentUserData = userData;
 
-    // 1. อัปเดตข้อมูลพื้นฐานบน UI
+    // 1. อัปเดตข้อมูลพื้นฐานบนหน้าจอหลัก (Header Welcome)
     document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
     updateProfilePage(userData);
 
-    // --- จัดการ Logic ของปุ่ม Navigation (Admin vs User) ---
-    const reportNavButtonSidebar = document.getElementById('report-or-admin-nav-sidebar');
-    const thirdNavButtonSidebar = document.getElementById('calendar-or-admin-nav-sidebar');
-    const reportNavButton = document.getElementById('report-or-admin-nav');
-    const thirdNavButton = document.getElementById('calendar-or-admin-nav');
+    // 2. [NEW] อัปเดตข้อมูลใน Sidebar ใหม่ (Mini Profile ด้านล่างซ้าย)
+    const sbPic = document.getElementById('sidebar-user-pic');
+    const sbName = document.getElementById('sidebar-user-name');
+    const sbRole = document.getElementById('sidebar-user-role');
+    
+    // ตรวจสอบว่ามี Element เหล่านี้จริง (ป้องกัน Error ถ้า HTML เก่ายังค้างอยู่)
+    if(sbPic && sbName && sbRole) {
+        sbName.textContent = userData.fullName || 'User';
+        // แปลง Role เป็นข้อความที่สวยงาม
+        sbRole.textContent = userData.role === 'admin' ? 'Administrator' : 'Employee';
+        
+        if(userData.profileImageUrl) {
+            // เพิ่ม timestamp เพื่อแก้ปัญหา browser cache รูปเก่า
+            sbPic.src = `${userData.profileImageUrl}?t=${new Date().getTime()}`;
+        } else {
+            sbPic.src = "https://placehold.co/100x100/E2E8F0/475569?text=User"; 
+        }
+    }
 
-    // ไอคอนสำหรับปุ่ม Dashboard (Admin)
+    // 3. จัดการการแสดงผลเมนู Sidebar (Desktop) ตาม Role
+    const adminMenuGroup = document.getElementById('admin-menu-group');
+    const systemMenuGroup = document.getElementById('system-menu-group'); // (เผื่ออนาคต)
+
+    if (currentUserData.role === 'admin') {
+        // --- Admin: เปิดโชว์เมนู Management และ System ---
+        if (adminMenuGroup) adminMenuGroup.classList.remove('hidden');
+        if (systemMenuGroup) systemMenuGroup.classList.remove('hidden');
+
+    } else {
+        // --- User: ซ่อนเมนู Management ---
+        if (adminMenuGroup) adminMenuGroup.classList.add('hidden');
+        if (systemMenuGroup) systemMenuGroup.classList.add('hidden');
+    }
+
+    // 4. จัดการ Mobile Bottom Nav (ใช้ Logic เดิมชั่วคราว เพื่อให้ Admin เข้า Dashboard ในมือถือได้)
+    const mobileCalendarNav = document.getElementById('calendar-or-admin-nav');
+
+    // ไอคอน Dashboard สำหรับมือถือ
     const dashboardIconSvg_BottomNav = `
     <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
     </svg>`;
-    const dashboardIconSvg_Sidebar = `
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-    </svg>`;
-
-    // ไอคอนสำหรับปุ่ม Calendar (User)
+    
+    // ไอคอน Calendar สำหรับมือถือ
     const calendarIconSvg_BottomNav = `
     <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
     </svg>`;
-    const calendarIconSvg_Sidebar = `
-    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-    </svg>`;
 
-    // --- แทนที่โค้ดส่วน "ตั้งค่าปุ่มเมนูตาม Role" เดิม ด้วยบล็อกนี้ทั้งหมดครับ ---
-
-    // ตั้งค่าปุ่มเมนูตาม Role
-    if (currentUserData && currentUserData.role === 'admin') {
-        
-        // 1. จัดการ Sidebar (จอคอม)
-        if (thirdNavButtonSidebar) {
-            thirdNavButtonSidebar.dataset.page = 'admin-dashboard-page';
-            
-            // [FIX] ป้องกัน Error: เช็คก่อนว่ามี span ให้แก้ไหม
-            const spanSidebar = thirdNavButtonSidebar.querySelector('span');
-            if (spanSidebar) spanSidebar.textContent = 'Dashboard';
-            
-            const oldIcon = thirdNavButtonSidebar.querySelector('svg');
-            if (oldIcon) oldIcon.outerHTML = dashboardIconSvg_Sidebar;
-        }
-
-        // 2. จัดการ Bottom Nav (จอมือถือ)
-        if (thirdNavButton) {
-            thirdNavButton.dataset.page = 'admin-dashboard-page';
-            
-            // [FIX] ป้องกัน Error: เช็คก่อนว่ามี span ให้แก้ไหม (เมนูใหม่ไม่มี span แล้ว)
-            const spanMobile = thirdNavButton.querySelector('span');
-            if (spanMobile) spanMobile.textContent = 'Dashboard';
-
-            const oldIcon = thirdNavButton.querySelector('svg');
+    if (currentUserData.role === 'admin') {
+        // Admin: เปลี่ยนปุ่มที่ 3 ของมือถือเป็น Dashboard
+        if (mobileCalendarNav) {
+            mobileCalendarNav.dataset.page = 'admin-dashboard-page';
+            const oldIcon = mobileCalendarNav.querySelector('svg');
             if (oldIcon) oldIcon.outerHTML = dashboardIconSvg_BottomNav;
         }
-
     } else {
-        // กรณี User ธรรมดา
-        
-        if (thirdNavButtonSidebar) {
-            thirdNavButtonSidebar.dataset.page = 'calendar-page';
-            
-            const spanSidebar = thirdNavButtonSidebar.querySelector('span');
-            if (spanSidebar) spanSidebar.textContent = 'ปฏิทิน';
-
-            const oldIcon = thirdNavButtonSidebar.querySelector('svg');
-            if (oldIcon) oldIcon.outerHTML = calendarIconSvg_Sidebar;
-        }
-        
-        if (thirdNavButton) {
-            thirdNavButton.dataset.page = 'calendar-page';
-            
-            const spanMobile = thirdNavButton.querySelector('span');
-            if (spanMobile) spanMobile.textContent = 'ปฏิทิน';
-
-            const oldIcon = thirdNavButton.querySelector('svg');
+        // User: เป็นปฏิทินเหมือนเดิม
+        if (mobileCalendarNav) {
+            mobileCalendarNav.dataset.page = 'calendar-page';
+            const oldIcon = mobileCalendarNav.querySelector('svg');
             if (oldIcon) oldIcon.outerHTML = calendarIconSvg_BottomNav;
         }
     }
 
-    // 2. แสดงหน้าจอหลักทันที
-    //appContainer.style.display = 'block';
-    // ลบ style none ที่เราใส่ไว้ใน HTML ออก (เผื่อกรณี CSS class ทำงานต่อ)
-    appContainer.style.removeProperty('display'); 
+    // 5. เตรียมพร้อมแสดงผล (UI State)
+    const appContainer = document.getElementById('app-container');
+    const loadingSpinner = document.getElementById('loading-spinner');
     
-    loadingSpinner.style.display = 'none';
+    // ลบ style="display: none" ออก เพื่อให้แสดงผล
+    if(appContainer) appContainer.style.removeProperty('display'); 
+    if(loadingSpinner) loadingSpinner.style.display = 'none';
+    
+    // บังคับเปิดหน้าแรก (Check In) เสมอเมื่อเข้าแอป
     showPage('check-in-out-page');
 
-    // ตั้งค่า Active Menu
+    // ตั้งค่า Active Menu ให้ตรงกับหน้าแรก
     const allNavItems = document.querySelectorAll('.nav-item');
     allNavItems.forEach(n => n.classList.remove('active'));
+    
+    // เลือกปุ่มเมนูที่ลิงก์ไปหน้า check-in-out-page ทั้งหมด (ทั้ง PC และ Mobile)
     const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
     checkInNavItems.forEach(n => n.classList.add('active'));
 
-    // เริ่มต้นระบบ GPS และ Controls
+    // เริ่มต้นระบบ GPS และ Controls อื่นๆ
     initializeControls();
     startWatchingPosition();
 
-    // 3. โหลดข้อมูลเบื้องหลัง (Parallel)
+    // 6. โหลดข้อมูลเบื้องหลัง (Parallel Loading)
     try {
         await Promise.all([
             checkUserWorkStatus(),
@@ -1696,35 +1738,49 @@ async function initializeApp(user, userData) {
         console.error("Error loading background data:", error);
     }
 }
-        auth.onAuthStateChanged(async (user) => {
-    // 1. ซ่อน Login และแสดง Loading ระหว่างรอ
-    loginPage.style.display = 'none';
-    loadingSpinner.style.display = 'flex'; // โชว์ loading รอไว้ก่อน
+        
+/* --- แก้ไข: เพิ่มบรรทัด currentUser = user; --- */
+auth.onAuthStateChanged(async (user) => {
+    console.log("🔄 Auth State Changed Triggered");
 
-    // เพิ่ม Try-Catch เพื่อป้องกันจอขาวหากเกิด Error
+    const loginPage = document.getElementById('login-page');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const appContainer = document.getElementById('app-container');
+
+    if (loginPage) loginPage.style.display = 'none';
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+
     try {
         if (user) {
-            console.log("User authenticated:", user.uid);
-            currentUser = user;
+            console.log("✅ User detected:", user.uid);
             
+            // ★★★ เพิ่มบรรทัดนี้สำคัญมาก! ★★★
+            currentUser = user; 
+            // -----------------------------
+
             const userDocRef = db.collection('users').doc(user.uid);
+            console.log("⏳ Fetching user profile...");
             
-            // [แก้ไข] ลบ { source: 'server' } ออก เพื่อให้โหลดจาก Cache ได้ถ้าเน็ตไม่ดี (ลดโอกาสเกิด AbortError)
-            // หรือถ้าอยากบังคับ Server จริงๆ ให้ใช้ try-catch ซ้อนอีกชั้น
+            // Timeout protection
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Timeout loading user profile")), 8000)
+            );
+
             let userDoc;
             try {
-                userDoc = await userDocRef.get(); 
+                userDoc = await Promise.race([
+                    userDocRef.get(),
+                    timeoutPromise
+                ]);
             } catch (err) {
-                console.warn("Load user failed, retrying...", err);
-                // ถ้าโหลดไม่ได้จริงๆ ให้ลองโหลดอีกครั้งหรือใช้ค่าว่าง
-                userDoc = await userDocRef.get({ source: 'cache' }); 
+                console.warn("⚠️ Fetch profile slow/failed:", err);
+                userDoc = { exists: false }; 
             }
 
-            if (userDoc && userDoc.exists) {
+            if (userDoc.exists) {
                 await initializeApp(user, userDoc.data());
             } else {
-                // --- กรณี User ใหม่ ---
-                console.log("Creating new user profile...");
+                console.warn("⚠️ No user profile found, creating default...");
                 const newUserProfile = {
                     fullName: user.displayName || user.email || 'New User',
                     email: user.email || null,
@@ -1733,35 +1789,30 @@ async function initializeApp(user, userData) {
                     role: 'user',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
-                
-                await userDocRef.set(newUserProfile);
+                userDocRef.set(newUserProfile).catch(e => console.error("Save profile error", e));
                 await initializeApp(user, newUserProfile);
             }
+
         } else {
-            // --- กรณี Logged out ---
-            console.log("User logged out");
-            stopWatchingPosition();
+            console.log("👋 User logged out");
+            if (typeof stopWatchingPosition === 'function') stopWatchingPosition();
             currentUser = null;
             
-            // แสดงหน้า Login
-            appContainer.style.display = 'none'; // ซ่อนหน้าหลัก
-            loginPage.style.display = 'flex';    // โชว์หน้า Login
-            loadingSpinner.style.display = 'none'; // ซ่อน Loading
+            if (appContainer) appContainer.style.display = 'none'; 
+            if (loginPage) loginPage.style.display = 'flex';    
+            if (loadingSpinner) loadingSpinner.style.display = 'none'; 
         }
 
     } catch (error) {
-        // ★★★ ดักจับ Error ตรงนี้ เพื่อไม่ให้จอขาว ★★★
-        console.error("Critical Init Error:", error);
-        alert("เกิดข้อผิดพลาดในการเริ่มระบบ: " + error.message + "\n(กด OK เพื่อรีโหลด)");
+        console.error("❌ Critical Auth Error:", error);
+        alert("เกิดข้อผิดพลาดร้ายแรง: " + error.message);
         
-        // ถ้า Error ให้ถอยกลับไปหน้า Login หรือรีโหลด
-        auth.signOut();
-        window.location.reload();
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        if (loginPage) loginPage.style.display = 'flex';
     }
 });
-        
-        // โค้ดส่วนนี้จะ "ประมวลผล" การ Login (ถ้ามี) และผลลัพธ์ของมันจะถูก "ดักจับ" 
-        // โดย onAuthStateChanged (ที่อยู่ข้างบน) ซึ่งกำลังรอฟังอยู่แล้ว
+
+            // โดย onAuthStateChanged (ที่อยู่ข้างบน) ซึ่งกำลังรอฟังอยู่แล้ว
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
           .then(() => {
             // เรียก getRedirectResult เพื่อประมวลผลการเด้งกลับจาก LINE/Google
