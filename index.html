@@ -836,18 +836,21 @@ aside .nav-item {
                 <div class="h-10 border-l border-gray-300 hidden md:block"></div>
 
                 <div>
-                    <label class="text-xs font-bold text-gray-500 block mb-1">กรองตามประเภทงาน</label>
-                    <div class="relative">
-                        <select id="audit-type-filter" class="h-10 appearance-none px-3 py-2 pr-8 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none w-32 cursor-pointer">
-                            <option value="all">ทั้งหมด</option>
-                            <option value="in_factory">🏭 Factory</option>
-                            <option value="onsite">🚗 On-site</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-                </div>
+    <label class="text-xs font-bold text-gray-500 block mb-1">กรองตามประเภทงาน</label>
+    <div class="relative">
+        <select id="audit-type-filter" class="block appearance-none w-32 bg-gray-50 border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-200 text-sm transition-all cursor-pointer">
+            <option value="all">ทั้งหมด</option>
+            <option value="in_factory">Factory</option>
+            <option value="onsite">On-site</option>
+        </select>
+        
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+        </div>
+    </div>
+</div>
             </div>
 
             <button id="export-audit-btn" class="h-10 flex items-center justify-center gap-2 px-4 py-2 bg-green-500 border border-green-600 text-white rounded-lg hover:bg-green-600 font-medium shadow-sm transition-all w-full md:w-auto text-sm">
@@ -862,7 +865,7 @@ aside .nav-item {
             <table class="w-full text-left border-collapse">
                 <thead class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-600 font-bold tracking-wider">
                     <tr>
-                        <th class="pl-14 pr-6 py-4 text-left w-1/4">Employee Profile</th>
+                        <th style="padding-left: 20px;" class="pr-6 py-4 text-left w-1/4">Employee Profile</th>
                         
                         <th class="px-4 py-4 text-center">In / Out</th>
                         <th class="px-6 py-4 text-center">Job Type & Details</th>
@@ -880,7 +883,7 @@ aside .nav-item {
             </table>
         </div>
         <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between">
-            <span id="audit-count-text">แสดง 0 รายการ</span>
+            <span style="padding-left: 20px;" id="audit-count-text">แสดง 0 รายการ</span>
         </div>
     </div>
 </div>
@@ -3646,7 +3649,7 @@ if (exportPayrollBtn) {
         let totalDays = recordsSnapshot.size;
         let accumulatorRegularWorkHours = 0;
 
-        recordsSnapshot.forEach(doc => {
+        recordsSnapshot.forEach(doc => {    
             const record = doc.data();
             const checkinTime = record.checkIn.timestamp.toDate();
             const report = record.report;
@@ -3657,7 +3660,6 @@ if (exportPayrollBtn) {
             let overtimeHours = 0;
             let checkoutTimeStr = '-';
 
-            // ---------------------------------------------------------
             // [ส่วนที่แก้ไข Logic] : คำนวณใหม่ถ้า DB เป็น 0
             // ---------------------------------------------------------
             if (record.status === 'completed' && record.checkOut) {
@@ -7466,7 +7468,7 @@ async function loadDailyAuditData() {
 
             html += `
             <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors group">
-                <td class="pl-16 pr-6 py-4">
+                <td style="padding-left: 20px;" class="pr-6 py-4">
                     <div class="flex items-center gap-4">
                         <img src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm">
                         <div class="min-w-0">
