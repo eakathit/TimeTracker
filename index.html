@@ -7410,11 +7410,15 @@ async function loadDailyAuditData() {
             if (isFilterLate && !isLate) return;
 
             // --- Location Audit ---
+            // --- 1. ส่วนจัดการ Location Audit (ตรวจสอบพิกัด) ---
             let locationStatusHTML = '';
             let mapLinkBtn = '';
 
             if (checkIn.location) {
+                // สร้างลิงก์ Google Map
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${checkIn.location.latitude},${checkIn.location.longitude}`;
+                
+                // ปุ่ม View Map (เหมือนเดิม)
                 mapLinkBtn = `
                     <a href="${mapUrl}" target="_blank" class="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded text-[10px] text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-colors shadow-sm">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
@@ -7423,18 +7427,29 @@ async function loadDailyAuditData() {
                 `;
 
                 if (checkIn.workType === 'in_factory') {
+                    // ★★★ FACTORY: Location Audit ★★★
+                    // ใช้สีเขียว (Green) เพื่อบอกว่า "อยู่ในพื้นที่" (In Factory)
                     const dist = calculateDistance(checkIn.location.latitude, checkIn.location.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
                     if (dist <= 200) {
-                        locationStatusHTML = `<span class="flex items-center gap-1 text-green-600 font-bold text-sm"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> In Factory</span>`;
+                        locationStatusHTML = `
+                            <span class="flex items-center gap-1 text-green-600 font-bold text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> 
+                                In Factory
+                            </span>`;
                     } else {
                         locationStatusHTML = `<span class="flex items-center gap-1 text-red-600 font-bold text-sm"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg> Out of Area</span>`;
                     }
                 } else {
+                    // ★★★ ON-SITE: Location Audit ★★★
+                    // ใช้สีม่วงเข้ม (Purple-800) ที่ข้อความ เพื่อให้ตัดกับสีเขียวของ Factory ชัดเจน
+                    // แต่ยังคงไอคอนติ๊กถูกสีเขียว (Green-500) ไว้เพื่อสื่อว่า Verified แล้ว
                     locationStatusHTML = `
-                        <div class="flex items-center justify-center text-purple-600 gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span class="font-bold text-sm">On-site</span>
-                        </div>`;
+                        <span class="flex items-center gap-1 text-purple-800 font-bold text-sm">
+                            <svg class="w-4 h-4 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg> 
+                            On-site
+                        </span>`;
                 }
             } else {
                 locationStatusHTML = `<span class="text-gray-400 italic text-sm">No GPS</span>`;
@@ -7444,10 +7459,13 @@ async function loadDailyAuditData() {
             const timeIn = checkInDate.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             const timeOut = checkOut ? checkOut.timestamp.toDate().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : '-';
             
+            // --- 2. ส่วนจัดการ Job Type & Details ---
             let workTypeDisplay = '';
             const detailText = checkIn.onSiteDetails ? `<div class="text-xs text-gray-500 mt-1 truncate max-w-[180px]" title="${checkIn.onSiteDetails}">${checkIn.onSiteDetails}</div>` : '';
 
             if (checkIn.workType === 'in_factory') {
+                // ★★★ FACTORY: Badge ★★★
+                // ใช้ธีมสีฟ้า (Sky Blue) พื้นหลังฟ้าอ่อน ตัวหนังสือฟ้าเข้ม
                 workTypeDisplay = `
                     <div class="flex flex-col items-center justify-center">
                         <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-sky-100 text-sky-700 border border-sky-200">
@@ -7456,9 +7474,12 @@ async function loadDailyAuditData() {
                     </div>
                 `;
             } else {
+                // ★★★ ON-SITE: Badge ★★★
+                // ใช้ธีมสีม่วง (Purple) พื้นหลังม่วงอ่อน ตัวหนังสือม่วงเข้ม
+                // สีจะตัดกับสีฟ้าของ Factory อย่างชัดเจนเวลาอยู่ใกล้กัน
                 workTypeDisplay = `
                     <div class="flex flex-col items-center justify-center">
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200 shadow-sm">
+                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-800 border border-violet-200">
                             On-site
                         </span>
                         ${detailText}
