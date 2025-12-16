@@ -1197,6 +1197,61 @@ aside .nav-item {
     </button>
 </div>
 
+<div id="admin-mobile-menu-page" class="page space-y-6">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-indigo-100 rounded-xl text-indigo-600">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Admin Menu</h2>
+            <p class="text-gray-500 text-sm">เลือกรายการที่ต้องการจัดการ</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4">
+        
+        <button id="btn-menu-calendar" class="card p-6 flex flex-row items-center gap-4 hover:bg-gray-50 transition-all active:scale-95 w-full text-left">
+            <div class="p-4 bg-green-100 text-green-600 rounded-full">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">Calendar</h3>
+                <p class="text-gray-500 text-sm">วันหยุดและตารางงาน</p>
+            </div>
+        </button>
+
+        <button id="btn-menu-dashboard" class="card p-6 flex flex-row items-center gap-4 hover:bg-gray-50 transition-all active:scale-95 w-full text-left">
+            <div class="p-4 bg-orange-100 text-orange-600 rounded-full">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">Dashboard</h3>
+                <p class="text-gray-500 text-sm">ภาพรวมการเข้างานวันนี้</p>
+            </div>
+        </button>
+
+        <button id="btn-menu-approvals" class="card p-6 flex flex-row items-center gap-4 hover:bg-gray-50 transition-all active:scale-95 w-full text-left">
+            <div class="p-4 bg-sky-100 text-sky-600 rounded-full">
+                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">Approvals</h3>
+                <p class="text-gray-500 text-sm">จัดการคำขอลาและ OT</p>
+            </div>
+        </button>
+
+    </div>
+</div>
+
         </main>
         
         <nav id="mobile-floating-menu" class="fixed bottom-0 left-0 right-0 h-16 bg-white flex justify-between items-center px-8 shadow-md md:hidden z-50 border-t border-gray-200">
@@ -1841,22 +1896,22 @@ async function initializeApp(user, userData) {
     currentUserData = userData;
 
     // 1. อัปเดตข้อมูลพื้นฐานบนหน้าจอหลัก (Header Welcome)
-    document.getElementById('user-display-name').textContent = userData.fullName || 'ผู้ใช้งาน';
+    const displayNameEl = document.getElementById('user-display-name');
+    if (displayNameEl) {
+        displayNameEl.textContent = userData.fullName || 'ผู้ใช้งาน';
+    }
     updateProfilePage(userData);
 
-    // 2. [NEW] อัปเดตข้อมูลใน Sidebar ใหม่ (Mini Profile ด้านล่างซ้าย)
+    // 2. อัปเดตข้อมูลใน Sidebar ใหม่ (Mini Profile ด้านล่างซ้าย - ถ้ามี)
     const sbPic = document.getElementById('sidebar-user-pic');
     const sbName = document.getElementById('sidebar-user-name');
     const sbRole = document.getElementById('sidebar-user-role');
     
-    // ตรวจสอบว่ามี Element เหล่านี้จริง (ป้องกัน Error ถ้า HTML เก่ายังค้างอยู่)
     if(sbPic && sbName && sbRole) {
         sbName.textContent = userData.fullName || 'User';
-        // แปลง Role เป็นข้อความที่สวยงาม
         sbRole.textContent = userData.role === 'admin' ? 'Administrator' : 'Employee';
         
         if(userData.profileImageUrl) {
-            // เพิ่ม timestamp เพื่อแก้ปัญหา browser cache รูปเก่า
             sbPic.src = `${userData.profileImageUrl}?t=${new Date().getTime()}`;
         } else {
             sbPic.src = "https://placehold.co/100x100/E2E8F0/475569?text=User"; 
@@ -1865,51 +1920,83 @@ async function initializeApp(user, userData) {
 
     // 3. จัดการการแสดงผลเมนู Sidebar (Desktop) ตาม Role
     const adminMenuGroup = document.getElementById('admin-menu-group');
-    const systemMenuGroup = document.getElementById('system-menu-group'); // (เผื่ออนาคต)
+    const systemMenuGroup = document.getElementById('system-menu-group');
 
     if (currentUserData.role === 'admin') {
         // --- Admin: เปิดโชว์เมนู Management และ System ---
         if (adminMenuGroup) adminMenuGroup.classList.remove('hidden');
         if (systemMenuGroup) systemMenuGroup.classList.remove('hidden');
-
     } else {
         // --- User: ซ่อนเมนู Management ---
         if (adminMenuGroup) adminMenuGroup.classList.add('hidden');
         if (systemMenuGroup) systemMenuGroup.classList.add('hidden');
     }
 
-    // 4. จัดการ Mobile Bottom Nav (ใช้ Logic เดิมชั่วคราว เพื่อให้ Admin เข้า Dashboard ในมือถือได้)
+    // 4. จัดการ Mobile Bottom Nav
     const mobileCalendarNav = document.getElementById('calendar-or-admin-nav');
-
-    // ไอคอน Dashboard สำหรับมือถือ
-    const dashboardIconSvg_BottomNav = `
-    <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-    </svg>`;
-    
-    // ไอคอน Calendar สำหรับมือถือ
-    const calendarIconSvg_BottomNav = `
-    <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-    </svg>`;
 
     if (currentUserData.role === 'admin') {
         // --- ADMIN MOBILE VIEW ---
         if (mobileCalendarNav) {
-            // [แก้ไข] เปลี่ยนให้ชี้ไปหน้า "อนุมัติ (Approvals)" โดยตรง
-            mobileCalendarNav.dataset.page = 'admin-approvals-page';
             
-            // เปลี่ยนไอคอนเป็นรูป "ตราประทับ/ตรวจสอบ" ให้สื่อความหมาย
+            // [แก้ไข] 1. เปลี่ยนให้ปุ่มนี้ลิงก์ไปหน้า "เมนูรวม (Admin Menu)" 
+            mobileCalendarNav.dataset.page = 'admin-mobile-menu-page';
+            
+            // [แก้ไข] 2. เปลี่ยนไอคอนเป็นรูปขีด 3 ขีด (Hamburger Menu) หรือ Grid
             mobileCalendarNav.innerHTML = `
             <div class="relative">
                 <svg class="w-7 h-7 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
                 <span id="mobile-admin-badge" class="hidden absolute top-0 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
             </div>
-            <span class="text-[10px] font-medium">อนุมัติ</span>
             `;
     
+            // [สำคัญ] 3. ใส่ Event Listener ให้ปุ่มในหน้า Admin Menu (โหลดข้อมูลเมื่อกด)
+            setTimeout(() => { 
+                const btnCalendar = document.getElementById('btn-menu-calendar');
+                const btnDashboard = document.getElementById('btn-menu-dashboard');
+                const btnApprovals = document.getElementById('btn-menu-approvals');
+
+                // --- ปุ่ม: ดูปฏิทิน ---
+                if(btnCalendar) {
+                    btnCalendar.onclick = () => {
+                        showPage('calendar-page');
+                        // โหลดข้อมูลปฏิทินทันที
+                        if (typeof loadCalendarData === 'function') {
+                            loadCalendarData(currentDisplayDate);
+                        }
+                        // โชว์ปุ่มจัดการวันหยุด (Admin Only)
+                        const adminControls = document.getElementById('admin-calendar-controls-card');
+                        if (adminControls) {
+                            adminControls.classList.remove('hidden');
+                            if (typeof loadCalendarRules === 'function') loadCalendarRules();
+                        }
+                    };
+                }
+
+                // --- ปุ่ม: ดู Dashboard ---
+                if(btnDashboard) {
+                    btnDashboard.onclick = () => {
+                        showPage('admin-dashboard-page');
+                        // โหลดกราฟ/สถิติ
+                        if (typeof loadAdminDashboardOverview === 'function') {
+                            loadAdminDashboardOverview();
+                        }
+                    };
+                }
+
+                // --- ปุ่ม: อนุมัติ (Approvals) ---
+                if(btnApprovals) {
+                    btnApprovals.onclick = () => {
+                        showPage('admin-approvals-page');
+                        // โหลดข้อมูลที่จำเป็นสำหรับหน้าอนุมัติ
+                        if (typeof loadAllUsersForDropdown === 'function') loadAllUsersForDropdown();
+                        if (typeof loadPendingLeaveRequests === 'function') loadPendingLeaveRequests();
+                        if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests();
+                    };
+                }
+            }, 500); // รอ DOM สร้างเสร็จ
         }
     } else {
         // --- USER MOBILE VIEW --- (เหมือนเดิม)
@@ -1928,22 +2015,21 @@ async function initializeApp(user, userData) {
     const appContainer = document.getElementById('app-container');
     const loadingSpinner = document.getElementById('loading-spinner');
     
-    // ลบ style="display: none" ออก เพื่อให้แสดงผล
+    // แสดงหน้า App ซ่อน Spinner
     if(appContainer) appContainer.style.removeProperty('display'); 
     if(loadingSpinner) loadingSpinner.style.display = 'none';
     
-    // บังคับเปิดหน้าแรก (Check In) เสมอเมื่อเข้าแอป
+    // บังคับเปิดหน้าแรก (Check In)
     showPage('check-in-out-page');
 
     // ตั้งค่า Active Menu ให้ตรงกับหน้าแรก
     const allNavItems = document.querySelectorAll('.nav-item');
     allNavItems.forEach(n => n.classList.remove('active'));
     
-    // เลือกปุ่มเมนูที่ลิงก์ไปหน้า check-in-out-page ทั้งหมด (ทั้ง PC และ Mobile)
     const checkInNavItems = document.querySelectorAll('.nav-item[data-page="check-in-out-page"]');
     checkInNavItems.forEach(n => n.classList.add('active'));
 
-    // เริ่มต้นระบบ GPS และ Controls อื่นๆ
+    // เริ่มต้นระบบ GPS และ Controls
     initializeControls();
     startWatchingPosition();
 
