@@ -641,39 +641,39 @@ aside .nav-item {
                 </div>
                 
                 <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="relative">
-                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
-                                <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                                    <option value="">ทั้งหมด (All Status)</option>
-                                    <option value="pending">🟡 รออนุมัติ</option>
-                                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                                    <option value="rejected">🔴 ไม่อนุมัติ</option>
-                                </select>
-                            </div>
-                            <div class="relative">
-                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
-                                <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                                    <option value="">ทุกคน (All Staff)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button id="leave-history-search-btn" class="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            ค้นหาประวัติ
-                        </button>
-                    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                    <option value="">ทั้งหมด (All Status)</option>
+                    <option value="pending">🟡 รออนุมัติ</option>
+                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                    <option value="">ทุกคน (All Staff)</option>
+                </select>
+            </div>
+        </div>
+        <button id="leave-history-search-btn" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            ค้นหาประวัติ
+        </button>
+    </div>
 
-                    <div id="leave-history-list" class="space-y-3 pb-4">
-                        <div class="text-center py-10">
-                            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
-                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-                        </div>
-                    </div>
-                </div>
+    <div id="leave-history-list" class="space-y-3 pb-4">
+        <div class="text-center py-10">
+            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
@@ -705,39 +705,40 @@ aside .nav-item {
                 </div>
 
                 <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="relative">
-                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
-                                <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                                    <option value="">ทั้งหมด (All Status)</option>
-                                    <option value="pending">🟡 รออนุมัติ</option>
-                                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                                    <option value="rejected">🔴 ไม่อนุมัติ</option>
-                                </select>
-                            </div>
-                            <div class="relative">
-                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
-                                <select id="ot-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                                    <option value="">ทุกคน (All Staff)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button id="ot-history-search-btn" class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            ค้นหาประวัติ
-                        </button>
-                    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                    <option value="">ทั้งหมด (All Status)</option>
+                    <option value="pending">🟡 รออนุมัติ</option>
+                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                <select id="ot-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                    <option value="">ทุกคน (All Staff)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="ot-history-search-btn" class="w-full py-3 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2" style="background-color: #F97316;">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            ค้นหาประวัติ
+        </button>
+    </div>
 
-                    <div id="ot-history-list" class="space-y-3 pb-4">
-                        <div class="text-center py-10">
-                            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
-                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-                        </div>
-                    </div>
-                </div>
+    <div id="ot-history-list" class="space-y-3 pb-4">
+        <div class="text-center py-10">
+            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
