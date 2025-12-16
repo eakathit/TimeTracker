@@ -2900,11 +2900,62 @@ auth.onAuthStateChanged(async (user) => {
     }
 
     function startWatchingPosition() {
-        if (navigator.geolocation && watchId === null) {
-            const options = { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 };
-            watchId = navigator.geolocation.watchPosition(updateRealtimeLocationStatus, handleLocationError, options);
-        }
+    if (!navigator.geolocation) {
+        showToast('อุปกรณ์ของคุณไม่รองรับ GPS', 'error');
+        return;
     }
+
+    // ฟังก์ชันจริงๆ ที่ใช้สั่งเริ่มจับพิกัด (แยกออกมาเพื่อเรียกใช้ซ้ำ)
+    const runGeoWatcher = () => {
+        // ถ้ามี Watcher เดิมทำงานอยู่ ให้เคลียร์ก่อน (ป้องกันการทำงานซ้อนกัน)
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+        }
+
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 10000 // ยอมรับค่าเก่าได้ไม่เกิน 10 วิ เพื่อลดการเรียก Hardware บ่อยเกินไป
+        };
+
+        watchId = navigator.geolocation.watchPosition(
+            updateLocation, // Success Callback
+            handleLocationError, // Error Callback
+            options
+        );
+        console.log("Started watching position (WatchID: " + watchId + ")");
+    };
+
+    // --- ส่วนตรวจสอบสิทธิ์ (Permissions API) ---
+    // ใช้ได้ดีใน Chrome/Android (iOS บางเวอร์ชันอาจจะข้ามส่วนนี้ไปทำ else เลย)
+    if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+            
+            if (result.state === 'granted') {
+                // 1. ถ้าอนุญาตแล้ว -> รันเลย (ไม่ถามซ้ำ)
+                runGeoWatcher();
+            } else if (result.state === 'prompt') {
+                // 2. ถ้ายังไม่เคยถาม -> รันเพื่อกระตุ้นให้ถาม
+                runGeoWatcher();
+            } else if (result.state === 'denied') {
+                // 3. ถ้าโดนปฏิเสธ -> แจ้งเตือน
+                updateLocationStatus('GPS ถูกปิดกั้น', 'error');
+                showToast('กรุณาเปิดอนุญาตตำแหน่ง (Location) ในตั้งค่า', 'error');
+            }
+
+            // ฟัง event เผื่อ User เปลี่ยนใจไปกดเปลี่ยนใน setting ขณะเปิดแอพค้างไว้
+            result.onchange = function() {
+                console.log('Geolocation permission state changed to:', result.state);
+                if (result.state === 'granted') {
+                    runGeoWatcher();
+                }
+            };
+        });
+    } else {
+        // Fallback สำหรับ Browser เก่า หรือ iOS Safari บางรุ่นที่ไม่มี Permissions API
+        runGeoWatcher();
+    }
+}
 
     function stopWatchingPosition() {
         if (navigator.geolocation && watchId !== null) {
