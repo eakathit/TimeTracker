@@ -579,7 +579,7 @@ aside .nav-item {
             <div class="p-3 bg-blue-100 text-blue-600 rounded-full mb-3">
                 <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
-            <p class="text-3xl font-bold text-blue-700" id="stat-leave">0</p>
+            <p class="text-3xl font-bold text-blue-600" id="stat-leave">0</p>
             <p class="text-xs text-blue-600 font-medium">ลา (อนุมัติแล้ว)</p>
         </div>
 
@@ -592,11 +592,28 @@ aside .nav-item {
         </div>
     </div>
 
-    <div class="card border border-gray-200">
-        <h3 class="font-bold text-gray-700 mb-3 border-b pb-2">รายชื่อคนมาสายวันนี้</h3>
-        <ul id="late-list-container" class="space-y-2 text-sm text-gray-600 max-h-40 overflow-y-auto">
-            <li class="text-center text-gray-400 py-2">- ไม่มีข้อมูล -</li>
-        </ul>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div class="card border border-red-100 bg-red-50/30">
+            <h3 class="font-bold text-red-700 mb-3 border-b border-red-200 pb-2 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                ขาด / ยังไม่เข้างาน
+            </h3>
+            <ul id="dashboard-absent-list" class="space-y-2 text-sm text-gray-600 max-h-60 overflow-y-auto">
+                <li class="text-center text-gray-400 py-2">กำลังโหลด...</li>
+            </ul>
+        </div>
+
+        <div class="card border border-blue-100 bg-blue-50/30">
+            <h3 class="font-bold text-blue-600 mb-3 border-b border-blue-200 pb-2 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                ลา (อนุมัติแล้ว)
+            </h3>
+            <ul id="dashboard-leave-list" class="space-y-2 text-sm text-gray-600 max-h-60 overflow-y-auto">
+                <li class="text-center text-gray-400 py-2">กำลังโหลด...</li>
+            </ul>
+        </div>
+
     </div>
 
 </div>
@@ -612,7 +629,7 @@ aside .nav-item {
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: 25px;">
 
         <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
@@ -7682,18 +7699,21 @@ if (auditTypeFilter) auditTypeFilter.addEventListener('change', loadDailyAuditDa
 if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditData);
 
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
+// ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
 async function loadAdminDashboardOverview() {
     const statPresent = document.getElementById('stat-present');
     const statLate = document.getElementById('stat-late');
     const statLeave = document.getElementById('stat-leave');
     const statAbsent = document.getElementById('stat-absent');
     const dateDisplay = document.getElementById('dashboard-date-display');
-    const lateListContainer = document.getElementById('late-list-container');
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
+    
+    // Elements ใหม่สำหรับ Morning Talk
+    const absentListContainer = document.getElementById('dashboard-absent-list');
+    const leaveListContainer = document.getElementById('dashboard-leave-list');
 
-    if (!statPresent) return; // เช็คว่าอยู่หน้า Dashbord จริงไหม
+    if (!statPresent) return;
 
-    // UI Feedback: กำลังโหลด (หมุนปุ่ม Refresh)
     if(refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.querySelector('svg').classList.add('animate-spin');
@@ -7701,21 +7721,17 @@ async function loadAdminDashboardOverview() {
 
     try {
         const today = new Date();
-        // ตั้งเวลา 00:00 - 23:59
         const startOfDay = new Date(today); startOfDay.setHours(0,0,0,0);
         const endOfDay = new Date(today); endOfDay.setHours(23,59,59,999);
         
-        // แสดงวันที่
         dateDisplay.textContent = today.toLocaleDateString('th-TH', { 
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
         });
 
-        // 1. ดึง Users ทั้งหมด (เพื่อนับจำนวนคนขาด)
+        // 1. ดึง Users ทั้งหมด
         const usersSnap = await db.collection('users').get();
         const totalUsers = usersSnap.size;
-        
-        // Map เก็บชื่อ User (id -> fullName)
-        const userMap = {};
+        const userMap = {}; // เก็บ id -> name เพื่อหาคนขาด
         usersSnap.forEach(doc => userMap[doc.id] = doc.data().fullName || "Unknown");
 
         // 2. ดึง Records ของวันนี้
@@ -7724,77 +7740,87 @@ async function loadAdminDashboardOverview() {
             .where('date', '<=', endOfDay)
             .get();
 
-        // 3. ดึง Leaves ที่ "Approved" และครอบคลุมวันนี้
+        // 3. ดึง Leaves Approved
         const leavesSnap = await db.collection('leave_requests')
             .where('status', '==', 'approved')
             .where('startDate', '<=', endOfDay)
             .where('endDate', '>=', startOfDay)
             .get();
 
-        // --- ประมวลผล ---
         let countPresent = 0;
         let countLate = 0;
         let countLeave = 0;
-        let lateEmployees = [];
         
-        // Set ของคนที่มาทำงานแล้ว หรือ ลาแล้ว (เพื่อหาคนขาด)
         const checkedInOrLeaveUserIds = new Set();
+        const leaveEmployeesList = []; // เก็บรายชื่อคนลา
 
-        // A. นับคนมาทำงาน + มาสาย
+        // A. นับคนมาทำงาน
         recordsSnap.forEach(doc => {
             const data = doc.data();
             countPresent++;
             checkedInOrLeaveUserIds.add(data.userId);
 
-            // เช็คสาย (> 08:30)
             const checkInTime = data.checkIn.timestamp.toDate();
             const lateLimit = new Date(checkInTime);
             lateLimit.setHours(8, 30, 0, 0);
-
-            if (checkInTime > lateLimit) {
-                countLate++;
-                const userName = userMap[data.userId] || 'Unknown';
-                const timeStr = checkInTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute:'2-digit'});
-                lateEmployees.push(`${userName} (${timeStr})`);
-            }
+            if (checkInTime > lateLimit) countLate++;
         });
 
-        // B. นับคนลา
+        // B. นับคนลา และเก็บรายชื่อ
         leavesSnap.forEach(doc => {
             const data = doc.data();
-            // เช็คซ้ำเผื่อคนเดียวกันลาหลายใบ (แต่ปกติไม่ควรเกิด) 
-            // และเช็คว่ายังไม่ได้ Check-in (ถ้า Check-in แล้วถือว่ามาทำงาน)
             if (!checkedInOrLeaveUserIds.has(data.userId)) {
                 countLeave++;
                 checkedInOrLeaveUserIds.add(data.userId);
+                
+                // เก็บชื่อและประเภทลา
+                const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
+                leaveEmployeesList.push(`${data.userName} <span class="text-xs text-gray-400">(${leaveType})</span>`);
             }
         });
 
-        // C. คำนวณคนขาด
-        // ขาด = จำนวนพนักงานทั้งหมด - (มา + ลา)
-        // **หมายเหตุ:** นี่เป็นแค่ค่าประมาณ ถ้ายังไม่ถึงเวลาเลิกงาน เขาอาจจะกำลังเดินทางมา
+        // C. หาคนขาด (คนที่ไม่อยู่ใน Set checkedInOrLeaveUserIds)
         let countAbsent = totalUsers - checkedInOrLeaveUserIds.size;
         if (countAbsent < 0) countAbsent = 0;
+        
+        const absentEmployeesList = [];
+        for (const [uid, name] of Object.entries(userMap)) {
+            if (!checkedInOrLeaveUserIds.has(uid)) {
+                absentEmployeesList.push(name);
+            }
+        }
 
-        // --- อัปเดต UI ---
+        // --- อัปเดตตัวเลข ---
         statPresent.textContent = countPresent;
         statLate.textContent = countLate;
         statLeave.textContent = countLeave;
         statAbsent.textContent = countAbsent;
 
-        // อัปเดตรายชื่อคนสาย
-        if (lateEmployees.length > 0) {
-            lateListContainer.innerHTML = lateEmployees.map(text => 
-                `<li class="text-orange-600">• ${text}</li>`
-            ).join('');
-        } else {
-            lateListContainer.innerHTML = `<li class="text-center text-green-600 py-2">✅ วันนี้ไม่มีคนมาสาย</li>`;
+        // --- อัปเดตรายชื่อคนขาด (Morning Talk) ---
+        if (absentListContainer) {
+            if (absentEmployeesList.length > 0) {
+                absentListContainer.innerHTML = absentEmployeesList.map(name => 
+                    `<li class="text-red-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${name}</li>`
+                ).join('');
+            } else {
+                absentListContainer.innerHTML = `<li class="text-center text-gray-400 py-2">- ไม่มีคนขาด -</li>`;
+            }
+        }   
+
+        // --- อัปเดตรายชื่อคนลา (Morning Talk) ---
+        if (leaveListContainer) {
+            if (leaveEmployeesList.length > 0) {
+                leaveListContainer.innerHTML = leaveEmployeesList.map(item => 
+                    `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`
+                ).join('');
+            } else {
+                leaveListContainer.innerHTML = `<li class="text-center text-gray-400 py-2">- ไม่มีคนลา -</li>`;
+            }
         }
 
     } catch (error) {
         console.error("Dashboard Load Error:", error);
     } finally {
-        // ปิดการหมุน
         if(refreshBtn) {
             refreshBtn.disabled = false;
             refreshBtn.querySelector('svg').classList.remove('animate-spin');
