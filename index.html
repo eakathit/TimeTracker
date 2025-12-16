@@ -292,7 +292,7 @@ aside .nav-item {
 
     <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="admin-dashboard-page">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
-        <span class="font-medium text-sm">Today's Overview</span>
+        <span class="font-medium text-sm">Dashboard</span>
     </a>
 
     <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="admin-approvals-page">
@@ -548,7 +548,7 @@ aside .nav-item {
     
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">ภาพรวมวันนี้</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Today's Overview</h2>
             <p id="dashboard-date-display" class="text-gray-500 text-sm mt-1">-</p>
         </div>
         <button id="refresh-dashboard-btn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl shadow-sm hover:bg-gray-50 hover:text-sky-600 transition-all active:scale-95">
@@ -5396,103 +5396,127 @@ async function handleDeleteCalendarRule(type, dateString, buttonElement) {
     }
 }
 
+// [อัปเดต] โหลดรายการใบลา (กรองตามแผนก)
 async function loadPendingLeaveRequests() {
-        const listContainer = document.getElementById('leave-approval-list');
-        const loadingMsg = document.getElementById('leave-loading-msg');
-        
-        if (!listContainer || !loadingMsg) return;
+    const listContainer = document.getElementById('leave-approval-list');
+    let loadingMsg = document.getElementById('leave-loading-msg');
+    
+    if (!listContainer) return;
 
-        listContainer.innerHTML = ''; 
-        loadingMsg.textContent = 'กำลังโหลดรายการ...';
-        listContainer.appendChild(loadingMsg); 
-
-        try {
-            // [ ★ 1. ดึงข้อมูล User ทั้งหมดมาเก็บใน Map ก่อน ★ ]
-            const userMap = new Map();
-            const usersSnapshot = await db.collection('users').get();
-            usersSnapshot.forEach(doc => {
-                userMap.set(doc.id, doc.data());
-            });
-
-
-            // [ ★ 2. ดึงใบลา (เหมือนเดิม) ★ ]
-            const querySnapshot = await db.collection('leave_requests')
-                                          .where('status', '==', 'pending')
-                                          // .orderBy('submittedAt', 'asc')
-                                          .get();
-
-            if (querySnapshot.empty) {
-                loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
-                return;
-            }
-
-            listContainer.innerHTML = ''; // ล้าง "กำลังโหลด" ออก
-
-            querySnapshot.forEach(doc => {
-                const leave = doc.data();
-                const docId = doc.id;
-
-                // [ ★ 3. ค้นหาชื่อและรูปปัจจุบันจาก Map ★ ]
-                const user = userMap.get(leave.userId);
-                // (ถ้าหา user ไม่เจอจริงๆ ให้ใช้ชื่อเก่าที่บันทึกมาแทน)
-                const displayName = user ? user.fullName : leave.userName;
-                const displayPhoto = user ? user.profileImageUrl : leave.userPhoto;
-
-                
-                // ... (โค้ดแปลงวันที่ เหมือนเดิม) ...
-                const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
-                const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
-                let dateInfoText = '';
-                if (leave.durationType === 'hourly' && leave.startTime && leave.endTime) {
-                    dateInfoText = `${startDate} (${leave.startTime} - ${leave.endTime})`;
-                } else {
-                    dateInfoText = `${startDate} ถึง ${endDate}`;
-                }
-
-
-                const cardHTML = `
-<div class="bg-white shadow-md rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-200 mb-4 relative leave-request-card">
-
-    <!-- แถบด้านบนให้รู้ว่าเป็นใบลาที่รออนุมัติ -->
-    <div class="flex items-start gap-3 mt-2">
-        <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
-            class="w-12 h-12 rounded-full object-cover border border-gray-300">
-        
-        <div>
-            <p class="font-semibold text-gray-800 text-lg">${displayName}</p>
-            <p class="text-sm font-medium text-sky-700">
-                ${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}
-            </p>
-            <p class="text-sm text-gray-600 font-medium">${dateInfoText}</p>
-        </div>
-    </div>
-
-    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-        ${leave.reason}
-    </p>
-
-    <div class="flex justify-end gap-3 mt-4">
-        <button data-id="${docId}" 
-            class="reject-leave-btn text-sm font-medium text-red-600 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition">
-            ไม่อนุมัติ
-        </button>
-
-        <button data-id="${docId}" 
-            class="approve-leave-btn text-sm font-medium text-green-600 px-4 py-2 rounded-lg border border-green-200 hover:bg-green-50 transition">
-            อนุมัติ
-        </button>
-    </div>
-
-</div>
-`;
-                listContainer.innerHTML += cardHTML;
-            });
-
-        } catch (error) {
-            console.error("Error loading leave requests:", error);
-            loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-        }
+    // สร้าง loading ถ้าไม่มี
+    if (!loadingMsg) {
+        loadingMsg = document.createElement('p');
+        loadingMsg.id = 'leave-loading-msg';
+        loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
+        listContainer.appendChild(loadingMsg);
     }
+    
+    loadingMsg.textContent = 'กำลังโหลดรายการ...';
+    listContainer.innerHTML = ''; 
+    listContainer.appendChild(loadingMsg); 
+
+    try {
+        // 1. ดึงข้อมูล User ทั้งหมดเพื่อเช็คแผนก
+        const userMap = new Map();
+        const usersSnapshot = await db.collection('users').get();
+        usersSnapshot.forEach(doc => userMap.set(doc.id, doc.data()));
+
+        // 2. ดึงใบลาที่รออนุมัติ
+        const querySnapshot = await db.collection('leave_requests')
+                                      .where('status', '==', 'pending')
+                                      .get();
+
+        if (querySnapshot.empty) {
+            loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
+            return;
+        }
+
+        listContainer.innerHTML = ''; // เคลียร์ Loading
+
+        let hasItems = false; // ตัวนับว่ามีรายการของแผนกเราไหม
+
+        querySnapshot.forEach(doc => {
+            const leave = doc.data();
+            const docId = doc.id;
+
+            // ดึงข้อมูล User ผู้ขอ
+            const user = userMap.get(leave.userId);
+            const userDept = user ? (user.department || 'Unassigned') : 'Unknown';
+            const adminDept = currentUserData.department || 'Unassigned';
+
+            // --- [LOGIC กรองแผนก] ---
+            // กฎ: แสดงก็ต่อเมื่อ (Admin เป็น HR/Management) หรือ (แผนกตรงกัน)
+            const isSuperAdmin = ['HR', 'Management', 'Admin'].includes(adminDept);
+            if (!isSuperAdmin && adminDept !== userDept) {
+                return; // ข้ามรายการที่ไม่ใช่แผนกเรา
+            }
+            
+            hasItems = true;
+
+            const displayName = user ? user.fullName : leave.userName;
+            const displayPhoto = user ? user.profileImageUrl : leave.userPhoto;
+            
+            // จัดการวันที่
+            const startDate = leave.startDate.toDate().toLocaleDateString('th-TH');
+            const endDate = leave.endDate.toDate().toLocaleDateString('th-TH');
+            let dateInfoText = (leave.durationType === 'hourly' && leave.startTime) 
+                ? `${startDate} (${leave.startTime} - ${leave.endTime})` 
+                : `${startDate} ถึง ${endDate}`;
+
+            // HTML การ์ด (เพิ่ม Badge แผนกมุมขวาบน)
+            const cardHTML = `
+            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative leave-request-card">
+                
+                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">
+                    ${userDept}
+                </span>
+
+                <div class="flex items-start gap-3">
+                    <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                        class="w-12 h-12 rounded-full object-cover border border-gray-100">
+                    
+                    <div>
+                        <p class="font-bold text-gray-800">${displayName}</p>
+                        <p class="text-sm font-medium text-sky-600 mb-1">
+                            ${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}
+                        </p>
+                        <div class="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded w-fit">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${dateInfoText}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">
+                    "${leave.reason}"
+                </div>
+
+                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <button data-id="${docId}" 
+                        class="reject-leave-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">
+                        ไม่อนุมัติ
+                    </button>
+                    <button data-id="${docId}" 
+                        class="approve-leave-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 shadow-sm transition">
+                        อนุมัติ (Approve)
+                    </button>
+                </div>
+            </div>
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
+
+        if (!hasItems) {
+            loadingMsg.textContent = `ไม่มีรายการรออนุมัติของแผนก ${currentUserData.department || '-'}`;
+            listContainer.appendChild(loadingMsg);
+        }
+
+    } catch (error) {
+        console.error("Error loading leave requests:", error);
+        loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+    }
+}
+
     // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
     // [ปรับปรุง] --- 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน ---
 // [FIXED] ฟังก์ชันโหลดรายชื่อพนักงาน แบบปลอดภัย (Safety Check)
@@ -5931,118 +5955,127 @@ if (otListContainer) {
         });
     }
 
-    // 2. โหลดรายการ OT ที่ "รออนุมัติ" (เวอร์ชันแก้ไข: ป้องกัน NaN และ บั๊ก loading)
-    async function loadPendingOtRequests() {
-        const listContainer = document.getElementById('ot-approval-list');
-        
-        // 1. ค้นหา loadingMsg ที่อยู่ใน HTML
-        let loadingMsg = document.getElementById('ot-loading-msg');
-        
-        if (!listContainer) return; // ออกถ้าไม่เจอ Container
+    // [อัปเดต] โหลดรายการ OT (กรองตามแผนก)
+async function loadPendingOtRequests() {
+    const listContainer = document.getElementById('ot-approval-list');
+    let loadingMsg = document.getElementById('ot-loading-msg');
+    
+    if (!listContainer) return;
 
-        // 2. เคลียร์เฉพาะ "การ์ด" เก่า, แต่ "เก็บ" loadingMsg ไว้
-        listContainer.innerHTML = ''; 
+    if (!loadingMsg) {
+        loadingMsg = document.createElement('p');
+        loadingMsg.id = 'ot-loading-msg';
+        loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
+        listContainer.appendChild(loadingMsg);
+    }
 
-        // 3. ตรวจสอบ: ถ้า loadingMsg ไม่มี (เช่น ถูกลบไป) ให้สร้างขึ้นมาใหม่
-        if (!loadingMsg) {
-            loadingMsg = document.createElement('p');
-            loadingMsg.id = 'ot-loading-msg';
-            loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
+    loadingMsg.textContent = 'กำลังโหลดรายการ...';
+    listContainer.innerHTML = '';
+    listContainer.appendChild(loadingMsg);
+
+    try {
+        const userMap = new Map();
+        const usersSnapshot = await db.collection('users').get();
+        usersSnapshot.forEach(doc => userMap.set(doc.id, doc.data()));
+
+        const querySnapshot = await db.collection('ot_requests')
+                                      .where('status', '==', 'pending')
+                                      .get();
+
+        if (querySnapshot.empty) {
+            loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
+            return;
         }
 
-        // 4. แสดงข้อความ "กำลังโหลด..." และเพิ่มกลับเข้าไปใน Container
-        loadingMsg.textContent = 'กำลังโหลดรายการ...';
-        listContainer.appendChild(loadingMsg); 
+        listContainer.innerHTML = ''; 
+        let hasItems = false;
 
-        try {
-            const userMap = new Map();
-            const usersSnapshot = await db.collection('users').get();
-            usersSnapshot.forEach(doc => userMap.set(doc.id, doc.data()));
+        querySnapshot.forEach(doc => {
+            const ot = doc.data();
+            const docId = doc.id;
+            
+            const user = userMap.get(ot.userId);
+            const userDept = user ? (user.department || 'Unassigned') : 'Unknown';
+            const adminDept = currentUserData.department || 'Unassigned';
 
-            const querySnapshot = await db.collection('ot_requests')
-                                          .where('status', '==', 'pending')
-                                          // .orderBy('submittedAt', 'asc') // (ปิดไว้ก่อน กัน Error เรื่อง Index)
-                                          .get();
+            // --- [LOGIC กรองแผนก] ---
+            const isSuperAdmin = ['HR', 'Management', 'Admin'].includes(adminDept);
+            if (!isSuperAdmin && adminDept !== userDept) {
+                return; 
+            }
+            
+            hasItems = true;
 
-            if (querySnapshot.empty) {
-                // 5. ถ้าไม่เจอ: เปลี่ยนข้อความใน loadingMsg (จะไม่ถูกลบ)
-                loadingMsg.textContent = 'ไม่มีรายการรออนุมัติ';
-                return;
+            const displayName = user ? user.fullName : ot.userName;
+            const displayPhoto = user ? user.profileImageUrl : ot.userPhoto;
+            const otDate = ot.date.toDate().toLocaleDateString('th-TH');
+
+            let timeInfoText = '';
+            let otDurationBadge = '';
+
+            if (ot.startTime && ot.endTime) {
+                timeInfoText = `${ot.startTime} - ${ot.endTime}`;
+                
+                const [startH, startM] = ot.startTime.split(':').map(Number);
+                const [endH, endM] = ot.endTime.split(':').map(Number);
+                const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+                const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
+                
+                otDurationBadge = `<span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-md ml-1">${otDurationHours.toFixed(1)} ชม.</span>`;
             }
 
-            // 6. ถ้าเจอ: เคลียร์ Container (ลบ loadingMsg) แล้วเริ่มสร้างการ์ด
-            listContainer.innerHTML = ''; 
+            const cardHTML = `
+            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative ot-request-card">
+                
+                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">
+                    ${userDept}
+                </span>
 
-            querySnapshot.forEach(doc => {
-                const ot = doc.data();
-                const docId = doc.id;
-                const user = userMap.get(ot.userId);
-                const displayName = user ? user.fullName : ot.userName;
-                const displayPhoto = user ? user.profileImageUrl : ot.userPhoto;
-                const otDate = ot.date.toDate().toLocaleDateString('th-TH');
-
-                // [ ★ แก้ไข ★ ] ตรวจสอบข้อมูลก่อนคำนวณและแสดงผล
-                let timeInfoText = '';
-                let otDurationText = '(ข้อมูลไม่สมบูรณ์)';
-
-                if (ot.startTime && ot.endTime) {
-                    timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
-                    
-                    // แยกชั่วโมงและนาที
-                    const [startH, startM] = ot.startTime.split(':').map(Number);
-                    const [endH, endM] = ot.endTime.split(':').map(Number);
-                    
-                    // 1. แปลงเวลาทั้งหมดเป็นหน่วย "นาที" เพื่อให้คำนวณง่าย
-                    const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-
-                    // 2. คำนวณ OT ตามกฎ "นับทุก 30 นาที" (เศษปัดทิ้ง)
-                    // สูตร: (นาทีรวม หาร 30) ปัดเศษทิ้ง แล้วคูณ 0.5
-                    const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
-
-                    // แสดงผล (จะลงท้ายด้วย .0 หรือ .5 เสมอ)
-                    otDurationText = `(${otDurationHours.toFixed(1)} ชม.)`;
-
-                } else {
-                    timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
-                }
-
-
-                const cardHTML = `
-                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm ot-request-card">
-                    <div class="flex items-start gap-3">
-                        <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                        <div>
-                            <p class="font-semibold">${displayName}</p> 
-                            <p class="text-sm font-medium text-orange-700">ขออนุมัติ OT ${otDurationText}</p>
-                            <p class="text-sm text-gray-500 font-medium">${timeInfoText}</p>
+                <div class="flex items-start gap-3">
+                    <img src="${displayPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                        class="w-12 h-12 rounded-full object-cover border border-gray-100">
+                    <div>
+                        <p class="font-bold text-gray-800">${displayName}</p> 
+                        <div class="flex items-center gap-1 mb-1">
+                            <span class="text-sm font-medium text-orange-600">ขอ OT ${otDate}</span>
+                            ${otDurationBadge}
                         </div>
-                    </div>
-                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason || '(ไม่มีเหตุผล)'}</p>
-                    
-                    <div class="flex justify-end gap-3 mt-4">
-                        <button data-id="${docId}" class="reject-ot-btn text-sm font-medium text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
-                            ไม่อนุมัติ
-                        </button>
-                        <button data-id="${docId}" class="approve-ot-btn text-sm font-medium text-green-600 px-4 py-2 rounded-lg hover:bg-green-50">
-                            อนุมัติ
-                        </button>
+                        <p class="text-xs text-gray-500 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            เวลา: ${timeInfoText}
+                        </p>
                     </div>
                 </div>
-                `;
-                listContainer.innerHTML += cardHTML;
-            });
+                
+                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">
+                    "${ot.reason || '-'}"
+                </div>
+                
+                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                    <button data-id="${docId}" 
+                        class="reject-ot-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">
+                        ไม่อนุมัติ
+                    </button>
+                    <button data-id="${docId}" 
+                        class="approve-ot-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 shadow-sm transition">
+                        อนุมัติ (Approve)
+                    </button>
+                </div>
+            </div>
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
 
-        } catch (error) {
-            console.error("Error loading OT requests:", error);
-            // 7. ถ้า Error: เปลี่ยนข้อความใน loadingMsg
-            loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-            
-            // (ถ้ามี Error เรื่อง Index ให้เปิด Console ดู)
-            if (error.code === 'failed-precondition') {
-                loadingMsg.textContent = 'ต้องสร้าง Index! (ดู Console F12)';
-            }
+        if (!hasItems) {
+            loadingMsg.textContent = `ไม่มีคำขอ OT ของแผนก ${currentUserData.department || '-'}`;
+            listContainer.appendChild(loadingMsg);
         }
+
+    } catch (error) {
+        console.error("Error loading OT requests:", error);
+        loadingMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
     }
+}
 
     // 3. โหลด "ประวัติ" OT ทั้งหมด (เวอร์ชันแก้ไข: ป้องกัน NaN และ บั๊ก loading)
     async function loadOtHistory() {
