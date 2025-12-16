@@ -601,95 +601,141 @@ aside .nav-item {
 
 </div>
 
-<div id="admin-approvals-page" class="page space-y-6">
-    <div>
-        <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            อนุมัติรายการ (Approvals)
-        </h2>
-        <p class="text-gray-500 text-xs">จัดการใบลาและคำขอ OT</p>
+<div id="admin-approvals-page" class="page space-y-6 pb-20">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <svg class="w-8 h-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Approvals Center
+            </h2>
+            <p class="text-gray-500 text-sm mt-1">จัดการคำขออนุมัติและตรวจสอบประวัติย้อนหลัง</p>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <div class="card border border-gray-200 shadow-md">
-            <div class="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                    🗓️ อนุมัติใบลา
+                    📄 Leave Management
                 </h3>
+                <span id="leave-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
             </div>
-            <div class="p-4">
-                <div class="border-b border-gray-200 mb-4">
-                    <nav id="leave-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <a href="#" data-target="leave-pending-content" class="leave-tab-btn whitespace-nowrap py-2 px-1 border-b-2 font-semibold border-sky-500 text-sky-600 text-sm">รออนุมัติ</a>
-                        <a href="#" data-target="leave-history-content" class="leave-tab-btn whitespace-nowrap py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm">ประวัติทั้งหมด</a>
-                    </nav>
-                </div>
-                <div id="leave-pending-content" class="leave-tab-content space-y-4 max-h-96 overflow-y-auto">
-                    <div id="leave-approval-list" class="space-y-4">
-                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลด...</p>
+            
+            <div class="px-4 pt-2 border-b border-gray-100">
+                <nav id="leave-tab-nav" class="flex gap-6" aria-label="Tabs">
+                    <a href="#" data-target="leave-pending-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-sky-500 text-sky-600">
+                        รออนุมัติ
+                    </a>
+                    <a href="#" data-target="leave-history-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
+                        ประวัติ / ค้นหา
+                    </a>
+                </nav>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
+                
+                <div id="leave-pending-content" class="leave-tab-content space-y-4">
+                    <div id="leave-approval-list" class="space-y-3">
+                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
                     </div>
                 </div>
-                <div id="leave-history-content" class="leave-tab-content hidden">
-                    <div class="space-y-3 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="leave-history-status-filter" class="w-full p-2 bg-white border rounded text-xs">
-                                <option value="">ทุกสถานะ</option>
-                                <option value="pending">รออนุมัติ</option>
-                                <option value="approved">อนุมัติ</option>
-                                <option value="rejected">ไม่อนุมัติ</option>
-                            </select>
-                            <select id="leave-history-user-filter" class="w-full p-2 bg-white border rounded text-xs">
-                                <option value="">พนักงานทั้งหมด</option>
-                            </select>
+                
+                <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative">
+                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                                <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                                    <option value="">ทั้งหมด (All Status)</option>
+                                    <option value="pending">🟡 รออนุมัติ</option>
+                                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                                </select>
+                            </div>
+                            <div class="relative">
+                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                                <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                                    <option value="">ทุกคน (All Staff)</option>
+                                </select>
+                            </div>
                         </div>
-                        <button id="leave-history-search-btn" class="w-full py-1.5 bg-white border border-gray-300 text-gray-600 text-xs font-semibold rounded hover:bg-gray-50">
+                        <button id="leave-history-search-btn" class="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             ค้นหาประวัติ
                         </button>
                     </div>
-                    <div id="leave-history-list" class="space-y-3 max-h-80 overflow-y-auto">
-                        <p class="text-center text-gray-400 text-xs py-4">กดค้นหาเพื่อดูข้อมูล</p>
+
+                    <div id="leave-history-list" class="space-y-3 pb-4">
+                        <div class="text-center py-10">
+                            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="card border border-gray-200 shadow-md">
-            <div class="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]">
+            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                    ⏱️ อนุมัติ OT
+                    ⏰ OT Management
                 </h3>
+                <span id="ot-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
             </div>
-            <div class="p-4">
-                <div class="border-b border-gray-200 mb-4">
-                    <nav id="ot-tab-nav" class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <a href="#" data-target="ot-pending-content" class="ot-tab-btn whitespace-nowrap py-2 px-1 border-b-2 font-semibold border-orange-500 text-orange-600 text-sm">รออนุมัติ</a>
-                        <a href="#" data-target="ot-history-content" class="ot-tab-btn whitespace-nowrap py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm">ประวัติทั้งหมด</a>
-                    </nav>
-                </div>
-                <div id="ot-pending-content" class="ot-tab-content space-y-4 max-h-96 overflow-y-auto">
-                    <div id="ot-approval-list" class="space-y-4">
-                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-4">กำลังโหลด...</p>
+
+            <div class="px-4 pt-2 border-b border-gray-100">
+                <nav id="ot-tab-nav" class="flex gap-6" aria-label="Tabs">
+                    <a href="#" data-target="ot-pending-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-orange-500 text-orange-600">
+                        รออนุมัติ
+                    </a>
+                    <a href="#" data-target="ot-history-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
+                        ประวัติ / ค้นหา
+                    </a>
+                </nav>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
+                
+                <div id="ot-pending-content" class="ot-tab-content space-y-4">
+                    <div id="ot-approval-list" class="space-y-3">
+                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
                     </div>
                 </div>
-                <div id="ot-history-content" class="ot-tab-content hidden">
-                     <div class="space-y-3 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="ot-history-status-filter" class="w-full p-2 bg-white border rounded text-xs">
-                                <option value="">ทุกสถานะ</option>
-                                <option value="pending">รออนุมัติ</option>
-                                <option value="approved">อนุมัติ</option>
-                                <option value="rejected">ไม่อนุมัติ</option>
-                            </select>
-                            <select id="ot-history-user-filter" class="w-full p-2 bg-white border rounded text-xs">
-                                <option value="">พนักงานทั้งหมด</option>
-                            </select>
+
+                <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
+                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative">
+                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                                <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                                    <option value="">ทั้งหมด (All Status)</option>
+                                    <option value="pending">🟡 รออนุมัติ</option>
+                                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                                </select>
+                            </div>
+                            <div class="relative">
+                                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                                <select id="ot-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                                    <option value="">ทุกคน (All Staff)</option>
+                                </select>
+                            </div>
                         </div>
-                        <button id="ot-history-search-btn" class="w-full py-1.5 bg-white border border-gray-300 text-gray-600 text-xs font-semibold rounded hover:bg-gray-50">
+                        <button id="ot-history-search-btn" class="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             ค้นหาประวัติ
                         </button>
                     </div>
-                    <div id="ot-history-list" class="space-y-3 max-h-80 overflow-y-auto">
-                        <p class="text-center text-gray-400 text-xs py-4">กดค้นหาเพื่อดูข้อมูล</p>
+
+                    <div id="ot-history-list" class="space-y-3 pb-4">
+                        <div class="text-center py-10">
+                            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -6077,110 +6123,102 @@ async function loadPendingOtRequests() {
     }
 }
 
-    // 3. โหลด "ประวัติ" OT ทั้งหมด (เวอร์ชันแก้ไข: ป้องกัน NaN และ บั๊ก loading)
-    async function loadOtHistory() {
-        const listContainer = document.getElementById('ot-history-list');
-        
-        // 1. ค้นหา loadingMsg ที่อยู่ใน HTML
-        let loadingMsg = document.getElementById('ot-history-loading-msg'); 
-        
-        if (!listContainer) return;
+    // [อัปเดต] โหลดประวัติ OT (Design ใหม่)
+async function loadOtHistory() {
+    const listContainer = document.getElementById('ot-history-list');
+    
+    if (!listContainer) return;
+    listContainer.innerHTML = '<div class="py-10 text-center text-gray-400 text-sm"><span class="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400 mr-2"></span>กำลังค้นหาข้อมูล...</div>';
 
-        // 2. เคลียร์การ์ดเก่า
+    const statusFilter = document.getElementById('ot-history-status-filter').value;
+    const userFilter = document.getElementById('ot-history-user-filter').value;
+
+    try {
+        let query = db.collection('ot_requests');
+
+        if (statusFilter) query = query.where('status', '==', statusFilter);
+        if (userFilter) query = query.where('userId', '==', userFilter);
+        // query = query.orderBy('submittedAt', 'desc');
+
+        const querySnapshot = await query.get();
+
+        if (querySnapshot.empty) {
+            listContainer.innerHTML = `
+                <div class="text-center py-8 bg-white rounded-xl border border-dashed border-gray-300">
+                    <p class="text-gray-400 text-sm">ไม่พบประวัติ OT ตามเงื่อนไข</p>
+                </div>`;
+            return;
+        }
+
         listContainer.innerHTML = ''; 
 
-        // 3. สร้าง loadingMsg ถ้าไม่มี
-        if (!loadingMsg) {
-            loadingMsg = document.createElement('p');
-            loadingMsg.id = 'ot-history-loading-msg';
-            loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
-        }
-
-        // 4. แสดง "กำลังโหลด..."
-        loadingMsg.textContent = 'กำลังโหลดประวัติ...';
-        listContainer.appendChild(loadingMsg);
-
-        const statusFilter = document.getElementById('ot-history-status-filter').value;
-        const userFilter = document.getElementById('ot-history-user-filter').value;
-
-        try {
-            let query = db.collection('ot_requests');
-
-            if (statusFilter) query = query.where('status', '==', statusFilter);
-            if (userFilter) query = query.where('userId', '==', userFilter);
+        querySnapshot.forEach(doc => {
+            const ot = doc.data();
+            const otDate = ot.date.toDate().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
             
-            // [ ★ แก้ไข ★ ] (ปิดไว้ก่อน กัน Error เรื่อง Index)
-            // if (!statusFilter || !userFilter) {
-            //     query = query.orderBy('submittedAt', 'desc');
-            // }
-
-            const querySnapshot = await query.get();
-
-            if (querySnapshot.empty) {
-                // 5. ถ้าไม่เจอ:
-                loadingMsg.textContent = 'ไม่พบประวัติ OT ตามเงื่อนไข';
-                return;
+            // คำนวณชั่วโมง
+            let durationText = '';
+            if(ot.startTime && ot.endTime){
+                const [h1, m1] = ot.startTime.split(':').map(Number);
+                const [h2, m2] = ot.endTime.split(':').map(Number);
+                const totalMins = (h2*60+m2) - (h1*60+m1);
+                const hours = Math.floor(totalMins/30) * 0.5;
+                durationText = `${hours.toFixed(1)} ชม.`;
             }
-            
-            // 6. ถ้าเจอ:
-            listContainer.innerHTML = ''; 
 
-            querySnapshot.forEach(doc => {
-                const ot = doc.data();
-                const otDate = ot.date.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+            // Status Styling
+            let statusBadge = '';
+            let borderColor = 'border-gray-200';
 
-                let statusText, statusColorClass;
-                switch (ot.status) {
-                    case 'approved':
-                        statusText = 'อนุมัติแล้ว';
-                        statusColorClass = 'bg-green-100 text-green-800';
-                        break;
-                    case 'rejected':
-                        statusText = 'ไม่อนุมัติ';
-                        statusColorClass = 'bg-red-100 text-red-800';
-                        break;
-                    default:
-                        statusText = 'รออนุมัติ';
-                        statusColorClass = 'bg-yellow-100 text-yellow-800';
-                }
-                
-                // [ ★ แก้ไข ★ ] ตรวจสอบข้อมูลก่อนแสดงผล
-                let timeInfoText = '';
-                if (ot.startTime && ot.endTime) {
-                    timeInfoText = `${otDate} (${ot.startTime} - ${ot.endTime})`;
-                } else {
-                    timeInfoText = `${otDate} (เวลาไม่ถูกต้อง)`;
-                }
+            if (ot.status === 'approved') {
+                statusBadge = `<span class="px-2 py-0.5 rounded-md bg-green-50 text-green-700 text-[10px] font-bold border border-green-100 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>อนุมัติ</span>`;
+                borderColor = 'border-green-200';
+            } else if (ot.status === 'rejected') {
+                statusBadge = `<span class="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold border border-red-100">ไม่อนุมัติ</span>`;
+                borderColor = 'border-red-200';
+            } else {
+                statusBadge = `<span class="px-2 py-0.5 rounded-md bg-yellow-50 text-yellow-700 text-[10px] font-bold border border-yellow-100">รออนุมัติ</span>`;
+                borderColor = 'border-yellow-200';
+            }
 
-                const cardHTML = `
-                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <img src="${ot.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+            const cardHTML = `
+            <div class="bg-white p-3 rounded-xl border ${borderColor} shadow-sm hover:shadow-md transition-all">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                        <img src="${ot.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-8 h-8 rounded-full object-cover border border-gray-100">
                         <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <p class="font-semibold">${ot.userName}</p>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColorClass}">${statusText}</span>
-                            </div>
-                            <p class="text-sm font-medium text-orange-700">คำขอ OT</p>
-                            <p class="text-sm text-gray-500 font-medium">${timeInfoText}</p>
+                            <p class="text-sm font-bold text-gray-800 leading-tight">${ot.userName}</p>
+                            <p class="text-[10px] text-gray-400">วันที่: ${otDate}</p>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${ot.reason || '(ไม่มีเหตุผล)'}</p>
-                    ${ot.status !== 'pending' ? `<p class="text-xs text-gray-400 mt-2 text-right">จัดการโดย: ${ot.approvedBy || 'N/A'}</p>` : ''}
+                    ${statusBadge}
                 </div>
-                `;
-                listContainer.innerHTML += cardHTML;
-            });
+                
+                <div class="bg-orange-50/50 rounded-lg p-2 mb-2 border border-orange-100">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-500 font-medium">เวลาขอ:</span>
+                        <span class="text-gray-700 font-bold">${ot.startTime} - ${ot.endTime}</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-500 font-medium">จำนวน:</span>
+                        <span class="text-orange-600 font-bold">${durationText}</span>
+                    </div>
+                </div>
 
-        } catch (error) {
-            console.error("Error loading OT history:", error);
-            loadingMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+                <div class="flex justify-between items-end">
+                    <p class="text-xs text-gray-500 italic max-w-[70%] truncate">"${ot.reason || '-'}"</p>
+                    ${ot.approvedBy ? `<p class="text-[10px] text-gray-400">โดย: ${ot.approvedBy}</p>` : ''}
+                </div>
+            </div>
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
 
-            if (error.code === 'failed-precondition') {
-                loadingMsg.textContent = 'ต้องสร้าง Index! (ดู Console F12)';
-            }
-        }
+    } catch (error) {
+        console.error("OT History Error:", error);
+        listContainer.innerHTML = '<div class="text-center text-red-400 py-4 text-xs">เกิดข้อผิดพลาดในการโหลด</div>';
     }
+}
 
     // 4. ฟังก์ชัน "อนุมัติ/ไม่อนุมัติ" OT (เวอร์ชันแก้ไข: ป้องกัน NaN)
     async function handleOtApproval(docId, newStatus, buttonElement) {
