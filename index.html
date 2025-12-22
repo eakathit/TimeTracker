@@ -7856,6 +7856,121 @@ const auditLateFilter = document.getElementById('audit-late-filter');
 if (auditTypeFilter) auditTypeFilter.addEventListener('change', loadDailyAuditData);
 if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditData);
 
+
+// --- [เพิ่มใหม่] ฟังก์ชันสำหรับปุ่ม Export Daily Audit ---
+    const exportAuditBtn = document.getElementById('export-audit-btn');
+    
+    if (exportAuditBtn) {
+        exportAuditBtn.addEventListener('click', async () => {
+            const dateStr = document.getElementById('audit-date-picker').value;
+            const typeFilter = document.getElementById('audit-type-filter').value;
+            
+            if (!dateStr) {
+                return showNotification('กรุณาเลือกวันที่ก่อน Export', 'warning');
+            }
+
+            // 1. แจ้งเตือนผู้ใช้และโหลด Library Excel
+            showNotification('กำลังเตรียมไฟล์ Excel...', 'warning');
+            if (typeof XLSX === 'undefined') {
+                try {
+                    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+                } catch (e) {
+                    alert("ไม่สามารถโหลดระบบ Export ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+                    return;
+                }
+            }
+
+            try {
+                // 2. ดึงข้อมูลจาก Firestore (เหมือนกับที่ดึงมาโชว์ในตาราง)
+                const startDate = new Date(dateStr); startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(dateStr); endDate.setHours(23, 59, 59, 999);
+
+                const [usersSnapshot, recordsSnapshot] = await Promise.all([
+                    db.collection('users').orderBy('fullName').get(),
+                    db.collection('work_records')
+                      .where('date', '>=', startDate)
+                      .where('date', '<=', endDate)
+                      .get()
+                ]);
+
+                // Map ข้อมูล User
+                const usersMap = {};
+                usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data());
+
+                // 3. เตรียม Header ของ Excel
+                const dataForExcel = [
+                    ["วันที่", "ชื่อพนักงาน", "แผนก", "เวลาเข้า", "เวลาออก", "สถานะ", "ประเภทงาน", "รายละเอียด Onsite", "พิกัด (Google Map)"]
+                ];
+
+                // 4. วนลูปข้อมูลและกรองตาม Filter ที่เลือกหน้าเว็บ
+                recordsSnapshot.forEach(doc => {
+                    const record = doc.data();
+                    const checkIn = record.checkIn;
+                    
+                    // Filter Logic (กรองให้ตรงกับหน้าเว็บ)
+                    if (typeFilter !== 'all') {
+                        if (typeFilter === 'in_factory' && checkIn.workType !== 'in_factory') return;
+                        if (typeFilter === 'onsite' && !checkIn.workType.includes('onsite') && !checkIn.workType.includes('on_site')) return;
+                    }
+
+                    const user = usersMap[record.userId] || {};
+                    const userName = user.fullName || 'Unknown';
+                    const userDept = user.department || '-';
+
+                    // จัดรูปแบบข้อมูล
+                    const dateDisplay = record.date.toDate().toLocaleDateString('th-TH');
+                    const timeIn = checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    const timeOut = record.checkOut ? record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
+                    
+                    // เช็คสาย
+                    const lateThreshold = new Date(checkIn.timestamp.toDate());
+                    lateThreshold.setHours(8, 30, 0, 0);
+                    const isLate = checkIn.timestamp.toDate() > lateThreshold;
+                    const statusText = isLate ? "มาสาย" : "ปกติ";
+
+                    const workTypeDisplay = checkIn.workType === 'in_factory' ? 'Factory' : 'On-site';
+                    const onsiteDetail = checkIn.onSiteDetails || '-';
+                    const mapLink = checkIn.googleMapLink || '-';
+
+                    // ใส่ข้อมูลลง Array
+                    dataForExcel.push([
+                        dateDisplay,
+                        userName,
+                        userDept,
+                        timeIn,
+                        timeOut,
+                        statusText,
+                        workTypeDisplay,
+                        onsiteDetail,
+                        mapLink
+                    ]);
+                });
+
+                if (dataForExcel.length <= 1) {
+                    return showNotification('ไม่พบข้อมูลตามเงื่อนไขที่เลือก', 'error');
+                }
+
+                // 5. สร้างไฟล์ Excel และดาวน์โหลด
+                const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+                // ปรับความกว้างคอลัมน์นิดหน่อยให้สวยงาม
+                ws['!cols'] = [
+                    { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 10 }, { wch: 10 }, 
+                    { wch: 10 }, { wch: 10 }, { wch: 30 }, { wch: 50 }
+                ];
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Daily_Audit");
+                XLSX.writeFile(wb, `Audit_Data_${dateStr}.xlsx`);
+
+                showNotification('ดาวน์โหลดไฟล์สำเร็จ!', 'success');
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
+            }
+        });
+    }
+    
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
 // ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
 async function loadAdminDashboardOverview() {
