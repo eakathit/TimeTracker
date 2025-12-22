@@ -539,7 +539,7 @@ aside .nav-item {
         </button>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 gap-4">
         
         <div class="card bg-green-50 border border-green-100 flex flex-col items-center justify-center p-6">
             <div class="p-3 bg-green-100 text-green-600 rounded-full mb-3">
@@ -574,7 +574,7 @@ aside .nav-item {
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4">
         
         <div class="card border border-red-100 bg-red-50/30">
             <h3 class="font-bold text-red-700 mb-3 border-b border-red-200 pb-2 flex items-center gap-2">
@@ -600,7 +600,7 @@ aside .nav-item {
 
 </div>
 
-<div id="admin-approvals-page" class="page space-y-6 pb-20">
+<div id="admin-approvals-page" class="page space-y-6 pb-20 max-w-5xl mx-auto">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -646,9 +646,9 @@ aside .nav-item {
                 <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
                 <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
                     <option value="">ทั้งหมด (All Status)</option>
-                    <option value="pending">🟡 รออนุมัติ</option>
-                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                    <option value="pending">รออนุมัติ</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
                 </select>
             </div>
             <div class="relative">
@@ -710,9 +710,9 @@ aside .nav-item {
                 <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
                 <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
                     <option value="">ทั้งหมด (All Status)</option>
-                    <option value="pending">🟡 รออนุมัติ</option>
-                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                    <option value="pending">รออนุมัติ</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
                 </select>
             </div>
             <div class="relative">
@@ -1037,9 +1037,9 @@ aside .nav-item {
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <button id="generate-payroll-summary-btn" class="flex-1 bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 shadow-sm transition-colors text-sm">
-                        แสดงข้อมูลสรุป (Preview)
-                    </button>
+                    <button id="generate-payroll-summary-btn" style="background-color: #f97316;" class="flex-1 text-white font-semibold py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm">
+    แสดงข้อมูลสรุป (Preview)
+</button>
                     <button id="export-payroll-summary-btn" class="flex-1 bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 shadow-sm transition-colors text-sm flex justify-center items-center gap-2">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Export for HR
@@ -7970,7 +7970,7 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
             }
         });
     }
-    
+
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
 // ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
 async function loadAdminDashboardOverview() {
