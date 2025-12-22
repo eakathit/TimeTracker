@@ -7785,7 +7785,7 @@ async function loadDailyAuditData() {
             let mapLinkBtn = '';
 
             if (checkIn.location) {
-                // สร้างลิงก์ Google Map
+                // ใช้ format นี้จะเปิด Google Maps ได้แม่นยำกว่า
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${checkIn.location.latitude},${checkIn.location.longitude}`;
                 
                 // ปุ่ม View Map (เหมือนเดิม)
