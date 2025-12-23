@@ -2075,6 +2075,12 @@ auth.onAuthStateChanged(async (user) => {
                 await initializeApp(user, newUserProfile);
             }
 
+        const today = toLocalDateKey(new Date());
+        if (reportDateInput) {
+            reportDateInput.value = today; // ตั้งค่าวันที่ในช่อง Input เป็นวันนี้
+            loadSentReports(); // สั่งโหลดรายงานของวันนี้มาโชว์
+        }
+
         } else {
             console.log("👋 User logged out");
             if (typeof stopWatchingPosition === 'function') stopWatchingPosition();
@@ -2117,95 +2123,74 @@ auth.onAuthStateChanged(async (user) => {
             // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
           });
 
-    // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
-     // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
-    saveReportBtn.addEventListener('click', async () => {
-        if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
+    // ค้นหา save-report-btn.addEventListener('click', ...) และแทนที่ด้วยโค้ดนี้:
+saveReportBtn.addEventListener('click', async () => {
+    if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
 
-        const selectedDateStr = reportDateInput.value; // รับค่าวันที่จาก Input
-        if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
+    const selectedDateStr = reportDateInput.value;
+    if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
 
-        const workType = workTypeSelectedText.textContent;
-        const project = projectSelectedText.textContent;
-        const duration = durationSelectedText.textContent;
-        let timeRange = duration;
+    const workType = workTypeSelectedText.textContent;
+    const project = projectSelectedText.textContent;
+    const duration = durationSelectedText.textContent;
+    let timeRange = duration;
 
-        // Validation
-        if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
-        if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
-        if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
+    if (workType.includes('เลือก...')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
+    if (project.includes('เลือก...')) return showNotification("กรุณาเลือกโครงการ", "warning");
+    if (duration.includes('เลือก...')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
 
-        if (duration === 'กำหนดเวลา') {
-            if (!customTimeStartInput.value || !customTimeEndInput.value) {
-                return alert("กรุณากรอกเวลา");
-            }
-            timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
+    if (duration === 'กำหนดเวลา') {
+        if (!customTimeStartInput.value || !customTimeEndInput.value) {
+            return showNotification("กรุณากรอกเวลา", "warning");
         }
+        timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
+    }
+    
+    saveReportBtn.disabled = true;
+    saveReportBtn.textContent = 'กำลังบันทึก...';
+    
+    try {
+        const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
+        const workRecordRef = db.collection('work_records').doc(workRecordDocId);
         
-        saveReportBtn.disabled = true;
-        saveReportBtn.textContent = 'กำลังบันทึก...';
+        // สร้าง Object รายงานใหม่ พร้อม ID สุ่ม (ใช้ timestamp) เพื่อให้ลบรายตัวได้ในอนาคต
+        const newReportEntry = {
+            id: Date.now(),
+            submittedAt: new Date(),
+            workType: workType,
+            project: project,
+            duration: timeRange
+        };
+
+        const doc = await workRecordRef.get();
         
-        try {
-            // ใช้ selectedDateStr แทน new Date()
-            const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
-            const workRecordRef = db.collection('work_records').doc(workRecordDocId);
-            
-            const doc = await workRecordRef.get();
-            
-            // กรณีที่ 1: มีการ Check-in วันนั้นแล้ว -> อัปเดต report ใส่เข้าไป
-            if (doc.exists) {
-                await workRecordRef.update({
-                    report: {
-                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        workType: workType,
-                        project: project,
-                        duration: timeRange
-                    }
-                });
-            } 
-            // กรณีที่ 2: ลืม Check-in ด้วย (ไม่มี Record เลย)
-            else {
-                // คุณต้องตัดสินใจว่าจะยอมให้สร้าง Record ใหม่ที่มีแต่ Report หรือไม่
-                // ถ้าเอาแบบง่ายสุดคือยอมให้สร้าง โดยไม่มีข้อมูล GPS Check-in
-                const confirmCreate = confirm(`ไม่พบข้อมูลการลงเวลาในวันที่ ${selectedDateStr}\nคุณต้องการสร้างรายงานโดยไม่มีเวลาเข้า-ออกงาน หรือไม่?`);
-                
-                if (!confirmCreate) {
-                    saveReportBtn.disabled = false;
-                    saveReportBtn.textContent = 'บันทึกข้อมูล';
-                    return;
-                }
-
-                // สร้าง Record ใหม่ (Backdate)
-                await workRecordRef.set({
-                    userId: currentUser.uid,
-                    date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
-                    status: "no_checkin_report_only", // สถานะพิเศษ
-                    checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${selectedDateStr}T08:30:00`)), // เวลาสมมติ
-                        workType: "backdate_report",
-                        location: null // ไม่มีพิกัด
-                    },
-                    report: {
-                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        workType: workType,
-                        project: project,
-                        duration: timeRange
-                    }
-                });
-            }
-
-            showNotification('บันทึกรายงานสำเร็จ!');
-            // รีเฟรช UI
-            loadReportForSelectedDate(); 
-            
-        } catch (error) {
-            console.error("Error saving report: ", error);
-            alert('เกิดข้อผิดพลาด: ' + error.message);
-        } finally {
-            saveReportBtn.disabled = false;
-            // คืนค่าข้อความปุ่มตามสถานะ (ทำผ่าน loadReportForSelectedDate ได้)
+        if (doc.exists) {
+            // ใช้ arrayUnion เพื่อเพิ่มสมาชิกใหม่เข้าไปใน Array 'reports'
+            await workRecordRef.update({
+                reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry)
+            });
+        } else {
+            // ถ้ายังไม่มี Record ของวันนี้ ให้สร้างใหม่พร้อมใส่ Array รายการแรก
+            await workRecordRef.set({
+                userId: currentUser.uid,
+                date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
+                status: "no_checkin_report_only",
+                reports: [newReportEntry]
+            });
         }
-    });
+
+        showNotification('เพิ่มรายงานเรียบร้อยแล้ว');
+        resetReportForm(); 
+        loadSentReports(); // โหลดรายการที่เพิ่งเพิ่มมาโชว์
+        
+    } catch (error) {
+        console.error("Error saving report: ", error);
+        showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
+    } finally {
+        saveReportBtn.disabled = false;
+        saveReportBtn.textContent = 'บันทึกข้อมูล';
+    }
+});
 
     workTypeButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -2527,73 +2512,58 @@ auth.onAuthStateChanged(async (user) => {
 
         // 2. ฟังก์ชันย่อยสำหรับ Export Excel
         const exportProjectSummaryToExcel = async () => {
-            const selectedProject = projectSelect.value;
-            const selectedMonth = monthInput.value;
+    const selectedProject = projectSelect.value;
+    const selectedMonth = monthInput.value;
 
-            if (!selectedProject || !selectedMonth) {
-                alert('กรุณาเลือกเดือนและโครงการก่อน Export');
-                return;
-            }
-            
-            const [year, month] = selectedMonth.split('-').map(Number);
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    if (!selectedProject || !selectedMonth) {
+        alert('กรุณาเลือกเดือนและโครงการก่อน Export');
+        return;
+    }
+    
+    try {
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-            try {
-                const querySnapshot = await db.collection('work_records')
-                                              .where('report.project', '==', selectedProject)
-                                              .where('date', '>=', startDate) 
-                                              .where('date', '<=', endDate)
-                                              .orderBy('date', 'asc')
-                                              .get();
-                
-                if (querySnapshot.empty) {
-                    alert('ไม่พบข้อมูลสำหรับ Export');
-                    return;
-                }
+        const [usersSnap, recordsSnap] = await Promise.all([
+            db.collection('users').get(),
+            db.collection('work_records').where('date', '>=', startDate).where('date', '<=', endDate).get()
+        ]);
 
-                const dataForExcel = [
-                    ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "ระยะเวลา"]
-                ];
-                
-                const usersCache = {}; 
+        const usersMap = {};
+        usersSnap.forEach(doc => usersMap[doc.id] = doc.data().fullName);
 
-                // วนลูปเก็บข้อมูล
-                for (const doc of querySnapshot.docs) {
-                    const record = doc.data();
-                    const report = record.report; 
-                    
-                    let userName = usersCache[record.userId];
-                    if (!userName) {
-                        // ถ้ายังไม่มีชื่อใน cache ให้ดึงจาก db
-                        const userDoc = await db.collection('users').doc(record.userId).get();
-                        userName = userDoc.exists ? userDoc.data().fullName : record.userId;
-                        usersCache[record.userId] = userName;
-                    }
+        const dataForExcel = [
+            ["วันที่", "ชื่อพนักงาน", "ประเภทงาน", "โครงการ", "ระยะเวลาที่ทำ"]
+        ];
+        
+        recordsSnap.forEach(doc => {
+            const record = doc.data();
+            const reports = record.reports || (record.report ? [record.report] : []);
+            const matchingReports = reports.filter(r => r.project === selectedProject);
 
-                    const reportDate = record.date.toDate().toLocaleDateString('th-TH', {
-                        year: 'numeric', month: 'long', day: 'numeric'
-                    });
-                    
-                    dataForExcel.push([
-                        reportDate,
-                        userName,
-                        report.workType,
-                        report.duration
-                    ]);
-                }
+            matchingReports.forEach(report => {
+                dataForExcel.push([
+                    record.date.toDate().toLocaleDateString('th-TH'),
+                    usersMap[record.userId] || record.userId,
+                    report.workType,
+                    report.project,
+                    report.duration
+                ]);
+            });
+        });
 
-                // สร้างไฟล์ Excel
-                const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'สรุปโครงการ');
-                XLSX.writeFile(wb, `สรุปโครงการ_${selectedProject}_${selectedMonth}.xlsx`);
+        if (dataForExcel.length === 1) return alert('ไม่พบข้อมูลสำหรับ Export');
 
-            } catch (error) {
-                console.error("Error exporting to Excel:", error);
-                alert("เกิดข้อผิดพลาดระหว่างการ Export ข้อมูล: " + error.message);
-            }
-        };
+        const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'ProjectReport');
+        XLSX.writeFile(wb, `ProjectSummary_${selectedProject}_${selectedMonth}.xlsx`);
+
+    } catch (error) {
+        alert("Export Error: " + error.message);
+    }
+};
         
         // 3. ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น
         const now = new Date();
@@ -2624,86 +2594,92 @@ auth.onAuthStateChanged(async (user) => {
 
         // 5. ฟังก์ชันดึงข้อมูลมาแสดงผล (Fetch Data)
         const fetchProjectData = async () => {
-            const selectedProject = projectSelect.value;
-            const selectedMonth = monthInput.value;
+    const selectedProject = projectSelect.value;
+    const selectedMonth = monthInput.value;
 
-            if (!selectedProject || !selectedMonth) {
-                resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>';
-                return;
-            }
+    if (!selectedProject || !selectedMonth) {
+        resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>';
+        return;
+    }
+    
+    resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
+    
+    const [yearNum, monthNum] = selectedMonth.split('-').map(Number);
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+    
+    try {
+        // ดึง Records ทั้งหมดของเดือนนั้น (ไม่ filter project ใน query เพราะเป็น Array)
+        const querySnapshot = await db.collection('work_records')
+                                      .where('date', '>=', startDate)
+                                      .where('date', '<=', endDate)
+                                      .get();
+
+        if (querySnapshot.empty) {
+            resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลในเดือนนี้</p>';
+            return;
+        }
+
+        const usersSnapshot = await db.collection('users').get();
+        const usersMap = {};
+        usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data().fullName);
+
+        let resultsHTML = `
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-semibold text-gray-800">รายละเอียดงาน: ${selectedProject}</h4>
+            </div>
+            <div class="space-y-3">
+        `;
+        
+        let matchCount = 0;
+
+        querySnapshot.forEach(doc => {
+            const record = doc.data();
+            // ดึง reports array (หรือ report เดิมถ้ามี)
+            const reports = record.reports || (record.report ? [record.report] : []);
             
-            resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
-            
-            const [yearNum, monthNum] = selectedMonth.split('-').map(Number);
-            const startDate = new Date(yearNum, monthNum - 1, 1);
-            const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
-            
-            const usersCache = {}; 
+            // กรองเอาเฉพาะรายการใน Array ที่ตรงกับโปรเจกต์ที่เลือก
+            const matchingReports = reports.filter(r => r.project === selectedProject);
 
-            try {
-                const querySnapshot = await db.collection('work_records')
-                                              .where('report.project', '==', selectedProject)
-                                              .where('date', '>=', startDate)
-                                              .where('date', '<=', endDate)
-                                              .orderBy('date', 'desc')
-                                              .get();
+            if (matchingReports.length > 0) {
+                const reportDate = record.date.toDate().toLocaleDateString('th-TH', {
+                    day: '2-digit', month: 'long', year: 'numeric'
+                });
+                const userName = usersMap[record.userId] || record.userId;
 
-                if (querySnapshot.empty) {
-                    resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลรายงานสำหรับเดือนและโครงการที่เลือก</p>';
-                    return;
-                }
-
-                let resultsHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-semibold text-gray-800">รายการทั้งหมด</h4>
-                        <p class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                            พบ ${querySnapshot.size} รายการ
-                        </p>
-                    </div>
-                    <div class="space-y-3">
-                `;
-                
-                for (const doc of querySnapshot.docs) {
-                    const record = doc.data();
-                    const report = record.report; 
-                    const reportDate = record.date.toDate().toLocaleDateString('th-TH', {
-                        day: '2-digit', month: 'long', year: 'numeric'
-                    });
-                    
-                    let userName = usersCache[record.userId];
-                    if (!userName) {
-                        const userDoc = await db.collection('users').doc(record.userId).get();
-                        userName = userDoc.exists ? userDoc.data().fullName : record.userId;
-                        usersCache[record.userId] = userName;
-                    }
-
+                matchingReports.forEach(report => {
+                    matchCount++;
                     resultsHTML += `
                         <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold text-gray-800">${userName}</p>
-                                <p class="text-xs text-gray-400">${reportDate}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">${reportDate}</p>
                             </div>
-                            <div class="mt-3 flex flex-wrap gap-2 text-xs">
-                                <span class="inline-flex items-center font-medium bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <span class="bg-sky-50 text-sky-700 text-xs px-2.5 py-1 rounded-lg font-bold border border-sky-100">
                                     ${report.workType}
                                 </span>
-                                <span class="inline-flex items-center font-medium bg-gray-100 text-gray-800 px-2.5 py-1 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 10.586V6z" clip-rule="evenodd" /></svg>
-                                    ${report.duration}
+                                <span class="bg-gray-50 text-gray-600 text-xs px-2.5 py-1 rounded-lg font-medium border border-gray-100">
+                                    เวลา: ${report.duration}
                                 </span>
                             </div>
                         </div>
                     `;
-                }
-                resultsHTML += '</div>';
-                resultsContainer.innerHTML = resultsHTML; 
-
-            } catch (error) {
-                console.error("Error fetching project data:", error);
-                resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการดึงข้อมูล</p>';
+                });
             }
-        };
+        });
+
+        if (matchCount === 0) {
+            resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลโปรเจกต์ที่เลือกในเดือนนี้</p>';
+        } else {
+            resultsContainer.innerHTML = resultsHTML + '</div>';
+        }
+
+    } catch (error) {
+        console.error("Error:", error);
+        resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+    }
+};
 
         // 6. เริ่มทำงาน
         populateProjectOptions();
@@ -4505,46 +4481,61 @@ checkoutBtn.addEventListener('click', async () => {
 
     
     // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
-    async function loadSentReports() {
-        if (!currentUser) return;
+async function loadSentReports() {
+    if (!currentUser) return;
+    
+    const container = document.getElementById('sent-reports-container');
+    if (!container) return;
 
-        const container = document.getElementById('sent-reports-container');
-        if (!container) {
-            console.error("Report container not found.");
-            return;
-        }
+    // ถ้าในช่องวันที่ไม่มีค่า ให้ใช้ค่าวันที่ปัจจุบัน (Today)
+    const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
+    const docId = `${currentUser.uid}_${selectedDate}`;
+    
+    try {
+        const doc = await db.collection('work_records').doc(docId).get();
+        let htmlContent = '';
 
-        const today = toLocalDateKey(new Date());
-        const reportDocId = `${currentUser.uid}_${today}`;
-        
-        try {
-            // [เปลี่ยน] อ่านจาก work_records
-            const reportDoc = await db.collection('work_records').doc(reportDocId).get();
+        if (doc.exists) {
+            const data = doc.data();
+            // ดึงจาก reports (Array ใหม่) หรือ report (Object เก่า)
+            const reportsArray = data.reports || (data.report ? [data.report] : []);
 
-            // [เปลี่ยน] ตรวจสอบว่ามี .report field หรือไม่
-            if (reportDoc.exists && reportDoc.data().report) {
-                const data = reportDoc.data().report; // ดึงข้อมูลจาก field 'report'
-                const reportCardHTML = `
-                    <div class="card !p-4">
-                        <div>
-                            <p class="text-sm text-gray-600">รายงานที่ส่งแล้ว:</p>
-                            <p class="text-lg font-bold text-sky-600 my-1">${data.workType}</p>
-                            <div class="pt-2 mt-2 border-t border-gray-100 text-sm space-y-1">
-                                <p class="text-gray-500">โครงการ: <span class="font-medium text-gray-700">${data.project}</span></p>
-                                <p class="text-gray-500">ระยะเวลา: <span class="font-medium text-gray-700">${data.duration}</span></p>
+            if (reportsArray.length > 0) {
+                // เรียงลำดับตามเวลาที่ส่ง (ถ้ามี) หรือเอาตามลำดับใน Array
+                reportsArray.forEach((item, index) => {
+                    htmlContent += `
+                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                    รายการที่ ${index + 1}
+                                </span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-base">${item.workType}</h4>
+                            <div class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-600">
+                                <div class="flex items-center">
+                                    <span class="w-16 text-gray-400">โครงการ:</span>
+                                    <span class="font-medium text-gray-700">${item.project}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="w-16 text-gray-400">เวลา:</span>
+                                    <span class="font-medium text-gray-700">${item.duration}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                container.innerHTML = reportCardHTML;
+                    `;
+                });
             } else {
-                container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่ได้ส่งรายงานวันนี้</p>`;
+                htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
             }
-        } catch (error) {
-            console.error("Error loading sent reports:", error);
-            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
+        } else {
+            htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
         }
+        container.innerHTML = htmlContent;
+    } catch (error) {
+        console.error("Error loading reports:", error);
+        container.innerHTML = `<div class="text-center py-8 text-red-400 text-sm">โหลดข้อมูลไม่สำเร็จ</div>`;
     }
+}
 
     function updateClock() {
         if (timeElement) {
@@ -6957,7 +6948,13 @@ async function loadOtHistory() {
         reportDateInput.addEventListener('change', loadReportForSelectedDate);
     }
 
-    function switchRole(role) {
+    if (reportDateInput) {
+    reportDateInput.addEventListener('change', () => {
+        loadSentReports(); // เมื่อเปลี่ยนวันที่ ให้โหลดรายงานของวันนั้นใหม่ทันที
+    });
+    }
+
+    function switchRole(role) { // role เ
     if (role === 'member') {
         memberSection.classList.remove('hidden');
         leaderSection.classList.add('hidden');
