@@ -61,30 +61,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-            .animate-fade-in {
-            animation: fadeInSlide 0.3s ease-out forwards;
-        }
-
-        @keyframes fadeInSlide {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ปรับแต่ง scrollbar สำหรับส่วนรายละเอียดให้ดูคลีน */
-        #work-history-container div::-webkit-scrollbar {
-            width: 4px;
-        }
-        #work-history-container div::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-
     /* --- แก้ไข CSS ของเมนูมือถือ (Navbar) --- */
     #mobile-floating-menu {
         position: fixed !important;
@@ -563,7 +539,7 @@ aside .nav-item {
         </button>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         
         <div class="card bg-green-50 border border-green-100 flex flex-col items-center justify-center p-6">
             <div class="p-3 bg-green-100 text-green-600 rounded-full mb-3">
@@ -598,7 +574,7 @@ aside .nav-item {
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <div class="card border border-red-100 bg-red-50/30">
             <h3 class="font-bold text-red-700 mb-3 border-b border-red-200 pb-2 flex items-center gap-2">
@@ -624,163 +600,144 @@ aside .nav-item {
 
 </div>
 
-<div id="admin-approvals-page" class="page space-y-6 pb-20 w-full max-w-7xl mx-auto">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+<div id="admin-approvals-page" class="page space-y-6 pb-20">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <div class="p-2 bg-sky-100 rounded-lg">
-                    <svg class="w-6 h-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
+                <svg class="w-8 h-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Approvals Center
             </h2>
-            <p class="text-gray-500 text-sm mt-1 ml-1">จัดการคำขออนุมัติและตรวจสอบประวัติย้อนหลัง</p>
+            <p class="text-gray-500 text-sm mt-1">จัดการคำขออนุมัติและตรวจสอบประวัติย้อนหลัง</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: 25px;">
 
-        <div class="card border border-gray-200 shadow-sm bg-white overflow-hidden flex flex-col min-h-fit transition-all hover:shadow-md">
-            <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                    <span class="bg-blue-100 text-blue-600 p-1 rounded-md">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </span>
-                    Leave Management
+                    📄 Leave Management
                 </h3>
-                <span id="leave-badge-count" class="hidden px-2.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm">0</span>
+                <span id="leave-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
             </div>
             
             <div class="px-4 pt-2 border-b border-gray-100">
                 <nav id="leave-tab-nav" class="flex gap-6" aria-label="Tabs">
-                    <a href="#" data-target="leave-pending-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-all border-sky-500 text-sky-600 hover:text-sky-700">
+                    <a href="#" data-target="leave-pending-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-sky-500 text-sky-600">
                         รออนุมัติ
                     </a>
-                    <a href="#" data-target="leave-history-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-all border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200">
+                    <a href="#" data-target="leave-history-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
                         ประวัติ / ค้นหา
                     </a>
                 </nav>
             </div>
 
-            <div class="flex-1 p-4 bg-gray-50/30 overflow-y-auto min-h-fit">
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
                 
-                <div id="leave-pending-content" class="leave-tab-content h-full flex flex-col">
-                    <div id="leave-approval-list" class="space-y-3 min-h-[300px] flex flex-col justify-center items-center text-center w-full">
-                        
-                        <div class="text-center py-10">
-                            <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <p id="leave-loading-msg" class="text-gray-500 font-medium">ไม่มีรายการรออนุมัติ</p>
-                            <p class="text-xs text-gray-400 mt-1">คำขอลาใหม่จะปรากฏที่นี่</p>
-                        </div>
-
+                <div id="leave-pending-content" class="leave-tab-content space-y-4">
+                    <div id="leave-approval-list" class="space-y-3">
+                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
                     </div>
                 </div>
                 
                 <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">สถานะ</label>
-                                <select id="leave-history-status-filter" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                                    <option value="">ทั้งหมด (All Status)</option>
-                                    <option value="pending">รออนุมัติ</option>
-                                    <option value="approved">อนุมัติแล้ว</option>
-                                    <option value="rejected">ไม่อนุมัติ</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">พนักงาน</label>
-                                <select id="leave-history-user-filter" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                                    <option value="">ทุกคน (All Staff)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button id="leave-history-search-btn" class="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            ค้นหาประวัติ
-                        </button>
-                    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                    <option value="">ทั้งหมด (All Status)</option>
+                    <option value="pending">🟡 รออนุมัติ</option>
+                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                    <option value="">ทุกคน (All Staff)</option>
+                </select>
+            </div>
+        </div>
+        <button id="leave-history-search-btn" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            ค้นหาประวัติ
+        </button>
+    </div>
 
-                    <div id="leave-history-list" class="space-y-3 pb-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                        <div class="text-center py-8">
-                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-                        </div>
-                    </div>
-                </div>
+    <div id="leave-history-list" class="space-y-3 pb-4">
+        <div class="text-center py-10">
+            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
-        <div class="card border border-gray-200 shadow-sm bg-white overflow-hidden flex flex-col min-h-fitf transition-all hover:shadow-md">
-            <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]">
+            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                     <span class="bg-orange-100 text-orange-600 p-1 rounded-md">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </span>
-                    OT Management
+                    ⏰ OT Management
                 </h3>
-                <span id="ot-badge-count" class="hidden px-2.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm">0</span>
+                <span id="ot-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
             </div>
 
             <div class="px-4 pt-2 border-b border-gray-100">
                 <nav id="ot-tab-nav" class="flex gap-6" aria-label="Tabs">
-                    <a href="#" data-target="ot-pending-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-all border-orange-500 text-orange-600 hover:text-orange-700">
+                    <a href="#" data-target="ot-pending-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-orange-500 text-orange-600">
                         รออนุมัติ
                     </a>
-                    <a href="#" data-target="ot-history-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-all border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-200">
+                    <a href="#" data-target="ot-history-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
                         ประวัติ / ค้นหา
                     </a>
                 </nav>
             </div>
 
-            <div class="flex-1 p-4 bg-gray-50/30 overflow-y-auto min-h-fit">
-
-                <div id="ot-pending-content" class="ot-tab-content h-full flex flex-col">
-                    <div id="ot-approval-list" class="space-y-3 min-h-[300px] flex flex-col justify-center items-center text-center w-full">
-                         <div class="text-center py-10">
-                            <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <p id="ot-loading-msg" class="text-gray-500 font-medium">ไม่มีรายการรออนุมัติ</p>
-                            <p class="text-xs text-gray-400 mt-1">คำขอ OT ใหม่จะปรากฏที่นี่</p>
-                        </div>
+            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
+                
+                <div id="ot-pending-content" class="ot-tab-content space-y-4">
+                    <div id="ot-approval-list" class="space-y-3">
+                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
                     </div>
                 </div>
 
                 <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">สถานะ</label>
-                                <select id="ot-history-status-filter" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                                    <option value="">ทั้งหมด (All Status)</option>
-                                    <option value="pending">รออนุมัติ</option>
-                                    <option value="approved">อนุมัติแล้ว</option>
-                                    <option value="rejected">ไม่อนุมัติ</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">พนักงาน</label>
-                                <select id="ot-history-user-filter" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                                    <option value="">ทุกคน (All Staff)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <button id="ot-history-search-btn" class="w-full py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 hover:opacity-90" style="background-color: #F97316;">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            ค้นหาประวัติ
-                        </button>
-                    </div>
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
+                <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                    <option value="">ทั้งหมด (All Status)</option>
+                    <option value="pending">🟡 รออนุมัติ</option>
+                    <option value="approved">🟢 อนุมัติแล้ว</option>
+                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                </select>
+            </div>
+            <div class="relative">
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
+                <select id="ot-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
+                    <option value="">ทุกคน (All Staff)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="ot-history-search-btn" class="w-full py-3 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2" style="background-color: #F97316;">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            ค้นหาประวัติ
+        </button>
+    </div>
 
-                    <div id="ot-history-list" class="space-y-3 pb-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                        <div class="text-center py-8">
-                            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-                        </div>
-                    </div>
-                </div>
+    <div id="ot-history-list" class="space-y-3 pb-4">
+        <div class="text-center py-10">
+            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
@@ -1080,9 +1037,9 @@ aside .nav-item {
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <button id="generate-payroll-summary-btn" style="background-color: #f97316;" class="flex-1 text-white font-semibold py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm">
-    แสดงข้อมูลสรุป (Preview)
-</button>
+                    <button id="generate-payroll-summary-btn" class="flex-1 bg-orange-500 text-white font-semibold py-2 rounded-lg hover:bg-orange-600 shadow-sm transition-colors text-sm">
+                        แสดงข้อมูลสรุป (Preview)
+                    </button>
                     <button id="export-payroll-summary-btn" class="flex-1 bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 shadow-sm transition-colors text-sm flex justify-center items-center gap-2">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Export for HR
@@ -1198,7 +1155,7 @@ aside .nav-item {
     <div class="space-y-4">
         <div class="flex justify-between items-center">
              <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-
+             
              <div class="relative inline-block shadow-sm rounded-lg">
                 <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
                     <option value="7">7 วันล่าสุด</option>
@@ -1641,27 +1598,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ฟังก์ชันช่วยจัดรูปแบบวันที่ (เช่น 23 ธ.ค. 2025)
-function formatDate(timestamp) {
-    if (!timestamp) return '--/--/--';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('th-TH', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-    });
-}
-
-// ฟังก์ชันช่วยจัดรูปแบบเวลา (เช่น 08:30)
-function formatTime(timestamp) {
-    if (!timestamp) return '--:--';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString('th-TH', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
     // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -2181,78 +2117,95 @@ auth.onAuthStateChanged(async (user) => {
             // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
           });
 
+    // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
-    // --- ส่วนการบันทึกรายงาน (รองรับหลายโปรเจกต์) ---
-saveReportBtn.addEventListener('click', async () => {
-    if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
+    saveReportBtn.addEventListener('click', async () => {
+        if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
 
-    const selectedDateStr = reportDateInput.value; 
-    if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
+        const selectedDateStr = reportDateInput.value; // รับค่าวันที่จาก Input
+        if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
 
-    const workType = workTypeSelectedText.textContent;
-    const project = projectSelectedText.textContent;
-    const duration = durationSelectedText.textContent;
-    let timeRange = duration;
+        const workType = workTypeSelectedText.textContent;
+        const project = projectSelectedText.textContent;
+        const duration = durationSelectedText.textContent;
+        let timeRange = duration;
 
-    // ตรวจสอบความถูกต้อง
-    if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
-    if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
-    if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
+        // Validation
+        if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
+        if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
+        if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
 
-    if (duration === 'กำหนดเวลา') {
-        if (!customTimeStartInput.value || !customTimeEndInput.value) {
-            return alert("กรุณากรอกเวลาให้ครบถ้วน");
+        if (duration === 'กำหนดเวลา') {
+            if (!customTimeStartInput.value || !customTimeEndInput.value) {
+                return alert("กรุณากรอกเวลา");
+            }
+            timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
         }
-        timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
-    }
-    
-    saveReportBtn.disabled = true;
-    saveReportBtn.textContent = 'กำลังบันทึก...';
-    
-    try {
-        const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
-        const workRecordRef = db.collection('work_records').doc(workRecordDocId);
         
-        // ข้อมูลชิ้นใหม่ (ใช้ Date() แทน serverTimestamp เพื่อไม่ให้ arrayUnion พัง)
-        const newEntry = {
-            id: Date.now().toString(), // ใช้ ID เพื่อไว้อ้างอิงลบหรือแก้ไข
-            timestamp: new Date().toISOString(),
-            workType: workType,
-            project: project,
-            duration: timeRange
-        };
+        saveReportBtn.disabled = true;
+        saveReportBtn.textContent = 'กำลังบันทึก...';
+        
+        try {
+            // ใช้ selectedDateStr แทน new Date()
+            const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
+            const workRecordRef = db.collection('work_records').doc(workRecordDocId);
+            
+            const doc = await workRecordRef.get();
+            
+            // กรณีที่ 1: มีการ Check-in วันนั้นแล้ว -> อัปเดต report ใส่เข้าไป
+            if (doc.exists) {
+                await workRecordRef.update({
+                    report: {
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        workType: workType,
+                        project: project,
+                        duration: timeRange
+                    }
+                });
+            } 
+            // กรณีที่ 2: ลืม Check-in ด้วย (ไม่มี Record เลย)
+            else {
+                // คุณต้องตัดสินใจว่าจะยอมให้สร้าง Record ใหม่ที่มีแต่ Report หรือไม่
+                // ถ้าเอาแบบง่ายสุดคือยอมให้สร้าง โดยไม่มีข้อมูล GPS Check-in
+                const confirmCreate = confirm(`ไม่พบข้อมูลการลงเวลาในวันที่ ${selectedDateStr}\nคุณต้องการสร้างรายงานโดยไม่มีเวลาเข้า-ออกงาน หรือไม่?`);
+                
+                if (!confirmCreate) {
+                    saveReportBtn.disabled = false;
+                    saveReportBtn.textContent = 'บันทึกข้อมูล';
+                    return;
+                }
 
-        const doc = await workRecordRef.get();
-        
-        if (doc.exists) {
-            // เพิ่มงานใหม่เข้าไปใน Array 'reports' ต่อจากงานเดิม
-            await workRecordRef.update({
-                reports: firebase.firestore.FieldValue.arrayUnion(newEntry)
-            });
-        } else {
-            // ถ้ายังไม่มีเอกสารของวันนี้ (กรณีลืม Check-in) ให้สร้างใหม่
-            await workRecordRef.set({
-                userId: currentUser.uid,
-                date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
-                status: "no_checkin",
-                reports: [newEntry] // เริ่มต้นด้วย Array ที่มีงานชิ้นแรก
-            });
+                // สร้าง Record ใหม่ (Backdate)
+                await workRecordRef.set({
+                    userId: currentUser.uid,
+                    date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
+                    status: "no_checkin_report_only", // สถานะพิเศษ
+                    checkIn: {
+                        timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${selectedDateStr}T08:30:00`)), // เวลาสมมติ
+                        workType: "backdate_report",
+                        location: null // ไม่มีพิกัด
+                    },
+                    report: {
+                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        workType: workType,
+                        project: project,
+                        duration: timeRange
+                    }
+                });
+            }
+
+            showNotification('บันทึกรายงานสำเร็จ!');
+            // รีเฟรช UI
+            loadReportForSelectedDate(); 
+            
+        } catch (error) {
+            console.error("Error saving report: ", error);
+            alert('เกิดข้อผิดพลาด: ' + error.message);
+        } finally {
+            saveReportBtn.disabled = false;
+            // คืนค่าข้อความปุ่มตามสถานะ (ทำผ่าน loadReportForSelectedDate ได้)
         }
-
-        showNotification('บันทึกสำเร็จ! คุณสามารถเพิ่มโปรเจกต์อื่นได้อีก');
-        
-        // --- ส่วนสำคัญ: ล้างฟอร์มเพื่อให้กรอกโปรเจกต์ที่ 2, 3, 4 ต่อได้ทันที ---
-        resetReportForm(); 
-        loadSentReports(); // อัปเดตรายการที่โชว์ด้านล่าง
-        
-    } catch (error) {
-        console.error("Error saving report:", error);
-        alert('เกิดข้อผิดพลาด: ' + error.message);
-    } finally {
-        saveReportBtn.disabled = false;
-        saveReportBtn.textContent = 'บันทึกข้อมูล';
-    }
-});
+    });
 
     workTypeButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -3050,42 +3003,65 @@ saveReportBtn.addEventListener('click', async () => {
         console.error("Location Error:", error);
     }
 
-    function checkUserWorkStatus(doc) {
-    // ป้องกัน Error กรณี doc ไม่มีค่า หรือไม่มีข้อมูล (doc.exists เป็น false)
-    if (!doc || !doc.exists) {
-        const statusReportTime = document.getElementById('status-report-time');
-        if (statusReportTime) statusReportTime.innerHTML = `<span class="text-gray-400 italic">ยังไม่มีรายการของวันนี้</span>`;
-        return;
-    }
-
-    const data = doc.data();
-    // ดึง Array reports ออกมา ถ้าไม่มีให้เป็น Array ว่าง
-    const reports = data.reports || (data.report ? [data.report] : []);
-    
-    const statusReportTime = document.getElementById('status-report-time');
-    if (!statusReportTime) return;
-
-    if (reports.length > 0) {
-        const lastReport = reports[reports.length - 1];
-        let displayTime = "--:--";
+    async function checkUserWorkStatus() {
+        if (!currentUser) return;
+        const today = toLocalDateKey(new Date());
+        const docId = `${currentUser.uid}_${today}`;
         
-        // ตรวจสอบฟิลด์เวลาของ Report ล่าสุด
-        if (lastReport.timestamp) {
-            displayTime = new Date(lastReport.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        } else if (lastReport.submittedAt) {
-            displayTime = lastReport.submittedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // ใช้ source: 'server' เพื่อให้ได้ข้อมูลล่าสุดเสมอ ไม่เอา cache
+        let workRecordDoc;
+        try {
+             workRecordDoc = await db.collection('work_records').doc(docId).get();
+        } catch(e) {
+             // fallback ถ้าไม่มีเน็ต
+             workRecordDoc = await db.collection('work_records').doc(docId).get({ source: 'cache' });
         }
 
-        statusReportTime.innerHTML = `
-            <span class="flex items-center gap-1 text-sky-600 font-medium">
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"></path></svg>
-                ส่งแล้ว ${reports.length} งาน (ล่าสุด ${displayTime})
-            </span>
-        `;
-    } else {
-        statusReportTime.innerHTML = `<span class="text-gray-400 italic">ยังไม่มีรายงาน</span>`;
+        if (workRecordDoc.exists) {
+            const data = workRecordDoc.data();
+            const checkinTime = data.checkIn.timestamp.toDate();
+            
+            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
+            summaryCheckinTime.classList.remove('text-gray-400');
+            summaryCheckinTime.classList.add('text-green-600');
+
+            if (data.status === 'checked_in') {
+                updateUIToCheckedIn();
+            } else if (data.status === 'completed') {
+                updateUIToCompleted(); 
+                
+                const checkoutTime = data.checkOut.timestamp.toDate();
+                
+                // 1. คำนวณตามสูตรปกติก่อน
+                let { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
+
+                // [แก้ไข] ตรวจสอบค่าจาก DB แต่ถ้า DB เป็น 0 และค่าคำนวณได้ > 0 ให้ใช้ค่าคำนวณ (เพื่อแก้ไขการแสดงผล)
+                let dbOvertime = 0;
+                if (data.overtime && typeof data.overtime.hours === 'number') {
+                    dbOvertime = data.overtime.hours;
+                }
+                
+                // ใช้ค่าจาก DB ถ้ามีค่ามากกว่า 0, ถ้าไม่ ให้ใช้ค่าที่คำนวณได้
+                if (dbOvertime > 0) {
+                    overtimeHours = dbOvertime;
+                }
+                // (ถ้า dbOvertime == 0 แต่ overtimeHours(คำนวณ) == 1.0 -> เราจะโชว์ 1.0 ตามสูตร)
+
+                summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+                summaryCheckoutTime.classList.remove('text-gray-400');
+                summaryCheckoutTime.classList.add('text-red-500');
+
+                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+                
+                // แสดงผล OT
+                if (overtimeHours > 0) {
+                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+                }
+            }
+        } else {
+            updateUIToCheckIn();
+        }
     }
-}
 
     async function loadEmployeeSummary(page = 1) { 
     const container = document.getElementById('employee-summary-container-admin');
@@ -3846,26 +3822,6 @@ if (exportPayrollBtn) {
         }
     }
 
-    function toggleReportDetails(id) {
-    const details = document.getElementById(`details-${id}`);
-    const icon = document.getElementById(`icon-${id}`);
-    
-    if (details.classList.contains('hidden')) {
-        details.classList.remove('hidden');
-        if(icon) icon.style.transform = 'rotate(180deg)';
-    } else {
-        details.classList.add('hidden');
-        if(icon) icon.style.transform = 'rotate(0deg)';
-    }
-}
-
-    window.toggleReportDetails = function(id) {
-    const el = document.getElementById(`details-${id}`);
-    if (el) {
-        el.classList.toggle('hidden');
-    }
-};
-
     async function loadWorkHistory() {
     if (!currentUser) return;
 
@@ -3877,6 +3833,7 @@ if (exportPayrollBtn) {
     const summaryOtEl = document.getElementById('profile-summary-ot');
     const summaryDaysEl = document.getElementById('profile-summary-days');
 
+    // รีเซ็ตค่าหน้าจอ
     summaryHoursEl.textContent = '-';
     summaryOtEl.textContent = '-';
     summaryDaysEl.textContent = '-';
@@ -3887,6 +3844,7 @@ if (exportPayrollBtn) {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
+        // กำหนดช่วงเวลาตามที่เลือก
         if (selectedRange === "7") {
             startDate = new Date(todayStart);
             startDate.setDate(todayStart.getDate() - 6);
@@ -3899,6 +3857,7 @@ if (exportPayrollBtn) {
             endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
         }
 
+        // ดึงข้อมูล Work Records
         const recordsSnapshot = await db.collection('work_records')
             .where('userId', '==', currentUser.uid)
             .where('date', '>=', startDate)
@@ -3907,7 +3866,12 @@ if (exportPayrollBtn) {
             .get();
 
         if (recordsSnapshot.empty) {
-            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">ไม่พบประวัติการทำงาน</p>`;
+            let emptyMessage = "ไม่พบประวัติการทำงาน";
+            if (selectedRange === "7") emptyMessage = "ไม่พบประวัติในช่วง 7 วันที่ผ่านมา";
+            else if (selectedRange === "this_month") emptyMessage = "ไม่พบประวัติในเดือนนี้";
+            else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
+
+            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
             summaryDaysEl.textContent = '0 วัน';
             return;
         }
@@ -3921,41 +3885,41 @@ if (exportPayrollBtn) {
         recordsSnapshot.forEach(doc => {    
             const record = doc.data();
             const checkinTime = record.checkIn.timestamp.toDate();
-            const docId = doc.id;
-            
-            // รองรับทั้ง Report เดียว (เก่า) และ หลาย Report (ใหม่)
-            const reports = record.reports || (record.report ? [record.report] : []);
+            const report = record.report;
 
-            let checkoutTimeStr = '-';
+            // const dateKey = toLocalDateKey(checkinTime); // (ไม่ได้ใช้ บรรทัดนี้ comment ไว้ได้)
+            let checkoutTime;
             let regularWorkHours = 0;
             let overtimeHours = 0;
+            let checkoutTimeStr = '-';
 
+            // [ส่วนที่แก้ไข Logic] : คำนวณใหม่ถ้า DB เป็น 0
+            // ---------------------------------------------------------
             if (record.status === 'completed' && record.checkOut) {
-                const checkoutTime = record.checkOut.timestamp.toDate();
+                checkoutTime = record.checkOut.timestamp.toDate();
                 checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+
+                // 1. คำนวณค่าจริงทางคณิตศาสตร์ก่อนเสมอ
                 const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
                 regularWorkHours = timeCalc.regularWorkHours;
-                overtimeHours = (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) ? record.overtime.hours : timeCalc.overtimeHours;
-            }
 
+                // 2. ตรวจสอบค่าใน Database
+                // ถ้ามีค่า > 0 ให้ใช้ค่าจาก DB
+                if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                    overtimeHours = record.overtime.hours;
+                } else {
+                    // ถ้า DB เป็น 0 หรือไม่มี ให้ใช้ค่าที่คำนวณได้ (Fallback)
+                    overtimeHours = timeCalc.overtimeHours;
+                }
+            }
+            // ---------------------------------------------------------
+
+            // สะสมยอดรวม
             totalRegularHours += regularWorkHours;
             totalOtHours += overtimeHours;
             accumulatorRegularWorkHours += regularWorkHours;
 
-            // HTML สำหรับก้อน Report (ใช้สไตล์ Badge เดิมของคุณ)
-            let reportsContent = reports.map(rpt => `
-                <div class="flex flex-wrap items-center gap-2 mb-2">
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
-                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" /><path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" /><path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" /></svg>
-                        ${rpt.workType} (${rpt.duration || '-'})
-                    </span>
-                    <span class="inline-flex items-center rounded-full ${rpt.project === 'FAC' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} px-3 py-1 text-xs font-semibold">
-                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.379 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                        ${rpt.project}
-                    </span>
-                </div>
-            `).join('');
-
+            // ส่วนของการ์ดแสดงผล (โครงสร้างเดิมที่คุณต้องการ)
             historyHtml += `
             <div class="flex space-x-4">
                 <div class="flex flex-col items-center">
@@ -3979,11 +3943,12 @@ if (exportPayrollBtn) {
                     </div>
 
                     <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
+                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ (ไม่รวม OT)">
                             <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
                         </div>
-                        <div class="flex items-center gap-1.5" title="Overtime">
+
+                        <div class="flex items-center gap-1.5" title="Overtime รวม">
                             <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                         </div>
@@ -3992,42 +3957,62 @@ if (exportPayrollBtn) {
                     <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
                         <div>
                             ${record.checkIn.workType === 'in_factory' ? `
-                                <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">ในโรงงาน</span>
+                                <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
+                                    ในโรงงาน
+                                </span>
                             ` : `
-                                <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">On-site: ${record.checkIn.onSiteDetails || 'N/A'}</span>
+                                <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
+                                    On-site: ${record.checkIn.onSiteDetails || 'N/A'}
+                                </span>
                             `}
                         </div>
 
-                        <div class="mt-2">
-                             <div class="flex justify-between items-center">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider italic">รายงาน: ${reports.length} รายการ</span>
-                                <button onclick="toggleReportDetails('${docId}')" class="text-xs text-sky-500 font-bold underline">ดูรายละเอียด</button>
-                             </div>
-                             <div id="details-${docId}" class="hidden mt-2 pt-2 border-t border-dashed border-gray-100">
-                                ${reportsContent}
-                             </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            ${report ? `
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" /><path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" /><path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" /></svg>
+                                    ${report.workType}
+                                </span>
+                                
+                                ${report.project === 'FAC' ? `
+                                    <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.183 2.25c.348-.7 1.286-.7 1.634 0l.963 1.947a.75.75 0 00.563.41l2.15.312c.732.106 1.025.99.494 1.506l-1.556 1.516a.75.75 0 00-.216.66l.367 2.14c.124.729-.64.128-1.283.3l-1.928.898a.75.75 0 00-.58 0l-1.928-.898c-.643-.172-1.407.428-1.283-.3l.367-2.14a.75.75 0 00-.216-.66L2.3 6.43c-.53-.516-.238-1.4.494-1.506l2.15-.312a.75.75 0 00.563-.41l.963-1.947z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M10 12.25a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
+                                        ${report.project} (Factory)
+                                    </span>
+                                ` : `
+                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.379 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                        ${report.project}
+                                    </span>
+                                `}
+                            ` : `
+                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" /></svg>
+                                    ยังไม่ส่งรายงาน
+                                </span>
+                            `}
                         </div>
                     </div>
+
                 </div>
             </div>`;
         });
 
         container.innerHTML = historyHtml;
+
+        // อัปเดต Summary ด้านบน
         summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
         summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
         summaryDaysEl.textContent = `${totalDays} วัน`;
 
     } catch (error) {
         console.error("Error loading work history:", error);
+        container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
     }
 }
-
-// ฟังก์ชันเปิด/ปิดรายละเอียด (วางไว้นอก loadWorkHistory)
-window.toggleReportDetails = function(id) {
-    const el = document.getElementById(`details-${id}`);
-    if (el) el.classList.toggle('hidden');
-};
-
+        
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
         checkoutBtn.classList.add('hidden');
@@ -4371,15 +4356,6 @@ checkoutBtn.addEventListener('click', async () => {
                 loadAllUsersForDropdown();
                 if (typeof loadPendingLeaveRequests === 'function') loadPendingLeaveRequests();
                 if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests(); // ถ้ามีฟังก์ชันนี้
-                
-                if (pageId === 'report-page') {
-                // 1. ถ้ายังไม่มีการเลือกวันที่ ให้ตั้งค่าเป็น "วันนี้" โดยอัตโนมัติ
-                if (!reportDateInput.value) {
-                    reportDateInput.value = toLocalDateKey(new Date());
-                }
-                // 2. สั่งโหลดรายการที่ส่งแล้วมาแสดงทันที
-                loadSentReports();
-            }
 
                 // ★★★ Safety Check: เช็คก่อนว่ามีตารางนี้ไหม ค่อยสั่งล้าง ★★★
                 const summaryContainer = document.getElementById('employee-summary-container-admin');
@@ -4530,73 +4506,45 @@ checkoutBtn.addEventListener('click', async () => {
     
     // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
     async function loadSentReports() {
-    if (!currentUser) return;
+        if (!currentUser) return;
 
-    const container = document.getElementById('sent-reports-container');
-    // ใช้ค่าจาก input หรือถ้าไม่มีให้ใช้ "วันนี้"
-    const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
-    const docId = `${currentUser.uid}_${selectedDate}`;
-    
-    try {
-        const doc = await db.collection('work_records').doc(docId).get();
+        const container = document.getElementById('sent-reports-container');
+        if (!container) {
+            console.error("Report container not found.");
+            return;
+        }
 
-        if (doc.exists && doc.data().reports && doc.data().reports.length > 0) {
-            const reports = doc.data().reports;
-            let html = '';
-            
-            reports.forEach((item, index) => {
-                html += `
-                    <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                รายการที่ ${index + 1}
-                            </span>
-                            <button onclick="deleteWorkEntry('${item.id}')" class="text-red-300 hover:text-red-500 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                        <p class="font-bold text-gray-800">${item.workType}</p>
-                        <div class="mt-2 text-sm text-gray-600 space-y-1">
-                            <p><span class="text-gray-400">โครงการ:</span> ${item.project}</p>
-                            <p><span class="text-gray-400">เวลา:</span> ${item.duration}</p>
+        const today = toLocalDateKey(new Date());
+        const reportDocId = `${currentUser.uid}_${today}`;
+        
+        try {
+            // [เปลี่ยน] อ่านจาก work_records
+            const reportDoc = await db.collection('work_records').doc(reportDocId).get();
+
+            // [เปลี่ยน] ตรวจสอบว่ามี .report field หรือไม่
+            if (reportDoc.exists && reportDoc.data().report) {
+                const data = reportDoc.data().report; // ดึงข้อมูลจาก field 'report'
+                const reportCardHTML = `
+                    <div class="card !p-4">
+                        <div>
+                            <p class="text-sm text-gray-600">รายงานที่ส่งแล้ว:</p>
+                            <p class="text-lg font-bold text-sky-600 my-1">${data.workType}</p>
+                            <div class="pt-2 mt-2 border-t border-gray-100 text-sm space-y-1">
+                                <p class="text-gray-500">โครงการ: <span class="font-medium text-gray-700">${data.project}</span></p>
+                                <p class="text-gray-500">ระยะเวลา: <span class="font-medium text-gray-700">${data.duration}</span></p>
+                            </div>
                         </div>
                     </div>
                 `;
-            });
-            container.innerHTML = html;
-        } else {
-            container.innerHTML = `<div class="text-center py-6 text-gray-400 text-sm">ยังไม่มีรายงานของวันที่เลือก</div>`;
+                container.innerHTML = reportCardHTML;
+            } else {
+                container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่ได้ส่งรายงานวันนี้</p>`;
+            }
+        } catch (error) {
+            console.error("Error loading sent reports:", error);
+            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
         }
-    } catch (error) {
-        console.error("Load Reports Error:", error);
     }
-}
-
-window.deleteWorkEntry = async (entryId) => {
-    if (!confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) return;
-
-    const selectedDate = reportDateInput.value;
-    const docId = `${currentUser.uid}_${selectedDate}`;
-    const docRef = db.collection('work_records').doc(docId);
-
-    try {
-        const doc = await docRef.get();
-        if (doc.exists) {
-            const reports = doc.data().reports || [];
-            // กรองเอาเฉพาะรายการที่ ID ไม่ตรงออก
-            const updatedReports = reports.filter(item => item.id !== entryId);
-            
-            await docRef.update({
-                reports: updatedReports
-            });
-            
-            showNotification("ลบรายการแล้ว");
-            loadSentReports();
-        }
-    } catch (error) {
-        alert("ลบไม่สำเร็จ: " + error.message);
-    }
-};
 
     function updateClock() {
         if (timeElement) {
@@ -6938,6 +6886,7 @@ async function loadOtHistory() {
         });
     }
 
+    // ฟังก์ชันโหลดข้อมูลรายงานตามวันที่เลือก (ฉบับสมบูรณ์)
     // ฟังก์ชันโหลดข้อมูลรายงาน (ฉบับใช้ปุ่มสีฟ้าเดิม)
     async function loadReportForSelectedDate() {
         if (!currentUser) return;
@@ -6955,7 +6904,6 @@ async function loadOtHistory() {
             const doc = await db.collection('work_records').doc(docId).get();
             
             resetReportForm();
-            loadSentReports();
 
             // ★★★ บังคับใช้ Class เดิม (ปุ่มสีฟ้า) เสมอ ไม่ว่าจะสถานะไหน ★★★
             saveReportBtn.className = 'btn-primary w-full py-3 text-base';
@@ -7008,27 +6956,6 @@ async function loadOtHistory() {
     if (reportDateInput) {
         reportDateInput.addEventListener('change', loadReportForSelectedDate);
     }
-
-    window.deleteReportEntry = async (index) => {
-    if(!confirm("ต้องการลบรายงานรายการนี้ใช่หรือไม่?")) return;
-    
-    const selectedDate = document.getElementById('report-date-input').value;
-    const docId = `${currentUser.uid}_${selectedDate}`;
-    const docRef = db.collection('work_records').doc(docId);
-
-    try {
-        const doc = await docRef.get();
-        if (doc.exists) {
-            let reports = doc.data().reports;
-            reports.splice(index, 1); // ลบรายการตาม index ที่เลือก
-            await docRef.update({ reports: reports });
-            showNotification("ลบรายการแล้ว");
-            loadSentReports(); // รีโหลดรายการ
-        }
-    } catch (error) {
-        alert("ลบไม่สำเร็จ: " + error.message);
-    }
-};
 
     function switchRole(role) {
     if (role === 'member') {
@@ -8043,7 +7970,7 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
             }
         });
     }
-
+    
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
 // ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
 async function loadAdminDashboardOverview() {
@@ -8199,7 +8126,6 @@ navItems.forEach(item => {
             loadPendingOtRequests();
         }
 
-        // ... (Logic หน้าอื่นๆ เหมือนเดิม) ...
     });
 });
 
@@ -8209,115 +8135,6 @@ if(btnRefreshDash) {
     btnRefreshDash.addEventListener('click', loadAdminDashboardOverview);
 }
 
-// ฟังก์ชันเช็คสถานะปุ่มตอนโหลดหน้า
-async function syncCheckButtonState() {
-    if (!currentUser) return;
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    try {
-        // ค้นหา record ของวันนี้
-        const snapshot = await db.collection('work_records')
-            .where('userId', '==', currentUser.uid)
-            .where('date', '>=', startOfToday)
-            .limit(1)
-            .get();
-
-        const checkInBtn = document.getElementById('check-in-btn');
-        const checkOutBtn = document.getElementById('check-out-btn');
-
-        if (!snapshot.empty) {
-            const record = snapshot.docs[0].data();
-
-            if (record.status === 'active') {
-                // เช็คอินไปแล้ว แต่ยังไม่เช็คเอาท์
-                checkInBtn.disabled = true;
-                checkInBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                checkOutBtn.disabled = false;
-                checkOutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else if (record.status === 'completed') {
-                // เช็คเอาท์เรียบร้อยแล้ว (ปิดทั้งสองปุ่ม)
-                checkInBtn.disabled = true;
-                checkInBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                checkOutBtn.disabled = true;
-                checkOutBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                // อาจจะเปลี่ยนข้อความปุ่ม
-                checkInBtn.innerText = 'วันนี้ลงเวลาแล้ว';
-            }
-        } else {
-            // ยังไม่ได้เช็คอินเลย (สถานะเริ่มต้น)
-            checkInBtn.disabled = false;
-            checkOutBtn.disabled = true;
-            checkOutBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    } catch (error) {
-        console.error("Sync Status Error:", error);
-    }
-}
-
-// เรียกใช้งานทุกครั้งที่หน้าเว็บโหลดเสร็จ และ Login อยู่
-auth.onAuthStateChanged(user => {
-    if (user) {
-        currentUser = user;
-        syncCheckButtonState(); // <--- เพิ่มตรงนี้
-        loadWorkHistory();
-    }
-});
-
-async function syncTodayButtonState() {
-    if (!currentUser) return;
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    const checkInBtn = document.getElementById('check-in-btn');
-    const checkOutBtn = document.getElementById('check-out-btn');
-
-    try {
-        const snapshot = await db.collection('work_records')
-            .where('userId', '==', currentUser.uid)
-            .where('date', '>=', startOfToday)
-            .limit(1)
-            .get();
-
-        if (!snapshot.empty) {
-            const record = snapshot.docs[0].data();
-
-            if (record.status === 'active') {
-                // เช็คอินแล้ว -> ปิดปุ่มเช็คอิน, เปิดปุ่มเช็คเอาท์
-                checkInBtn.disabled = true;
-                checkInBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                checkOutBtn.disabled = false;
-                checkOutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else if (record.status === 'completed') {
-                // ทำครบแล้ว -> ปิดทั้งสองปุ่ม
-                checkInBtn.disabled = true;
-                checkInBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                checkOutBtn.disabled = true;
-                checkOutBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                checkInBtn.innerText = 'วันนี้ลงเวลาเรียบร้อย';
-            }
-        } else {
-            // ยังไม่มีข้อมูลวันนี้ -> เปิดเช็คอิน, ปิดเช็คเอาท์
-            checkInBtn.disabled = false;
-            checkOutBtn.disabled = true;
-            checkOutBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    } catch (error) {
-        console.error("Sync Button Error:", error);
-    }
-}
-
-// เรียกใช้ใน auth state change
-auth.onAuthStateChanged(user => {
-    if (user) {
-        currentUser = user;
-        syncTodayButtonState(); // เช็คสถานะปุ่มทันทีที่ล็อกอิน/รีเฟรช
-        loadWorkHistory();
-    }
-});
 
 });
 
