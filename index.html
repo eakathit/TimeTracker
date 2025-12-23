@@ -712,7 +712,7 @@ aside .nav-item {
             </div>
 
             <div class="flex-1 p-4 bg-gray-50/30 overflow-y-auto min-h-fit">
-                
+
                 <div id="ot-pending-content" class="ot-tab-content h-full flex flex-col">
                     <div id="ot-approval-list" class="space-y-3 min-h-[300px] flex flex-col justify-center items-center text-center w-full">
                          <div class="text-center py-10">
@@ -1174,7 +1174,7 @@ aside .nav-item {
     <div class="space-y-4">
         <div class="flex justify-between items-center">
              <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
-             
+
              <div class="relative inline-block shadow-sm rounded-lg">
                 <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
                     <option value="7">7 วันล่าสุด</option>
@@ -1617,6 +1617,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // ฟังก์ชันช่วยจัดรูปแบบวันที่ (เช่น 23 ธ.ค. 2025)
+function formatDate(timestamp) {
+    if (!timestamp) return '--/--/--';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('th-TH', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+}
+
+// ฟังก์ชันช่วยจัดรูปแบบเวลา (เช่น 08:30)
+function formatTime(timestamp) {
+    if (!timestamp) return '--:--';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleTimeString('th-TH', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
     // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -2136,95 +2157,78 @@ auth.onAuthStateChanged(async (user) => {
             // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
           });
 
-    // ... (วางโค้ดฟังก์ชันเดิมทั้งหมดที่นี่ ตั้งแต่ saveReportBtn.addEventListener จนถึง showNotification) ...
      // --- [ปรับปรุง] Logic การบันทึกรายงาน ---
-    saveReportBtn.addEventListener('click', async () => {
-        if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
+    // --- ส่วนการบันทึกรายงาน (รองรับหลายโปรเจกต์) ---
+saveReportBtn.addEventListener('click', async () => {
+    if (!currentUser) return alert("กรุณาเข้าสู่ระบบ");
 
-        const selectedDateStr = reportDateInput.value; // รับค่าวันที่จาก Input
-        if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
+    const selectedDateStr = reportDateInput.value; 
+    if (!selectedDateStr) return alert("กรุณาเลือกวันที่");
 
-        const workType = workTypeSelectedText.textContent;
-        const project = projectSelectedText.textContent;
-        const duration = durationSelectedText.textContent;
-        let timeRange = duration;
+    const workType = workTypeSelectedText.textContent;
+    const project = projectSelectedText.textContent;
+    const duration = durationSelectedText.textContent;
+    let timeRange = duration;
 
-        // Validation
-        if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
-        if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
-        if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
+    // ตรวจสอบความถูกต้อง
+    if (workType.includes('เลือก...')) return alert("กรุณาเลือกประเภทงาน");
+    if (project.includes('เลือก...')) return alert("กรุณาเลือกโครงการ");
+    if (duration.includes('เลือก...')) return alert("กรุณาเลือกระยะเวลา");
 
-        if (duration === 'กำหนดเวลา') {
-            if (!customTimeStartInput.value || !customTimeEndInput.value) {
-                return alert("กรุณากรอกเวลา");
-            }
-            timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
+    if (duration === 'กำหนดเวลา') {
+        if (!customTimeStartInput.value || !customTimeEndInput.value) {
+            return alert("กรุณากรอกเวลาให้ครบถ้วน");
         }
+        timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
+    }
+    
+    saveReportBtn.disabled = true;
+    saveReportBtn.textContent = 'กำลังบันทึก...';
+    
+    try {
+        const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
+        const workRecordRef = db.collection('work_records').doc(workRecordDocId);
         
-        saveReportBtn.disabled = true;
-        saveReportBtn.textContent = 'กำลังบันทึก...';
+        // ข้อมูลชิ้นใหม่ (ใช้ Date() แทน serverTimestamp เพื่อไม่ให้ arrayUnion พัง)
+        const newEntry = {
+            id: Date.now().toString(), // ใช้ ID เพื่อไว้อ้างอิงลบหรือแก้ไข
+            timestamp: new Date().toISOString(),
+            workType: workType,
+            project: project,
+            duration: timeRange
+        };
+
+        const doc = await workRecordRef.get();
         
-        try {
-            // ใช้ selectedDateStr แทน new Date()
-            const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
-            const workRecordRef = db.collection('work_records').doc(workRecordDocId);
-            
-            const doc = await workRecordRef.get();
-            
-            // กรณีที่ 1: มีการ Check-in วันนั้นแล้ว -> อัปเดต report ใส่เข้าไป
-            if (doc.exists) {
-                await workRecordRef.update({
-                    report: {
-                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        workType: workType,
-                        project: project,
-                        duration: timeRange
-                    }
-                });
-            } 
-            // กรณีที่ 2: ลืม Check-in ด้วย (ไม่มี Record เลย)
-            else {
-                // คุณต้องตัดสินใจว่าจะยอมให้สร้าง Record ใหม่ที่มีแต่ Report หรือไม่
-                // ถ้าเอาแบบง่ายสุดคือยอมให้สร้าง โดยไม่มีข้อมูล GPS Check-in
-                const confirmCreate = confirm(`ไม่พบข้อมูลการลงเวลาในวันที่ ${selectedDateStr}\nคุณต้องการสร้างรายงานโดยไม่มีเวลาเข้า-ออกงาน หรือไม่?`);
-                
-                if (!confirmCreate) {
-                    saveReportBtn.disabled = false;
-                    saveReportBtn.textContent = 'บันทึกข้อมูล';
-                    return;
-                }
-
-                // สร้าง Record ใหม่ (Backdate)
-                await workRecordRef.set({
-                    userId: currentUser.uid,
-                    date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
-                    status: "no_checkin_report_only", // สถานะพิเศษ
-                    checkIn: {
-                        timestamp: firebase.firestore.Timestamp.fromDate(new Date(`${selectedDateStr}T08:30:00`)), // เวลาสมมติ
-                        workType: "backdate_report",
-                        location: null // ไม่มีพิกัด
-                    },
-                    report: {
-                        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        workType: workType,
-                        project: project,
-                        duration: timeRange
-                    }
-                });
-            }
-
-            showNotification('บันทึกรายงานสำเร็จ!');
-            // รีเฟรช UI
-            loadReportForSelectedDate(); 
-            
-        } catch (error) {
-            console.error("Error saving report: ", error);
-            alert('เกิดข้อผิดพลาด: ' + error.message);
-        } finally {
-            saveReportBtn.disabled = false;
-            // คืนค่าข้อความปุ่มตามสถานะ (ทำผ่าน loadReportForSelectedDate ได้)
+        if (doc.exists) {
+            // เพิ่มงานใหม่เข้าไปใน Array 'reports' ต่อจากงานเดิม
+            await workRecordRef.update({
+                reports: firebase.firestore.FieldValue.arrayUnion(newEntry)
+            });
+        } else {
+            // ถ้ายังไม่มีเอกสารของวันนี้ (กรณีลืม Check-in) ให้สร้างใหม่
+            await workRecordRef.set({
+                userId: currentUser.uid,
+                date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
+                status: "no_checkin",
+                reports: [newEntry] // เริ่มต้นด้วย Array ที่มีงานชิ้นแรก
+            });
         }
-    });
+
+        showNotification('บันทึกสำเร็จ! คุณสามารถเพิ่มโปรเจกต์อื่นได้อีก');
+        
+        // --- ส่วนสำคัญ: ล้างฟอร์มเพื่อให้กรอกโปรเจกต์ที่ 2, 3, 4 ต่อได้ทันที ---
+        resetReportForm(); 
+        loadSentReports(); // อัปเดตรายการที่โชว์ด้านล่าง
+        
+    } catch (error) {
+        console.error("Error saving report:", error);
+        alert('เกิดข้อผิดพลาด: ' + error.message);
+    } finally {
+        saveReportBtn.disabled = false;
+        saveReportBtn.textContent = 'บันทึกข้อมูล';
+    }
+});
 
     workTypeButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -3022,65 +3026,42 @@ auth.onAuthStateChanged(async (user) => {
         console.error("Location Error:", error);
     }
 
-    async function checkUserWorkStatus() {
-        if (!currentUser) return;
-        const today = toLocalDateKey(new Date());
-        const docId = `${currentUser.uid}_${today}`;
-        
-        // ใช้ source: 'server' เพื่อให้ได้ข้อมูลล่าสุดเสมอ ไม่เอา cache
-        let workRecordDoc;
-        try {
-             workRecordDoc = await db.collection('work_records').doc(docId).get();
-        } catch(e) {
-             // fallback ถ้าไม่มีเน็ต
-             workRecordDoc = await db.collection('work_records').doc(docId).get({ source: 'cache' });
-        }
-
-        if (workRecordDoc.exists) {
-            const data = workRecordDoc.data();
-            const checkinTime = data.checkIn.timestamp.toDate();
-            
-            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
-            summaryCheckinTime.classList.remove('text-gray-400');
-            summaryCheckinTime.classList.add('text-green-600');
-
-            if (data.status === 'checked_in') {
-                updateUIToCheckedIn();
-            } else if (data.status === 'completed') {
-                updateUIToCompleted(); 
-                
-                const checkoutTime = data.checkOut.timestamp.toDate();
-                
-                // 1. คำนวณตามสูตรปกติก่อน
-                let { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
-
-                // [แก้ไข] ตรวจสอบค่าจาก DB แต่ถ้า DB เป็น 0 และค่าคำนวณได้ > 0 ให้ใช้ค่าคำนวณ (เพื่อแก้ไขการแสดงผล)
-                let dbOvertime = 0;
-                if (data.overtime && typeof data.overtime.hours === 'number') {
-                    dbOvertime = data.overtime.hours;
-                }
-                
-                // ใช้ค่าจาก DB ถ้ามีค่ามากกว่า 0, ถ้าไม่ ให้ใช้ค่าที่คำนวณได้
-                if (dbOvertime > 0) {
-                    overtimeHours = dbOvertime;
-                }
-                // (ถ้า dbOvertime == 0 แต่ overtimeHours(คำนวณ) == 1.0 -> เราจะโชว์ 1.0 ตามสูตร)
-
-                summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.remove('text-gray-400');
-                summaryCheckoutTime.classList.add('text-red-500');
-
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
-                
-                // แสดงผล OT
-                if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
-                }
-            }
-        } else {
-            updateUIToCheckIn();
-        }
+    function checkUserWorkStatus(doc) {
+    // ป้องกัน Error กรณี doc ไม่มีค่า หรือไม่มีข้อมูล (doc.exists เป็น false)
+    if (!doc || !doc.exists) {
+        const statusReportTime = document.getElementById('status-report-time');
+        if (statusReportTime) statusReportTime.innerHTML = `<span class="text-gray-400 italic">ยังไม่มีรายการของวันนี้</span>`;
+        return;
     }
+
+    const data = doc.data();
+    // ดึง Array reports ออกมา ถ้าไม่มีให้เป็น Array ว่าง
+    const reports = data.reports || (data.report ? [data.report] : []);
+    
+    const statusReportTime = document.getElementById('status-report-time');
+    if (!statusReportTime) return;
+
+    if (reports.length > 0) {
+        const lastReport = reports[reports.length - 1];
+        let displayTime = "--:--";
+        
+        // ตรวจสอบฟิลด์เวลาของ Report ล่าสุด
+        if (lastReport.timestamp) {
+            displayTime = new Date(lastReport.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (lastReport.submittedAt) {
+            displayTime = lastReport.submittedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        statusReportTime.innerHTML = `
+            <span class="flex items-center gap-1 text-sky-600 font-medium">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"></path></svg>
+                ส่งแล้ว ${reports.length} งาน (ล่าสุด ${displayTime})
+            </span>
+        `;
+    } else {
+        statusReportTime.innerHTML = `<span class="text-gray-400 italic">ยังไม่มีรายงาน</span>`;
+    }
+}
 
     async function loadEmployeeSummary(page = 1) { 
     const container = document.getElementById('employee-summary-container-admin');
@@ -3842,196 +3823,71 @@ if (exportPayrollBtn) {
     }
 
     async function loadWorkHistory() {
-    if (!currentUser) return;
+    const historyContainer = document.getElementById('work-history-container');
+    if (!historyContainer || !currentUser) return;
 
-    const container = document.getElementById('work-history-container');
-    const rangeSelect = document.getElementById('history-range-select');
-    const selectedRange = rangeSelect.value;
-
-    const summaryHoursEl = document.getElementById('profile-summary-hours');
-    const summaryOtEl = document.getElementById('profile-summary-ot');
-    const summaryDaysEl = document.getElementById('profile-summary-days');
-
-    // รีเซ็ตค่าหน้าจอ
-    summaryHoursEl.textContent = '-';
-    summaryOtEl.textContent = '-';
-    summaryDaysEl.textContent = '-';
-    container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
+    historyContainer.innerHTML = '<div class="p-8 text-center"><div class="animate-spin inline-block w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full"></div></div>';
 
     try {
-        let startDate, endDate;
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-
-        // กำหนดช่วงเวลาตามที่เลือก
-        if (selectedRange === "7") {
-            startDate = new Date(todayStart);
-            startDate.setDate(todayStart.getDate() - 6);
-            endDate = new Date(now);
-        } else if (selectedRange === "this_month") {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now);
-        } else if (selectedRange === "last_month") {
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-        }
-
-        // ดึงข้อมูล Work Records
-        const recordsSnapshot = await db.collection('work_records')
+        const snapshot = await db.collection('work_records')
             .where('userId', '==', currentUser.uid)
-            .where('date', '>=', startDate)
-            .where('date', '<=', endDate)
             .orderBy('date', 'desc')
+            .limit(10)
             .get();
 
-        if (recordsSnapshot.empty) {
-            let emptyMessage = "ไม่พบประวัติการทำงาน";
-            if (selectedRange === "7") emptyMessage = "ไม่พบประวัติในช่วง 7 วันที่ผ่านมา";
-            else if (selectedRange === "this_month") emptyMessage = "ไม่พบประวัติในเดือนนี้";
-            else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
-
-            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
-            summaryDaysEl.textContent = '0 วัน';
+        if (snapshot.empty) {
+            historyContainer.innerHTML = '<p class="text-center py-10 text-gray-400">ยังไม่มีประวัติการบันทึกงาน</p>';
             return;
         }
 
-        let historyHtml = '';
-        let totalRegularHours = 0;
-        let totalOtHours = 0;
-        let totalDays = recordsSnapshot.size;
-        let accumulatorRegularWorkHours = 0;
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const reports = data.reports || (data.report ? [data.report] : []);
 
-        recordsSnapshot.forEach(doc => {    
-            const record = doc.data();
-            const checkinTime = record.checkIn.timestamp.toDate();
-            const report = record.report;
+            let statusBadge = data.status === 'check_out' 
+                ? '<span class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold">เลิกงานแล้ว</span>'
+                : '<span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold">เข้างาน</span>';
 
-            // const dateKey = toLocalDateKey(checkinTime); // (ไม่ได้ใช้ บรรทัดนี้ comment ไว้ได้)
-            let checkoutTime;
-            let regularWorkHours = 0;
-            let overtimeHours = 0;
-            let checkoutTimeStr = '-';
-
-            // [ส่วนที่แก้ไข Logic] : คำนวณใหม่ถ้า DB เป็น 0
-            // ---------------------------------------------------------
-            if (record.status === 'completed' && record.checkOut) {
-                checkoutTime = record.checkOut.timestamp.toDate();
-                checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-
-                // 1. คำนวณค่าจริงทางคณิตศาสตร์ก่อนเสมอ
-                const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
-                regularWorkHours = timeCalc.regularWorkHours;
-
-                // 2. ตรวจสอบค่าใน Database
-                // ถ้ามีค่า > 0 ให้ใช้ค่าจาก DB
-                if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
-                    overtimeHours = record.overtime.hours;
-                } else {
-                    // ถ้า DB เป็น 0 หรือไม่มี ให้ใช้ค่าที่คำนวณได้ (Fallback)
-                    overtimeHours = timeCalc.overtimeHours;
-                }
-            }
-            // ---------------------------------------------------------
-
-            // สะสมยอดรวม
-            totalRegularHours += regularWorkHours;
-            totalOtHours += overtimeHours;
-            accumulatorRegularWorkHours += regularWorkHours;
-
-            // ส่วนของการ์ดแสดงผล (โครงสร้างเดิมที่คุณต้องการ)
-            historyHtml += `
-            <div class="flex space-x-4">
-                <div class="flex flex-col items-center">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center leading-none">
-                        <span class="text-xs text-sky-600 font-medium">${checkinTime.toLocaleDateString('th-TH', { month: 'short' })}</span>
-                        <span class="text-xl font-bold text-sky-700">${checkinTime.getDate()}</span>
+            html += `
+                <div class="mb-4 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="bg-gray-50/50 px-4 py-3 flex justify-between items-center border-b border-gray-50">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-gray-700 text-sm">${formatDate(data.date)}</span>
+                        </div>
+                        ${statusBadge}
                     </div>
-                    <div class="flex-1 w-px bg-gray-200 my-2"></div> 
+                    <div class="p-3 space-y-2">
+                        ${reports.length > 0 ? reports.map((rpt, idx) => `
+                            <div class="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors">
+                                <div class="flex-none flex flex-col items-center">
+                                    <div class="w-2 h-2 rounded-full bg-sky-400 mt-2"></div>
+                                    ${idx !== reports.length - 1 ? '<div class="w-0.5 h-full bg-gray-100 my-1"></div>' : ''}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <p class="font-bold text-gray-800 text-sm leading-tight">${rpt.workType}</p>
+                                        <span class="text-[10px] text-gray-400 whitespace-nowrap">${rpt.duration}</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-0.5">${rpt.project}</p>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="text-xs text-gray-400 italic text-center py-2">ไม่มีข้อมูลโครงการ</p>'}
+                    </div>
+                    <div class="px-4 py-2 bg-gray-50/30 text-[10px] text-gray-400 flex justify-between border-t border-gray-50">
+                        <span>Check-in: ${formatTime(data.checkInTime)}</span>
+                        <span>Check-out: ${formatTime(data.checkOutTime)}</span>
+                    </div>
                 </div>
-                
-                <div class="flex-1 card !p-4 !shadow-sm mb-4">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-semibold text-gray-800">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long' })}</p>
-                            <p class="text-sm text-gray-500 font-medium">
-                                <span class="text-green-600">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-                                <span> → </span>
-                                <span class="text-red-500">${checkoutTimeStr}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ (ไม่รวม OT)">
-                            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
-                        </div>
-
-                        <div class="flex items-center gap-1.5" title="Overtime รวม">
-                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
-                        <div>
-                            ${record.checkIn.workType === 'in_factory' ? `
-                                <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
-                                    ในโรงงาน
-                                </span>
-                            ` : `
-                                <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
-                                    On-site: ${record.checkIn.onSiteDetails || 'N/A'}
-                                </span>
-                            `}
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-2">
-                            ${report ? `
-                                <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" /><path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" /><path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" /></svg>
-                                    ${report.workType}
-                                </span>
-                                
-                                ${report.project === 'FAC' ? `
-                                    <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.183 2.25c.348-.7 1.286-.7 1.634 0l.963 1.947a.75.75 0 00.563.41l2.15.312c.732.106 1.025.99.494 1.506l-1.556 1.516a.75.75 0 00-.216.66l.367 2.14c.124.729-.64.128-1.283.3l-1.928.898a.75.75 0 00-.58 0l-1.928-.898c-.643-.172-1.407.428-1.283-.3l.367-2.14a.75.75 0 00-.216-.66L2.3 6.43c-.53-.516-.238-1.4.494-1.506l2.15-.312a.75.75 0 00.563-.41l.963-1.947z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M10 12.25a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
-                                        ${report.project} (Factory)
-                                    </span>
-                                ` : `
-                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.379 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                                        ${report.project}
-                                    </span>
-                                `}
-                            ` : `
-                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" /></svg>
-                                    ยังไม่ส่งรายงาน
-                                </span>
-                            `}
-                        </div>
-                    </div>
-
-                </div>
-            </div>`;
+            `;
         });
-
-        container.innerHTML = historyHtml;
-
-        // อัปเดต Summary ด้านบน
-        summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
-        summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
-        summaryDaysEl.textContent = `${totalDays} วัน`;
-
+        historyContainer.innerHTML = html;
     } catch (error) {
         console.error("Error loading work history:", error);
-        container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+        historyContainer.innerHTML = '<p class="text-center py-10 text-red-400">โหลดข้อมูลไม่สำเร็จ</p>';
     }
 }
-        
+
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
         checkoutBtn.classList.add('hidden');
@@ -4525,45 +4381,73 @@ checkoutBtn.addEventListener('click', async () => {
     
     // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
     async function loadSentReports() {
-        if (!currentUser) return;
+    if (!currentUser) return;
 
-        const container = document.getElementById('sent-reports-container');
-        if (!container) {
-            console.error("Report container not found.");
-            return;
-        }
+    const container = document.getElementById('sent-reports-container');
+    const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
+    const docId = `${currentUser.uid}_${selectedDate}`;
+    
+    try {
+        const doc = await db.collection('work_records').doc(docId).get();
 
-        const today = toLocalDateKey(new Date());
-        const reportDocId = `${currentUser.uid}_${today}`;
-        
-        try {
-            // [เปลี่ยน] อ่านจาก work_records
-            const reportDoc = await db.collection('work_records').doc(reportDocId).get();
-
-            // [เปลี่ยน] ตรวจสอบว่ามี .report field หรือไม่
-            if (reportDoc.exists && reportDoc.data().report) {
-                const data = reportDoc.data().report; // ดึงข้อมูลจาก field 'report'
-                const reportCardHTML = `
-                    <div class="card !p-4">
-                        <div>
-                            <p class="text-sm text-gray-600">รายงานที่ส่งแล้ว:</p>
-                            <p class="text-lg font-bold text-sky-600 my-1">${data.workType}</p>
-                            <div class="pt-2 mt-2 border-t border-gray-100 text-sm space-y-1">
-                                <p class="text-gray-500">โครงการ: <span class="font-medium text-gray-700">${data.project}</span></p>
-                                <p class="text-gray-500">ระยะเวลา: <span class="font-medium text-gray-700">${data.duration}</span></p>
-                            </div>
+        if (doc.exists && doc.data().reports && doc.data().reports.length > 0) {
+            const reports = doc.data().reports;
+            let html = '';
+            
+            // วนลูปสร้างการ์ดของแต่ละโปรเจกต์
+            reports.forEach((item, index) => {
+                html += `
+                    <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                รายการที่ ${index + 1}
+                            </span>
+                            <button onclick="deleteWorkEntry('${item.id}')" class="text-red-300 hover:text-red-500 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        <p class="font-bold text-gray-800">${item.workType}</p>
+                        <div class="mt-2 text-sm text-gray-600 space-y-1">
+                            <p><span class="text-gray-400">โครงการ:</span> ${item.project}</p>
+                            <p><span class="text-gray-400">เวลา:</span> ${item.duration}</p>
                         </div>
                     </div>
                 `;
-                container.innerHTML = reportCardHTML;
-            } else {
-                container.innerHTML = `<p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่ได้ส่งรายงานวันนี้</p>`;
-            }
-        } catch (error) {
-            console.error("Error loading sent reports:", error);
-            container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดรายงาน</p>';
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `<div class="text-center py-6 text-gray-400 text-sm">ยังไม่มีรายงานของวันนี้</div>`;
         }
+    } catch (error) {
+        console.error("Load Reports Error:", error);
     }
+}
+
+window.deleteWorkEntry = async (entryId) => {
+    if (!confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) return;
+
+    const selectedDate = reportDateInput.value;
+    const docId = `${currentUser.uid}_${selectedDate}`;
+    const docRef = db.collection('work_records').doc(docId);
+
+    try {
+        const doc = await docRef.get();
+        if (doc.exists) {
+            const reports = doc.data().reports || [];
+            // กรองเอาเฉพาะรายการที่ ID ไม่ตรงออก
+            const updatedReports = reports.filter(item => item.id !== entryId);
+            
+            await docRef.update({
+                reports: updatedReports
+            });
+            
+            showNotification("ลบรายการแล้ว");
+            loadSentReports();
+        }
+    } catch (error) {
+        alert("ลบไม่สำเร็จ: " + error.message);
+    }
+};
 
     function updateClock() {
         if (timeElement) {
@@ -6905,7 +6789,6 @@ async function loadOtHistory() {
         });
     }
 
-    // ฟังก์ชันโหลดข้อมูลรายงานตามวันที่เลือก (ฉบับสมบูรณ์)
     // ฟังก์ชันโหลดข้อมูลรายงาน (ฉบับใช้ปุ่มสีฟ้าเดิม)
     async function loadReportForSelectedDate() {
         if (!currentUser) return;
@@ -6975,6 +6858,27 @@ async function loadOtHistory() {
     if (reportDateInput) {
         reportDateInput.addEventListener('change', loadReportForSelectedDate);
     }
+
+    window.deleteReportEntry = async (index) => {
+    if(!confirm("ต้องการลบรายงานรายการนี้ใช่หรือไม่?")) return;
+    
+    const selectedDate = document.getElementById('report-date-input').value;
+    const docId = `${currentUser.uid}_${selectedDate}`;
+    const docRef = db.collection('work_records').doc(docId);
+
+    try {
+        const doc = await docRef.get();
+        if (doc.exists) {
+            let reports = doc.data().reports;
+            reports.splice(index, 1); // ลบรายการตาม index ที่เลือก
+            await docRef.update({ reports: reports });
+            showNotification("ลบรายการแล้ว");
+            loadSentReports(); // รีโหลดรายการ
+        }
+    } catch (error) {
+        alert("ลบไม่สำเร็จ: " + error.message);
+    }
+};
 
     function switchRole(role) {
     if (role === 'member') {
