@@ -324,13 +324,13 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">ยินดีต้อนรับสู่</p>
+                        <p class="text-gray-500">Welcome to</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
                 </div>
                 <div class="card text-center">
-                    <p class="text-gray-400 text-sm">เวลาปัจจุบัน</p>
+                    <p class="text-gray-400 text-sm">Current Time</p>
                     <p id="current-time" class="text-5xl font-bold my-4"></p>
                     
                     <button id="checkin-btn" class="w-48 h-48 bg-sky-400 text-white rounded-full flex flex-col items-center justify-center mx-auto shadow-lg hover:bg-sky-500 transition-all duration-300 checkin-btn-anim">
@@ -351,7 +351,7 @@ aside .nav-item {
 
                 <div class="card space-y-4">
                     <div>
-                        <h3 class="font-semibold mb-3">ประเภทการทำงาน</h3>
+                        <h3 class="font-semibold mb-3">Work Type</h3>
                         <div id="work-type-selector" class="flex bg-gray-100 rounded-xl p-1">
                             <button data-work-type="in_factory" class="work-type-btn flex-1 p-2 rounded-lg bg-sky-500 text-white shadow">Factory</button>
                             <button data-work-type="on_site" class="work-type-btn flex-1 p-2 rounded-lg text-gray-600">On-site</button>
@@ -359,14 +359,14 @@ aside .nav-item {
                     </div>
                     
                     <div id="onsite-details-form" class="hidden pt-4 border-t border-gray-100 space-y-4">
-    <h3 class="font-semibold text-center mb-2 text-gray-700">เลือกบทบาทของคุณ</h3>
+    <h3 class="font-semibold text-center mb-2 text-gray-700">Select Your Role</h3>
     
     <div class="flex gap-3">
         <button id="role-member-btn" class="flex-1 py-3 bg-white border-2 border-sky-500 text-sky-600 rounded-xl font-bold hover:bg-sky-50 transition-all active-role">
-            📷 สแกน QR <br><span class="text-xs font-normal">(สมาชิก)</span>
+            📷 Scan QR <br><span class="text-xs font-normal">(Member)</span>
         </button>
         <button id="role-leader-btn" class="flex-1 py-3 bg-white border-2 border-gray-300 text-gray-500 rounded-xl font-bold hover:bg-gray-50 transition-all">
-            👑 สร้างห้อง <br><span class="text-xs font-normal">(หัวหน้าทีม)</span>
+            👑 Create Room <br><span class="text-xs font-normal">(Leader)</span>
         </button>
     </div>
 
@@ -374,26 +374,28 @@ aside .nav-item {
         <div id="reader" class="w-full rounded-xl overflow-hidden bg-black hidden"></div>
         <button id="start-scan-btn" class="w-full btn-primary py-3 flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-            เปิดกล้องสแกน QR
+            Open Camera to Scan QR
         </button>
-        <p id="scan-status" class="text-center text-sm text-gray-500">กดปุ่มเพื่อเริ่มสแกน</p>
+        <p id="scan-status" class="text-center text-sm text-gray-500">Tap button to start scan</p>
     </div>
 
     <div id="leader-section" class="hidden space-y-3">
-        <input id="room-project-input" type="text" placeholder="ชื่อโครงการ / Project No." class="w-full p-3 border border-gray-300 rounded-xl">
-        <input id="room-location-input" type="text" placeholder="ชื่อสถานที่ / ลูกค้า" class="w-full p-3 border border-gray-300 rounded-xl">
+        <input id="room-project-input" type="text" placeholder="Project Name / Project No." class="w-full p-3 border border-gray-300 rounded-xl">
+        <input id="room-location-input" type="text" placeholder="Location" class="w-full p-3 border border-gray-300 rounded-xl">
         
-        <button id="create-room-btn" class="w-full btn-primary py-3">สร้างห้อง Check-in</button>
+        <button id="create-room-btn" class="w-full btn-primary py-3">Create Check-in Room</button>
+        <p class="text-xs text-gray-400 mb-2 text-center">
+    *ระบบจะบันทึกเวลาเข้างานทันทีเมื่อกดสร้างห้อง</p>    
 
         <div id="room-qr-container" class="hidden flex flex-col items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
-            <p class="text-sm font-bold text-gray-600 mb-2">QR Code สำหรับทีม</p>
+            <p class="text-sm font-bold text-gray-600 mb-2">Team QR Code</p>
             <div id="qrcode" class="mb-4"></div>
-            <p class="text-xs text-gray-400 mb-2">ให้สมาชิกสแกนเพื่อ Check-in</p>
+            <p class="text-xs text-gray-400 mb-2">Members scan this to Check-in</p>
             
             <div class="w-full border-t pt-2">
-                <p class="text-xs font-bold text-gray-500 mb-2">สมาชิกที่เข้าร่วม:</p>
+                <p class="text-xs font-bold text-gray-500 mb-2">Joined Members:</p>
                 <ul id="room-members-list" class="text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto w-full text-center">
-                    <li class="text-gray-400 italic">รอสมาชิกสแกน...</li>
+                    <li class="text-gray-400 italic">Waiting for members...</li>
                 </ul>
             </div>
         </div>
@@ -401,16 +403,16 @@ aside .nav-item {
 </div>
 
                     <div class="pt-4 border-t border-gray-100">
-                         <h3 class="font-semibold mb-3">สถานะตำแหน่งปัจจุบัน</h3>
+                         <h3 class="font-semibold mb-3">Location Status</h3>
                          <div id="location-status" class="flex items-center p-3 rounded-xl bg-gray-100 text-gray-700">
                             <svg id="location-icon" class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
-                            <span id="location-text" class="font-medium">กำลังตรวจสอบตำแหน่ง...</span>
+                            <span id="location-text" class="font-medium">Verifying location...</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <h3 class="font-semibold mb-3">สรุปการทำงานวันนี้</h3>
+                    <h3 class="font-semibold mb-3">Daily Summary</h3>
                     <div id="summary-card-content" class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-500">Check-in:</span>
@@ -421,7 +423,7 @@ aside .nav-item {
                             <span id="summary-checkout-time" class="font-medium text-gray-400">-</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-500">ชั่วโมงทำงาน:</span>
+                            <span class="text-gray-500">Working Hours:</span>
                             <span id="summary-work-hours" class="font-medium text-gray-400">-</span>
                         </div>
                     </div>
@@ -429,7 +431,7 @@ aside .nav-item {
             </div>
 
             <div id="report-page" class="page space-y-6">
-    <h2 class="text-2xl font-bold">บันทึกรายงานประจำวัน</h2>
+    <h2 class="text-2xl font-bold">Daily Report</h2>
     <div class="card space-y-4">
         
         <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
@@ -473,7 +475,7 @@ aside .nav-item {
 
                         <div id="project-dropdown" class="relative mt-2">
                             <button id="project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                                <span id="project-selected-text" class="text-gray-500">Select Project NO</span>
+                                <span id="project-selected-text" class="text-gray-500">Select Project No...</span>
                                 <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                             </button>
                             <div id="project-panel" class="hidden absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -506,20 +508,20 @@ aside .nav-item {
 
                         <div id="custom-time-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg">
     <div>
-        <label class="text-xs font-medium text-gray-500">เวลาเริ่มต้น</label>
+        <label class="text-xs font-medium text-gray-500">Start:</label>
         <input type="time" id="custom-time-start-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
     </div>
     <div>
-        <label class="text-xs font-medium text-gray-500">เวลาสิ้นสุด</label>
+        <label class="text-xs font-medium text-gray-500">End:</label>
         <input type="time" id="custom-time-end-input" class="w-full mt-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-400 focus:outline-none">
     </div>
 </div>
                     </div>
-                    <button id="save-report-btn" class="btn-primary w-full py-3 text-base">บันทึกข้อมูล</button>
+                    <button id="save-report-btn" class="btn-primary w-full py-3 text-base">Save Report</button>
                 </div>
                 
                 <div class="space-y-4">
-                    <h3 class="font-semibold text-lg">รายงานที่ส่งวันนี้</h3>
+                    <h3 class="font-semibold text-lg">Today's Reports</h3>
                     <div id="sent-reports-container" class="space-y-3">
                         <p id="no-reports-message" class="text-center text-gray-500 text-sm py-4">ยังไม่ได้ส่งรายงานวันนี้</p>
                     </div>
@@ -2139,7 +2141,7 @@ saveReportBtn.addEventListener('click', async () => {
     if (project.includes('เลือก...')) return showNotification("กรุณาเลือกโครงการ", "warning");
     if (duration.includes('เลือก...')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
 
-    if (duration === 'กำหนดเวลา') {
+    if (duration === 'SOME TIME') {
         if (!customTimeStartInput.value || !customTimeEndInput.value) {
             return showNotification("กรุณากรอกเวลา", "warning");
         }
@@ -2388,24 +2390,16 @@ saveReportBtn.addEventListener('click', async () => {
         setupAdminAction('delete-project-btn', 'delete-project-selected-text', 'projects', 'delete');
 
         document.getElementById('duration-options').addEventListener('click', (e) => {
-            if (e.target && e.target.classList.contains('duration-option')) {
-                const selectedValue = e.target.textContent;
-                durationSelectedText.textContent = selectedValue;
-                durationSelectedText.classList.remove('text-gray-500');
-                document.getElementById('duration-panel').classList.add('hidden');
-                customTimeInputs.classList.toggle('hidden', selectedValue !== 'กำหนดเวลา');
-            }
-        });
-
-        document.getElementById('edit-modal-duration-options').addEventListener('click', (e) => {
-            if (e.target && e.target.classList.contains('duration-option')) {
-                const selectedValue = e.target.textContent;
-                editModalDurationSelectedText.textContent = selectedValue;
-                editModalDurationSelectedText.classList.remove('text-gray-500');
-                document.getElementById('edit-modal-duration-panel').classList.add('hidden');
-                editModalCustomTimeInputs.classList.toggle('hidden', selectedValue !== 'กำหนดเวลา');
-            }
-        });
+    if (e.target && e.target.classList.contains('duration-option')) {
+        const selectedValue = e.target.textContent;
+        durationSelectedText.textContent = selectedValue;
+        durationSelectedText.classList.remove('text-gray-500');
+        document.getElementById('duration-panel').classList.add('hidden');
+        
+        // แก้ไขบรรทัดนี้: เปลี่ยน 'กำหนดเวลา' เป็น 'SOME TIME'
+        customTimeInputs.classList.toggle('hidden', selectedValue !== 'SOME TIME');
+    }
+});
 
         document.getElementById('calendar-admin-add-holiday')?.addEventListener('click', () => {
             handleAddCalendarRule('holidays');
@@ -2775,7 +2769,7 @@ saveReportBtn.addEventListener('click', async () => {
                 };
 
                 await db.collection('work_records').doc(docId).set(workRecord);
-                showNotification("บันทึกเวลาเข้างานสำเร็จ!"); 
+                showNotification("Check-in successful!"); 
                 updateUIToCheckedIn();
 
                 const savedRecord = await db.collection('work_records').doc(docId).get();
@@ -2961,11 +2955,11 @@ saveReportBtn.addEventListener('click', async () => {
         if (distance <= ALLOWED_RADIUS_METERS) {
             locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-green-100 text-green-700";
             locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
-            locationText.textContent = `ในพื้นที่โรงงาน (รัศมี ${position.coords.accuracy.toFixed(0)} เมตร)`;
+            locationText.textContent = `In Factory Area (Accuracy: ${position.coords.accuracy.toFixed(0)} m)`;
         } else {
             locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-red-50 text-red-600 border border-red-100";
             locationIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>`;
-            locationText.textContent = `อยู่นอกพื้นที่ (ห่าง ${distance.toFixed(0)} ม.)`;
+            locationText.textContent = `Out of Area (${distance.toFixed(0)} m away)`;
         }
     }
     
@@ -3027,11 +3021,11 @@ saveReportBtn.addEventListener('click', async () => {
                 summaryCheckoutTime.classList.remove('text-gray-400');
                 summaryCheckoutTime.classList.add('text-red-500');
 
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชั่วโมง`;
+                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} hours`;
                 
                 // แสดงผล OT
                 if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} ชม.)`;
+                    summaryWorkHours.textContent += ` (OT ${overtimeHours} hrs)`;
                 }
             }
         } else {
@@ -4092,7 +4086,7 @@ checkoutBtn.addEventListener('click', async () => {
                 await batch.commit();
 
                 // Update UI
-                showNotification(`Check-out สำเร็จ! (${locationNote})`);
+                showNotification(`Check-out successful! (${locationNote})`);
                 updateUIToCompleted();
                 summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.add('text-red-500');
@@ -4397,16 +4391,16 @@ checkoutBtn.addEventListener('click', async () => {
     
 
     function resetReportForm() {
-        workTypeSelectedText.textContent = 'เลือกประเภทงาน...';
-        workTypeSelectedText.classList.add('text-gray-500');
-        projectSelectedText.textContent = 'เลือกโครงการ...';
-        projectSelectedText.classList.add('text-gray-500');
-        durationSelectedText.textContent = 'เลือกระยะเวลา...';
-        durationSelectedText.classList.add('text-gray-500');
-        customTimeInputs.classList.add('hidden');
-        customTimeStartInput.value = '';
-        customTimeEndInput.value = '';
-    }
+    workTypeSelectedText.textContent = 'Select Detail...';
+    workTypeSelectedText.classList.add('text-gray-500');
+    projectSelectedText.textContent = 'Select Project NO';
+    projectSelectedText.classList.add('text-gray-500');
+    durationSelectedText.textContent = 'Select Period...';
+    durationSelectedText.classList.add('text-gray-500');
+    customTimeInputs.classList.add('hidden');
+    customTimeStartInput.value = '';
+    customTimeEndInput.value = '';
+}
 
     function updateProfilePage(userData) {
         const profilePic = document.getElementById('profile-page-pic');
@@ -4487,7 +4481,6 @@ async function loadSentReports() {
     const container = document.getElementById('sent-reports-container');
     if (!container) return;
 
-    // ถ้าในช่องวันที่ไม่มีค่า ให้ใช้ค่าวันที่ปัจจุบัน (Today)
     const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
     const docId = `${currentUser.uid}_${selectedDate}`;
     
@@ -4497,18 +4490,25 @@ async function loadSentReports() {
 
         if (doc.exists) {
             const data = doc.data();
-            // ดึงจาก reports (Array ใหม่) หรือ report (Object เก่า)
             const reportsArray = data.reports || (data.report ? [data.report] : []);
 
             if (reportsArray.length > 0) {
-                // เรียงลำดับตามเวลาที่ส่ง (ถ้ามี) หรือเอาตามลำดับใน Array
                 reportsArray.forEach((item, index) => {
+                    // แปลง object เป็น string เพื่อใช้ใน function ลบ
+                    const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
+                    
                     htmlContent += `
-                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white">
+                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white relative group">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
                                     No.${index + 1}
                                 </span>
+                                <button class="delete-report-btn text-gray-300 hover:text-red-500 transition-colors" 
+                                        onclick="deleteReportItem('${docId}', ${item.id || index})">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
                             </div>
                             <h4 class="font-bold text-gray-800 text-base">${item.workType}</h4>
                             <div class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-600">
@@ -5312,15 +5312,26 @@ const openLeaveModal = () => {
             const project = editModalProjectSelectedText.textContent;
             let duration = editModalDurationSelectedText.textContent;
 
-            if (duration === 'กำหนดเวลา') {
-                const startTime = editModalCustomTimeStartInput.value;
-                const endTime = editModalCustomTimeEndInput.value;
-                if (startTime && endTime) {
-                    duration = `${startTime} - ${endTime}`;
-                } else {
-                    duration = 'กำหนดเวลา (ไม่สมบูรณ์)';
-                }
-            }
+            if (duration === 'SOME TIME') {
+    const startTime = editModalCustomTimeStartInput.value;
+    const endTime = editModalCustomTimeEndInput.value;
+
+    if (startTime && endTime) {
+        // บันทึกรูปแบบเวลา เช่น "09:00 - 11:00"
+        duration = `${startTime} - ${endTime}`;
+    } else {
+        // 1. เปลี่ยนข้อความเป็นภาษาอังกฤษ เพื่อไม่ให้ UI กลับเป็นไทย
+        duration = 'SOME TIME (Incomplete)'; 
+        
+        // 2. (แนะนำ) เพิ่มการแจ้งเตือนให้ผู้ใช้กรอกเวลาให้ครบ และหยุดการทำงานไม่ให้บันทึก
+        if (typeof showNotification === "function") {
+            showNotification("Please select both start and end times.", "warning");
+        } else {
+            alert("Please select both start and end times.");
+        }
+        return; // หยุดการทำงานของฟังก์ชันบันทึกทันทีเพื่อให้ผู้ใช้ไปแก้เวลาก่อน
+    }
+}
 
             const reportData = {
                 workType: (workType.includes('...') ? null : workType),
@@ -6880,68 +6891,68 @@ async function loadOtHistory() {
     // ฟังก์ชันโหลดข้อมูลรายงานตามวันที่เลือก (ฉบับสมบูรณ์)
     // ฟังก์ชันโหลดข้อมูลรายงาน (ฉบับใช้ปุ่มสีฟ้าเดิม)
     async function loadReportForSelectedDate() {
-        if (!currentUser) return;
-        
-        const selectedDate = reportDateInput.value;
-        if (!selectedDate) return;
+    if (!currentUser) return;
+    
+    const selectedDate = reportDateInput.value;
+    if (!selectedDate) return;
 
-        const docId = `${currentUser.uid}_${selectedDate}`;
-        
-        // สถานะกำลังโหลด
-        saveReportBtn.textContent = 'กำลังตรวจสอบข้อมูล...';
-        saveReportBtn.disabled = true;
+    const docId = `${currentUser.uid}_${selectedDate}`;
+    
+    saveReportBtn.textContent = 'Checking records...';
+    saveReportBtn.disabled = true;
 
-        try {
-            const doc = await db.collection('work_records').doc(docId).get();
+    try {
+        const doc = await db.collection('work_records').doc(docId).get();
+        
+        // ล้างฟอร์มเป็นภาษาอังกฤษก่อน
+        resetReportForm();
+
+        saveReportBtn.className = 'btn-primary w-full py-3 text-base';
+
+        if (doc.exists && doc.data().report) {
+            const report = doc.data().report;
             
-            resetReportForm();
+            // ใส่ข้อมูลเก่ากลับเข้าไป (ใช้ภาษาอังกฤษ)
+            workTypeSelectedText.textContent = report.workType || 'Select Detail...';
+            if (report.workType) workTypeSelectedText.classList.remove('text-gray-500');
+            
+            projectSelectedText.textContent = report.project || 'Select Project NO';
+            if (report.project) projectSelectedText.classList.remove('text-gray-500');
+            
+            // เช็คระยะเวลา
+            const standardDurations = [
+                'ALL (08:30 - 17:30)', 
+                'HALF DAY (08:30 - 12:00)', 
+                'HALF DAY (13:00 - 17:30)'
+            ];
 
-            // ★★★ บังคับใช้ Class เดิม (ปุ่มสีฟ้า) เสมอ ไม่ว่าจะสถานะไหน ★★★
-            saveReportBtn.className = 'btn-primary w-full py-3 text-base';
-
-            if (doc.exists && doc.data().report) {
-                // --- กรณีมีรายงานแล้ว (โหมดแก้ไข) ---
-                const report = doc.data().report;
+            if (report.duration && !standardDurations.includes(report.duration)) {
+                durationSelectedText.textContent = 'SOME TIME';
+                durationSelectedText.classList.remove('text-gray-500');
+                customTimeInputs.classList.remove('hidden');
                 
-                // คืนค่าข้อมูลลงในฟอร์ม
-                workTypeSelectedText.textContent = report.workType || 'เลือกประเภทงาน...';
-                if (report.workType) workTypeSelectedText.classList.remove('text-gray-500');
-                
-                projectSelectedText.textContent = report.project || 'เลือกโครงการ...';
-                if (report.project) projectSelectedText.classList.remove('text-gray-500');
-                
-                // คืนค่าระยะเวลา
-                const standardDurations = ['ทั้งวัน (08:30 - 17:30)', 'ครึ่งวันเช้า (08:30 - 12:00)', 'ครึ่งวันบ่าย (13:00 - 17:30)'];
-                if (report.duration && !standardDurations.includes(report.duration)) {
-                    durationSelectedText.textContent = 'กำหนดเวลา';
-                    durationSelectedText.classList.remove('text-gray-500');
-                    customTimeInputs.classList.remove('hidden');
-                    
-                    const times = report.duration.split(' - ');
-                    if (times.length === 2) {
-                        customTimeStartInput.value = times[0];
-                        customTimeEndInput.value = times[1];
-                    }
-                } else {
-                    durationSelectedText.textContent = report.duration || 'เลือกระยะเวลา...';
-                    if (report.duration) durationSelectedText.classList.remove('text-gray-500');
+                const times = report.duration.split(' - ');
+                if (times.length === 2) {
+                    customTimeStartInput.value = times[0];
+                    customTimeEndInput.value = times[1];
                 }
-
-                // ★ เปลี่ยนแค่ข้อความ (Style ปุ่มยังคงเป็นสีฟ้าเหมือนเดิม) ★
-                saveReportBtn.textContent = 'บันทึกการแก้ไข'; 
-
             } else {
-                // --- กรณีสร้างใหม่ ---
-                saveReportBtn.textContent = 'บันทึกข้อมูล';
+                durationSelectedText.textContent = report.duration || 'Select Period...';
+                if (report.duration) durationSelectedText.classList.remove('text-gray-500');
             }
 
-        } catch (error) {
-            console.error("Error loading report:", error);
-            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
-        } finally {
-            saveReportBtn.disabled = false;
+            saveReportBtn.textContent = 'Update Report'; 
+
+        } else {
+            saveReportBtn.textContent = 'Save Report';
         }
+
+    } catch (error) {
+        console.error("Error loading report:", error);
+    } finally {
+        saveReportBtn.disabled = false;
     }
+}
     
     // เพิ่ม Event Listener เมื่อเปลี่ยนวันที่ 
     if (reportDateInput) {
@@ -8132,6 +8143,44 @@ if(btnRefreshDash) {
     btnRefreshDash.addEventListener('click', loadAdminDashboardOverview);
 }
 
+window.deleteReportItem = async function(docId, reportId) {
+    // ใช้ showConfirmDialog ที่คุณมีอยู่แล้ว
+    showConfirmDialog(
+        "คุณแน่ใจหรือไม่ว่าต้องการลบรายงานนี้?",
+        async () => {
+            try {
+                const docRef = db.collection('work_records').doc(docId);
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    // ตรวจสอบว่ามีข้อมูลใน reports (Array) หรือไม่
+                    let reports = data.reports || (data.report ? [data.report] : []);
+                    
+                    // กรองเอาตัวที่ไม่ต้องการออก
+                    const updatedReports = reports.filter(r => (r.id || 0) !== reportId);
+                    
+                    // อัปเดตกลับไปที่ Firebase
+                    await docRef.update({
+                        reports: updatedReports,
+                        // ถ้ายังมีข้อมูลเหลือ ให้เอาตัวแรกไปใส่ใน field report (เพื่อรองรับระบบเก่า)
+                        report: updatedReports.length > 0 ? updatedReports[0] : null 
+                    });
+
+                    showNotification("Report deleted successfully", "success");
+                    
+                    // เรียกโหลดรายการใหม่มาแสดงผลทันที
+                    if (typeof loadSentReports === "function") {
+                        loadSentReports();
+                    }
+                }
+            } catch (error) {
+                console.error("Error deleting report:", error);
+                showNotification("Delete failed: " + error.message, "error");
+            }
+        }
+    );
+};
 
 });
 
