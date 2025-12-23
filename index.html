@@ -4231,6 +4231,15 @@ checkoutBtn.addEventListener('click', async () => {
                 loadAllUsersForDropdown();
                 if (typeof loadPendingLeaveRequests === 'function') loadPendingLeaveRequests();
                 if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests(); // ถ้ามีฟังก์ชันนี้
+                
+                if (pageId === 'report-page') {
+                // 1. ถ้ายังไม่มีการเลือกวันที่ ให้ตั้งค่าเป็น "วันนี้" โดยอัตโนมัติ
+                if (!reportDateInput.value) {
+                    reportDateInput.value = toLocalDateKey(new Date());
+                }
+                // 2. สั่งโหลดรายการที่ส่งแล้วมาแสดงทันที
+                loadSentReports();
+            }
 
                 // ★★★ Safety Check: เช็คก่อนว่ามีตารางนี้ไหม ค่อยสั่งล้าง ★★★
                 const summaryContainer = document.getElementById('employee-summary-container-admin');
@@ -4384,6 +4393,7 @@ checkoutBtn.addEventListener('click', async () => {
     if (!currentUser) return;
 
     const container = document.getElementById('sent-reports-container');
+    // ใช้ค่าจาก input หรือถ้าไม่มีให้ใช้ "วันนี้"
     const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
     const docId = `${currentUser.uid}_${selectedDate}`;
     
@@ -4394,7 +4404,6 @@ checkoutBtn.addEventListener('click', async () => {
             const reports = doc.data().reports;
             let html = '';
             
-            // วนลูปสร้างการ์ดของแต่ละโปรเจกต์
             reports.forEach((item, index) => {
                 html += `
                     <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white">
@@ -4416,7 +4425,7 @@ checkoutBtn.addEventListener('click', async () => {
             });
             container.innerHTML = html;
         } else {
-            container.innerHTML = `<div class="text-center py-6 text-gray-400 text-sm">ยังไม่มีรายงานของวันนี้</div>`;
+            container.innerHTML = `<div class="text-center py-6 text-gray-400 text-sm">ยังไม่มีรายงานของวันที่เลือก</div>`;
         }
     } catch (error) {
         console.error("Load Reports Error:", error);
@@ -6806,6 +6815,7 @@ async function loadOtHistory() {
             const doc = await db.collection('work_records').doc(docId).get();
             
             resetReportForm();
+            loadSentReports();
 
             // ★★★ บังคับใช้ Class เดิม (ปุ่มสีฟ้า) เสมอ ไม่ว่าจะสถานะไหน ★★★
             saveReportBtn.className = 'btn-primary w-full py-3 text-base';
