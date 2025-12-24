@@ -1114,7 +1114,7 @@ aside .nav-item {
             <div id="calendar-page" class="page space-y-6">
                 
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">ปฏิทินการทำงาน</h2>
+                    <h2 class="text-2xl font-bold">Calendar</h2>
                     <button id="show-leave-form-btn" class="btn-primary !py-2 !px-4 text-sm">
                         + ยื่นใบลา
                     </button>
@@ -1170,21 +1170,21 @@ aside .nav-item {
         </div>
         
         <div class="mt-5 pt-4 border-t border-gray-100">
-            <h3 class="text-sm font-semibold text-gray-600 mb-3">สรุปข้อมูล (ตามช่วงวันที่เลือก)</h3>
+            <h3 class="text-sm font-semibold text-gray-600 mb-3">Work Summary</h3>
             
             <div class="grid grid-cols-3 gap-3 text-center">
                 <div class="bg-sky-50 p-3 rounded-xl border border-sky-100">
-                    <p class="text-xs text-sky-700 font-semibold">ชั่วโมงปกติ</p>
+                    <p class="text-xs text-sky-700 font-semibold">Regular Hours</p>
                     <p id="profile-summary-hours" class="text-2xl font-bold text-sky-600 mt-1">-</p> 
                 </div>
                 
                 <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                    <p class="text-xs text-orange-700 font-semibold">OT รวม</p>
+                    <p class="text-xs text-orange-700 font-semibold">Overtime</p>
                     <p id="profile-summary-ot" class="text-2xl font-bold text-orange-600 mt-1">-</p> 
                 </div>
                 
                 <div class="bg-green-50 p-3 rounded-xl border border-green-100">
-                    <p class="text-xs text-green-700 font-semibold">จำนวนวัน</p>
+                    <p class="text-xs text-green-700 font-semibold">Days</p>
                     <p id="profile-summary-days" class="text-2xl font-bold text-green-600 mt-1">-</p> 
                 </div>
             </div>
@@ -1194,14 +1194,14 @@ aside .nav-item {
                     <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </span>
-                    <span class="font-semibold text-gray-700 text-sm">เช็คสถานะใบลา</span>
+                    <span class="font-semibold text-gray-700 text-sm">Leave Status</span>
                 </button>
                 
                 <button id="btn-my-ot-history" class="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors">
                     <span class="bg-orange-100 text-orange-600 p-1.5 rounded-lg">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </span>
-                    <span class="font-semibold text-gray-700 text-sm">เช็คสถานะ OT</span>
+                    <span class="font-semibold text-gray-700 text-sm">OT Status</span>
                 </button>
             </div>
 
@@ -1210,13 +1210,13 @@ aside .nav-item {
 
     <div class="space-y-4">
         <div class="flex justify-between items-center">
-             <h3 class="font-bold text-xl text-gray-800">ประวัติการทำงาน</h3>
+             <h3 class="font-bold text-xl text-gray-800">Work History</h3>
              
              <div class="relative inline-block shadow-sm rounded-lg">
                 <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
-                    <option value="7">7 วันล่าสุด</option>
-                    <option value="this_month">เดือนนี้</option>
-                    <option value="last_month">เดือนที่แล้ว</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="this_month">This Month</option>
+                    <option value="last_month">Last Month</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1231,7 +1231,7 @@ aside .nav-item {
 
     <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        <span>ออกจากระบบ</span>
+        <span>Logout</span>
     </button>
 </div>
 
@@ -2708,7 +2708,7 @@ saveReportBtn.addEventListener('click', async () => {
                                     ${report.workType}
                                 </span>
                                 <span class="bg-gray-50 text-gray-600 text-xs px-2.5 py-1 rounded-lg font-medium border border-gray-100">
-                                    เวลา: ${report.duration}
+                                    Period: ${report.duration}
                                 </span>
                             </div>
                         </div>
@@ -3896,7 +3896,7 @@ if (exportPayrollBtn) {
             else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
 
             container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
-            summaryDaysEl.textContent = '0 วัน';
+            summaryDaysEl.textContent = '0 Days';
             return;
         }
 
