@@ -3909,41 +3909,36 @@ if (exportPayrollBtn) {
         recordsSnapshot.forEach(doc => {    
             const record = doc.data();
             const checkinTime = record.checkIn.timestamp.toDate();
-            const report = record.report;
 
-            // const dateKey = toLocalDateKey(checkinTime); // (ไม่ได้ใช้ บรรทัดนี้ comment ไว้ได้)
+            // --- ส่วนที่แก้ไข: ตรวจสอบรายงานจากทั้งแบบใหม่ (Array: reports) และแบบเก่า (Object: report) ---
+            const reportsArray = record.reports || (record.report ? [record.report] : []);
+            const hasReport = reportsArray.length > 0;
+            // -------------------------------------------------------------------------
+
             let checkoutTime;
             let regularWorkHours = 0;
             let overtimeHours = 0;
             let checkoutTimeStr = '-';
 
-            // [ส่วนที่แก้ไข Logic] : คำนวณใหม่ถ้า DB เป็น 0
-            // ---------------------------------------------------------
             if (record.status === 'completed' && record.checkOut) {
                 checkoutTime = record.checkOut.timestamp.toDate();
                 checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
-                // 1. คำนวณค่าจริงทางคณิตศาสตร์ก่อนเสมอ
                 const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
                 regularWorkHours = timeCalc.regularWorkHours;
 
-                // 2. ตรวจสอบค่าใน Database
-                // ถ้ามีค่า > 0 ให้ใช้ค่าจาก DB
                 if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
                     overtimeHours = record.overtime.hours;
                 } else {
-                    // ถ้า DB เป็น 0 หรือไม่มี ให้ใช้ค่าที่คำนวณได้ (Fallback)
                     overtimeHours = timeCalc.overtimeHours;
                 }
             }
-            // ---------------------------------------------------------
 
-            // สะสมยอดรวม
             totalRegularHours += regularWorkHours;
             totalOtHours += overtimeHours;
             accumulatorRegularWorkHours += regularWorkHours;
 
-            // ส่วนของการ์ดแสดงผล (โครงสร้างเดิมที่คุณต้องการ)
+            // สร้าง HTML สำหรับรายการประวัติ
             historyHtml += `
             <div class="flex space-x-4">
                 <div class="flex flex-col items-center">
@@ -3967,12 +3962,12 @@ if (exportPayrollBtn) {
                     </div>
 
                     <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ (ไม่รวม OT)">
+                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
                             <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
                         </div>
 
-                        <div class="flex items-center gap-1.5" title="Overtime รวม">
+                        <div class="flex items-center gap-1.5" title="Overtime">
                             <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                         </div>
@@ -3994,26 +3989,18 @@ if (exportPayrollBtn) {
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            ${report ? `
-                                <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.234 3.125a.75.75 0 011.06 0l2.625 2.625a.75.75 0 010 1.06l-2.625 2.625a.75.75 0 01-1.06-1.06L12.44 7.17 9.83 9.83l-1.25-1.25a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.03-.07zM9.83 12.83l-1.25 1.25a.75.75 0 01-1.06 0L4.895 11.455a.75.75 0 010-1.06l2.625-2.625a.75.75 0 011.06 1.06L7.33 10.08l2.5 2.5.001.001z" clip-rule="evenodd" /><path d="M10 2.25a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V6a.75.75 0 01-1.5 0V4.86a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 019.25 3.251V3a.75.75 0 01.75-.75z" /><path d="M11 12.75a.75.75 0 01.75.75v.251a3.001 3.001 0 012.38 1.34l.32.4a.75.75 0 01-.98.98l-.32-.4a1.5 1.5 0 00-1.19-.67V16a.75.75 0 01-1.5 0v-.76a1.5 1.5 0 00-1.19.67l-.32.4a.75.75 0 11-.98-.98l.32-.4A3.001 3.001 0 0110.25 13.751V13.5a.75.75 0 01.75-.75z" /></svg>
-                                    ${report.workType}
+                            ${hasReport ? `
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    ส่งรายงานแล้ว (${reportsArray.length} รายการ)
                                 </span>
-                                
-                                ${report.project === 'FAC' ? `
-                                    <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.183 2.25c.348-.7 1.286-.7 1.634 0l.963 1.947a.75.75 0 00.563.41l2.15.312c.732.106 1.025.99.494 1.506l-1.556 1.516a.75.75 0 00-.216.66l.367 2.14c.124.729-.64.128-1.283.3l-1.928.898a.75.75 0 00-.58 0l-1.928-.898c-.643-.172-1.407.428-1.283-.3l.367-2.14a.75.75 0 00-.216-.66L2.3 6.43c-.53-.516-.238-1.4.494-1.506l2.15-.312a.75.75 0 00.563-.41l.963-1.947z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M10 12.25a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
-                                        ${report.project} (Factory)
-                                    </span>
-                                ` : `
-                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.5 3A2.5 2.5 0 003 5.5v2.879a2.5 2.5 0 00.732 1.767l6.5 6.5a2.5 2.5 0 003.536 0l2.878-2.878a2.5 2.5 0 000-3.536l-6.5-6.5A2.5 2.5 0 008.379 3H5.5zM6 7a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-                                        ${report.project}
-                                    </span>
-                                `}
                             ` : `
                                 <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" /></svg>
+                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" />
+                                    </svg>
                                     ยังไม่ส่งรายงาน
                                 </span>
                             `}
