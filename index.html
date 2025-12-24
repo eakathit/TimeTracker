@@ -641,7 +641,8 @@ aside .nav-item {
                 </div>
                 
                 <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
-    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+        
         <div class="grid grid-cols-2 gap-3">
             <div class="relative">
                 <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
@@ -659,9 +660,32 @@ aside .nav-item {
                 </select>
             </div>
         </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ตั้งแต่ (Start Date)</label>
+                <input type="date" id="leave-history-start-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ถึง (End Date)</label>
+                <input type="date" id="leave-history-end-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 outline-none">
+            </div>
+        </div>
+
+        <div class="relative">
+            <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ประเภทการลา</label>
+            <select id="leave-history-type-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
+                <option value="">ทุกประเภท (All Types)</option>
+                <option value="annual">ลาพักร้อน (Annual Leave)</option>
+                <option value="sick">ลาป่วย (Sick Leave)</option>
+                <option value="personal">ลากิจ (Personal Leave)</option>
+                <option value="maternity">ลาคลอด (Maternity Leave)</option>
+            </select>
+        </div>
+
         <button id="leave-history-search-btn" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            ค้นหาประวัติ
+            ค้นหาประวัติการลา
         </button>
     </div>
 
@@ -908,6 +932,11 @@ aside .nav-item {
                     data-target="tab-payroll">
                 Payroll
             </button>
+
+            <button class="ts-tab-btn whitespace-nowrap py-3 border-b-2 font-medium text-sm transition-all border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" 
+                data-target="tab-summary">
+            Summary Statistics
+        </button>
         </nav>
     </div>
 
@@ -1053,6 +1082,32 @@ aside .nav-item {
             </div>
         </div>
     </div>
+
+    <div id="tab-summary" class="ts-tab-content hidden space-y-6 animate-fade-in">
+    <div class="card border border-gray-200 bg-white">
+        <div class="p-4 bg-sky-50 border-b border-sky-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h3 class="font-bold text-sky-800 text-lg">Annual Attendance Statistics</h3>
+                <p class="text-xs text-sky-600">สรุปข้อมูล ขาด ลา มาสาย และ OT รายปี</p>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <select id="summary-stat-user-select" class="flex-1 md:w-56 h-10 px-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                    <option value="">-- เลือกพนักงาน --</option>
+                </select>
+                <select id="summary-stat-year-select" class="w-28 h-10 px-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                    </select>
+            </div>
+        </div>
+
+        <div id="summary-stat-results" class="p-6 min-h-[300px]">
+            <div class="flex flex-col items-center justify-center py-20 text-gray-400">
+                <svg class="w-12 h-12 mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <p class="text-sm">กรุณาเลือกพนักงานเพื่อดูสถิติภาพรวมปีนี้</p>
+            </div>
+        </div>
+        
+    </div>
+</div>
 
 </div>
 
@@ -5768,11 +5823,12 @@ async function loadPendingLeaveRequests() {
     // [ปรับปรุง] --- 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน ---
 // [FIXED] ฟังก์ชันโหลดรายชื่อพนักงาน แบบปลอดภัย (Safety Check)
 async function loadAllUsersForDropdown() {
-    // 1. พยายามดึง Element ทั้งหมดมาก่อน
+    // 1. ดึง Element ทั้งหมด (เพิ่ม statUserSelect เข้ามา)
     const editUserSelect = document.getElementById('edit-user-select');
     const summaryEmployeeSelect = document.getElementById('summary-employee-select');
     const leaveHistoryUserSelect = document.getElementById('leave-history-user-filter');
-    const otHistoryUserSelect = document.getElementById('ot-history-user-filter'); // เพิ่มอันนี้ด้วยเผื่อมี
+    const otHistoryUserSelect = document.getElementById('ot-history-user-filter');
+    const statUserSelect = document.getElementById('summary-stat-user-select'); // << เพิ่มบรรทัดนี้
 
     try {
         const usersSnapshot = await db.collection('users').orderBy('fullName').get();
@@ -5782,19 +5838,19 @@ async function loadAllUsersForDropdown() {
             if (element) element.innerHTML = `<option value="">${defaultText}</option>`;
         };
 
-        // รีเซ็ตทุกอันที่มี
+        // รีเซ็ตทุก Dropdown
         safeReset(editUserSelect, "--- เลือกพนักงาน ---");
         safeReset(summaryEmployeeSelect, "พนักงานทั้งหมด");
         safeReset(leaveHistoryUserSelect, "พนักงานทั้งหมด");
         safeReset(otHistoryUserSelect, "พนักงานทั้งหมด");
+        safeReset(statUserSelect, "--- เลือกพนักงาน ---"); // << ตอนนี้จะไม่ Error แล้ว
 
-        // 3. วนลูปใส่รายชื่อ
+        // 3. วนลูปใส่รายชื่อพนักงาน
         usersSnapshot.forEach(doc => {
             const user = doc.data();
             const optionText = user.fullName || doc.id;
             const optionValue = doc.id;
 
-            // ฟังก์ชันย่อย: ช่วยสร้าง Option (ถ้า Element มีอยู่จริง)
             const safeAppend = (element) => {
                 if (element) {
                     const option = document.createElement('option');
@@ -5804,141 +5860,120 @@ async function loadAllUsersForDropdown() {
                 }
             };
 
-            // ใส่รายชื่อลงในทุก Dropdown ที่มีอยู่จริง
+            // ใส่รายชื่อลงในทุก Dropdown
             safeAppend(editUserSelect);
             safeAppend(summaryEmployeeSelect);
             safeAppend(leaveHistoryUserSelect);
             safeAppend(otHistoryUserSelect);
+            safeAppend(statUserSelect); // << เพิ่มบรรทัดนี้เพื่อให้ชื่อไปโผล่ในหน้า Summary
         });
 
     } catch (error) {
         console.error("Error loading users:", error);
-        // ถ้า Error ให้แสดงข้อความแจ้งเตือนใน Dropdown ที่มีอยู่
-        const safeError = (element) => { 
-            if (element) element.innerHTML = '<option value="">โหลดข้อมูลล้มเหลว</option>'; 
-        };
-        safeError(editUserSelect);
-        safeError(summaryEmployeeSelect);
     }
 }
 
     async function loadLeaveHistory() {
-        const listContainer = document.getElementById('leave-history-list');
-        // FIX: ต้องตรวจสอบและสร้าง element ใหม่ถ้าถูกลบไป
-        let loadingMsg = document.getElementById('leave-history-loading-msg'); 
-        
-        if (!listContainer) {
-            console.error("Leave history elements not found!");
+    const listContainer = document.getElementById('leave-history-list');
+    if (!listContainer) return;
+
+    // ดึงค่าจาก Filters (ตรวจสอบ ID ให้ตรงกับ HTML)
+    const statusFilter = document.getElementById('leave-history-status-filter')?.value || '';
+    const userFilter = document.getElementById('leave-history-user-filter')?.value || '';
+    const typeFilter = document.getElementById('leave-history-type-filter')?.value || '';
+    const startFilter = document.getElementById('leave-history-start-filter')?.value || '';
+    const endFilter = document.getElementById('leave-history-end-filter')?.value || '';
+
+    // แสดงสถานะกำลังโหลด
+    listContainer.innerHTML = `
+        <div class="flex flex-col items-center py-12 text-gray-400">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mb-2"></div>
+            <p class="text-sm">กำลังค้นหาข้อมูล...</p>
+        </div>
+    `;
+
+    try {
+        let query = db.collection('leave_requests');
+
+        // การกรองข้อมูล
+        if (statusFilter) query = query.where('status', '==', statusFilter);
+        if (userFilter) query = query.where('userId', '==', userFilter);
+        if (typeFilter) query = query.where('leaveType', '==', typeFilter);
+
+        if (startFilter) {
+            const start = new Date(startFilter);
+            start.setHours(0, 0, 0, 0);
+            query = query.where('startDate', '>=', firebase.firestore.Timestamp.fromDate(start));
+        }
+
+        if (endFilter) {
+            const end = new Date(endFilter);
+            end.setHours(23, 59, 59, 999);
+            query = query.where('startDate', '<=', firebase.firestore.Timestamp.fromDate(end));
+        }
+
+        // จัดลำดับ (สำคัญ: ถ้า Error ให้ดูใน Console เพื่อคลิกสร้าง Index ของ Firebase)
+        query = query.orderBy('startDate', 'desc');
+
+        const querySnapshot = await query.get();
+
+        if (querySnapshot.empty) {
+            listContainer.innerHTML = `
+                <div class="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <p class="text-gray-400 text-sm">ไม่พบข้อมูลการลาที่ตรงตามเงื่อนไข</p>
+                </div>
+            `;
             return;
         }
 
-        // หาก loadingMsg ไม่มีอยู่ (ถูกล้างไปในการค้นหาก่อนหน้า) ให้สร้างใหม่
-        if (!loadingMsg) {
-            loadingMsg = document.createElement('p');
-            loadingMsg.id = 'leave-history-loading-msg';
-            loadingMsg.className = 'text-center text-gray-400 text-sm py-4';
-        }
+        listContainer.innerHTML = '';
 
-        listContainer.innerHTML = ''; // ล้างของเก่า
-        loadingMsg.textContent = 'กำลังโหลดประวัติ...';
-        listContainer.appendChild(loadingMsg);
-
-        // 1. ดึงค่าจากฟิลเตอร์
-        const statusFilter = document.getElementById('leave-history-status-filter').value;
-        const userFilter = document.getElementById('leave-history-user-filter').value;
-
-        try {
-            let query = db.collection('leave_requests');
-
-            // 2. สร้าง Query ตามฟิลเตอร์
-            if (statusFilter) {
-                query = query.where('status', '==', statusFilter);
-            }
-            if (userFilter) {
-                query = query.where('userId', '==', userFilter);
-            }
+        querySnapshot.forEach(doc => {
+            const leave = doc.data();
+            const docId = doc.id;
             
-            // 3. เรียงลำดับ (ต้องสร้าง Index ใน Firestore ถ้า Query ซับซ้อน)
-            // ถ้าใช้แค่ filter เดียว ให้เรียงตาม submittedAt
-            if (!statusFilter || !userFilter) {
-                // query = query.orderBy('submittedAt', 'desc');
-            }
-            // (หมายเหตุ: ถ้าใช้ filter 2 ช่องพร้อมกัน อาจต้องสร้าง Composite Index ใน Firebase)
+            const startStr = leave.startDate ? leave.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            const endStr = leave.endDate ? leave.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            const submittedStr = leave.submittedAt ? leave.submittedAt.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : '-';
 
-            const querySnapshot = await query.get();
+            let statusConfig = {
+                pending: { label: 'รออนุมัติ', class: 'bg-yellow-100 text-yellow-700' },
+                approved: { label: 'อนุมัติแล้ว', class: 'bg-green-100 text-green-700' },
+                rejected: { label: 'ไม่อนุมัติ', class: 'bg-red-100 text-red-700' }
+            };
+            const status = statusConfig[leave.status] || { label: leave.status, class: 'bg-gray-100 text-gray-700' };
 
-            if (querySnapshot.empty) {
-                loadingMsg.textContent = 'ไม่พบประวัติใบลาตามเงื่อนไขที่เลือก';
-                return;
-            }
-
-            listContainer.innerHTML = ''; // ล้าง "กำลังโหลด"
-
-            querySnapshot.forEach(doc => {
-                const leave = doc.data();
-                const docId = doc.id;
-
-                const startDate = leave.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
-                const endDate = leave.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
-
-                // 4. กำหนดสีและข้อความของสถานะ
-                let statusText, statusColorClass;
-                switch (leave.status) {
-                    case 'approved':
-                        statusText = 'อนุมัติแล้ว';
-                        statusColorClass = 'bg-green-100 text-green-800';
-                        break;
-                    case 'rejected':
-                        statusText = 'ไม่อนุมัติ';
-                        statusColorClass = 'bg-red-100 text-red-800';
-                        break;
-                    default:
-                        statusText = 'รออนุมัติ';
-                        statusColorClass = 'bg-yellow-100 text-yellow-800';
-                }
-
-                // [ใหม่] สร้างข้อความแสดงผลวันที่/เวลา
-                let dateInfoText = '';
-                if (leave.durationType === 'hourly' && leave.startTime && leave.endTime) {
-                    // สำหรับลารายชั่วโมง (ใช้ startDate ที่ format แล้ว)
-                    dateInfoText = `${startDate} (${leave.startTime} - ${leave.endTime})`;
-                } else {
-                    // สำหรับลาเต็มวัน (แบบเดิม)
-                    dateInfoText = `${startDate} ถึง ${endDate}`;
-                }
-
-
-                const cardHTML = `
-                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <p class="font-semibold">${leave.userName}</p>
-                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${statusColorClass}">${statusText}</span>
+            const cardHTML = `
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-3">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-3">
+                            <img src="${leave.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                                 class="w-10 h-10 rounded-full object-cover">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">${leave.userName || 'ไม่ระบุชื่อ'}</h4>
+                                <p class="text-[10px] text-gray-400">ยื่นเมื่อ: ${submittedStr}</p>
                             </div>
-                            <p class="text-sm font-medium text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
-                            
-                            <p class="text-sm text-gray-500 font-medium">${dateInfoText}</p>
-
                         </div>
+                        <span class="text-[10px] px-2.5 py-1 rounded-full font-bold ${status.class}">
+                            ${status.label}
+                        </span>
                     </div>
-                    <p class="text-sm text-gray-700 mt-3 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${leave.reason}</p>
-                    ${leave.status !== 'pending' ? `<p class="text-xs text-gray-400 mt-2 text-right">จัดการโดย: ${leave.approvedBy || 'N/A'}</p>` : ''}
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <p class="text-xs font-bold text-sky-700">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
+                        <p class="text-xs text-gray-600">
+                            📅 ${leave.durationType === 'hourly' ? `${startStr} (${leave.startTime}-${leave.endTime})` : `${startStr} ถึง ${endStr}`}
+                        </p>
+                    </div>
                 </div>
-                `;
-                listContainer.innerHTML += cardHTML;
-            });
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
 
-        } catch (error) {
-            console.error("Error loading leave history:", error);
-            loadingMsg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
-            // (ถ้า error เกี่ยวกับ Index, Firebase จะบอกใน Console)
-            if (error.code === 'failed-precondition') {
-                loadingMsg.textContent = 'Error: ต้องสร้าง Index ใน Firestore สำหรับการค้นหานี้';
-            }
-        }
+    } catch (error) {
+        console.error("Error:", error);
+        listContainer.innerHTML = `<p class="text-red-500 text-xs text-center py-10">Error: ${error.message}</p>`;
     }
+}
 
     const leaveListContainer = document.getElementById('leave-approval-list');
     if (leaveListContainer) {
@@ -8180,6 +8215,103 @@ window.deleteReportItem = async function(docId, reportId) {
         }
     );
 };
+
+async function loadTimesheetSummary() {
+    const userId = document.getElementById('summary-stat-user-select').value;
+    const year = parseInt(document.getElementById('summary-stat-year-select').value);
+    const container = document.getElementById('summary-stat-results');
+
+    if (!userId || !year) return;
+
+    container.innerHTML = `<div class="flex justify-center py-20"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div></div>`;
+
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59);
+
+    try {
+        // 1. ดึงข้อมูลบันทึกเวลา
+        const recordsSnap = await db.collection('work_records')
+            .where('userId', '==', userId)
+            .where('date', '>=', startOfYear)
+            .where('date', '<=', endOfYear)
+            .get();
+
+        // 2. ดึงข้อมูลการลาที่อนุมัติแล้ว
+        const leavesSnap = await db.collection('leave_requests')
+            .where('userId', '==', userId)
+            .where('status', '==', 'approved')
+            .where('startDate', '>=', firebase.firestore.Timestamp.fromDate(startOfYear))
+            .where('startDate', '<=', firebase.firestore.Timestamp.fromDate(endOfYear))
+            .get();
+
+        let stats = { late: 0, ot: 0, sick: 0, annual: 0, absent: 0 };
+
+        recordsSnap.forEach(doc => {
+            const data = doc.data();
+            const cin = data.checkIn.timestamp.toDate();
+            // เช็คสายหลัง 08:30
+            if (cin.getHours() > 8 || (cin.getHours() === 8 && cin.getMinutes() > 30)) stats.late++;
+            // เก็บ OT
+            if (data.overtime && data.overtime.hours) stats.ot += data.overtime.hours;
+        });
+
+        leavesSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.leaveType === 'sick') stats.sick++;
+            else stats.annual++;
+        });
+
+        // 3. Render Dashboard UI
+        container.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-center">
+                    <p class="text-[10px] font-bold text-orange-400 uppercase tracking-wider">มาสาย (Late)</p>
+                    <p class="text-3xl font-bold text-orange-600 mt-1">${stats.late}</p>
+                    <p class="text-[10px] text-orange-400 mt-1">ครั้งในปีนี้</p>
+                </div>
+                <div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center">
+                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">OT สะสม</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-1">${stats.ot.toFixed(1)}</p>
+                    <p class="text-[10px] text-blue-400 mt-1">ชั่วโมงรวม</p>
+                </div>
+                <div class="p-4 bg-red-50 border border-red-100 rounded-2xl text-center">
+                    <p class="text-[10px] font-bold text-red-400 uppercase tracking-wider">ลาป่วย (Sick)</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1">${stats.sick}</p>
+                    <p class="text-[10px] text-red-400 mt-1">วัน/ปี</p>
+                </div>
+                <div class="p-4 bg-green-50 border border-green-100 rounded-2xl text-center">
+                    <p class="text-[10px] font-bold text-green-400 uppercase tracking-wider">ลากิจ/พักร้อน</p>
+                    <p class="text-3xl font-bold text-green-600 mt-1">${stats.annual}</p>
+                    <p class="text-[10px] text-green-400 mt-1">วัน/ปี</p>
+                </div>
+            </div>
+            <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <div class="p-2 bg-white rounded-lg shadow-sm font-bold text-sky-600 text-sm">i</div>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    ข้อมูลนี้สรุปจากการบันทึกเวลาจริงและใบลาที่ได้รับการอนุมัติแล้วเท่านั้น หากข้อมูลไม่ถูกต้อง กรุณาตรวจสอบการอนุมัติใบลาในระบบ
+                </p>
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = `<p class="text-center text-red-500">เกิดข้อผิดพลาด: ${e.message}</p>`;
+    }
+}
+
+// ผูก Event เพิ่มเติมตอนเริ่มระบบ
+document.getElementById('summary-stat-user-select')?.addEventListener('change', loadTimesheetSummary);
+document.getElementById('summary-stat-year-select')?.addEventListener('change', loadTimesheetSummary);
+
+// เติมปีใน Dropdown (ย้อนหลัง 2 ปี ถึงปัจจุบัน)
+const yearSelect = document.getElementById('summary-stat-year-select');
+if (yearSelect) {
+    const curYear = new Date().getFullYear();
+    for (let y = curYear; y >= curYear - 2; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = `ปี ${y + 543}`;
+        yearSelect.appendChild(opt);
+    }
+}
 
 });
 
