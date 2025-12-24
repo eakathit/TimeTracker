@@ -1,4 +1,4 @@
-const CACHE_NAME = "timetracker-v2.5"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v2.6"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
