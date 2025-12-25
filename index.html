@@ -334,7 +334,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">Welcome to</p>
+                        <p class="text-gray-500">Welcome to Application</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -612,7 +612,7 @@ aside .nav-item {
 </div>
 
 <div id="admin-approvals-page" class="page space-y-6 pb-20">
-    <div class="max-w-6xl mx-auto w-full space-y-6">
+    <div class="max-w-5xl mx-auto w-full space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -625,7 +625,7 @@ aside .nav-item {
 
     <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: 25px;">
 
-        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
                     📄 Leave Management
                 </h3>
@@ -647,7 +647,7 @@ aside .nav-item {
                 
                 <div id="leave-pending-content" class="leave-tab-content space-y-4">
                     <div id="leave-approval-list" class="space-y-3">
-                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
+                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-20">กำลังโหลด...</p>
                     </div>
                 </div>
                 
@@ -659,9 +659,9 @@ aside .nav-item {
                 <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
                 <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
                     <option value="">ทั้งหมด (All Status)</option>
-                    <option value="pending">🟡 รออนุมัติ</option>
-                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                    <option value="rejected">🔴 ไม่อนุมัติ</option>
+                    <option value="pending">รออนุมัติ</option>
+                    <option value="approved">อนุมัติแล้ว</option>
+                    <option value="rejected">ไม่อนุมัติ</option>
                 </select>
             </div>
             <div class="relative">
@@ -670,28 +670,6 @@ aside .nav-item {
                     <option value="">ทุกคน (All Staff)</option>
                 </select>
             </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ตั้งแต่ (Start Date)</label>
-                <input type="date" id="leave-history-start-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 outline-none">
-            </div>
-            <div>
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ถึง (End Date)</label>
-                <input type="date" id="leave-history-end-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-sky-100 outline-none">
-            </div>
-        </div>
-
-        <div class="relative">
-            <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">ประเภทการลา</label>
-            <select id="leave-history-type-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                <option value="">ทุกประเภท (All Types)</option>
-                <option value="annual">ลาพักร้อน (Annual Leave)</option>
-                <option value="sick">ลาป่วย (Sick Leave)</option>
-                <option value="personal">ลากิจ (Personal Leave)</option>
-                <option value="maternity">ลาคลอด (Maternity Leave)</option>
-            </select>
         </div>
 
         <button id="leave-history-search-btn" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
@@ -712,7 +690,7 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col h-[600px]">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]">
             <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
                     ⏰ OT Management
@@ -735,7 +713,7 @@ aside .nav-item {
                 
                 <div id="ot-pending-content" class="ot-tab-content space-y-4">
                     <div id="ot-approval-list" class="space-y-3">
-                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-10">กำลังโหลด...</p>
+                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-20">กำลังโหลด...</p>
                     </div>
                 </div>
 
@@ -1180,7 +1158,7 @@ aside .nav-item {
                 </button>
             </div>
         </div>
-
+        
         <div class="mt-5 pt-4 border-t border-gray-100">
             <h3 class="text-sm font-semibold text-gray-600 mb-3">Work Summary</h3>
             
@@ -1240,12 +1218,11 @@ aside .nav-item {
        
         <div id="work-history-container"></div>
     </div>
-    
+
     <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         <span>Logout</span>
     </button>
-
 </div>
 
 <div id="admin-mobile-menu-page" class="page space-y-6">
@@ -1606,7 +1583,6 @@ aside .nav-item {
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
     <script src="firebase-config.js?v=1.3"></script>
@@ -2108,7 +2084,7 @@ auth.onAuthStateChanged(async (user) => {
             
             // ★★★ เพิ่มบรรทัดนี้สำคัญมาก! ★★★
             currentUser = user; 
-            initMessaging();
+            // -----------------------------
 
             const userDocRef = db.collection('users').doc(user.uid);
             console.log("⏳ Fetching user profile...");
@@ -8421,56 +8397,8 @@ if (yearSelect) {
     }
 }
 
-const VAPID_KEY = 'BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s'; // ★ อย่าลืมเอา Key จาก Firebase Console มาใส่
-
-    async function initMessaging() {
-        try {
-            // เช็คว่า Browser รองรับไหม
-            if (!firebase.messaging.isSupported()) {
-                console.log('Firebase Messaging not supported in this browser');
-                return;
-            }
-
-            const messaging = firebase.messaging();
-
-            // 1. ขออนุญาต
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                console.log('User denied notification permission');
-                return;
-            }
-
-            // 2. ดึง Token
-            const token = await messaging.getToken({ vapidKey: VAPID_KEY });
-            
-            if (token) {
-                console.log('FCM Token:', token);
-                // 3. บันทึก Token ลง Firestore ของ User คนนี้
-                if (currentUser) {
-                    // ใช้ merge: true เพื่อไม่ให้ทับข้อมูลเดิม
-                    await db.collection('users').doc(currentUser.uid).set({
-                        fcmToken: token,
-                        lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                }
-            } else {
-                console.log('No registration token available.');
-            }
-
-            // 4. จัดการข้อความตอนเปิดหน้าเว็บค้างไว้ (Foreground)
-            messaging.onMessage((payload) => {
-                console.log('Message received. ', payload);
-                // เรียกใช้ Notification สีเขียวที่คุณมีอยู่แล้ว
-                showNotification(payload.notification.title + ': ' + payload.notification.body, 'success');
-            });
-
-        } catch (error) {
-            console.error('An error occurred while retrieving token. ', error);
-        }
-    }
-
 });
 
 </script>
 </body>
-</html> 
+</html>
