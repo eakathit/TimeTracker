@@ -1098,7 +1098,7 @@ aside .nav-item {
         <div class="p-4 bg-sky-50 border-b border-sky-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h3 class="font-bold text-sky-800 text-lg">Annual Attendance Statistics</h3>
-                <p class="text-xs text-sky-600">สรุปข้อมูล ขาด ลา มาสาย และ OT รายปี</p>
+                <p class="text-xs text-sky-600">*สรุปข้อมูล ขาด ลา มาสาย และ OT รายปี</p>
             </div>
             <div class="flex gap-2 w-full md:w-auto">
                 <select id="summary-stat-user-select" class="flex-1 md:w-56 h-10 px-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none">
@@ -2074,7 +2074,7 @@ async function initializeApp(user, userData) {
     // เริ่มต้นระบบ GPS และ Controls
     initializeControls();
     startWatchingPosition();
-
+    
     // 6. โหลดข้อมูลเบื้องหลัง (Parallel Loading)
     try {
         await Promise.all([
@@ -2909,61 +2909,92 @@ saveReportBtn.addEventListener('click', async () => {
     }
 
     function startWatchingPosition() {
-    if (!navigator.geolocation) {
-        showNotification('อุปกรณ์ของคุณไม่รองรับ GPS', 'error');
-        return;
-    }
-
-    // ฟังก์ชันจริงๆ ที่ใช้สั่งเริ่มจับพิกัด
-    const runGeoWatcher = () => {
-        // ถ้ามี Watcher เดิมทำงานอยู่ ให้เคลียร์ก่อน
-        if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId);
+        if (!navigator.geolocation) {
+            showNotification('อุปกรณ์ของคุณไม่รองรับ GPS', 'error');
+            return;
         }
 
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 20000,
-            maximumAge: 10000 
+        // 1. ฟังก์ชันเริ่มจับสัญญาณ (แยกออกมาเพื่อเรียกใช้ภายหลัง)
+        const runGeoWatcher = () => {
+            // แสดงสถานะกำลังค้นหา
+            if (locationText) locationText.textContent = "กำลังค้นหาตำแหน่ง...";
+            // เปลี่ยนสีกล่องเป็นสีเหลือง
+            if (locationStatusDiv) locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
+            
+            // เคลียร์ Watcher เดิม (ถ้ามี)
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+
+            // เริ่มจับพิกัด
+            watchId = navigator.geolocation.watchPosition(
+                updateRealtimeLocationStatus,
+                handleLocationError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 10000 
+                }
+            );
+            console.log("Started watching position...");
         };
 
-        // ★★★ แก้ไขตรงนี้ครับ: เปลี่ยน updateLocation เป็น updateRealtimeLocationStatus ★★★
-        watchId = navigator.geolocation.watchPosition(
-            updateRealtimeLocationStatus, // เรียกฟังก์ชันที่ถูกต้อง
-            handleLocationError,          // เรียกฟังก์ชันเมื่อ Error
-            options
-        );
-        console.log("Started watching position (WatchID: " + watchId + ")");
-    };
-
-    // --- ส่วนตรวจสอบสิทธิ์ (Permissions API) ---
-    if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
-            
-            if (result.state === 'granted') {
-                // อนุญาตแล้ว -> รันเลย
-                runGeoWatcher();
-            } else if (result.state === 'prompt') {
-                // ยังไม่เคยถาม -> รันเพื่อกระตุ้นให้ Browser ถาม Permission
-                runGeoWatcher();
-            } else if (result.state === 'denied') {
-                // โดนปิดกั้น -> แจ้งเตือน
-                updateLocationStatusUI('GPS ถูกปิดกั้น', 'error'); // ตรวจสอบด้วยว่ามีฟังก์ชันนี้ไหม หรือใช้ handleLocationError แทน
-                showNotification('กรุณาเปิดอนุญาตตำแหน่ง (Location) ในตั้งค่า', 'error');
+        // 2. ฟังก์ชันแสดงปุ่มให้กด (สำหรับ iOS/First time users)
+        const showEnableGpsButton = () => {
+            if (locationStatusDiv) {
+                // เปลี่ยนหน้าตากล่องสถานะให้เป็นปุ่มกดได้
+                locationStatusDiv.className = "flex items-center p-3 rounded-xl bg-blue-100 text-blue-700 cursor-pointer hover:bg-blue-200 transition-all shadow-sm border border-blue-200";
+                locationStatusDiv.innerHTML = `
+                    <div class="flex items-center justify-center w-full gap-2">
+                        <span class="relative flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                        </span>
+                        <span class="font-bold">แตะเพื่อเปิดใช้งาน GPS</span>
+                    </div>
+                `;
+                
+                // สร้างฟังก์ชันกดเพียงครั้งเดียว
+                const clickHandler = () => {
+                    runGeoWatcher(); // เรียกขอ GPS เมื่อกด
+                    // คืนค่า Event Listener เดิม (ถ้าจำเป็น) หรือปล่อยไว้เพราะ runGeoWatcher จะเปลี่ยนหน้าตาปุ่มไปเอง
+                    locationStatusDiv.removeEventListener('click', clickHandler); 
+                };
+                
+                // ลบ Event เก่าออกก่อน (กันเบิ้ล) แล้วใส่ใหม่
+                const newLocationStatusDiv = locationStatusDiv.cloneNode(true);
+                locationStatusDiv.parentNode.replaceChild(newLocationStatusDiv, locationStatusDiv);
+                // *หมายเหตุ: การ cloneNode เพื่อล้าง event listener เก่าที่อาจค้างอยู่
+                
+                // อัปเดตตัวแปร global ให้ชี้ไปที่ตัวใหม่
+                // (ในกรณีนี้เราใช้ getElementById ใหม่ชัวร์กว่าในบรรทัดถัดไป แต่เพื่อความง่ายใช้ตัวแปรเดิมถ้าทำได้)
+                document.getElementById('location-status').addEventListener('click', clickHandler);
             }
+        };
 
-            result.onchange = function() {
-                console.log('Geolocation permission state changed to:', result.state);
+        // --- 3. Logic การตัดสินใจ (Decision Making) ---
+        if (navigator.permissions && navigator.permissions.query) {
+            // สำหรับ Chrome / Android / Desktop
+            navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
                 if (result.state === 'granted') {
+                    // ถ้าอนุญาตแล้ว -> ให้รันเลย (ไม่ต้องกด)
                     runGeoWatcher();
+                } else {
+                    // ถ้ายังไม่อนุญาต (prompt) หรือ ปฏิเสธไปแล้ว -> แสดงปุ่มให้กดเอง
+                    showEnableGpsButton();
                 }
-            };
-        });
-    } else {
-        // Browser เก่า
-        runGeoWatcher();
+                
+                result.onchange = function() {
+                    if (result.state === 'granted') runGeoWatcher();
+                };
+            }).catch(() => {
+                // กรณี Error (บาง Browser) ให้แสดงปุ่มไว้ก่อนเพื่อความชัวร์
+                showEnableGpsButton();
+            });
+        } else {
+            // ★ สำหรับ iOS Safari (มักจะเข้าเคสนี้) ★
+            // iOS ไม่รองรับ permissions API เต็มรูปแบบ เราจึงต้องบังคับให้กดปุ่มเสมอ
+            showEnableGpsButton();
+        }
     }
-}
 
     function stopWatchingPosition() {
         if (navigator.geolocation && watchId !== null) {
