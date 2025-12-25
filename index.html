@@ -1214,9 +1214,9 @@ aside .nav-item {
              
              <div class="relative inline-block shadow-sm rounded-lg">
                 <select id="history-range-select" class="appearance-none text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none">
-                    <option value="7">7 วันล่าสุด</option>
-                    <option value="this_month">เดือนนี้</option>
-                    <option value="last_month">เดือนที่แล้ว</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="this_month">This Month</option>
+                    <option value="last_month">Last Month</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1231,7 +1231,7 @@ aside .nav-item {
 
     <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-        <span>ออกจากระบบ</span>
+        <span>Logout</span>
     </button>
 </div>
 
@@ -1495,19 +1495,19 @@ aside .nav-item {
 <div id="profile-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div id="profile-edit-overlay" class="absolute inset-0 bg-black opacity-50"></div>
         <div class="card relative z-10 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-6">แก้ไขโปรไฟล์</h3>
+            <h3 class="text-xl font-bold mb-6">Edit Profile</h3>
             
             <div class="space-y-4">
                 <div>
-                    <label class="text-sm font-medium text-gray-600">ชื่อ-สกุล (ที่แสดงผล)</label>
+                    <label class="text-sm font-medium text-gray-600">Display Name</label>
                     <input type="text" id="profile-edit-name-input" placeholder="กรอกชื่อ-สกุล" class="w-full mt-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-600">ฝ่าย / แผนก</label>
+                    <label class="text-sm font-medium text-gray-600">Department</label>
                     
                     <select id="profile-edit-dept-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none">
-                        <option value="">-- เลือกฝ่าย/แผนก --</option>
+                        <option value="">-- Select Department --</option>
                         <option value="Mechanic">Mechanic</option>
                         <option value="Electrical">Electrical</option>
                         <option value="Design">Design</option>
