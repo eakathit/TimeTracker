@@ -334,7 +334,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">Welcome to</p>
+                        <p class="text-gray-500">Welcome to Application</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -612,6 +612,7 @@ aside .nav-item {
 </div>
 
 <div id="admin-approvals-page" class="page space-y-6 pb-20">
+    <div class="max-w-6xl mx-auto w-full space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -771,11 +772,12 @@ aside .nav-item {
             </div>
             <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
         </div>
-    </div>
-</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
@@ -3128,6 +3130,17 @@ saveReportBtn.addEventListener('click', async () => {
 
         if (workRecordDoc.exists) {
             const data = workRecordDoc.data();
+
+            // --- [จุดที่แก้ไข] ตรวจสอบก่อนว่ามี CheckIn หรือไม่ ---
+            // ถ้าเป็น Report Only (ไม่มี CheckIn) ให้ข้ามการดึง timestamp
+            if (!data.checkIn || !data.checkIn.timestamp) {
+                console.log("Found record but no check-in data (Report Only)");
+                // อาจจะอัปเดต UI ว่าส่ง Report แล้วแต่วันนี้ไม่ได้เข้างานก็ได้
+                // แต่เบื้องต้นให้ return เพื่อไม่ให้ error
+                return;
+            }
+            // ---------------------------------------------------
+
             const checkinTime = data.checkIn.timestamp.toDate();
             
             summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
@@ -3144,17 +3157,15 @@ saveReportBtn.addEventListener('click', async () => {
                 // 1. คำนวณตามสูตรปกติก่อน
                 let { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
 
-                // [แก้ไข] ตรวจสอบค่าจาก DB แต่ถ้า DB เป็น 0 และค่าคำนวณได้ > 0 ให้ใช้ค่าคำนวณ (เพื่อแก้ไขการแสดงผล)
+                // ตรวจสอบค่าจาก DB
                 let dbOvertime = 0;
                 if (data.overtime && typeof data.overtime.hours === 'number') {
                     dbOvertime = data.overtime.hours;
                 }
                 
-                // ใช้ค่าจาก DB ถ้ามีค่ามากกว่า 0, ถ้าไม่ ให้ใช้ค่าที่คำนวณได้
                 if (dbOvertime > 0) {
                     overtimeHours = dbOvertime;
                 }
-                // (ถ้า dbOvertime == 0 แต่ overtimeHours(คำนวณ) == 1.0 -> เราจะโชว์ 1.0 ตามสูตร)
 
                 summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
                 summaryCheckoutTime.classList.remove('text-gray-400');
@@ -3162,7 +3173,6 @@ saveReportBtn.addEventListener('click', async () => {
 
                 summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} hours`;
                 
-                // แสดงผล OT
                 if (overtimeHours > 0) {
                     summaryWorkHours.textContent += ` (OT ${overtimeHours} hrs)`;
                 }
@@ -3932,182 +3942,199 @@ if (exportPayrollBtn) {
     }
 
     async function loadWorkHistory() {
-    if (!currentUser) return;
+        if (!currentUser) return;
 
-    const container = document.getElementById('work-history-container');
-    const rangeSelect = document.getElementById('history-range-select');
-    const selectedRange = rangeSelect.value;
+        const container = document.getElementById('work-history-container');
+        const rangeSelect = document.getElementById('history-range-select');
+        const selectedRange = rangeSelect.value;
 
-    const summaryHoursEl = document.getElementById('profile-summary-hours');
-    const summaryOtEl = document.getElementById('profile-summary-ot');
-    const summaryDaysEl = document.getElementById('profile-summary-days');
+        const summaryHoursEl = document.getElementById('profile-summary-hours');
+        const summaryOtEl = document.getElementById('profile-summary-ot');
+        const summaryDaysEl = document.getElementById('profile-summary-days');
 
-    // รีเซ็ตค่าหน้าจอ
-    summaryHoursEl.textContent = '-';
-    summaryOtEl.textContent = '-';
-    summaryDaysEl.textContent = '-';
-    container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
+        // รีเซ็ตค่าหน้าจอ
+        summaryHoursEl.textContent = '-';
+        summaryOtEl.textContent = '-';
+        summaryDaysEl.textContent = '-';
+        container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">กำลังโหลดประวัติการทำงาน...</p>`;
 
-    try {
-        let startDate, endDate;
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        try {
+            let startDate, endDate;
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
-        // กำหนดช่วงเวลาตามที่เลือก
-        if (selectedRange === "7") {
-            startDate = new Date(todayStart);
-            startDate.setDate(todayStart.getDate() - 6);
-            endDate = new Date(now);
-        } else if (selectedRange === "this_month") {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now);
-        } else if (selectedRange === "last_month") {
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-        }
-
-        // ดึงข้อมูล Work Records
-        const recordsSnapshot = await db.collection('work_records')
-            .where('userId', '==', currentUser.uid)
-            .where('date', '>=', startDate)
-            .where('date', '<=', endDate)
-            .orderBy('date', 'desc')
-            .get();
-
-        if (recordsSnapshot.empty) {
-            let emptyMessage = "ไม่พบประวัติการทำงาน";
-            if (selectedRange === "7") emptyMessage = "ไม่พบประวัติในช่วง 7 วันที่ผ่านมา";
-            else if (selectedRange === "this_month") emptyMessage = "ไม่พบประวัติในเดือนนี้";
-            else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
-
-            container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
-            summaryDaysEl.textContent = '0 วัน';
-            return;
-        }
-
-        let historyHtml = '';
-        let totalRegularHours = 0;
-        let totalOtHours = 0;
-        let totalDays = recordsSnapshot.size;
-        let accumulatorRegularWorkHours = 0;
-
-        recordsSnapshot.forEach(doc => {    
-            const record = doc.data();
-            const checkinTime = record.checkIn.timestamp.toDate();
-
-            // --- ส่วนที่แก้ไข: ตรวจสอบรายงานจากทั้งแบบใหม่ (Array: reports) และแบบเก่า (Object: report) ---
-            const reportsArray = record.reports || (record.report ? [record.report] : []);
-            const hasReport = reportsArray.length > 0;
-            // -------------------------------------------------------------------------
-
-            let checkoutTime;
-            let regularWorkHours = 0;
-            let overtimeHours = 0;
-            let checkoutTimeStr = '-';
-
-            if (record.status === 'completed' && record.checkOut) {
-                checkoutTime = record.checkOut.timestamp.toDate();
-                checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-
-                const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
-                regularWorkHours = timeCalc.regularWorkHours;
-
-                if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
-                    overtimeHours = record.overtime.hours;
-                } else {
-                    overtimeHours = timeCalc.overtimeHours;
-                }
+            // กำหนดช่วงเวลาตามที่เลือก
+            if (selectedRange === "7") {
+                startDate = new Date(todayStart);
+                startDate.setDate(todayStart.getDate() - 6);
+                endDate = new Date(now);
+            } else if (selectedRange === "this_month") {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now);
+            } else if (selectedRange === "last_month") {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
             }
 
-            totalRegularHours += regularWorkHours;
-            totalOtHours += overtimeHours;
-            accumulatorRegularWorkHours += regularWorkHours;
+            // ดึงข้อมูล Work Records
+            const recordsSnapshot = await db.collection('work_records')
+                .where('userId', '==', currentUser.uid)
+                .where('date', '>=', startDate)
+                .where('date', '<=', endDate)
+                .orderBy('date', 'desc')
+                .get();
 
-            // สร้าง HTML สำหรับรายการประวัติ
-            historyHtml += `
-            <div class="flex space-x-4">
-                <div class="flex flex-col items-center">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center leading-none">
-                        <span class="text-xs text-sky-600 font-medium">${checkinTime.toLocaleDateString('th-TH', { month: 'short' })}</span>
-                        <span class="text-xl font-bold text-sky-700">${checkinTime.getDate()}</span>
-                    </div>
-                    <div class="flex-1 w-px bg-gray-200 my-2"></div> 
-                </div>
+            if (recordsSnapshot.empty) {
+                let emptyMessage = "ไม่พบประวัติการทำงาน";
+                if (selectedRange === "7") emptyMessage = "ไม่พบประวัติในช่วง 7 วันที่ผ่านมา";
+                else if (selectedRange === "this_month") emptyMessage = "ไม่พบประวัติในเดือนนี้";
+                else if (selectedRange === "last_month") emptyMessage = "ไม่พบประวัติในเดือนที่แล้ว";
+
+                container.innerHTML = `<p class="text-center text-gray-500 text-sm py-4">${emptyMessage}</p>`;
+                summaryDaysEl.textContent = '0 วัน';
+                return;
+            }
+
+            let historyHtml = '';
+            let totalRegularHours = 0;
+            let totalOtHours = 0;
+            let totalDays = recordsSnapshot.size;
+            let accumulatorRegularWorkHours = 0;
+
+            recordsSnapshot.forEach(doc => {    
+                const record = doc.data();
+
+                // --- [จุดที่แก้ไข]: ใช้ record.date เป็นหลัก และตรวจสอบ checkIn ก่อนใช้งาน ---
+                const displayDate = record.date.toDate(); 
                 
-                <div class="flex-1 card !p-4 !shadow-sm mb-4">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-semibold text-gray-800">${checkinTime.toLocaleDateString('th-TH', { weekday: 'long' })}</p>
-                            <p class="text-sm text-gray-500 font-medium">
-                                <span class="text-green-600">${checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-                                <span> → </span>
-                                <span class="text-red-500">${checkoutTimeStr}</span>
-                            </p>
+                // ตรวจสอบว่ามีการ Check-in จริงหรือไม่
+                const hasCheckIn = record.checkIn && record.checkIn.timestamp;
+                const checkinTime = hasCheckIn ? record.checkIn.timestamp.toDate() : null;
+
+                // --- ตรวจสอบรายงาน ---
+                const reportsArray = record.reports || (record.report ? [record.report] : []);
+                const hasReport = reportsArray.length > 0;
+                // ---------------------
+
+                let checkoutTimeStr = '-';
+                let regularWorkHours = 0;
+                let overtimeHours = 0;
+                let checkinTimeStr = hasCheckIn 
+                    ? checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
+                    : '<span class="text-orange-400">Report Only</span>';
+
+                // คำนวณเวลาเฉพาะเมื่อมี Check-in และ Check-out ครบถ้วน
+                if (hasCheckIn && record.status === 'completed' && record.checkOut) {
+                    const checkoutTime = record.checkOut.timestamp.toDate();
+                    checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+
+                    const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
+                    regularWorkHours = timeCalc.regularWorkHours;
+
+                    if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                        overtimeHours = record.overtime.hours;
+                    } else {
+                        overtimeHours = timeCalc.overtimeHours;
+                    }
+                }
+
+                totalRegularHours += regularWorkHours;
+                totalOtHours += overtimeHours;
+                accumulatorRegularWorkHours += regularWorkHours;
+                
+                // Location / Work Type Text
+                let workTypeHTML = '';
+                if (!hasCheckIn) {
+                    workTypeHTML = `<span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">Daily Report</span>`;
+                } else if (record.checkIn.workType === 'in_factory') {
+                    workTypeHTML = `
+                        <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
+                            ในโรงงาน
+                        </span>`;
+                } else {
+                    workTypeHTML = `
+                        <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
+                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
+                            On-site: ${record.checkIn.onSiteDetails || 'N/A'}
+                        </span>`;
+                }
+
+                // สร้าง HTML สำหรับรายการประวัติ
+                historyHtml += `
+                <div class="flex space-x-4">
+                    <div class="flex flex-col items-center">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-sky-50 flex flex-col items-center justify-center leading-none">
+                            <span class="text-xs text-sky-600 font-medium">${displayDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
+                            <span class="text-xl font-bold text-sky-700">${displayDate.getDate()}</span>
                         </div>
+                        <div class="flex-1 w-px bg-gray-200 my-2"></div> 
                     </div>
-
-                    <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                        <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
-                            <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
+                    
+                    <div class="flex-1 card !p-4 !shadow-sm mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-gray-800">${displayDate.toLocaleDateString('th-TH', { weekday: 'long' })}</p>
+                                <p class="text-sm text-gray-500 font-medium">
+                                    <span class="text-green-600">${checkinTimeStr}</span>
+                                    <span> → </span>
+                                    <span class="text-red-500">${checkoutTimeStr}</span>
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-1.5" title="Overtime">
-                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
+                        <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
+                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
+                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
+                            </div>
+
+                            <div class="flex items-center gap-1.5" title="Overtime">
+                                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
+                            </div>
                         </div>
+
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
+                            <div>
+                                ${workTypeHTML}
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${hasReport ? `
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                        ส่งรายงานแล้ว (${reportsArray.length} รายการ)
+                                    </span>
+                                ` : `
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
+                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" />
+                                        </svg>
+                                        ยังไม่ส่งรายงาน
+                                    </span>
+                                `}
+                            </div>
+                        </div>
+
                     </div>
+                </div>`;
+            });
 
-                    <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
-                        <div>
-                            ${record.checkIn.workType === 'in_factory' ? `
-                                <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
-                                    ในโรงงาน
-                                </span>
-                            ` : `
-                                <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
-                                    On-site: ${record.checkIn.onSiteDetails || 'N/A'}
-                                </span>
-                            `}
-                        </div>
+            container.innerHTML = historyHtml;
 
-                        <div class="flex flex-wrap items-center gap-2">
-                            ${hasReport ? `
-                                <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    ส่งรายงานแล้ว (${reportsArray.length} รายการ)
-                                </span>
-                            ` : `
-                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                                    <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" />
-                                    </svg>
-                                    ยังไม่ส่งรายงาน
-                                </span>
-                            `}
-                        </div>
-                    </div>
+            // อัปเดต Summary ด้านบน
+            summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
+            summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
+            summaryDaysEl.textContent = `${totalDays} วัน`;
 
-                </div>
-            </div>`;
-        });
-
-        container.innerHTML = historyHtml;
-
-        // อัปเดต Summary ด้านบน
-        summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
-        summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
-        summaryDaysEl.textContent = `${totalDays} วัน`;
-
-    } catch (error) {
-        console.error("Error loading work history:", error);
-        container.innerHTML = '<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+        } catch (error) {
+            console.error("Error loading work history:", error);
+            container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</p>`;
+        }
     }
-}
         
     function updateUIToCheckIn() {
         checkinBtn.classList.remove('hidden');
@@ -8144,13 +8171,23 @@ async function loadAdminDashboardOverview() {
         // A. นับคนมาทำงาน
         recordsSnap.forEach(doc => {
             const data = doc.data();
-            countPresent++;
+
+            // ถือว่าเป็นผู้ที่มี record ในวันนี้ (ไม่ว่าจะขาด หรือ ลา หรือ มาทำงาน)
+            // ให้เพิ่ม userId เข้าไปใน set เพื่อไม่ให้ไปโผล่ในรายชื่อ "คนขาด"
             checkedInOrLeaveUserIds.add(data.userId);
 
-            const checkInTime = data.checkIn.timestamp.toDate();
-            const lateLimit = new Date(checkInTime);
-            lateLimit.setHours(8, 30, 0, 0);
-            if (checkInTime > lateLimit) countLate++;
+            // --- [จุดที่แก้ไข] ตรวจสอบว่ามีการ Check-in จริงหรือไม่ ---
+            if (data.checkIn && data.checkIn.timestamp) {
+                countPresent++; // นับเฉพาะคนที่มี Check-in
+
+                const checkInTime = data.checkIn.timestamp.toDate();
+                const lateLimit = new Date(checkInTime);
+                lateLimit.setHours(8, 30, 0, 0); // ตั้งเวลาสาย 08:30
+
+                if (checkInTime > lateLimit) countLate++;
+            } 
+            // ถ้าเป็น status: "no_checkin_report_only" โค้ดจะข้ามบล็อกนี้ไป ไม่ error
+            // ---------------------------------------------------
         });
 
         // B. นับคนลา และเก็บรายชื่อ
