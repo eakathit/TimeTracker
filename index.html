@@ -334,7 +334,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">Welcome to Application</p>
+                        <p class="text-gray-500">Welcome to</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -1180,7 +1180,7 @@ aside .nav-item {
                 </button>
             </div>
         </div>
-        
+
         <div class="mt-5 pt-4 border-t border-gray-100">
             <h3 class="text-sm font-semibold text-gray-600 mb-3">Work Summary</h3>
             
@@ -1240,11 +1240,12 @@ aside .nav-item {
        
         <div id="work-history-container"></div>
     </div>
-
+    
     <button id="logout-btn" class="w-full flex items-center justify-center text-center py-3 bg-red-100 text-red-600 rounded-xl font-semibold hover:bg-red-200 transition-colors">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         <span>Logout</span>
     </button>
+
 </div>
 
 <div id="admin-mobile-menu-page" class="page space-y-6">
@@ -2116,7 +2117,7 @@ auth.onAuthStateChanged(async (user) => {
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error("Timeout loading user profile")), 8000)
             );
-            
+
             let userDoc;
             try {
                 userDoc = await Promise.race([
