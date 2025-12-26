@@ -315,10 +315,6 @@ aside .nav-item {
         <span class="font-medium text-sm">Timesheet</span>
     </a>
     
-    <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all opacity-50 cursor-not-allowed">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        <span class="font-medium text-sm">Employees</span>
-    </a>
 </div>
         <div id="system-menu-group" class="hidden"> <p class="nav-group-title">Administration</p>
     <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 transition-all" data-page="settings-page">
@@ -612,7 +608,7 @@ aside .nav-item {
 </div>
 
 <div id="admin-approvals-page" class="page space-y-6 pb-20">
-    <div class="max-w-5xl mx-auto w-full space-y-6">
+    <div class="max-w-full mx-auto space-y-6 px-4 md:px-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -664,6 +660,8 @@ aside .nav-item {
                     <option value="rejected">ไม่อนุมัติ</option>
                 </select>
             </div>
+
+            
             <div class="relative">
                 <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
                 <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
@@ -6878,51 +6876,56 @@ async function loadOtHistory() {
                 }
 
                 let html = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
-                    
-                    // จัดการวันที่
-                    const start = data.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
-                    const end = data.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
-                    let dateText = `${start} - ${end}`;
-                    if (data.durationType === 'hourly') {
-                        dateText = `${start} (${data.startTime} - ${data.endTime})`;
-                    }
+                // --- ส่วนของประวัติการลาของฉัน ---
+snapshot.forEach(doc => {
+    const data = doc.data();
+    const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
+    
+    // จัดการวันที่
+    const startStr = data.startDate ? data.startDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+    const endStr = data.endDate ? data.endDate.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+    const submittedStr = data.submittedAt ? data.submittedAt.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : '-';
 
-                    // สถานะและการแสดงผล
-                    // สถานะและการแสดงผล
-                    let statusBadge = '';
-                    let statusBorder = '';
-                    
-                    // [แก้ไข] เพิ่ม class: inline-block, w-24 (กว้างคงที่), text-center (จัดกลาง)
-                    const badgeBaseClass = "inline-block w-24 text-center text-xs font-semibold px-2 py-1 rounded-full";
+    let dateText = `${startStr} ถึง ${endStr}`;
+    if (data.durationType === 'hourly') {
+        dateText = `${startStr} (${data.startTime} - ${data.endTime})`;
+    }
 
-                    if (data.status === 'pending') {
-                        statusBadge = `<span class="${badgeBaseClass} bg-yellow-100 text-yellow-800">รออนุมัติ</span>`;
-                        statusBorder = 'border-l-4 border-yellow-400';
-                    } else if (data.status === 'approved') {
-                        statusBadge = `<span class="${badgeBaseClass} bg-green-100 text-green-800">อนุมัติแล้ว</span>`;
-                        statusBorder = 'border-l-4 border-green-500';
-                    } else if (data.status === 'rejected') {
-                        statusBadge = `<span class="${badgeBaseClass} bg-red-100 text-red-800">ไม่อนุมัติ</span>`;
-                        statusBorder = 'border-l-4 border-red-500';
-                    }
+    // กำหนดสีและข้อความของ Badge ตามสถานะ
+    let statusConfig = {
+        pending: { label: 'รออนุมัติ', class: 'bg-yellow-100 text-yellow-700' },
+        approved: { label: 'อนุมัติแล้ว', class: 'bg-green-100 text-green-700' },
+        rejected: { label: 'ไม่อนุมัติ', class: 'bg-red-100 text-red-700' }
+    };
+    const status = statusConfig[data.status] || { label: data.status, class: 'bg-gray-100 text-gray-700' };
 
-                    html += `
-                        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 ${statusBorder}">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-bold text-gray-800 text-sm">${leaveType}</p>
-                                    <p class="text-xs text-gray-500 mt-1">${dateText}</p>
-                                </div>
-                                ${statusBadge}
-                            </div>
-                            <p class="text-xs text-gray-600 mt-2 bg-gray-50 p-2 rounded">เหตุผล: ${data.reason}</p>
-                            ${data.approvedBy ? `<p class="text-[10px] text-gray-400 text-right mt-1">ตรวจสอบโดย: ${data.approvedBy}</p>` : ''}
-                        </div>
-                    `;
-                });
+    // HTML ดีไซน์ใหม่ตามแบบประวัติ Admin
+    html += `
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-3">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                    <img src="${data.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                         class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-800">${data.userName || 'ฉัน'}</h4>
+                        <p class="text-[10px] text-gray-400">ยื่นเมื่อ: ${submittedStr}</p>
+                    </div>
+                </div>
+                <span class="text-[10px] px-2.5 py-1 rounded-full font-bold ${status.class}">
+                    ${status.label}
+                </span>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <p class="text-xs font-bold text-sky-700">${leaveType}</p>
+                <p class="text-xs text-gray-600 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    ${dateText}
+                </p>
+            </div>
+            ${data.approvedBy ? `<p class="text-[10px] text-gray-400 text-right mt-2 italic">อนุมัติโดย: ${data.approvedBy}</p>` : ''}
+        </div>
+    `;
+});
                 myLeaveContainer.innerHTML = html;
 
             } catch (error) {
@@ -6953,38 +6956,55 @@ async function loadOtHistory() {
                 }
 
                 let html = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const date = data.date.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
-                    const timeText = `${data.startTime} - ${data.endTime}`;
+                // --- ส่วนของประวัติ OT ของฉัน ---
+snapshot.forEach(doc => {
+    const data = doc.data();
+    const otDate = data.date.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+    const submittedStr = data.submittedAt ? data.submittedAt.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: 'short' }) : '-';
+    
+    // คำนวณจำนวนชั่วโมง
+    let durationText = '-';
+    if(data.startTime && data.endTime){
+        const [h1, m1] = data.startTime.split(':').map(Number);
+        const [h2, m2] = data.endTime.split(':').map(Number);
+        const totalMins = (h2*60+m2) - (h1*60+m1);
+        durationText = `${(Math.floor(totalMins/30) * 0.5).toFixed(1)} ชม.`;
+    }
 
-                    let statusBadge = '';
-                    let statusBorder = '';
-                    if (data.status === 'pending') {
-                        statusBadge = '<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">รออนุมัติ</span>';
-                        statusBorder = 'border-l-4 border-yellow-400';
-                    } else if (data.status === 'approved') {
-                        statusBadge = '<span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">อนุมัติแล้ว</span>';
-                        statusBorder = 'border-l-4 border-green-500';
-                    } else if (data.status === 'rejected') {
-                        statusBadge = '<span class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">ไม่อนุมัติ</span>';
-                        statusBorder = 'border-l-4 border-red-500';
-                    }
+    let statusConfig = {
+        pending: { label: 'รออนุมัติ', class: 'bg-yellow-100 text-yellow-700' },
+        approved: { label: 'อนุมัติแล้ว', class: 'bg-green-100 text-green-700' },
+        rejected: { label: 'ไม่อนุมัติ', class: 'bg-red-100 text-red-700' }
+    };
+    const status = statusConfig[data.status] || { label: data.status, class: 'bg-gray-100 text-gray-700' };
 
-                    html += `
-                        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 ${statusBorder}">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-bold text-gray-800 text-sm">ขอ OT: ${date}</p>
-                                    <p class="text-xs text-gray-500 mt-1">เวลา: ${timeText}</p>
-                                </div>
-                                ${statusBadge}
-                            </div>
-                            <p class="text-xs text-gray-600 mt-2 bg-gray-50 p-2 rounded">รายละเอียด: ${data.reason}</p>
-                            ${data.approvedBy ? `<p class="text-[10px] text-gray-400 text-right mt-1">ตรวจสอบโดย: ${data.approvedBy}</p>` : ''}
-                        </div>
-                    `;
-                });
+    // HTML ดีไซน์ใหม่แบบ Card (OT Management Style)
+    html += `
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-3">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                    <img src="${data.userPhoto || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                         class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-800">${data.userName || 'ฉัน'}</h4>
+                        <p class="text-[10px] text-gray-400">ยื่นเมื่อ: ${submittedStr}</p>
+                    </div>
+                </div>
+                <span class="text-[10px] px-2.5 py-1 rounded-full font-bold ${status.class}">
+                    ${status.label}
+                </span>
+            </div>
+            <div class="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                <p class="text-xs font-bold text-orange-700">ขอโอที: ${otDate}</p>
+                <div class="flex justify-between mt-1">
+                    <p class="text-xs text-gray-600">Period: ${data.startTime} - ${data.endTime}</p>
+                    <p class="text-xs font-bold text-orange-600">${durationText}</p>
+                </div>
+            </div>
+            ${data.approvedBy ? `<p class="text-[10px] text-gray-400 text-right mt-2 italic">อนุมัติโดย: ${data.approvedBy}</p>` : ''}
+        </div>
+    `;
+});
                 myOtContainer.innerHTML = html;
 
             } catch (error) {
