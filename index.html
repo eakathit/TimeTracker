@@ -1547,7 +1547,7 @@ aside .nav-item {
         <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
         <div class="card relative z-10 w-full max-w-md max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                <h3 class="text-lg font-bold">สถานะการลาของฉัน</h3>
+                <h3 class="text-lg font-bold">My Leave Status</h3>
                 <button class="close-modal-btn text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -1562,7 +1562,7 @@ aside .nav-item {
         <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
         <div class="card relative z-10 w-full max-w-md max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                <h3 class="text-lg font-bold">สถานะคำขอ OT ของฉัน</h3>
+                <h3 class="text-lg font-bold">My OT Status</h3>
                 <button class="close-modal-btn text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -6968,7 +6968,7 @@ snapshot.forEach(doc => {
         const [h1, m1] = data.startTime.split(':').map(Number);
         const [h2, m2] = data.endTime.split(':').map(Number);
         const totalMins = (h2*60+m2) - (h1*60+m1);
-        durationText = `${(Math.floor(totalMins/30) * 0.5).toFixed(1)} ชม.`;
+        durationText = `${(Math.floor(totalMins/30) * 0.5).toFixed(1)} hrs`;
     }
 
     let statusConfig = {
@@ -6995,7 +6995,7 @@ snapshot.forEach(doc => {
                 </span>
             </div>
             <div class="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
-                <p class="text-xs font-bold text-orange-700">ขอโอที: ${otDate}</p>
+                <p class="text-xs font-bold text-orange-700">Request OT: ${otDate}</p>
                 <div class="flex justify-between mt-1">
                     <p class="text-xs text-gray-600">Period: ${data.startTime} - ${data.endTime}</p>
                     <p class="text-xs font-bold text-orange-600">${durationText}</p>
