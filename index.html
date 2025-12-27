@@ -1191,6 +1191,12 @@ aside .nav-item {
                     </span>
                     <span class="font-semibold text-gray-700 text-sm">OT Status</span>
                 </button>
+
+                <button id="show-leave-form-btn-profile" class="col-span-2 flex items-center justify-center gap-2 p-3 rounded-xl bg-sky-500 text-white shadow-md hover:bg-sky-600 transition-all">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span class="font-bold">Leave Request</span>
+    </button>
+    
             </div>
 
         </div>
@@ -1469,7 +1475,7 @@ aside .nav-item {
 
             <div>
                 <label class="text-sm font-medium text-gray-600">เหตุผลประกอบการลา</label>
-                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม. (9:30-10:30)..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม    ..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
@@ -5163,10 +5169,11 @@ const openLeaveModal = () => {
 
     // นี่คือวิธีที่ปลอดภัยกว่า หากปุ่มถูกสร้างทีหลัง หรืออยู่ในหน้าที่ยังไม่ active
     document.body.addEventListener('click', function(event) {
-        if (event.target.id === 'show-leave-form-btn') {
-            openLeaveModal();
-        }
-    });
+    // เช็กว่าสิ่งที่คลิกคือปุ่มยื่นใบลา (ทั้ง ID เดิม และ ID ใหม่ใน Profile)
+    if (event.target.closest('#show-leave-form-btn') || event.target.closest('#show-leave-form-btn-profile')) {
+        openLeaveModal();
+    }
+});
 
     if (cancelLeaveBtn) {
         cancelLeaveBtn.addEventListener('click', closeLeaveModal);
@@ -5239,6 +5246,8 @@ const openLeaveModal = () => {
                 userId: currentUser.uid,
                 userName: currentUserData.fullName,
                 userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
+                // --- เพิ่มบรรทัดข้างล่างนี้ ---
+                department: currentUserData.department || 'ทั่วไป',
                 leaveType: leaveType,
                 reason: reason,
                 status: "pending", 
@@ -6257,6 +6266,8 @@ if (otListContainer) {
                 userId: currentUser.uid,
                 userName: currentUserData.fullName,
                 userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
+                // --- เพิ่มบรรทัดข้างล่างนี้ ---
+                department: currentUserData.department || 'ทั่วไป',
                 date: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
                 startTime: startTimeStr,
                 endTime: endTimeStr,
@@ -8252,7 +8263,6 @@ async function loadAdminDashboardOverview() {
 
 navItems.forEach(item => {
     item.addEventListener('click', e => {
-        // ... (โค้ดเดิม: preventDefault, active class) ...
         
         const pageId = item.dataset.page;
 
@@ -8416,6 +8426,7 @@ if (yearSelect) {
         yearSelect.appendChild(opt);
     }
 }
+
 
 });
 
