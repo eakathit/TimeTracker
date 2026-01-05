@@ -105,7 +105,7 @@
             color: #64748B; /* Slate-500: เข้มขึ้นกว่าเดิม อ่านง่ายขึ้น */
             font-weight: 500; /* เพิ่มความหนานิดหน่อย */
         }
-
+            
         /* 2. สไตล์เฉพาะ Sidebar ในคอมพิวเตอร์ (จอใหญ่กว่า 768px) */
         @media (min-width: 768px) {
             /* ปรับระยะห่างปุ่มให้ดูไม่อึดอัด */
@@ -762,7 +762,7 @@ aside .nav-item {
         <div class="p-3 bg-gray-100 rounded-xl">
  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>        </div>
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">ตั้งค่าระบบ</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
             <p class="text-gray-500 text-sm">จัดการข้อมูลพื้นฐาน ปฏิทิน และโครงการ</p>
         </div>
     </div>
@@ -771,10 +771,10 @@ aside .nav-item {
         
         <div class="space-y-6">
             <div class="card">
-                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">จัดการประเภทงาน</h4>
+                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">Detail Management</h4>
                 <div class="space-y-3">
                     <div class="flex items-center gap-2">
-                        <input type="text" id="add-work-type-input" placeholder="ชื่อประเภทงานใหม่..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <input type="text" id="add-work-type-input" placeholder="New Detail Name..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
                         <button id="add-work-type-btn" class="bg-sky-500 hover:bg-sky-600 text-white p-2.5 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         </button>
@@ -782,7 +782,7 @@ aside .nav-item {
                     <div class="flex items-center gap-2">
                         <div class="relative flex-1">
                             <button id="delete-work-type-select-btn" class="w-full p-2.5 border border-gray-300 rounded-lg text-left text-sm flex justify-between items-center bg-white">
-                                <span id="delete-work-type-selected-text" class="text-gray-500">เลือกรายการที่จะลบ...</span>
+                                <span id="delete-work-type-selected-text" class="text-gray-500">Select item to delete...</span>
                                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             <div id="delete-work-type-panel" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -797,10 +797,10 @@ aside .nav-item {
             </div>
 
             <div class="card">
-                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">จัดการโครงการ</h4>
+                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">Project Management</h4>
                 <div class="space-y-3">
                     <div class="flex items-center gap-2">
-                        <input type="text" id="add-project-input" placeholder="ชื่อโครงการใหม่..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <input type="text" id="add-project-input" placeholder="New Project Name..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
                         <button id="add-project-btn" class="bg-sky-500 hover:bg-sky-600 text-white p-2.5 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         </button>
@@ -808,7 +808,7 @@ aside .nav-item {
                     <div class="flex items-center gap-2">
                         <div class="relative flex-1">
                             <button id="delete-project-select-btn" class="w-full p-2.5 border border-gray-300 rounded-lg text-left text-sm flex justify-between items-center bg-white">
-                                <span id="delete-project-selected-text" class="text-gray-500">เลือกรายการที่จะลบ...</span>
+                                <span id="delete-project-selected-text" class="text-gray-500">Select item to delete...</span>
                                 <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
                             <div id="delete-project-panel" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -827,7 +827,7 @@ aside .nav-item {
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
                     <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                    ค้นหาและแก้ไขข้อมูล (Edit Records)
+                    Attendance Record Editor
                 </h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -855,10 +855,10 @@ aside .nav-item {
 
         <div class="space-y-6">
             <div id="admin-calendar-controls-card" class="card">
-                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">🗓️ จัดการวันหยุด & วันเสาร์ทำงาน</h4>
+                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">🗓️ Holiday & Schedule Configuration</h4>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-sm font-medium text-gray-600 mb-1 block">เลือกวันที่</label>
+                        <label class="text-sm font-medium text-gray-600 mb-1 block">Select Date</label>
                         <input type="date" id="admin-calendar-date-input" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
@@ -1475,7 +1475,7 @@ aside .nav-item {
 
             <div>
                 <label class="text-sm font-medium text-gray-600">เหตุผลประกอบการลา</label>
-                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม    ..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
+                <textarea id="leave-reason" rows="3" placeholder="เช่น ป่วย, ไปทำธุระ, ลากิจ 1 ชม..." class="w-full mt-1 p-3 border border-gray-300 rounded-xl"></textarea>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4">
@@ -7822,7 +7822,7 @@ async function loadDailyAuditData() {
 
     if(!auditTableBody) return;
     
-    auditTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400">กำลังประมวลผลพิกัด...</td></tr>';
+    auditTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400">กำลังประมวลผลข้อมูล...</td></tr>';
 
     const selectedDateStr = auditDatePicker.value;
     const startDate = new Date(selectedDateStr); startDate.setHours(0,0,0,0);
@@ -7832,16 +7832,31 @@ async function loadDailyAuditData() {
     const isFilterLate = lateFilterCheckbox ? lateFilterCheckbox.checked : false;
 
     try {
-        const [usersSnapshot, recordsSnapshot] = await Promise.all([
+        // [แก้ไข] ดึงข้อมูลใบลาที่อนุมัติแล้วในช่วงวันที่เลือกมาด้วย
+        const [usersSnapshot, recordsSnapshot, leavesSnapshot] = await Promise.all([
             db.collection('users').get(),
             db.collection('work_records')
               .where('date', '>=', startDate)
               .where('date', '<=', endDate)
+              .get(),
+            db.collection('leave_requests')
+              .where('status', '==', 'approved')
+              .where('startDate', '<=', endDate)
+              .where('endDate', '>=', startDate)
               .get()
         ]);
 
         const usersMap = {};
         usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data());
+
+        // [เพิ่ม] สร้าง Map ใบลาชั่วโมงเพื่อใช้ตรวจสอบสถานะมาสาย
+        const leaveMap = {};
+        leavesSnapshot.forEach(doc => {
+            const l = doc.data();
+            if (l.durationType === 'hourly') {
+                leaveMap[l.userId] = l;
+            }
+        });
 
         const records = [];
         recordsSnapshot.forEach(doc => records.push({ ...doc.data(), id: doc.id }));
@@ -7850,11 +7865,14 @@ async function loadDailyAuditData() {
         let count = 0;
 
         records.forEach(record => {
+            // [แก้ไข] Safety Check: ป้องกัน Error กรณีไม่มีข้อมูล Check-in (TypeError: timestamp of undefined)
+            if (!record.checkIn || !record.checkIn.timestamp) return;
+
             const user = usersMap[record.userId];
             const checkIn = record.checkIn;
             const checkOut = record.checkOut;
             
-            // Filter Logic
+            // Filter Logic ตามประเภทงาน
             if (filterType !== 'all') {
                 if (filterType === 'in_factory' && checkIn.workType !== 'in_factory') return;
                 if (filterType === 'onsite' && !checkIn.workType.includes('onsite') && !checkIn.workType.includes('on_site')) return;
@@ -7863,51 +7881,48 @@ async function loadDailyAuditData() {
             const checkInDate = checkIn.timestamp.toDate();
             const lateThreshold = new Date(checkInDate);
             lateThreshold.setHours(8, 30, 0, 0);
-            const isLate = checkInDate > lateThreshold;
+            
+            // ตรรกะเช็คสายเบื้องต้น
+            let isLate = checkInDate > lateThreshold;
 
+            // [เพิ่ม] ตรวจสอบเงื่อนไขการลารายชั่วโมง: ถ้าสายแต่มีใบลาคลุมเวลาเข้างาน ให้ถือว่า "ปกติ"
+            const userLeave = leaveMap[record.userId];
+            if (isLate && userLeave && userLeave.endTime) {
+                const [h, m] = userLeave.endTime.split(':').map(Number);
+                const leaveEnd = new Date(checkInDate);
+                leaveEnd.setHours(h, m, 0, 0);
+                
+                // ถ้าเช็คอินก่อนหรือตรงกับเวลาสิ้นสุดการลา จะไม่นับว่าสาย
+                if (checkInDate <= leaveEnd) {
+                    isLate = false; 
+                }
+            }
+
+            // กรองเฉพาะคนมาสาย (ถ้าติ๊กเลือกไว้)
             if (isFilterLate && !isLate) return;
 
-            // --- Location Audit ---
-            // --- 1. ส่วนจัดการ Location Audit (ตรวจสอบพิกัด) ---
+            // --- ส่วนการแสดงผล HTML ---
             let locationStatusHTML = '';
             let mapLinkBtn = '';
 
             if (checkIn.location) {
-                // ใช้ format นี้จะเปิด Google Maps ได้แม่นยำกว่า
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${checkIn.location.latitude},${checkIn.location.longitude}`;
-                
-                // ปุ่ม View Map (เหมือนเดิม)
                 mapLinkBtn = `
                     <a href="${mapUrl}" target="_blank" class="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded text-[10px] text-gray-600 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-colors shadow-sm">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
                         View Map
                     </a>
                 `;
 
                 if (checkIn.workType === 'in_factory') {
-                    // FACTORY: Location Audit
-                    // ใช้สีเขียว (Green) เพื่อบอกว่า "อยู่ในพื้นที่" (In Factory)
                     const dist = calculateDistance(checkIn.location.latitude, checkIn.location.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
                     if (dist <= 200) {
-                        locationStatusHTML = `
-                            <span class="flex items-center gap-1 text-green-600 font-bold text-sm">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> 
-                                In Factory
-                            </span>`;
+                        locationStatusHTML = `<span class="flex items-center gap-1 text-green-600 font-bold text-sm">In Factory</span>`;
                     } else {
-                        locationStatusHTML = `<span class="flex items-center gap-1 text-red-600 font-bold text-sm"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg> Out of Area</span>`;
+                        locationStatusHTML = `<span class="flex items-center gap-1 text-red-600 font-bold text-sm">Out of Area</span>`;
                     }
                 } else {
-                    // ON-SITE: Location Audit
-                    // ใช้สีม่วงเข้ม (Purple-800) ที่ข้อความ เพื่อให้ตัดกับสีเขียวของ Factory ชัดเจน
-                    // แต่ยังคงไอคอนติ๊กถูกสีเขียว (Green-500) ไว้เพื่อสื่อว่า Verified แล้ว
-                    locationStatusHTML = `
-                        <span class="flex items-center gap-1 text-purple-800 font-bold text-sm">
-                            <svg class="w-4 h-4 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg> 
-                            On-site
-                        </span>`;
+                    locationStatusHTML = `<span class="flex items-center gap-1 text-purple-800 font-bold text-sm">On-site</span>`;
                 }
             } else {
                 locationStatusHTML = `<span class="text-gray-400 italic text-sm">No GPS</span>`;
@@ -7917,61 +7932,34 @@ async function loadDailyAuditData() {
             const timeIn = checkInDate.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             const timeOut = checkOut ? checkOut.timestamp.toDate().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : '-';
             
-            // --- 2. ส่วนจัดการ Job Type & Details ---
-            let workTypeDisplay = '';
-            const detailText = checkIn.onSiteDetails ? `<div class="text-xs text-gray-500 mt-1 truncate max-w-[180px]" title="${checkIn.onSiteDetails}">${checkIn.onSiteDetails}</div>` : '';
-
-            if (checkIn.workType === 'in_factory') {
-                // FACTORY: Badge
-                workTypeDisplay = `
-                    <div class="flex flex-col items-center justify-center">
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-sky-100 text-sky-700 border border-sky-200">
-                            Factory
-                        </span>
-                    </div>
-                `;
-            } else {
-                // ON-SITE: Badge
-                workTypeDisplay = `
-                    <div class="flex flex-col items-center justify-center">
-                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-800 border border-violet-200">
-                            On-site
-                        </span>
-                        ${detailText}
-                    </div>
-                `;
-            }
+            let workTypeDisplay = checkIn.workType === 'in_factory' 
+                ? `<span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-sky-100 text-sky-700 border border-sky-200">Factory</span>`
+                : `<span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-800 border border-violet-200">On-site</span>`;
 
             html += `
-            <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+            <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
                 <td style="padding-left: 20px;" class="pr-6 py-4">
                     <div class="flex items-center gap-4">
-                        <img src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm">
-                        <div class="min-w-0">
-                            <p class="font-bold text-gray-800 text-sm truncate">${user?.fullName || 'Unknown'}</p>
-                            <p class="text-xs text-gray-500 truncate">${user?.department || '-'}</p>
+                        <img src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <p class="font-bold text-gray-800 text-sm">${user?.fullName || 'Unknown'}</p>
+                            <p class="text-xs text-gray-500">${user?.department || '-'}</p>
                         </div>
                     </div>
                 </td>
-                
                 <td class="px-4 py-4 text-center">
                     <div class="text-sm font-semibold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg inline-block border border-gray-200">
                         ${timeIn} - ${timeOut}
                     </div>
                     ${isLate ? '<div class="mt-1"><span class="text-[10px] text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full font-bold">Late</span></div>' : ''}
                 </td>
-                
-                <td class="px-6 py-4 align-middle text-center">
-                    ${workTypeDisplay}
-                </td>
-                
-                <td class="px-6 py-4 align-middle text-center">
-                    <div class="flex flex-col items-center justify-center h-full">
+                <td class="px-6 py-4 text-center">${workTypeDisplay}</td>
+                <td class="px-6 py-4 text-center">
+                    <div class="flex flex-col items-center">
                         ${locationStatusHTML}
                         ${checkIn.location ? mapLinkBtn : ''}
                     </div>
                 </td>
-                
                 <td class="px-4 py-4 text-center">
                     ${record.status === 'completed' 
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">Completed</span>' 
@@ -8126,7 +8114,7 @@ async function loadAdminDashboardOverview() {
     const dateDisplay = document.getElementById('dashboard-date-display');
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
     
-    // Elements ใหม่สำหรับ Morning Talk
+    // Elements สำหรับ Morning Talk
     const absentListContainer = document.getElementById('dashboard-absent-list');
     const leaveListContainer = document.getElementById('dashboard-leave-list');
 
@@ -8146,79 +8134,93 @@ async function loadAdminDashboardOverview() {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
         });
 
-        // 1. ดึง Users ทั้งหมด
-        const usersSnap = await db.collection('users').get();
+        // 1. ดึงข้อมูลพื้นฐาน (Users, Records, Leaves)
+        const [usersSnap, recordsSnap, leavesSnap] = await Promise.all([
+            db.collection('users').get(),
+            db.collection('work_records').where('date', '>=', startOfDay).where('date', '<=', endOfDay).get(),
+            db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endOfDay).where('endDate', '>=', startOfDay).get()
+        ]);
+
         const totalUsers = usersSnap.size;
-        const userMap = {}; // เก็บ id -> name เพื่อหาคนขาด
+        const userMap = {}; 
         usersSnap.forEach(doc => userMap[doc.id] = doc.data().fullName || "Unknown");
 
-        // 2. ดึง Records ของวันนี้
-        const recordsSnap = await db.collection('work_records')
-            .where('date', '>=', startOfDay)
-            .where('date', '<=', endOfDay)
-            .get();
-
-        // 3. ดึง Leaves Approved
-        const leavesSnap = await db.collection('leave_requests')
-            .where('status', '==', 'approved')
-            .where('startDate', '<=', endOfDay)
-            .where('endDate', '>=', startOfDay)
-            .get();
+        // [เพิ่ม] สร้าง Map สำหรับเก็บข้อมูลลารายชั่วโมงของวันนี้
+        const hourlyLeaveMap = {};
+        leavesSnap.forEach(doc => {
+            const l = doc.data();
+            if (l.durationType === 'hourly') {
+                hourlyLeaveMap[l.userId] = l;
+            }
+        });
 
         let countPresent = 0;
         let countLate = 0;
         let countLeave = 0;
         
         const checkedInOrLeaveUserIds = new Set();
-        const leaveEmployeesList = []; // เก็บรายชื่อคนลา
+        const leaveEmployeesList = []; 
 
-        // A. นับคนมาทำงาน
+        // A. ประมวลผลคนมาทำงาน (Records)
         recordsSnap.forEach(doc => {
             const data = doc.data();
-
-            // ถือว่าเป็นผู้ที่มี record ในวันนี้ (ไม่ว่าจะขาด หรือ ลา หรือ มาทำงาน)
-            // ให้เพิ่ม userId เข้าไปใน set เพื่อไม่ให้ไปโผล่ในรายชื่อ "คนขาด"
             checkedInOrLeaveUserIds.add(data.userId);
 
-            // --- [จุดที่แก้ไข] ตรวจสอบว่ามีการ Check-in จริงหรือไม่ ---
+            // [แก้ไข] Safety Check ป้องกัน Error กรณีไม่มีข้อมูล Check-in
             if (data.checkIn && data.checkIn.timestamp) {
-                countPresent++; // นับเฉพาะคนที่มี Check-in
+                countPresent++; 
 
                 const checkInTime = data.checkIn.timestamp.toDate();
                 const lateLimit = new Date(checkInTime);
-                lateLimit.setHours(8, 30, 0, 0); // ตั้งเวลาสาย 08:30
+                lateLimit.setHours(8, 30, 0, 0); 
 
-                if (checkInTime > lateLimit) countLate++;
+                // ตรวจสอบเงื่อนไขมาสาย
+                if (checkInTime > lateLimit) {
+                    let isTrulyLate = true;
+                    
+                    // [แก้ไข] ตรวจสอบว่าพนักงานคนนี้มีใบลาชั่วโมงรองรับเวลาที่มาสายหรือไม่
+                    const userLeave = hourlyLeaveMap[data.userId];
+                    if (userLeave && userLeave.endTime) {
+                        const [h, m] = userLeave.endTime.split(':').map(Number);
+                        const leaveEnd = new Date(checkInTime);
+                        leaveEnd.setHours(h, m, 0, 0);
+                        
+                        // ถ้าเวลาเช็คอิน ยังไม่เกินเวลาสิ้นสุดการลา -> "ไม่นับว่าสาย"
+                        if (checkInTime <= leaveEnd) {
+                            isTrulyLate = false;
+                        }
+                    }
+
+                    if (isTrulyLate) countLate++;
+                }
             } 
-            // ถ้าเป็น status: "no_checkin_report_only" โค้ดจะข้ามบล็อกนี้ไป ไม่ error
-            // ---------------------------------------------------
         });
 
-        // B. นับคนลา และเก็บรายชื่อ
+        // B. ประมวลผลคนลา (Leaves)
         leavesSnap.forEach(doc => {
             const data = doc.data();
+            // ถ้านับยอดคนลา (นับเฉพาะคนที่ไม่ได้เช็คอินเข้างานมา)
             if (!checkedInOrLeaveUserIds.has(data.userId)) {
                 countLeave++;
                 checkedInOrLeaveUserIds.add(data.userId);
-                
-                // เก็บชื่อและประเภทลา
-                const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
-                leaveEmployeesList.push(`${data.userName} <span class="text-xs text-gray-400">(${leaveType})</span>`);
             }
+            
+            // เก็บรายชื่อคนลาเพื่อแสดงผลใน Morning Talk
+            const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
+            let timeInfo = data.durationType === 'hourly' ? ` (${data.startTime}-${data.endTime})` : '';
+            leaveEmployeesList.push(`${data.userName} <span class="text-[10px] text-gray-400">(${leaveType}${timeInfo})</span>`);
         });
 
-        // C. หาคนขาด (คนที่ไม่อยู่ใน Set checkedInOrLeaveUserIds)
-        let countAbsent = totalUsers - checkedInOrLeaveUserIds.size;
-        if (countAbsent < 0) countAbsent = 0;
-        
+        // C. หารายชื่อคนขาด
         const absentEmployeesList = [];
         for (const [uid, name] of Object.entries(userMap)) {
             if (!checkedInOrLeaveUserIds.has(uid)) {
                 absentEmployeesList.push(name);
             }
         }
+        let countAbsent = absentEmployeesList.length;
 
-        // --- อัปเดตตัวเลข ---
+        // --- อัปเดต UI ตัวเลขสถิติ ---
         statPresent.textContent = countPresent;
         statLate.textContent = countLate;
         statLeave.textContent = countLeave;
@@ -8226,24 +8228,16 @@ async function loadAdminDashboardOverview() {
 
         // --- อัปเดตรายชื่อคนขาด (Morning Talk) ---
         if (absentListContainer) {
-            if (absentEmployeesList.length > 0) {
-                absentListContainer.innerHTML = absentEmployeesList.map(name => 
-                    `<li class="text-red-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${name}</li>`
-                ).join('');
-            } else {
-                absentListContainer.innerHTML = `<li class="text-center text-gray-400 py-2">- ไม่มีคนขาด -</li>`;
-            }
+            absentListContainer.innerHTML = absentEmployeesList.length > 0 
+                ? absentEmployeesList.map(name => `<li class="text-red-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${name}</li>`).join('')
+                : `<li class="text-center text-gray-400 py-2">- ไม่มีคนขาด -</li>`;
         }   
 
         // --- อัปเดตรายชื่อคนลา (Morning Talk) ---
         if (leaveListContainer) {
-            if (leaveEmployeesList.length > 0) {
-                leaveListContainer.innerHTML = leaveEmployeesList.map(item => 
-                    `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`
-                ).join('');
-            } else {
-                leaveListContainer.innerHTML = `<li class="text-center text-gray-400 py-2">- ไม่มีคนลา -</li>`;
-            }
+            leaveListContainer.innerHTML = leaveEmployeesList.length > 0 
+                ? leaveEmployeesList.map(item => `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`).join('')
+                : `<li class="text-center text-gray-400 py-2">- ไม่มีคนลา -</li>`;
         }
 
     } catch (error) {
