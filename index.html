@@ -369,10 +369,10 @@ aside .nav-item {
     
     <div class="flex gap-3">
         <button id="role-member-btn" class="flex-1 py-3 bg-white border-2 border-sky-500 text-sky-600 rounded-xl font-bold hover:bg-sky-50 transition-all active-role">
-            📷 Scan QR <br><span class="text-xs font-normal">(Member)</span>
+            Scan QR <br><span class="text-xs font-normal">(Member)</span>
         </button>
         <button id="role-leader-btn" class="flex-1 py-3 bg-white border-2 border-gray-300 text-gray-500 rounded-xl font-bold hover:bg-gray-50 transition-all">
-            👑 Create Room <br><span class="text-xs font-normal">(Leader)</span>
+            Create Room <br><span class="text-xs font-normal">(Leader)</span>
         </button>
     </div>
 
@@ -823,32 +823,30 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">Role Management</h3>
-                <p class="text-xs text-gray-500">Assign Admin or User permissions to staff</p>
-            </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col h-full">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="p-2.5 bg-indigo-50 rounded-xl text-indigo-600 flex-shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-lg font-bold text-gray-800 leading-tight">Role Management</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Assign Admin or User permissions to staff</p>
         </div>
     </div>
 
-    <div class="overflow-x-auto overflow-y-auto border border-gray-50 rounded-xl" style="max-height: 500px;">
+    <div class="overflow-x-auto overflow-y-auto border border-gray-50 rounded-2xl" style="height: 260px;">
         <table class="w-full text-left border-collapse">
-            <thead class="sticky top-0 z-20 bg-gray-50">
-                <tr class="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+            <thead class="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-sm">
+                <tr class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
                     <th class="px-6 py-4">Employee</th>
-                    <th class="px-4 py-4 text-center">Current Role</th>
+                    <th class="px-4 py-4 text-center">Role</th>
                     <th class="px-6 py-4 text-right">Action</th>
                 </tr>
             </thead>
             <tbody id="role-management-list" class="divide-y divide-gray-50">
-                <tr><td colspan="3" class="text-center py-10 text-gray-400">Loading users...</td></tr>
+                <tr><td colspan="3" class="text-center py-12 text-gray-400">Loading users...</td></tr>
             </tbody>
         </table>
     </div>
@@ -4518,7 +4516,7 @@ checkoutBtn.addEventListener('click', async () => {
                 }
             }
             
-            if (pageId === 'settings-page') {
+        if (pageId === 'settings-page') {
     // ใช้ฟังก์ชันที่มีอยู่จริงในไฟล์ของคุณเพื่อโหลดข้อมูล Project และ Work Type
     if (typeof populateDropdownOptions === 'function') {
         populateDropdownOptions();
@@ -8480,31 +8478,33 @@ async function loadRoleManagement() {
             const currentRole = user.role || 'user'; // ถ้าไม่มี role ให้เป็น user ไว้ก่อน
 
             html += `
-            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-4">
-                    <div class="flex items-center gap-3">
-                        <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-8 h-8 rounded-full object-cover">
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">${user.fullName}</p>
-                            <p class="text-[10px] text-gray-500">${user.department || '-'}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-4 py-4 text-center">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentRole === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}">
-                        ${currentRole.toUpperCase()}
-                    </span>
-                </td>
-                <td class="px-4 py-4 text-right">
-                    <select onchange="updateUserRole('${userId}', this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="user" ${currentRole === 'user' ? 'selected' : ''}>Set as User</option>
-                        <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Set as Admin</option>
-                    </select>
-                </td>
-            </tr>
-            `;
-        });
-
+        <tr class="hover:bg-gray-50/50 transition-colors">
+        <td class="px-6 py-3">
+            <div class="flex items-center gap-3">
+                <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" 
+                     class="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-sm">
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-gray-800 truncate">${user.fullName}</p>
+                    <p class="text-[10px] text-gray-400 truncate">${user.department || 'Unassigned'}</p>
+                </div>
+            </div>
+        </td>
+        <td class="px-4 py-3 text-center">
+            <span class="inline-flex items-center justify-center rounded-full text-[8px] font-bold uppercase tracking-tight ${currentRole === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}" 
+                  style="min-width: 48px; height: 18px; padding: 0 6px;">
+                ${currentRole}
+            </span>
+        </td>
+        <td class="px-6 py-3 text-right">
+            <select onchange="updateUserRole('${userId}', this.value)" 
+                class="text-[10px] font-semibold border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
+                <option value="user" ${currentRole === 'user' ? 'selected' : ''}>Set as User</option>
+                <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Set as Admin</option>
+            </select>
+        </td>
+    </tr>
+    `;
+});
         listContainer.innerHTML = html;
     } catch (error) {
         console.error("Error loading roles:", error);
