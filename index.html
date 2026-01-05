@@ -5246,7 +5246,6 @@ const openLeaveModal = () => {
                 userId: currentUser.uid,
                 userName: currentUserData.fullName,
                 userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-                // --- เพิ่มบรรทัดข้างล่างนี้ ---
                 department: currentUserData.department || 'ทั่วไป',
                 leaveType: leaveType,
                 reason: reason,
@@ -6266,7 +6265,6 @@ if (otListContainer) {
                 userId: currentUser.uid,
                 userName: currentUserData.fullName,
                 userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-                // --- เพิ่มบรรทัดข้างล่างนี้ ---
                 department: currentUserData.department || 'ทั่วไป',
                 date: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
                 startTime: startTimeStr,
