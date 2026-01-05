@@ -823,6 +823,37 @@ aside .nav-item {
             </div>
         </div>
 
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">Role Management</h3>
+                <p class="text-xs text-gray-500">Assign Admin or User permissions to staff</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto overflow-y-auto border border-gray-50 rounded-xl" style="max-height: 500px;">
+        <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 z-20 bg-gray-50">
+                <tr class="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                    <th class="px-6 py-4">Employee</th>
+                    <th class="px-4 py-4 text-center">Current Role</th>
+                    <th class="px-6 py-4 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody id="role-management-list" class="divide-y divide-gray-50">
+                <tr><td colspan="3" class="text-center py-10 text-gray-400">Loading users...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
         <div class="card border border-sky-100">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
@@ -4487,6 +4518,19 @@ checkoutBtn.addEventListener('click', async () => {
                 }
             }
             
+            if (pageId === 'settings-page') {
+    // ใช้ฟังก์ชันที่มีอยู่จริงในไฟล์ของคุณเพื่อโหลดข้อมูล Project และ Work Type
+    if (typeof populateDropdownOptions === 'function') {
+        populateDropdownOptions();
+    } 
+    
+    // เรียกฟังก์ชันจัดการ Role ที่เราสร้างใหม่
+    if (typeof loadRoleManagement === 'function') {
+        loadRoleManagement();
+    }
+}
+        
+        
             // D. หน้า Profile
             if (pageId === 'profile-page') {
                 if (typeof loadWorkHistory === 'function') loadWorkHistory();
@@ -8419,6 +8463,155 @@ if (yearSelect) {
     }
 }
 
+    // ฟังก์ชันโหลดรายชื่อผู้ใช้เพื่อจัดการ Role
+async function loadRoleManagement() {
+    const listContainer = document.getElementById('role-management-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 text-sm">กำลังโหลดข้อมูล...</td></tr>';
+
+    try {
+        const usersSnapshot = await db.collection('users').orderBy('fullName').get();
+        let html = '';
+
+        usersSnapshot.forEach(doc => {
+            const user = doc.data();
+            const userId = doc.id;
+            const currentRole = user.role || 'user'; // ถ้าไม่มี role ให้เป็น user ไว้ก่อน
+
+            html += `
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">${user.fullName}</p>
+                            <p class="text-[10px] text-gray-500">${user.department || '-'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-4 text-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentRole === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}">
+                        ${currentRole.toUpperCase()}
+                    </span>
+                </td>
+                <td class="px-4 py-4 text-right">
+                    <select onchange="updateUserRole('${userId}', this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="user" ${currentRole === 'user' ? 'selected' : ''}>Set as User</option>
+                        <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Set as Admin</option>
+                    </select>
+                </td>
+            </tr>
+            `;
+        });
+
+        listContainer.innerHTML = html;
+    } catch (error) {
+        console.error("Error loading roles:", error);
+        listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500 text-sm">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+    }
+}
+
+// ฟังก์ชันอัปเดต Role ลงใน Firestore
+async function updateUserRole(userId, newRole) {
+    if (!confirm(`คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้เป็น ${newRole.toUpperCase()} ใช่หรือไม่?`)) {
+        loadRoleManagement(); // รีโหลดเพื่อคืนค่าเดิมใน select
+        return;
+    }
+
+    try {
+        await db.collection('users').doc(userId).update({
+            role: newRole
+        });
+        
+        Toast.fire({
+            icon: 'success',
+            title: 'อัปเดตสิทธิ์เรียบร้อยแล้ว'
+        });
+        
+        loadRoleManagement(); // โหลดรายการใหม่
+    } catch (error) {
+        console.error("Error updating role:", error);
+        alert("ไม่สามารถอัปเดตสิทธิ์ได้");
+    }
+}
+
+// --- ส่วนจัดการสิทธิ์ Admin (Role Management) ---
+
+// 1. ฟังก์ชันโหลดรายชื่อเพื่อแสดงในหน้า Settings
+window.loadRoleManagement = async function() {
+    const listContainer = document.getElementById('role-management-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 text-sm">Loading users...</td></tr>';
+
+    try {
+        const usersSnapshot = await firebase.firestore().collection('users').orderBy('fullName').get();
+        let html = '';
+
+        usersSnapshot.forEach(doc => {
+            const user = doc.data();
+            const userId = doc.id;
+            const currentRole = user.role || 'user';
+
+            html += `
+            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${user.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">${user.fullName || 'Unknown'}</p>
+                            <p class="text-[10px] text-gray-500">${user.department || '-'}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-4 py-4 text-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${currentRole === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}">
+                        ${currentRole.toUpperCase()}
+                    </span>
+                </td>
+                <td class="px-4 py-4 text-right">
+                    <select onchange="updateUserRole('${userId}', this.value)" class="text-[11px] border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="user" ${currentRole === 'user' ? 'selected' : ''}>Set as User</option>
+                        <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Set as Admin</option>
+                    </select>
+                </td>
+            </tr>
+            `;
+        });
+
+        listContainer.innerHTML = html || '<tr><td colspan="3" class="text-center py-4">No users found.</td></tr>';
+    } catch (error) {
+        console.error("Error loading roles:", error);
+        listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500 text-sm">Failed to load data.</td></tr>';
+    }
+};
+
+// 2. ฟังก์ชันอัปเดตค่าไปยัง Firestore (ต้องเป็น window. เพื่อให้ onchange มองเห็น)
+window.updateUserRole = async function(userId, newRole) {
+    if (!confirm(`Confirm change role to ${newRole.toUpperCase()}?`)) {
+        loadRoleManagement(); // คืนค่าเดิม
+        return;
+    }
+
+    try {
+        await firebase.firestore().collection('users').doc(userId).update({
+            role: newRole
+        });
+        
+        // ใช้ฟังก์ชันแจ้งเตือนที่มีอยู่ในแอปของคุณ
+        if (typeof showNotification === 'function') {
+            showNotification("Role updated successfully!");
+        } else {
+            alert("Role updated successfully!");
+        }
+        
+        loadRoleManagement(); // รีโหลดตาราง
+    } catch (error) {
+        console.error("Error updating role:", error);
+        alert("Update failed: " + error.message);
+    }
+};
 
 });
 
