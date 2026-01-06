@@ -7230,14 +7230,18 @@ if (createRoomBtn) {
                 leaderName: currentUserData.fullName,
                 project: project,
                 locationName: locationName,
+                // เก็บพิกัด GPS ของ Leader
                 gpsLocation: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
+                // เก็บเวลาที่ Leader สร้างห้องไว้ให้สมาชิกใช้
+                leaderTimestamp: firebase.firestore.Timestamp.fromDate(leaderNow),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 isActive: true,
                 members: [] 
             };
 
             await db.collection('onsite_rooms').doc(roomId).set(roomData);
-            await performCheckIn(roomId, project, locationName, 'leader', currentUser.uid);
+            // เรียก performCheckIn ของ Leader
+            await performCheckIn(roomId, project, locationName, 'leader', currentUser.uid, leaderNow);
 
             // 4. สร้าง QR Code (ตอนนี้ QRCode จะไม่ error แล้วเพราะเรา await โหลดมาแล้ว)
             document.getElementById('qrcode').innerHTML = ""; 
@@ -7362,42 +7366,55 @@ async function joinRoom(roomId) {
 }
 
 // --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
-// --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
-// [แก้ไข] เพิ่ม parameter 'leaderId' ต่อท้าย
-async function performCheckIn(roomId, project, locationName, role, leaderId) {
-    const now = new Date();
-    const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
+// เพิ่ม parameter 'customTime' ต่อท้าย
 
+    async function performCheckIn(roomId, project, locationName, role, leaderId, customTime = null) {
+    // 1. กำหนดเวลา: ถ้ามี customTime (จาก Leader) ให้ใช้ค่านั้น ถ้าไม่มี (Member) ให้ดึงจาก Room
+    let checkInTime = customTime || new Date();
+    let checkInLocation = new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude);
+
+    // 2. ถ้าเป็นสมาชิก (Member) ให้ไปดึงเวลาและพิกัดจากข้อมูลห้อง (Room)
+    if (role === 'member') {
+        const roomDoc = await db.collection('onsite_rooms').doc(roomId).get();
+        if (roomDoc.exists) {
+            const rData = roomDoc.data();
+            // ใช้เวลาเดียวกับ Leader
+            if (rData.leaderTimestamp) {
+                checkInTime = rData.leaderTimestamp.toDate();
+            }
+            // ใช้พิกัดเดียวกับ Leader
+            if (rData.gpsLocation) {
+                checkInLocation = rData.gpsLocation;
+            }
+        }
+    }
+
+    const docId = `${currentUser.uid}_${toLocalDateKey(checkInTime)}`;
+    
     const workRecord = {
         userId: currentUser.uid,
-        date: firebase.firestore.Timestamp.fromDate(now),
+        date: firebase.firestore.Timestamp.fromDate(checkInTime),
         checkIn: {
-            timestamp: firebase.firestore.Timestamp.fromDate(now),
-            location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-            // เพิ่ม google map
-            googleMapLink: `https://www.google.com/maps/search/?api=1&query=${latestPosition.coords.latitude},${latestPosition.coords.longitude}`,
-            accuracy: latestPosition.coords.accuracy,
-            
-            // ระบุประเภทงานเป็น Group Onsite
-            workType: 'onsite_group', 
-            
-            // เก็บข้อมูลห้องไว้ด้วย
+            timestamp: firebase.firestore.Timestamp.fromDate(checkInTime),
+            location: checkInLocation, // ใช้พิกัดที่ดึงมา (ของ Leader)
+            // สร้างลิงก์แผนที่จากพิกัดของ Leader
+            googleMapLink: `https://www.google.com/maps/search/?api=1&query=${checkInLocation.latitude},${checkInLocation.longitude}`,
+            accuracy: role === 'leader' ? latestPosition.coords.accuracy : null, 
+            workType: 'onsite_group',
             roomId: roomId,
-            leaderId: leaderId, // [แก้ไข] ใช้ค่าจาก parameter แทน roomData.leaderId
+            leaderId: leaderId,
             onSiteDetails: `${locationName} (Group: ${project})`,
-            photoUrl: null // ไม่ต้องใช้รูปเพราะมี Leader ยืนยันแล้ว
+            photoUrl: null 
         },
         status: "checked_in",
-        report: null, // ยังไม่มีรายงาน
+        report: null,
         checkOut: null,
         overtime: null
     };
 
     await db.collection('work_records').doc(docId).set(workRecord);
-    
-    // อัปเดต UI หลักให้เป็น Checked In
     updateUIToCheckedIn();
-    showNotification("บันทึกเวลาเข้างานเรียบร้อย");
+    showNotification("บันทึกเวลาเข้างานเรียบร้อย (เวลาเดียวกับหัวหน้า)");
 }
 
 // เพิ่ม Logic การกดปุ่ม On-site ใน Event Listener เดิม
@@ -8452,7 +8469,7 @@ document.getElementById('summary-stat-year-select')?.addEventListener('change', 
 // เติมปีใน Dropdown (ย้อนหลัง 2 ปี ถึงปัจจุบัน)
 const yearSelect = document.getElementById('summary-stat-year-select');
 if (yearSelect) {
-    const curYear = new Date().getFullYear();
+    const curYear = new Date().getFullYear();   
     for (let y = curYear; y >= curYear - 2; y--) {
         const opt = document.createElement('option');
         opt.value = y;
