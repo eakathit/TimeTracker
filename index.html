@@ -7219,9 +7219,10 @@ if (createRoomBtn) {
         }
         // ------------------------------------------------------------------
 
-        try {
+        try { 
+            const leaderNow = new Date();
             // 1. สร้าง Room ID
-            const roomId = `ROOM_${currentUser.uid}_${Date.now()}`;
+            const roomId = Math.random().toString(36).substring(2, 9).toUpperCase();
             
             // ... (โค้ดส่วนสร้าง roomData และ Firestore เหมือนเดิม) ...
             const roomData = {
