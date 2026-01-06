@@ -330,7 +330,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">Welcome to Application</p>
+                        <p class="text-gray-500">Welcome to</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -4211,55 +4211,77 @@ checkoutBtn.addEventListener('click', async () => {
         // ฟังก์ชันบันทึก (Core Save Function)
         // =========================================================
         const executeSaveCheckout = async (withOT, locationNote, groupUpdateData = null) => {
-            try {
-                if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
-                const checkoutTime = new Date();
-                
-                // คำนวณเวลา (ตัด 17:30 ถ้าไม่เอา OT)
-                let calculationTime = new Date(checkoutTime);
-                if (!withOT && checkoutTime.getHours() >= 18) {
-                    calculationTime.setHours(17, 30, 0, 0);
-                }
+    try {
+        if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
+        const checkoutTime = new Date();
+        const lat = latestPosition.coords.latitude;
+        const lng = latestPosition.coords.longitude;
 
-                const { regularWorkHours, overtimeHours } = calculateWorkHours(recordData.checkIn.timestamp.toDate(), calculationTime);
+        const batch = db.batch();
 
-                // เริ่ม Batch Update
-                const batch = db.batch();
+        // 1. บันทึกข้อมูลของ Leader เอง
+        // คำนวณเวลาของ Leader
+        let leaderCalcTime = new Date(checkoutTime);
+        if (!withOT && checkoutTime.getHours() >= 18) leaderCalcTime.setHours(17, 30, 0, 0);
+        
+        const leaderHours = calculateWorkHours(recordData.checkIn.timestamp.toDate(), leaderCalcTime);
+
+        batch.update(workRecordRef, {
+            checkOut: {
+                timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
+                location: new firebase.firestore.GeoPoint(lat, lng),
+                locationNote: locationNote
+            },
+            status: "completed",
+            overtime: { hours: withOT ? leaderHours.overtimeHours : 0 }
+        });
+
+        // 2. ถ้าเป็น Leader ให้หาลูกน้องทุกคนในห้องมาปิดงาน
+        if (groupUpdateData && roomId) {
+            const roomRef = db.collection('onsite_rooms').doc(roomId);
+            batch.update(roomRef, groupUpdateData);
+
+            // ค้นหา Record ของสมาชิกที่อยู่ในห้องนี้และยังไม่ปิดงาน
+            const membersSnapshot = await db.collection('work_records')
+                .where('checkIn.roomId', '==', roomId)
+                .where('checkIn.leaderId', '==', currentUser.uid)
+                .where('status', '==', 'checked_in')
+                .get();
+
+            membersSnapshot.forEach(doc => {
+                const memberData = doc.data();
+                if (memberData.userId === currentUser.uid) return; // ข้ามตัวเอง
+
+                // คำนวณชั่วโมงงานของสมาชิกแต่ละคน (เทียบเวลาเช็กอินของเขาเอง กับเวลาที่หัวหน้าสั่งปิด)
+                let memCalcTime = new Date(checkoutTime);
+                if (!withOT && checkoutTime.getHours() >= 18) memCalcTime.setHours(17, 30, 0, 0);
                 
-                // A. อัปเดตข้อมูลส่วนตัว (Work Record)
-                const userUpdate = {
+                const memberHours = calculateWorkHours(memberData.checkIn.timestamp.toDate(), memCalcTime);
+
+                batch.update(doc.ref, {
                     checkOut: {
                         timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
-                        location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-                        locationNote: locationNote
+                        location: new firebase.firestore.GeoPoint(lat, lng),
+                        locationNote: `Auto (${locationNote})`
                     },
                     status: "completed",
-                    overtime: { hours: withOT ? overtimeHours : 0 }
-                };
-                batch.update(workRecordRef, userUpdate);
+                    overtime: { hours: withOT ? memberHours.overtimeHours : 0 }
+                });
+            });
+        }
 
-                // B. ถ้าเป็น Leader และมีข้อมูลอัปเดตสถานะห้อง (ปิดห้อง/ระบุสถานที่)
-                if (groupUpdateData && roomId) {
-                    const roomRef = db.collection('onsite_rooms').doc(roomId);
-                    batch.update(roomRef, groupUpdateData);
-                }
-
-                await batch.commit();
-
-                // Update UI
-                showNotification(`Check-out successful! (${locationNote})`);
-                updateUIToCompleted();
-                summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.add('text-red-500');
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} ชม.` + (withOT && overtimeHours > 0 ? ` (+OT ${overtimeHours} ชม.)` : '');
-
-            } catch (error) {
-                console.error("Save Error:", error);
-                showNotification("Error: " + error.message, 'error');
-                checkoutBtn.disabled = false;
-                if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-            }
-        };
+        await batch.commit();
+        
+        showNotification("บันทึกเวลาเลิกงานกลุ่มเรียบร้อย");
+        updateUIToCompleted();
+        // ... (UI Update อื่นๆ ตามโค้ดเดิมของคุณ)
+        
+    } catch (error) {
+        console.error("Save Error:", error);
+        showNotification("Error: " + error.message, 'error');
+        if (checkoutBtn) checkoutBtn.disabled = false;
+    }
+};
 
         // Helper: ถาม OT (ใช้ร่วมกันทุกกรณี)
         function checkTimeAndProceed(note, groupUpdate = null) {
