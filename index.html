@@ -3394,7 +3394,7 @@ saveReportBtn.addEventListener('click', async () => {
     }
 }
 
-    // --- [ฟังก์ชันใหม่] 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
+    // 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
     async function fetchPayrollData(startDate, endDate) {
         
         // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
@@ -5181,6 +5181,8 @@ const openLeaveModal = () => {
             leaveHourlyInputsWrapper.classList.remove('hidden');
             // ตั้งวันที่สิ้นสุดให้เป็นวันเดียวกับวันที่เริ่ม
             leaveEndDate.value = leaveStartDate.value;
+            leaveStartTime.value = '08:30';
+            
         } else { // 'full_day'
             leaveEndDateWrapper.classList.remove('hidden');
             leaveHourlyInputsWrapper.classList.add('hidden');
@@ -5425,39 +5427,37 @@ const openLeaveModal = () => {
 
             // --- (เหมือนเดิม) กรณีคลิก "บันทึกแผนใหม่" ---
             if (e.target.id === 'plan-save-new-btn') {
-                const saveBtn = e.target;
-                const dateKey = saveBtn.dataset.dateKey;
-                const textarea = document.getElementById('plan-new-textarea');
-                const planText = textarea.value.trim();
-                const docId = `${currentUser.uid}_${dateKey}`; // ID เอกสาร
-
-                if (!planText) {
-                    alert("กรุณากรอกแผนงาน");
-                    return;
-                }
-
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'กำลังบันทึก...';
-                
-                try {
-                    const planData = {
-                        userId: currentUser.uid,
-                        date: firebase.firestore.Timestamp.fromDate(new Date(dateKey)),
-                        planText: planText,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    await db.collection('user_plans').doc(docId).set(planData);
-                    
-                    showNotification('บันทึกแผนสำเร็จ!');
-                    loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินทั้งหมด
-                    
-                } catch (error) {
-                    console.error("Error saving plan:", error);
-                    showNotification('เกิดข้อผิดพลาด', 'error');
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'บันทึกแผนของฉัน';
-                }
-            }
+    const saveBtn = e.target;
+    const dateKey = saveBtn.dataset.dateKey;
+    const textarea = document.getElementById('plan-new-textarea');
+    const planText = textarea.value.trim();
+    
+    if (!planText) {
+        alert("กรุณากรอกแผนงาน");
+        return;
+    }
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'กำลังบันทึก...';
+    try {
+        const planData = {
+            userId: currentUser.uid,
+            date: firebase.firestore.Timestamp.fromDate(new Date(dateKey)),
+            planText: planText,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // เปลี่ยนจาก .doc(docId).set(planData) เป็น .add(planData) เพื่อสร้างเอกสารใหม่ทุกครั้ง
+        await db.collection('user_plans').add(planData); 
+        
+        showNotification('บันทึกแผนสำเร็จ!');
+        loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินเพื่อแสดงรายการใหม่
+    } catch (error) {
+        console.error("Error saving plan:", error);
+        showNotification('เกิดข้อผิดพลาด', 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'บันทึกแผนของฉัน';
+    }
+}
 
             // --- (เหมือนเดิม) กรณีคลิก "ลบ" ---
             if (e.target.closest('.plan-delete-btn')) {
