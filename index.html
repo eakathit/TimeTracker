@@ -5459,7 +5459,7 @@ const openLeaveModal = () => {
     }
 }
 
-            // --- (เหมือนเดิม) กรณีคลิก "ลบ" ---
+            // --- กรณีคลิก "ลบ" ---
             if (e.target.closest('.plan-delete-btn')) {
                 const deleteBtn = e.target.closest('.plan-delete-btn');
                 const docId = deleteBtn.dataset.docId; // ID ของ plan ที่จะลบ
@@ -8191,6 +8191,7 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
     
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
 // ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
+// --- ค้นหาฟังก์ชัน loadAdminDashboardOverview และวางทับด้วยโค้ดด้านล่างนี้ ---
 async function loadAdminDashboardOverview() {
     const statPresent = document.getElementById('stat-present');
     const statLate = document.getElementById('stat-late');
@@ -8198,102 +8199,88 @@ async function loadAdminDashboardOverview() {
     const statAbsent = document.getElementById('stat-absent');
     const dateDisplay = document.getElementById('dashboard-date-display');
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
-    
-    // Elements สำหรับ Morning Talk
     const absentListContainer = document.getElementById('dashboard-absent-list');
     const leaveListContainer = document.getElementById('dashboard-leave-list');
 
     if (!statPresent) return;
 
-    if(refreshBtn) {
+    if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.querySelector('svg').classList.add('animate-spin');
     }
 
     try {
         const today = new Date();
-        const startOfDay = new Date(today); startOfDay.setHours(0,0,0,0);
-        const endOfDay = new Date(today); endOfDay.setHours(23,59,59,999);
-        
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+
         dateDisplay.textContent = today.toLocaleDateString('th-TH', { 
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
         });
 
-        // 1. ดึงข้อมูลพื้นฐาน (Users, Records, Leaves)
+        // 1. ดึงข้อมูลพื้นฐาน
         const [usersSnap, recordsSnap, leavesSnap] = await Promise.all([
             db.collection('users').get(),
             db.collection('work_records').where('date', '>=', startOfDay).where('date', '<=', endOfDay).get(),
             db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endOfDay).where('endDate', '>=', startOfDay).get()
         ]);
 
-        const totalUsers = usersSnap.size;
-        const userMap = {}; 
+        const userMap = {};
         usersSnap.forEach(doc => userMap[doc.id] = doc.data().fullName || "Unknown");
 
-        // [เพิ่ม] สร้าง Map สำหรับเก็บข้อมูลลารายชั่วโมงของวันนี้
-        const hourlyLeaveMap = {};
-        leavesSnap.forEach(doc => {
-            const l = doc.data();
-            if (l.durationType === 'hourly') {
-                hourlyLeaveMap[l.userId] = l;
-            }
-        });
-
+        // --- 2. ประกาศตัวแปรก่อนเริ่มประมวลผล (สำคัญ: ห้ามย้ายลำดับ) ---
         let countPresent = 0;
         let countLate = 0;
         let countLeave = 0;
-        
         const checkedInOrLeaveUserIds = new Set();
-        const leaveEmployeesList = []; 
+        const leaveEmployeesList = [];
+        const hourlyLeaveMap = {};
 
         // A. ประมวลผลคนมาทำงาน (Records)
         recordsSnap.forEach(doc => {
             const data = doc.data();
             checkedInOrLeaveUserIds.add(data.userId);
 
-            // [แก้ไข] Safety Check ป้องกัน Error กรณีไม่มีข้อมูล Check-in
             if (data.checkIn && data.checkIn.timestamp) {
-                countPresent++; 
-
+                countPresent++;
                 const checkInTime = data.checkIn.timestamp.toDate();
                 const lateLimit = new Date(checkInTime);
-                lateLimit.setHours(8, 30, 0, 0); 
+                lateLimit.setHours(8, 30, 0, 0);
 
-                // ตรวจสอบเงื่อนไขมาสาย
                 if (checkInTime > lateLimit) {
                     let isTrulyLate = true;
-                    
-                    // [แก้ไข] ตรวจสอบว่าพนักงานคนนี้มีใบลาชั่วโมงรองรับเวลาที่มาสายหรือไม่
-                    const userLeave = hourlyLeaveMap[data.userId];
-                    if (userLeave && userLeave.endTime) {
-                        const [h, m] = userLeave.endTime.split(':').map(Number);
-                        const leaveEnd = new Date(checkInTime);
-                        leaveEnd.setHours(h, m, 0, 0);
-                        
-                        // ถ้าเวลาเช็คอิน ยังไม่เกินเวลาสิ้นสุดการลา -> "ไม่นับว่าสาย"
-                        if (checkInTime <= leaveEnd) {
-                            isTrulyLate = false;
-                        }
+                    // ตรวจสอบลาชั่วโมง (ถ้ามี)
+                    if (hourlyLeaveMap[data.userId]) {
+                        const leaveEnd = hourlyLeaveMap[data.userId].endTimeObj;
+                        if (checkInTime <= leaveEnd) isTrulyLate = false;
                     }
-
                     if (isTrulyLate) countLate++;
                 }
-            } 
+            }
         });
 
         // B. ประมวลผลคนลา (Leaves)
         leavesSnap.forEach(doc => {
             const data = doc.data();
-            // ถ้านับยอดคนลา (นับเฉพาะคนที่ไม่ได้เช็คอินเข้างานมา)
+            
+            // นับยอดคนลา (นับเฉพาะคนที่ไม่ได้เช็คอิน)
             if (!checkedInOrLeaveUserIds.has(data.userId)) {
                 countLeave++;
                 checkedInOrLeaveUserIds.add(data.userId);
             }
-            
-            // เก็บรายชื่อคนลาเพื่อแสดงผลใน Morning Talk
+
+            // เก็บข้อมูลสำหรับการแสดงผลเหตุผล
             const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
             let timeInfo = data.durationType === 'hourly' ? ` (${data.startTime}-${data.endTime})` : '';
-            leaveEmployeesList.push(`${data.userName} <span class="text-[10px] text-gray-400">(${leaveType}${timeInfo})</span>`);
+            
+            leaveEmployeesList.push(`
+                ${data.userName} 
+                <span class="text-[10px] text-gray-400">(${leaveType}${timeInfo})</span>
+                <br>
+                <span class="text-[10px] text-gray-500 italic ml-4">เหตุผล: ${data.reason || '-'}</span>
+            `);
         });
 
         // C. หารายชื่อคนขาด
@@ -8303,32 +8290,29 @@ async function loadAdminDashboardOverview() {
                 absentEmployeesList.push(name);
             }
         }
-        let countAbsent = absentEmployeesList.length;
 
-        // --- อัปเดต UI ตัวเลขสถิติ ---
+        // --- 3. อัปเดต UI ---
         statPresent.textContent = countPresent;
         statLate.textContent = countLate;
         statLeave.textContent = countLeave;
-        statAbsent.textContent = countAbsent;
+        statAbsent.textContent = absentEmployeesList.length;
 
-        // --- อัปเดตรายชื่อคนขาด (Morning Talk) ---
         if (absentListContainer) {
             absentListContainer.innerHTML = absentEmployeesList.length > 0 
-                ? absentEmployeesList.map(name => `<li class="text-red-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${name}</li>`).join('')
+                ? absentEmployeesList.map(name => `<li class="text-red-600 font-medium border-b border-gray-50 pb-1">• ${name}</li>`).join('') 
                 : `<li class="text-center text-gray-400 py-2">- ไม่มีคนขาด -</li>`;
-        }   
+        }
 
-        // --- อัปเดตรายชื่อคนลา (Morning Talk) ---
         if (leaveListContainer) {
             leaveListContainer.innerHTML = leaveEmployeesList.length > 0 
-                ? leaveEmployeesList.map(item => `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`).join('')
+                ? leaveEmployeesList.map(item => `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`).join('') 
                 : `<li class="text-center text-gray-400 py-2">- ไม่มีคนลา -</li>`;
         }
 
     } catch (error) {
         console.error("Dashboard Load Error:", error);
     } finally {
-        if(refreshBtn) {
+        if (refreshBtn) {
             refreshBtn.disabled = false;
             refreshBtn.querySelector('svg').classList.remove('animate-spin');
         }
