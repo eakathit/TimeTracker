@@ -1681,7 +1681,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, function(err) {
             console.log('ServiceWorker registration failed: ', err);
         });
-
         // สำหรับ FCM ปกติ Firebase SDK จะพยายามหาไฟล์ firebase-messaging-sw.js ให้อัตโนมัติ
         // เมื่อมีการเรียกใช้ getToken() ครับ
     });
@@ -8731,6 +8730,20 @@ window.updateUserRole = async function(userId, newRole) {
         alert("Update failed: " + error.message);
     }
 };
+
+
+function updateToken() {
+    messaging.getToken({ vapidKey: 'BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s' })
+    .then((currentToken) => {
+        if (currentToken) {
+            // บันทึกลง Firestore เสมอ 
+            // แม้ใน Function จะลบทิ้งไป แต่พอ User เปิดเว็บใหม่ Token ใหม่จะมาวางที่เดิมเอง
+            db.collection("users").doc(auth.currentUser.uid).update({
+                fcmToken: currentToken
+            });
+        }
+    });
+}
 
 });
 
