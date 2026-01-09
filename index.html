@@ -1226,6 +1226,13 @@ aside .nav-item {
         <span class="font-bold">Leave Request</span>
     </button>
     
+    <button id="enable-notify-btn" class="col-span-2 flex items-center justify-center gap-2 p-3 rounded-xl bg-indigo-500 text-white shadow-md hover:bg-indigo-600 transition-all mt-2 hidden">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+    <span class="font-bold">เปิดรับการแจ้งเตือน</span>
+</button>
+
             </div>
 
         </div>
@@ -1616,6 +1623,8 @@ aside .nav-item {
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
+
+    <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
     <script src="firebase-config.js?v=1.3"></script>
@@ -8640,7 +8649,82 @@ window.updateUserRole = async function(userId, newRole) {
     }
 };
 
+// --- ส่วนตั้งค่า Notification (วางไว้ใน DOMContentLoaded หรือ initializeApp) ---
 
+// 1. ประกาศตัวแปร Messaging
+let messaging;
+try {
+    messaging = firebase.messaging();
+} catch (e) {
+    console.log("Messaging not supported (iOS อาจต้องเพิ่ม Config พิเศษ หรือไม่ใช่ HTTPS)");
+}
+
+// 2. ฟังก์ชันตรวจสอบว่าเปิดแจ้งเตือนหรือยัง
+function checkNotificationStatus() {
+    const btn = document.getElementById('enable-notify-btn');
+    if (!btn) return;
+
+    if (Notification.permission === 'granted') {
+        // ถ้าอนุญาตแล้ว -> ซ่อนปุ่ม หรือเปลี่ยนเป็นข้อความว่า "เปิดแล้ว"
+        btn.classList.add('hidden'); 
+        // หรือจะเปลี่ยนปุ่มเป็นสีเขียวแล้วบอกว่า "เปิดการแจ้งเตือนแล้ว" ก็ได้
+    } else if (Notification.permission === 'denied') {
+        // ถ้า User เคย Block -> อาจจะซ่อนปุ่ม หรือแสดงปุ่มสีเทาที่กดไม่ได้
+        btn.classList.remove('hidden');
+        btn.classList.replace('bg-indigo-500', 'bg-gray-400');
+        btn.disabled = true;
+        btn.querySelector('span').textContent = "ถูกปิดกั้นการแจ้งเตือน";
+    } else {
+        // ถ้ายังไม่เคยเลือก (default) -> โชว์ปุ่มให้กด
+        btn.classList.remove('hidden');
+    }
+}
+
+// 3. ผูก Event ปุ่มกด
+const notifyBtn = document.getElementById('enable-notify-btn');
+if (notifyBtn) {
+    notifyBtn.addEventListener('click', async () => {
+        try {
+            // ขออนุญาต
+            const permission = await Notification.requestPermission();
+            
+            if (permission === 'granted') {
+                showNotification("อนุญาตการแจ้งเตือนแล้ว!", "success");
+                
+                // ดึง Token
+                // ** สำคัญ: คุณต้องไปเอา Key pair ใน Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates **
+                const token = await messaging.getToken({ 
+                    vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" // <--- ใส่ Key ของคุณตรงนี้
+                });
+
+                if (token) {
+                    console.log("FCM Token:", token);
+                    
+                    // บันทึก Token ลงใน Firestore ของ User คนนั้น
+                    if (currentUser) {
+                        await db.collection('users').doc(currentUser.uid).update({
+                            fcmToken: token,
+                            lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log("Token saved to DB");
+                    }
+                }
+                
+                // อัปเดตหน้าจอ
+                checkNotificationStatus();
+                
+            } else {
+                showNotification("คุณปฏิเสธการแจ้งเตือน", "error");
+            }
+        } catch (error) {
+            console.error("Notification Error:", error);
+            showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
+        }
+    });
+}
+
+// เรียกตรวจสอบสถานะตอนโหลดหน้าเว็บ
+checkNotificationStatus();
 });
 
 </script>
