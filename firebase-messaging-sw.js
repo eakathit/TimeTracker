@@ -1,8 +1,7 @@
-// ไฟล์: firebase-messaging-sw.js
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+// ใช้เวอร์ชั่น 12.3.0 (Compat) ให้ตรงกับหน้าเว็บ
+importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js');
 
-// Config ของคุณ (ถูกต้องแล้ว)
 const firebaseConfig = {
     apiKey: "AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc",
     authDomain: "timetracker-f1e11.web.app",
@@ -15,20 +14,17 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+// ประกาศ messaging ใน Background
 const messaging = firebase.messaging();
 
-// ส่วนที่แก้ไข: จัดการแจ้งเตือนเมื่ออยู่ Background (ปิดแอพ/ล็อคจอ)
+// (Optional) จัดการเมือได้รับแจ้งเตือนตอนปิดหน้าเว็บ
 messaging.onBackgroundMessage((payload) => {
-  console.log('[Background] Message received:', payload);
-
-  // ตรวจสอบว่ามีข้อมูล notification หรือไม่
-  const notificationTitle = payload.notification?.title || 'แจ้งเตือนใหม่';
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body: payload.notification?.body || 'มีข้อความใหม่เข้ามา',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png'
+    body: payload.notification.body,
+    icon: '/icons/icon-192.png' // เช็คว่ามีไฟล์ไอคอนนี้จริงไหม
   };
 
-  // บรรทัดนี้สำคัญมาก! ต้องสั่งให้แสดงผล
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });

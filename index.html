@@ -1691,8 +1691,67 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
     const functions = firebase.app().functions('asia-southeast1');
+
     const storage = firebase.storage(); 
     
+    // --- ส่วนตั้งค่า Notification (วางต่อจาก storage) ---
+    let messaging;
+    try {
+        messaging = firebase.messaging();
+    } catch (e) {
+        console.log("Messaging failed (อาจไม่ใช่ HTTPS หรือ Browser ไม่รองรับ)");
+    }
+
+    // ฟังก์ชันตรวจสอบปุ่ม
+    function checkNotificationStatus() {
+        const btn = document.getElementById('enable-notify-btn');
+        if (!btn) return;
+
+        if (Notification.permission === 'granted') {
+            btn.classList.add('hidden'); // อนุญาตแล้ว ซ่อนปุ่ม
+        } else if (Notification.permission === 'denied') {
+            btn.classList.remove('hidden');
+            btn.classList.replace('bg-indigo-500', 'bg-gray-400');
+            btn.disabled = true;
+            btn.querySelector('span').textContent = "ถูกปิดกั้นการแจ้งเตือน";
+        } else {
+            btn.classList.remove('hidden'); // ยังไม่เลือก โชว์ปุ่ม
+        }
+    }
+
+    // ผูก Event ปุ่มกด
+    const notifyBtn = document.getElementById('enable-notify-btn');
+    if (notifyBtn) {
+        notifyBtn.addEventListener('click', async () => {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    // *** อย่าลืมใส่ VAPID Key ของคุณตรงนี้ ***
+                    const token = await messaging.getToken({ 
+                        vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" 
+                    });
+                    
+                    if (token) {
+                        console.log("Token:", token);
+                        // บันทึกลง Firestore
+                        if (currentUser) {
+                            await db.collection('users').doc(currentUser.uid).update({
+                                fcmToken: token
+                            });
+                        }
+                    }
+                    checkNotificationStatus(); // อัปเดตปุ่ม
+                }
+            } catch (error) {
+                console.error("Notify Error:", error);
+                alert("เกิดข้อผิดพลาด: " + error.message);
+            }
+        });
+    }
+
+    // เรียกตรวจสอบสถานะทันที
+    checkNotificationStatus();
+
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
         console.log("🔧 Running in Development Mode (Using Emulators)");
         
@@ -8649,82 +8708,6 @@ window.updateUserRole = async function(userId, newRole) {
     }
 };
 
-// --- ส่วนตั้งค่า Notification (วางไว้ใน DOMContentLoaded หรือ initializeApp) ---
-
-// 1. ประกาศตัวแปร Messaging
-let messaging;
-try {
-    messaging = firebase.messaging();
-} catch (e) {
-    console.log("Messaging not supported (iOS อาจต้องเพิ่ม Config พิเศษ หรือไม่ใช่ HTTPS)");
-}
-
-// 2. ฟังก์ชันตรวจสอบว่าเปิดแจ้งเตือนหรือยัง
-function checkNotificationStatus() {
-    const btn = document.getElementById('enable-notify-btn');
-    if (!btn) return;
-
-    if (Notification.permission === 'granted') {
-        // ถ้าอนุญาตแล้ว -> ซ่อนปุ่ม หรือเปลี่ยนเป็นข้อความว่า "เปิดแล้ว"
-        btn.classList.add('hidden'); 
-        // หรือจะเปลี่ยนปุ่มเป็นสีเขียวแล้วบอกว่า "เปิดการแจ้งเตือนแล้ว" ก็ได้
-    } else if (Notification.permission === 'denied') {
-        // ถ้า User เคย Block -> อาจจะซ่อนปุ่ม หรือแสดงปุ่มสีเทาที่กดไม่ได้
-        btn.classList.remove('hidden');
-        btn.classList.replace('bg-indigo-500', 'bg-gray-400');
-        btn.disabled = true;
-        btn.querySelector('span').textContent = "ถูกปิดกั้นการแจ้งเตือน";
-    } else {
-        // ถ้ายังไม่เคยเลือก (default) -> โชว์ปุ่มให้กด
-        btn.classList.remove('hidden');
-    }
-}
-
-// 3. ผูก Event ปุ่มกด
-const notifyBtn = document.getElementById('enable-notify-btn');
-if (notifyBtn) {
-    notifyBtn.addEventListener('click', async () => {
-        try {
-            // ขออนุญาต
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                showNotification("อนุญาตการแจ้งเตือนแล้ว!", "success");
-                
-                // ดึง Token
-                // ** สำคัญ: คุณต้องไปเอา Key pair ใน Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates **
-                const token = await messaging.getToken({ 
-                    vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" // <--- ใส่ Key ของคุณตรงนี้
-                });
-
-                if (token) {
-                    console.log("FCM Token:", token);
-                    
-                    // บันทึก Token ลงใน Firestore ของ User คนนั้น
-                    if (currentUser) {
-                        await db.collection('users').doc(currentUser.uid).update({
-                            fcmToken: token,
-                            lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log("Token saved to DB");
-                    }
-                }
-                
-                // อัปเดตหน้าจอ
-                checkNotificationStatus();
-                
-            } else {
-                showNotification("คุณปฏิเสธการแจ้งเตือน", "error");
-            }
-        } catch (error) {
-            console.error("Notification Error:", error);
-            showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-        }
-    });
-}
-
-// เรียกตรวจสอบสถานะตอนโหลดหน้าเว็บ
-checkNotificationStatus();
 });
 
 </script>
