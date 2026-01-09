@@ -19,12 +19,20 @@ const messaging = firebase.messaging();
 
 // (Optional) จัดการเมือได้รับแจ้งเตือนตอนปิดหน้าเว็บ
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icons/icon-192.png' // เช็คว่ามีไฟล์ไอคอนนี้จริงไหม
+    icon: '/icons/icon-192.png',
+    data: { url: 'https://timetracker-f1e11.web.app' } // ใส่ URL ของแอปคุณ
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// เพิ่ม Event Listener สำหรับการคลิก
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
 });

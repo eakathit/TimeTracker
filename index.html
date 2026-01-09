@@ -1674,17 +1674,18 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                registration.unregister()
-                .then(function() {
-                    console.log("Service Worker ถูกลบออกแล้ว!");
-                    // ลบเสร็จแล้ว ให้รีโหลดหน้าจออัตโนมัติ 1 ครั้งเพื่อให้ได้ของใหม่ทันที
-                    // window.location.reload(); 
-                });
-            }
+    window.addEventListener('load', function() {
+        // ลงทะเบียน sw.js สำหรับ PWA
+        navigator.serviceWorker.register('/sw.js').then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
         });
-    }
+
+        // สำหรับ FCM ปกติ Firebase SDK จะพยายามหาไฟล์ firebase-messaging-sw.js ให้อัตโนมัติ
+        // เมื่อมีการเรียกใช้ getToken() ครับ
+    });
+}
     
     // --- Initialize Firebase & Config ---
     firebase.initializeApp(firebaseConfig);
@@ -1701,6 +1702,15 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
         console.log("Messaging failed (อาจไม่ใช่ HTTPS หรือ Browser ไม่รองรับ)");
     }
+
+    // เพิ่มโค้ดนี้เพื่อให้แจ้งเตือนเด้งตอนเปิดเว็บอยู่
+        if (messaging) {
+            messaging.onMessage((payload) => {
+                console.log('ได้รับข้อความขณะเปิดแอป: ', payload);
+                // แสดงการแจ้งเตือนโดยใช้ฟังก์ชัน showNotification ที่คุณมีอยู่แล้ว
+                showNotification(payload.notification.title + ": " + payload.notification.body, "info");
+            });
+        }
 
     // ฟังก์ชันตรวจสอบปุ่ม
     function checkNotificationStatus() {
