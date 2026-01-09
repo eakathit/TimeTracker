@@ -4528,6 +4528,20 @@ checkoutBtn.addEventListener('click', async () => {
         return R * c;
     }
 
+    function calculateWorkHours(checkinDate, checkoutDate) {
+    const diffMs = checkoutDate - checkinDate;
+    const diffHrs = diffMs / (1000 * 60 * 60);
+    
+    // ตัวอย่างการคำนวณคร่าวๆ (ปรับสูตรตามกฎบริษัทคุณได้)
+    let regularWorkHours = Math.min(diffHrs, 8); // ทำงานปกติไม่เกิน 8 ชม.
+    let overtimeHours = Math.max(0, diffHrs - 9); // ถ้าเกิน 9 ชม. (รวมพัก 1) ให้เป็น OT
+
+    return {
+        regularWorkHours: parseFloat(regularWorkHours.toFixed(2)),
+        overtimeHours: parseFloat(overtimeHours.toFixed(2))
+    };
+}
+
     function showPage(pageId) {
         pages.forEach(p => p.classList.remove('active'));
         const activePage = document.getElementById(pageId);
