@@ -1074,10 +1074,12 @@ aside .nav-item {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-4">
     <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">🔍 ค้นหาชื่อพนักงาน</label>
-        <input type="text" id="payroll-search-name" placeholder="พิมพ์ชื่อเพื่อค้นหา..." 
-               class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
-    </div>
+    <label class="block text-xs font-medium text-gray-700 mb-1">เลือกพนักงาน</label>
+    <select id="payroll-search-name" 
+            class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+        <option value="">-- พนักงานทุกคน --</option>
+        </select>
+</div>
     <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">📁 เลือกแผนก</label>
         <select id="payroll-filter-dept" class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
@@ -2090,7 +2092,7 @@ async function initializeApp(user, userData) {
             sbPic.src = "https://placehold.co/100x100/E2E8F0/475569?text=User"; 
         }
     }
-
+   
     // 3. จัดการการแสดงผลเมนู Sidebar (Desktop) ตาม Role
     const adminMenuGroup = document.getElementById('admin-menu-group');
     const systemMenuGroup = document.getElementById('system-menu-group');
@@ -3656,88 +3658,103 @@ saveReportBtn.addEventListener('click', async () => {
     const endInput = document.getElementById('payroll-end-date');
     const spinner = document.getElementById('loading-spinner');
 
-    // --- ส่วนที่ 1: ดึงค่าจากตัวกรองที่เพิ่มใหม่ ---
-    const searchNameInput = document.getElementById('payroll-search-name');
+    // --- 1. ดึงค่าจากตัวกรอง (Dropdown รายชื่อ และ แผนก) ---
+    const searchNameSelect = document.getElementById('payroll-search-name');
     const filterDeptSelect = document.getElementById('payroll-filter-dept');
     
-    const searchTerm = searchNameInput ? searchNameInput.value.toLowerCase() : "";
-    const deptFilter = filterDeptSelect ? filterDeptSelect.value : "";
+    // ดึงค่าจาก Dropdown (ถ้าเป็นค่าว่างคือเลือก "ทั้งหมด")
+    const selectedName = searchNameSelect ? searchNameSelect.value.toLowerCase() : "";
+    const selectedDept = filterDeptSelect ? filterDeptSelect.value : "";
 
-    // ตรวจสอบความพร้อมของวันที่
+    // ตรวจสอบการเลือกวันที่
     if (!startInput.value || !endInput.value) {
         return showNotification('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด', 'warning');
     }
 
-    // --- ส่วนที่ 2: แสดงสถานะการโหลด ---
+    // --- 2. แสดงสถานะการโหลด (Spinner + ข้อความในพื้นที่ตาราง) ---
     if (spinner) spinner.style.display = 'flex';
-    container.innerHTML = '<p class="text-sm text-center text-gray-500 py-4 italic">กำลังประมวลผลข้อมูลและกรองรายชื่อ...</p>';
+    container.innerHTML = '<p class="text-sm text-center text-gray-500 py-6 italic">กำลังรวบรวมข้อมูลและคำนวณรายรับ...</p>';
 
     try {
         const startDate = new Date(startInput.value); startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(endInput.value); endDate.setHours(23, 59, 59, 999);
 
         if (endDate < startDate) {
-            if (spinner) spinner.style.display = 'none';
-            return showNotification('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
+            throw new Error('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
         }
 
-        // ดึงข้อมูลดิบทั้งหมดจาก Firestore ผ่านฟังก์ชัน fetchPayrollData
+        // ดึงข้อมูลพนักงานทั้งหมดจากฐานข้อมูลตามช่วงวันที่
         const summaryData = await fetchPayrollData(startDate, endDate);
 
-        // --- ส่วนที่ 3: ตรรกะการกรองข้อมูล (Filtering Logic) ---
+        // --- 3. ตรรกะการกรองข้อมูล (Filtering Logic) ---
         const filteredData = summaryData.filter(user => {
-            const matchesName = user.fullName.toLowerCase().includes(searchTerm);
-            const matchesDept = deptFilter === "" || user.department === deptFilter;
+            // เช็คชื่อ: ถ้าเลือก "พนักงานทุกคน" (ค่าว่าง) ให้ผ่านหมด ถ้าเลือกชื่อคน ให้เช็คว่าตรงกันไหม
+            const matchesName = selectedName === "" || user.fullName.toLowerCase() === selectedName;
+            // เช็คแผนก: ถ้าเลือก "ทุกแผนก" ให้ผ่านหมด
+            const matchesDept = selectedDept === "" || user.department === selectedDept;
+            
             return matchesName && matchesDept;
         });
 
+        // กรณีไม่พบข้อมูลหลังกรอง
         if (filteredData.length === 0) {
-            container.innerHTML = '<p class="text-sm text-center text-gray-500 py-10">❌ ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา</p>';
+            container.innerHTML = `
+                <div class="py-12 text-center">
+                    <p class="text-gray-400 text-sm">❌ ไม่พบข้อมูลพนักงานที่ตรงกับเงื่อนไขในช่วงเวลานี้</p>
+                </div>`;
             return;
         }
 
-        // --- ส่วนที่ 4: สร้างตาราง HTML ---
+        // --- 4. สร้างตารางแสดงผล ---
         let tableHTML = `
-            <div class="overflow-x-auto rounded-lg border border-gray-100 shadow-sm">
+            <div class="mb-2 flex justify-between items-end">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payroll Report</p>
+                <p class="text-[10px] font-bold text-orange-500 uppercase">พบพนักงาน ${filteredData.length} ท่าน</p>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
+                    <thead class="text-[11px] text-gray-500 uppercase bg-gray-50/80 sticky top-0">
                         <tr>
-                            <th scope="col" class="px-4 py-3">พนักงาน</th>
-                            <th scope="col" class="px-2 py-3 text-center">วันทำงาน</th>
-                            <th scope="col" class="px-2 py-3 text-center">ชม.ปกติ</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT (1.5x)</th>
-                            <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (2x)</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT (3x)</th>
-                            <th scope="col" class="px-2 py-3 text-center">สาย/ลา/ขาด</th>
-                            <th scope="col" class="px-2 py-3 text-center">จัดการ</th>
+                            <th scope="col" class="px-4 py-4">พนักงาน / แผนก</th>
+                            <th scope="col" class="px-2 py-4 text-center text-blue-600">วันทำงาน</th>
+                            <th scope="col" class="px-2 py-4 text-center">ชม.ปกติ</th>
+                            <th scope="col" class="px-2 py-4 text-center text-orange-600">OT (1.5x)</th>
+                            <th scope="col" class="px-2 py-4 text-center">วันหยุด (2x)</th>
+                            <th scope="col" class="px-2 py-4 text-center text-orange-600">OT หยุด (3x)</th>
+                            <th scope="col" class="px-2 py-4 text-center">สาย/ลา/ขาด</th>
+                            <th scope="col" class="px-4 py-4 text-center">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody class="divide-y divide-gray-50">
         `;
 
         filteredData.forEach(user => {
             tableHTML += `
-                <tr class="bg-white hover:bg-orange-50/50 transition-colors">
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-gray-900">${user.fullName}</div>
-                        <div class="text-[10px] text-gray-400 uppercase">${user.department}</div>
+                <tr class="bg-white hover:bg-orange-50/30 transition-colors">
+                    <td class="px-4 py-4">
+                        <div class="font-bold text-gray-800">${user.fullName}</div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-tighter">${user.department || 'ไม่ระบุแผนก'}</div>
                     </td>
-                    <td class="px-2 py-3 text-center font-medium text-sky-600">${user.totalWorkDays}</td>
-                    <td class="px-2 py-3 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
-                    <td class="px-2 py-3 text-center text-orange-600 font-bold">${user.total_OT_1_5x.toFixed(1)}</td>
-                    <td class="px-2 py-3 text-center text-gray-600">${user.total_Holiday_2x.toFixed(2)}</td>
-                    <td class="px-2 py-3 text-center text-orange-600">${user.total_OT_3x.toFixed(1)}</td>
-                    <td class="px-2 py-3 text-center space-x-1">
+                    <td class="px-2 py-4 text-center font-semibold text-sky-600">${user.totalWorkDays}</td>
+                    <td class="px-2 py-4 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
+                    <td class="px-2 py-4 text-center text-orange-600 font-bold">${user.total_OT_1_5x.toFixed(1)}</td>
+                    <td class="px-2 py-4 text-center text-gray-600">${user.total_Holiday_2x.toFixed(1)}</td>
+                    <td class="px-2 py-4 text-center text-orange-600 font-bold">${user.total_OT_3x.toFixed(1)}</td>
+                    <td class="px-2 py-4 text-center font-mono">
                         <span class="${user.totalLateDays > 0 ? 'text-orange-500 font-bold' : 'text-gray-300'}">${user.totalLateDays}</span>
                         <span class="text-gray-200">/</span>
                         <span class="${user.totalLeaveDays > 0 ? 'text-blue-500 font-bold' : 'text-gray-300'}">${user.totalLeaveDays}</span>
                         <span class="text-gray-200">/</span>
                         <span class="${user.totalAbsentDays > 0 ? 'text-red-500 font-bold' : 'text-gray-300'}">${user.totalAbsentDays}</span>
                     </td>
-                    <td class="px-2 py-3 text-center">
+                    <td class="px-4 py-4 text-center">
                         <button onclick="viewEmployeeDetail('${user.userId}', '${startInput.value}', '${endInput.value}')" 
-                                class="text-sky-500 hover:text-sky-700 p-1 rounded-full hover:bg-sky-50 transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                class="inline-flex p-2 text-sky-500 hover:bg-sky-50 rounded-full transition-all"
+                                title="ดูรายละเอียดรายวัน">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
                         </button>
                     </td>
                 </tr>
@@ -3745,19 +3762,17 @@ saveReportBtn.addEventListener('click', async () => {
         });
 
         tableHTML += `</tbody></table></div>`;
-        
-        // แสดงจำนวนพนักงานที่พบ
-        const countHTML = `<p class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest text-right">พบพนักงาน ${filteredData.length} ท่าน</p>`;
-        container.innerHTML = countHTML + tableHTML;
+        container.innerHTML = tableHTML;
 
     } catch (error) {
-        console.error("Error loading payroll summary:", error);
-        container.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center">⚠️ เกิดข้อผิดพลาด: ${error.message}</div>`;
+        console.error("Payroll Error:", error);
+        showNotification(error.message, 'error');
+        container.innerHTML = `<div class="p-6 text-center text-red-500 bg-red-50 rounded-xl text-sm">⚠️ เกิดข้อผิดพลาด: ${error.message}</div>`;
     } finally {
-        // --- ส่วนที่ 5: ซ่อน Spinner เสมอเมื่อทำงานเสร็จ ---
+        // --- 5. ซ่อน Spinner ทุกกรณีเมื่อจบการทำงาน ---
         if (spinner) spinner.style.display = 'none';
     }
-}
+}   
 
     // event loadpayroll
 document.getElementById('payroll-search-name')?.addEventListener('input', loadPayrollSummary);
@@ -8890,6 +8905,31 @@ window.viewEmployeeDetail = function(userId, startDate, endDate) {
         }
     }
 };
+
+// ฟังก์ชันสำหรับโหลดรายชื่อพนักงานเข้า Dropdown ของ Payroll
+async function populatePayrollUserDropdown() {
+    const userSelect = document.getElementById('payroll-search-name');
+    if (!userSelect) return;
+
+    try {
+        // ดึงข้อมูลพนักงานทั้งหมด เรียงตามชื่อ
+        const snapshot = await db.collection('users').orderBy('fullName').get();
+        
+        // ล้างค่าเดิมก่อน (ยกเว้น option แรกที่เป็น "พนักงานทุกคน")
+        userSelect.innerHTML = '<option value="">-- พนักงานทุกคน --</option>';
+
+        snapshot.forEach(doc => {
+            const user = doc.data();
+            const option = document.createElement('option');
+            // ใช้ชื่อจริงในการค้นหา (หรือจะใช้ User ID ก็ได้ครับ)
+            option.value = user.fullName.toLowerCase(); 
+            option.textContent = user.fullName;
+            userSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error populating user dropdown:", error);
+    }
+}
 
 });
 
