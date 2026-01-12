@@ -1710,6 +1710,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification(payload.notification.title + ": " + payload.notification.body, "info");
             });
         }
+    
+        // ฟังก์ชันสำหรับขอ Token และบันทึกลง Database
+async function saveFCMToken() {
+    if (!messaging || !currentUser) return;
+
+    try {
+        // เช็คสิทธิ์ก่อน ถ้าได้รับอนุญาตแล้วค่อยขอ Token
+        if (Notification.permission === 'granted') {
+            const token = await messaging.getToken({ 
+                vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" 
+            });
+
+            if (token) {
+                console.log("Auto-refreshing Token:", token);
+                await db.collection('users').doc(currentUser.uid).update({
+                    fcmToken: token,
+                    lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp() // เก็บเวลาที่อัปเดตล่าสุดไว้ดูด้วย
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error auto-saving token:", error);
+    }
+}
 
     // ฟังก์ชันตรวจสอบปุ่ม
     function checkNotificationStatus() {
@@ -2216,6 +2240,8 @@ auth.onAuthStateChanged(async (user) => {
 
             if (userDoc.exists) {
                 await initializeApp(user, userDoc.data());
+
+                saveFCMToken();
             } else {
                 console.warn("⚠️ No user profile found, creating default...");
                 const newUserProfile = {
@@ -5824,6 +5850,7 @@ function showConfirmDialog(message, onConfirm, onCancel = null, okText = "ตก
         }
     });
 
+
     async function loadCalendarRules() {
     const holidayList = document.getElementById('holiday-list');
     const workSatList = document.getElementById('working-saturday-list');
@@ -7966,8 +7993,13 @@ let currentAuditFilter = 'all';
 
 // ตั้งค่าเริ่มต้นเป็นวันนี้
 if(auditDatePicker) {
+    // ตั้งค่าวันที่ปัจจุบัน
     auditDatePicker.value = new Date().toISOString().split('T')[0];
+
+    //  เมื่อมีการเปลี่ยนวันที่
     auditDatePicker.addEventListener('change', loadDailyAuditData);
+
+    loadDailyAuditData();
 }
 
 // ผูกปุ่ม Filter
