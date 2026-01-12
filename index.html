@@ -1081,7 +1081,7 @@ aside .nav-item {
         </select>
 </div>
     <div>
-        <label class="block text-xs font-medium text-gray-700 mb-1">📁 เลือกแผนก</label>
+        <label class="block text-xs font-medium text-gray-700 mb-1">เลือกแผนก</label>
         <select id="payroll-filter-dept" class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
             <option value="">-- ทุกแผนก --</option>
             <option value="Office">Office</option>
@@ -3733,7 +3733,7 @@ saveReportBtn.addEventListener('click', async () => {
                 <tr class="bg-white hover:bg-orange-50/30 transition-colors">
                     <td class="px-4 py-4">
                         <div class="font-bold text-gray-800">${user.fullName}</div>
-                        <div class="text-[10px] text-gray-400 uppercase tracking-tighter">${user.department || 'ไม่ระบุแผนก'}</div>
+                        <div class="text-[10px] text-gray-400">${user.department || 'ไม่ระบุแผนก'}</div>
                     </td>
                     <td class="px-2 py-4 text-center font-semibold text-sky-600">${user.totalWorkDays}</td>
                     <td class="px-2 py-4 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
@@ -7764,6 +7764,10 @@ if (tsTabBtns) {
                 if (typeof populatePayrollUserDropdown === 'function') {
                     populatePayrollUserDropdown();
                 }
+
+                if (typeof populatePayrollDeptDropdown === 'function') {
+                    populatePayrollDeptDropdown();
+                }
             }
         });
     });
@@ -8935,6 +8939,43 @@ async function populatePayrollUserDropdown() {
         console.log("Payroll dropdown populated.");
     } catch (error) {
         console.error("Error populating user dropdown:", error);
+    }
+}
+
+// ฟังก์ชันสำหรับโหลดชื่อแผนกที่ "มีอยู่จริง" เข้า Dropdown
+async function populatePayrollDeptDropdown() {
+    const deptSelect = document.getElementById('payroll-filter-dept');
+    if (!deptSelect) return;
+
+    try {
+        // 1. ดึงข้อมูลพนักงานทุกคน
+        const snapshot = await db.collection('users').get();
+        
+        // 2. ใช้ Set เพื่อเก็บชื่อแผนกแบบไม่ให้ซ้ำกัน
+        const departments = new Set();
+        
+        snapshot.forEach(doc => {
+            const userData = doc.data();
+            if (userData.department) {
+                // เก็บชื่อแผนกใส่ Set (จะถูกลบตัวที่ซ้ำออกให้อัตโนมัติ)
+                departments.add(userData.department);
+            }
+        });
+
+        // 3. ล้างค่าเดิมใน Dropdown (ยกเว้น "ทุกแผนก")
+        deptSelect.innerHTML = '<option value="">-- ทุกแผนก --</option>';
+
+        // 4. แปลง Set เป็น Array และเรียงลำดับตัวอักษร จากนั้นนำมาสร้าง Option
+        Array.from(departments).sort().forEach(deptName => {
+            const option = document.createElement('option');
+            option.value = deptName;
+            option.textContent = deptName;
+            deptSelect.appendChild(option);
+        });
+
+        console.log("Payroll department dropdown updated.");
+    } catch (error) {
+        console.error("Error loading departments:", error);
     }
 }
 
