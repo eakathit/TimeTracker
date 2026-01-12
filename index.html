@@ -3246,72 +3246,80 @@ saveReportBtn.addEventListener('click', async () => {
     }
 
     async function checkUserWorkStatus() {
-        if (!currentUser) return;
-        const today = toLocalDateKey(new Date());
-        const docId = `${currentUser.uid}_${today}`;
-        
-        // ใช้ source: 'server' เพื่อให้ได้ข้อมูลล่าสุดเสมอ ไม่เอา cache
-        let workRecordDoc;
+
+    if (!auth.currentUser || !currentUser) return;
+
+    const today = toLocalDateKey(new Date());
+    const docId = `${currentUser.uid}_${today}`;
+    
+    // ดึงข้อมูลแบบปกติ เพื่อให้ Firebase จัดการ Offline/Cache เองตามธรรมชาติ
+    // ลดปัญหา FirebaseError: Failed to get document from cache
+    let workRecordDoc;
+    try {
+        workRecordDoc = await db.collection('work_records').doc(docId).get();
+    } catch(e) {
+        console.warn("Network error, trying to fetch status from local cache...", e);
+        // ถ้าดึงปกติไม่ได้จริงๆ ค่อยลองดึงจาก cache แบบเงียบๆ
         try {
-             workRecordDoc = await db.collection('work_records').doc(docId).get();
-        } catch(e) {
-             // fallback ถ้าไม่มีเน็ต
-             workRecordDoc = await db.collection('work_records').doc(docId).get({ source: 'cache' });
-        }
-
-        if (workRecordDoc.exists) {
-            const data = workRecordDoc.data();
-
-            // --- [จุดที่แก้ไข] ตรวจสอบก่อนว่ามี CheckIn หรือไม่ ---
-            // ถ้าเป็น Report Only (ไม่มี CheckIn) ให้ข้ามการดึง timestamp
-            if (!data.checkIn || !data.checkIn.timestamp) {
-                console.log("Found record but no check-in data (Report Only)");
-                // อาจจะอัปเดต UI ว่าส่ง Report แล้วแต่วันนี้ไม่ได้เข้างานก็ได้
-                // แต่เบื้องต้นให้ return เพื่อไม่ให้ error
-                return;
-            }
-            // ---------------------------------------------------
-
-            const checkinTime = data.checkIn.timestamp.toDate();
-            
-            summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
-            summaryCheckinTime.classList.remove('text-gray-400');
-            summaryCheckinTime.classList.add('text-green-600');
-
-            if (data.status === 'checked_in') {
-                updateUIToCheckedIn();
-            } else if (data.status === 'completed') {
-                updateUIToCompleted(); 
-                
-                const checkoutTime = data.checkOut.timestamp.toDate();
-                
-                // 1. คำนวณตามสูตรปกติก่อน
-                let { regularWorkHours, overtimeHours } = calculateWorkHours(checkinTime, checkoutTime);
-
-                // ตรวจสอบค่าจาก DB
-                let dbOvertime = 0;
-                if (data.overtime && typeof data.overtime.hours === 'number') {
-                    dbOvertime = data.overtime.hours;
-                }
-                
-                if (dbOvertime > 0) {
-                    overtimeHours = dbOvertime;
-                }
-
-                summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
-                summaryCheckoutTime.classList.remove('text-gray-400');
-                summaryCheckoutTime.classList.add('text-red-500');
-
-                summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} hours`;
-                
-                if (overtimeHours > 0) {
-                    summaryWorkHours.textContent += ` (OT ${overtimeHours} hrs)`;
-                }
-            }
-        } else {
-            updateUIToCheckIn();
+            workRecordDoc = await db.collection('work_records').doc(docId).get({ source: 'cache' });
+        } catch(cacheError) {
+            return; // ถ้าไม่มีทั้งเน็ตและไม่มี cache ให้หยุดทำงาน
         }
     }
+
+    if (workRecordDoc && workRecordDoc.exists) {
+        const data = workRecordDoc.data();
+
+        // --- [ตรวจสอบ Check-In] ---
+        // ถ้าเป็นกรณี Report Only (มี Record แต่ไม่มี Check-in) ให้แสดงสถานะเตรียม Check-in ปกติ
+        if (!data.checkIn || !data.checkIn.timestamp) {
+            console.log("Found record but no check-in data (Potential Report Only)");
+            updateUIToCheckIn();
+            return;
+        }
+
+        const checkinTime = data.checkIn.timestamp.toDate();
+        summaryCheckinTime.textContent = checkinTime.toLocaleTimeString('th-TH');
+        summaryCheckinTime.classList.remove('text-gray-400');
+        summaryCheckinTime.classList.add('text-green-600');
+
+        if (data.status === 'checked_in') {
+            updateUIToCheckedIn();
+        } else if (data.status === 'completed' && data.checkOut) {
+            updateUIToCompleted(); 
+            
+            const checkoutTime = data.checkOut.timestamp.toDate();
+            
+            // 1. คำนวณชั่วโมงเบื้องต้น
+            let { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(checkinTime, checkoutTime);
+
+            // 2. จัดการค่า OT (หัวใจสำคัญ: เชื่อข้อมูลในฐานข้อมูลเป็นอันดับแรก)
+            let finalOt = 0;
+            // ตรวจสอบว่ามีข้อมูล OT บันทึกไว้ไหม (ถ้ามีให้ใช้ค่าในนั้น แม้จะเป็น 0 ก็ตาม)
+            if (data.overtime && typeof data.overtime.hours === 'number') {
+                finalOt = data.overtime.hours;
+            } else {
+                // ถ้าใน DB ยังไม่มีข้อมูล OT (กรณีเก่า) ให้ใช้ค่าจากการคำนวณ
+                finalOt = calculatedOt;
+            }
+
+            summaryCheckoutTime.textContent = checkoutTime.toLocaleTimeString('th-TH');
+            summaryCheckoutTime.classList.remove('text-gray-400');
+            summaryCheckoutTime.classList.add('text-red-500');
+
+            // แสดงชั่วโมงงานปกติ
+            summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} hours`;
+            
+            // แสดง OT เฉพาะรายการที่มากกว่า 0
+            if (finalOt > 0) {
+                summaryWorkHours.textContent += ` (OT ${finalOt} hrs)`;
+            }
+        }
+    } else {
+        // กรณีไม่มีข้อมูล Record ใดๆ ของวันนี้เลย
+        updateUIToCheckIn();
+    }
+}
 
     async function loadEmployeeSummary(page = 1) { 
     const container = document.getElementById('employee-summary-container-admin');
@@ -4746,9 +4754,7 @@ checkoutBtn.addEventListener('click', async () => {
     
             // ★ เพิ่มเงื่อนไข: รันฟังก์ชันเหล่านี้เฉพาะคนที่เป็น Admin เท่านั้น
             if (currentUserData && currentUserData.role === 'admin') {
-                
                 loadAllUsersForDropdown();
-                
                 if (typeof loadPendingLeaveRequests === 'function') loadPendingLeaveRequests();
                 if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests();
 
@@ -4915,7 +4921,9 @@ checkoutBtn.addEventListener('click', async () => {
 
 async function loadSentReports() {
     // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
-    if (!currentUser || !currentUser.uid || !currentUserData) return;
+    if (!currentUser || !currentUser.uid || !currentUserData) {
+        return; // หยุดทำงานถ้าข้อมูล User ยังไม่พร้อม
+    }
     
     const container = document.getElementById('sent-reports-container');
     if (!container) return;
@@ -8211,20 +8219,32 @@ async function loadDailyAuditData() {
     const lateFilterCheckbox = document.getElementById('audit-late-filter');
     const spinner = document.getElementById('loading-spinner');
 
-    if(!auditTableBody) return;
-    
-    // แสดง Spinner และข้อความโหลด (ปรับ colspan เป็น 6 ตามจำนวนคอลัมน์ใหม่)
+    // 1. ★ เพิ่มจุดสกัด: ป้องกัน Null value error และเช็คสิทธิ์ Admin
+    if (!currentUser || !currentUserData) return;
+    if (currentUserData.role !== 'admin') {
+        console.warn("Unauthorized: loadDailyAuditData is for admin only.");
+        return;
+    }
+    if (!auditTableBody) return;
+
+    // 2. ตรวจสอบว่าเลือกวันที่หรือยัง
+    const selectedDateStr = auditDatePicker.value;
+    if (!selectedDateStr) {
+        auditTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">กรุณาเลือกวันที่เพื่อดูข้อมูล</td></tr>';
+        return;
+    }
+
     if (spinner) spinner.style.display = 'flex';
     auditTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">กำลังประมวลผลข้อมูล...</td></tr>';
 
-    const selectedDateStr = auditDatePicker.value;
-    const startDate = new Date(selectedDateStr); startDate.setHours(0,0,0,0);
-    const endDate = new Date(selectedDateStr); endDate.setHours(23,59,59,999);
-
-    const filterType = typeFilterSelect ? typeFilterSelect.value : 'all'; 
-    const isFilterLate = lateFilterCheckbox ? lateFilterCheckbox.checked : false;
-
     try {
+        const startDate = new Date(selectedDateStr); startDate.setHours(0,0,0,0);
+        const endDate = new Date(selectedDateStr); endDate.setHours(23,59,59,999);
+
+        const filterType = typeFilterSelect ? typeFilterSelect.value : 'all'; 
+        const isFilterLate = lateFilterCheckbox ? lateFilterCheckbox.checked : false;
+
+        // ดึงข้อมูลพร้อมกัน (Promise.all)
         const [usersSnapshot, recordsSnapshot, leavesSnapshot] = await Promise.all([
             db.collection('users').get(),
             db.collection('work_records')
@@ -8249,19 +8269,18 @@ async function loadDailyAuditData() {
             }
         });
 
-        const records = [];
-        recordsSnapshot.forEach(doc => records.push({ ...doc.data(), id: doc.id }));
-
         let html = '';
         let count = 0;
 
-        records.forEach(record => {
+        recordsSnapshot.forEach(doc => {
+            const record = doc.data();
             if (!record.checkIn || !record.checkIn.timestamp) return;
 
             const user = usersMap[record.userId];
             const checkIn = record.checkIn;
             const checkOut = record.checkOut;
             
+            // กรองประเภทงาน
             if (filterType !== 'all') {
                 if (filterType === 'in_factory' && checkIn.workType !== 'in_factory') return;
                 if (filterType === 'onsite' && !checkIn.workType.includes('onsite') && !checkIn.workType.includes('on_site')) return;
@@ -8273,6 +8292,7 @@ async function loadDailyAuditData() {
             
             let isLate = checkInDate > lateThreshold;
 
+            // เช็คว่าลาครึ่งเช้าหรือไม่ (ถ้าใช่ ไม่นับว่าสาย)
             const userLeave = leaveMap[record.userId];
             if (isLate && userLeave && userLeave.endTime) {
                 const [h, m] = userLeave.endTime.split(':').map(Number);
@@ -8285,23 +8305,23 @@ async function loadDailyAuditData() {
 
             if (isFilterLate && !isLate) return;
 
-            // --- [ส่วนที่เพิ่ม: เช็คสถานะรายงาน] ---
+            // สถานะรายงาน
             const reportsArray = record.reports || (record.report ? [record.report] : []);
             const hasReport = reportsArray.length > 0;
             const reportStatusBadge = hasReport 
                 ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">Submitted</span>`
                 : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">Not Submitted</span>`;
 
-            // --- ส่วนการแสดงผล HTML (ยึดตาม UI เดิมของคุณ) ---
+            // ส่วนของแผนที่
             let locationStatusHTML = '';
             let mapLinkBtn = '';
 
             if (checkIn.location) {
-                // แก้ไขจุดที่ผิดจาก 0 เป็น $ ตรงพิกัด
+                // ★ แก้ไขจุดที่ผิด: เปลี่ยนจาก 0{ เป็น ${ และใช้ URL ที่ถูกต้อง
                 const mapUrl = `https://www.google.com/maps?q=${checkIn.location.latitude},${checkIn.location.longitude}`;
                 mapLinkBtn = `
                 <a href="${mapUrl}" target="_blank" class="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded-md text-[10px] font-medium text-gray-700 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-300 transition-all shadow-sm">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
@@ -8332,10 +8352,10 @@ async function loadDailyAuditData() {
             <tr class="hover:bg-gray-50 border-b border-gray-100 transition-colors">
                 <td style="padding-left: 20px;" class="pr-6 py-4">
                     <div class="flex items-center gap-4">
-                        <img src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover">
+                        <img src="${user?.profileImageUrl || 'https://placehold.co/100x100/E2E8F0/475569?text=User'}" class="w-10 h-10 rounded-full object-cover border border-gray-100">
                         <div>
                             <p class="font-bold text-gray-800 text-sm">${user?.fullName || 'Unknown'}</p>
-                            <p class="text-xs text-gray-500">${user?.department || '-'}</p>
+                            <p class="text-[10px] text-gray-500 uppercase">${user?.department || '-'}</p>
                         </div>
                     </div>
                 </td>
@@ -8360,20 +8380,21 @@ async function loadDailyAuditData() {
                         ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">Completed</span>' 
                         : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 animate-pulse">Working</span>'}
                 </td>
-            </tr>
-            `;
+            </tr>`;
         });
 
         if (count === 0) {
-            html = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">ไม่พบข้อมูลตามเงื่อนไข</td></tr>';
+            html = '<tr><td colspan="6" class="px-6 py-10 text-center text-gray-400">ไม่พบข้อมูลพนักงานเข้างานในวันนี้</td></tr>';
         }
 
         auditTableBody.innerHTML = html;
-        document.getElementById('audit-count-text').textContent = `แสดง ${count} รายการ`;
+        if (document.getElementById('audit-count-text')) {
+            document.getElementById('audit-count-text').textContent = `แสดง ${count} รายการ`;
+        }
 
     } catch (error) {
         console.error("Audit Load Error:", error);
-        auditTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+        auditTableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-red-500">เกิดข้อผิดพลาด: ' + error.message + '</td></tr>';
     } finally {
         if (spinner) spinner.style.display = 'none';
     }
@@ -9077,7 +9098,7 @@ async function populatePayrollDeptDropdown() {
     const currentMinute = now.getMinutes();
 
     // 2. กำหนดเวลาเลิกงานปกติ (เช่น 17:30)
-    const normalEndTime = { h: 8, m: 0 }; // แก้ให้เป็น 8 โมงเช้า เพื่อให้เวลาตอนนี้ (10:00) ถือว่าเป็น OT
+    const normalEndTime = { h: 17, m: 30 }; // แก้ให้เป็น 8 โมงเช้า เพื่อให้เวลาตอนนี้ (10:00) ถือว่าเป็น OT
     
     // คำนวณว่าตอนนี้เกินเวลาเลิกงานมาแล้วกี่นาที
     const totalMinutesNow = (currentHour * 60) + currentMinute;
