@@ -621,7 +621,8 @@ aside .nav-item {
 
     <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: 25px;">
 
-        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]"> <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
+        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]"> 
+            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
                     📄 Leave Management
                 </h3>
@@ -3436,7 +3437,7 @@ saveReportBtn.addEventListener('click', async () => {
                             // 2. ตรวจสอบค่าจาก Database
                             let finalOt = 0;
                             // ถ้า DB มีค่า > 0 ให้ใช้ค่าจาก DB (เชื่อ DB)
-                            if (latestRecord.overtime && typeof latestRecord.overtime.hours === 'number' && latestRecord.overtime.hours > 0) {
+                            if (latestRecord.overtime && typeof latestRecord.overtime.hours === 'number') {
                                 finalOt = latestRecord.overtime.hours;
                             } else {
                                 // ถ้า DB เป็น 0 หรือไม่มีค่า ให้ใช้ค่าที่คำนวณได้ (Fallback)
@@ -3619,7 +3620,7 @@ saveReportBtn.addEventListener('click', async () => {
                         const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(checkinTime, checkoutTime);
                         
                         let otHoursToday = 0;
-                        if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                        if (record.overtime && typeof record.overtime.hours === 'number') {
                             otHoursToday = record.overtime.hours;
                         } else {
                             otHoursToday = calculatedOt; // ใช้ค่าคำนวณถ้า DB เป็น 0
@@ -4258,7 +4259,7 @@ if (exportPayrollBtn) {
                     const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
                     regularWorkHours = timeCalc.regularWorkHours;
 
-                    if (record.overtime && typeof record.overtime.hours === 'number' && record.overtime.hours > 0) {
+                    if (record.overtime && typeof record.overtime.hours === 'number') {
                         overtimeHours = record.overtime.hours;
                     } else {
                         overtimeHours = timeCalc.overtimeHours;
@@ -4504,20 +4505,24 @@ checkoutBtn.addEventListener('click', async () => {
 
         // Helper: ถาม OT (ใช้ร่วมกันทุกกรณี)
         function checkTimeAndProceed(note, groupUpdate = null) {
-             const h = now.getHours();
-             if (h >= 18) {
-                 // หน่วงเวลาเล็กน้อยเพื่อให้ Modal เดิมปิดสนิท
-                 setTimeout(() => {
+            const h = now.getHours();
+            const m = now.getMinutes();
+            
+            // ★ แก้กลับเป็น 18 (หรือเวลาที่คุณต้องการให้ระบบเริ่มถามเรื่อง OT)
+            // เดิมตอนเทสคือ h >= 8
+            if (h >= 18) { 
+                setTimeout(() => {
                     showConfirmDialog(
                         "เลยเวลาเลิกงาน ต้องการบันทึก OT หรือไม่?",
-                        () => executeSaveCheckout(true, note, groupUpdate),  // เอา OT
-                        () => executeSaveCheckout(false, note, groupUpdate), // ไม่เอา OT
-                        "บันทึก OT", "ไม่เอา OT"
+                        () => executeSaveCheckout(true, note, groupUpdate),
+                        () => executeSaveCheckout(false, note, groupUpdate),
+                        "บันทึก OT",
+                        "ไม่เอา OT"
                     );
-                 }, 300);
-             } else {
-                 executeSaveCheckout(true, note, groupUpdate);
-             }
+                }, 300);
+            } else {
+                executeSaveCheckout(true, note, groupUpdate);
+            }
         }
 
         // =========================================================
@@ -9010,6 +9015,69 @@ async function populatePayrollDeptDropdown() {
         console.log("Payroll department dropdown updated.");
     } catch (error) {
         console.error("Error loading departments:", error);
+    }
+}
+
+    async function handleCheckOut() {
+    // 1. ตรวจสอบเบื้องต้น
+    if (!currentWorkRecordId) return;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // 2. กำหนดเวลาเลิกงานปกติ (เช่น 17:30)
+    const normalEndTime = { h: 8, m: 0 }; // แก้ให้เป็น 8 โมงเช้า เพื่อให้เวลาตอนนี้ (10:00) ถือว่าเป็น OT
+    
+    // คำนวณว่าตอนนี้เกินเวลาเลิกงานมาแล้วกี่นาที
+    const totalMinutesNow = (currentHour * 60) + currentMinute;
+    const totalMinutesEnd = (normalEndTime.h * 60) + normalEndTime.m;
+    const otMinutes = totalMinutesNow - totalMinutesEnd;
+
+    // 3. ถ้าเวลาปัจจุบันเกิน 17:30 น. (otMinutes > 0)
+    if (otMinutes > 0) {
+        const otHours = (otMinutes / 60).toFixed(1); // เช่น 0.5, 1.0
+
+        const result = await Swal.fire({
+            title: 'ยืนยันการบันทึก OT',
+            html: `ขณะนี้เวลา <b>${currentHour}:${currentMinute.toString().padStart(2, '0')} น.</b><br>
+                   คุณทำงานเกินเวลาปกติมาแล้ว <b>${otHours} ชม.</b><br><br>
+                   <span class="text-sm text-gray-500">คุณต้องการบันทึกเวลานี้เป็น OT หรือไม่?</span>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, บันทึกเป็น OT',
+            cancelButtonText: 'ไม่, บันทึกเป็นเวลาปกติ (ไม่มี OT)',
+            confirmButtonColor: '#f97316', // สีส้ม (Orange-500)
+            cancelButtonColor: '#94a3b8', // สีเทา
+        });
+
+        if (result.isConfirmed) {
+            // กรณีพนักงานยืนยัน OT: พาไปหน้าเขียนคำขอ OT หรือบันทึก Flag ไว้
+            showNotification('กรุณากรอกรายละเอียดการทำ OT ในขั้นตอนถัดไป', 'info');
+            // คุณอาจจะสั่งให้เปิด Tab ขอ OT ทันที
+            showTab('tab-ot-request'); 
+            // หมายเหตุ: ตรงนี้เรายังต้องทำการ Check-out ให้เสร็จก่อน
+        } else {
+            // กรณีพนักงานเลือก "ไม่": ระบบจะบันทึก Checkout ปกติ 
+            // แต่อาจจะใส่ Note ไว้ในระบบว่า "พนักงานไม่ขอรับ OT (เดินทางกลับจาก On-site)"
+            console.log("User declined OT calculation.");
+        }
+    }
+
+    // 4. ทำกระบวนการ Check-out ปกติ (โค้ดเดิมของคุณ)
+    try {
+        // ... (โค้ดส่วนบันทึก Firebase .update() เดิมของคุณ) ...
+        // ตัวอย่างเพิ่ม Note เข้าไปใน Record
+        await db.collection('work_records').doc(currentWorkRecordId).update({
+            checkOutTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')}`,
+            status: 'completed',
+            // otStatus: result.isConfirmed ? 'requested' : 'declined'
+        });
+        
+        Swal.fire('สำเร็จ', 'ลงเวลาออกงานเรียบร้อยแล้ว', 'success');
+        checkStatus(); // อัปเดต UI หน้าแรก
+    } catch (error) {
+        console.error("Check-out Error:", error);
     }
 }
 
