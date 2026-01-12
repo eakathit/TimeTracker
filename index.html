@@ -3744,21 +3744,20 @@ saveReportBtn.addEventListener('click', async () => {
         `;
                 
         filteredData.forEach(user => {
-            // กำหนดสีตัวอักษร: ถ้าส่งรายงานครบเป็นสีเขียว ถ้าส่งไม่ครบเป็นสีแดง
-            const reportColor = user.totalReportDays === user.totalWorkDays ? 'text-green-600' : 'text-red-500';
+        const reportColor = user.totalReportDays === user.totalWorkDays ? 'text-green-600' : 'text-red-500';
 
-            tableHTML += `
-    <tr class="bg-white hover:bg-orange-50/30 transition-colors">
-        <td class="px-4 py-4">
-            <div class="font-bold text-gray-800 text-sm leading-tight">${user.fullName}</div>
-            
-            <div class="flex items-center mt-1">
-                <span class="bg-gray-50/50 text-[8.5px] pl-1 pr-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-semibold whitespace-nowrap ml-[-4.5px] leading-none tracking-tighter antialiased">
-                    Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
-                </span>
-            </div>
+        tableHTML += `
+            <tr class="bg-white hover:bg-orange-50/30 transition-colors">
+                <td class="px-4 py-4">
+                    <div class="font-bold text-gray-800 text-sm leading-tight">${user.fullName}</div>
+                    
+                    <div class="flex items-center mt-1.5 h-3">
+                        <span class="mt-2 bg-gray-50/50 text-[10px] pl-1 pr-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-bold whitespace-nowrap inline-block origin-left scale-[0.87] ml-[-1px] leading-none tracking-tighter antialiased">
+                            Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
+                        </span>
+                    </div>
                         
-                        <div class="text-[10px] text-gray-400 mt-0.5">${user.department || 'ไม่ระบุแผนก'}</div>
+                        <div class="text-[10px] text-gray-400 mt-1">${user.department || 'ไม่ระบุแผนก'}</div>
                     </td>
                     <td class="px-2 py-4 text-center font-semibold text-sky-600">${user.totalWorkDays}</td>
                     <td class="px-2 py-4 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
@@ -3767,9 +3766,9 @@ saveReportBtn.addEventListener('click', async () => {
                     <td class="px-2 py-4 text-center text-orange-600 font-bold">${user.total_OT_3x.toFixed(1)}</td>
                     <td class="px-2 py-4 text-center font-mono">
                         <span class="${user.totalLateDays > 0 ? 'text-orange-500 font-bold' : 'text-gray-300'}">${user.totalLateDays}</span>
-                        <span class="text-gray-200">/</span>
+                        <span class="text-gray-200"> / </span>
                         <span class="${user.totalLeaveDays > 0 ? 'text-blue-500 font-bold' : 'text-gray-300'}">${user.totalLeaveDays}</span>
-                        <span class="text-gray-200">/</span>
+                        <span class="text-gray-200"> / </span>
                         <span class="${user.totalAbsentDays > 0 ? 'text-red-500 font-bold' : 'text-gray-300'}">${user.totalAbsentDays}</span>
                     </td>
                     <td class="px-4 py-4 text-center">
@@ -4950,72 +4949,47 @@ async function loadSentReports() {
             const reportsArray = data.reports || (data.report ? [data.report] : []);
 
             if (reportsArray.length > 0) {
-                // ส่วนหัวแสดงจำนวนรายการ
-                htmlContent += `
-                    <div class="flex items-center justify-between mb-3 px-1">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                            ประวัติรายงาน (${reportsArray.length} รายการ)
-                        </span>
-                    </div>
-                `;
-
                 reportsArray.forEach((item, index) => {
+                    // แปลง object เป็น string เพื่อใช้ใน function ลบ
+                    const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
+
                     htmlContent += `
-                        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-3 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-sky-400 opacity-70"></div>
-                            
+                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white relative group">
                             <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <span class="text-[9px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full uppercase">
-                                        รายการที่ ${index + 1}
-                                    </span>
-                                    <h4 class="font-bold text-gray-800 text-sm mt-1.5">${item.workType}</h4>
-                                </div>
-                                
-                                <button class="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" 
-                                        onclick="deleteReportItem('${docId}', ${item.id || index})"
-                                        title="ลบรายงาน">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                    No.${index + 1}
+                                </span>
+                                <button class="delete-report-btn text-gray-300 hover:text-red-500 transition-colors" 
+                                        onclick="deleteReportItem('${docId}', ${item.id || index})">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
                                 </button>
                             </div>
-
-                            <div class="space-y-1.5">
-                                <div class="flex items-center text-xs">
+                            <h4 class="font-bold text-gray-800 text-base">${item.workType}</h4>
+                            <div class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-600">
+                                <div class="flex items-center">
                                     <span class="w-16 text-gray-400">Project:</span>
-                                    <span class="font-semibold text-gray-700">${item.project || '-'}</span>
+                                    <span class="font-medium text-gray-700">${item.project}</span>
                                 </div>
-                                <div class="flex items-center text-xs">
+                                <div class="flex items-center">
                                     <span class="w-16 text-gray-400">Period:</span>
-                                    <span class="text-gray-600 font-mono bg-gray-50 px-1.5 py-0.5 rounded">${item.duration || '-'}</span>
+                                    <span class="font-medium text-gray-700">${item.duration}</span>
                                 </div>
-                                ${item.note ? `
-                                <div class="mt-2 pt-2 border-t border-gray-50">
-                                    <p class="text-xs text-gray-500 italic leading-relaxed">"${item.note}"</p>
-                                </div>
-                                ` : ''}
                             </div>
                         </div>
                     `;
-                });
+                 });
             } else {
-                htmlContent = showEmptyState();
+                htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
             }
         } else {
-            htmlContent = showEmptyState();
+            htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
         }
         container.innerHTML = htmlContent;
-
     } catch (error) {
         console.error("Error loading reports:", error);
-        container.innerHTML = `
-            <div class="text-center py-8">
-                <p class="text-xs text-red-400 bg-red-50 inline-block px-4 py-2 rounded-full font-medium">
-                    ไม่สามารถโหลดข้อมูลได้: ${error.message}
-                </p>
-            </div>
-        `;
+        container.innerHTML = `<div class="text-center py-8 text-red-400 text-sm">โหลดข้อมูลไม่สำเร็จ</div>`;
     }
 }
 
