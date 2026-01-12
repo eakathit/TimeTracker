@@ -1072,7 +1072,23 @@ aside .nav-item {
                 </div>
             </div>
 
-            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 mb-4">
+    <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">🔍 ค้นหาชื่อพนักงาน</label>
+        <input type="text" id="payroll-search-name" placeholder="พิมพ์ชื่อเพื่อค้นหา..." 
+               class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+    </div>
+    <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">📁 เลือกแผนก</label>
+        <select id="payroll-filter-dept" class="w-full p-2 border border-orange-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <option value="">-- ทุกแผนก --</option>
+            <option value="Office">Office</option>
+            <option value="Factory">Factory</option>
+            <option value="On-site">On-site</option>
+            <option value="IT">IT</option> </select>
+    </div>
+</div>
+
             <div class="p-4 bg-orange-50 rounded-xl border border-orange-100 mb-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                     <div>
@@ -3635,85 +3651,147 @@ saveReportBtn.addEventListener('click', async () => {
 
     //  ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ
     async function loadPayrollSummary() {
-        const container = document.getElementById('payroll-summary-results-container');
-        const startInput = document.getElementById('payroll-start-date');
-        const endInput = document.getElementById('payroll-end-date');
-        const spinner = document.getElementById('loading-spinner');
+    const container = document.getElementById('payroll-summary-results-container');
+    const startInput = document.getElementById('payroll-start-date');
+    const endInput = document.getElementById('payroll-end-date');
+    const spinner = document.getElementById('loading-spinner');
 
-        if (!startInput.value || !endInput.value) {
-            return showNotification('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด', 'warning');
+    // --- ส่วนที่ 1: ดึงค่าจากตัวกรองที่เพิ่มใหม่ ---
+    const searchNameInput = document.getElementById('payroll-search-name');
+    const filterDeptSelect = document.getElementById('payroll-filter-dept');
+    
+    const searchTerm = searchNameInput ? searchNameInput.value.toLowerCase() : "";
+    const deptFilter = filterDeptSelect ? filterDeptSelect.value : "";
+
+    // ตรวจสอบความพร้อมของวันที่
+    if (!startInput.value || !endInput.value) {
+        return showNotification('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด', 'warning');
+    }
+
+    // --- ส่วนที่ 2: แสดงสถานะการโหลด ---
+    if (spinner) spinner.style.display = 'flex';
+    container.innerHTML = '<p class="text-sm text-center text-gray-500 py-4 italic">กำลังประมวลผลข้อมูลและกรองรายชื่อ...</p>';
+
+    try {
+        const startDate = new Date(startInput.value); startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(endInput.value); endDate.setHours(23, 59, 59, 999);
+
+        if (endDate < startDate) {
+            if (spinner) spinner.style.display = 'none';
+            return showNotification('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
         }
 
-        if (spinner) spinner.style.display = 'flex';
-        container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังประมวลผลข้อมูลสรุป...</p>';
+        // ดึงข้อมูลดิบทั้งหมดจาก Firestore ผ่านฟังก์ชัน fetchPayrollData
+        const summaryData = await fetchPayrollData(startDate, endDate);
 
-        try {
-            const startDate = new Date(startInput.value); startDate.setHours(0,0,0,0);
-            const endDate = new Date(endInput.value); endDate.setHours(23,59,59,999);
-            
-            if (endDate < startDate) {
-                return showNotification('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น', 'warning');
-            }
-            
-            const summaryData = await fetchPayrollData(startDate, endDate);
-            
-            if (summaryData.length === 0) {
-                container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลพนักงาน</p>';
-                return;
-            }
+        // --- ส่วนที่ 3: ตรรกะการกรองข้อมูล (Filtering Logic) ---
+        const filteredData = summaryData.filter(user => {
+            const matchesName = user.fullName.toLowerCase().includes(searchTerm);
+            const matchesDept = deptFilter === "" || user.department === deptFilter;
+            return matchesName && matchesDept;
+        });
 
-            // [แก้ไข] 1/2: อัปเดต "หัวตาราง" (Header)
-            let tableHTML = `
+        if (filteredData.length === 0) {
+            container.innerHTML = '<p class="text-sm text-center text-gray-500 py-10">❌ ไม่พบข้อมูลที่ตรงกับเงื่อนไขการค้นหา</p>';
+            return;
+        }
+
+        // --- ส่วนที่ 4: สร้างตาราง HTML ---
+        let tableHTML = `
+            <div class="overflow-x-auto rounded-lg border border-gray-100 shadow-sm">
                 <table class="w-full text-left text-sm">
-                    <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
                         <tr>
                             <th scope="col" class="px-4 py-3">พนักงาน</th>
-                            <th scope="col" class="px-2 py-3 text-center">ทำงาน (วัน)</th>
-                            <th scope="col" class="px-2 py-3 text-center">ชั่วโมงปกติ</th>
-                            <th scope="col" class="px-2 py-3 text-center">OT</th>
+                            <th scope="col" class="px-2 py-3 text-center">วันทำงาน</th>
+                            <th scope="col" class="px-2 py-3 text-center">ชม.ปกติ</th>
+                            <th scope="col" class="px-2 py-3 text-center">OT (1.5x)</th>
                             <th scope="col" class="px-2 py-3 text-center">ชม.หยุด (2x)</th>
                             <th scope="col" class="px-2 py-3 text-center">OT (3x)</th>
-                            <th scope="col" class="px-2 py-3 text-center">มาสาย</th>
-                            <th scope="col" class="px-2 py-3 text-center">ลา</th>
-                            <th scope="col" class="px-2 py-3 text-center">ขาด</th>
+                            <th scope="col" class="px-2 py-3 text-center">สาย/ลา/ขาด</th>
+                            <th scope="col" class="px-2 py-3 text-center">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
+        `;
+
+        filteredData.forEach(user => {
+            tableHTML += `
+                <tr class="bg-white hover:bg-orange-50/50 transition-colors">
+                    <td class="px-4 py-3">
+                        <div class="font-bold text-gray-900">${user.fullName}</div>
+                        <div class="text-[10px] text-gray-400 uppercase">${user.department}</div>
+                    </td>
+                    <td class="px-2 py-3 text-center font-medium text-sky-600">${user.totalWorkDays}</td>
+                    <td class="px-2 py-3 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
+                    <td class="px-2 py-3 text-center text-orange-600 font-bold">${user.total_OT_1_5x.toFixed(1)}</td>
+                    <td class="px-2 py-3 text-center text-gray-600">${user.total_Holiday_2x.toFixed(2)}</td>
+                    <td class="px-2 py-3 text-center text-orange-600">${user.total_OT_3x.toFixed(1)}</td>
+                    <td class="px-2 py-3 text-center space-x-1">
+                        <span class="${user.totalLateDays > 0 ? 'text-orange-500 font-bold' : 'text-gray-300'}">${user.totalLateDays}</span>
+                        <span class="text-gray-200">/</span>
+                        <span class="${user.totalLeaveDays > 0 ? 'text-blue-500 font-bold' : 'text-gray-300'}">${user.totalLeaveDays}</span>
+                        <span class="text-gray-200">/</span>
+                        <span class="${user.totalAbsentDays > 0 ? 'text-red-500 font-bold' : 'text-gray-300'}">${user.totalAbsentDays}</span>
+                    </td>
+                    <td class="px-2 py-3 text-center">
+                        <button onclick="viewEmployeeDetail('${user.userId}', '${startInput.value}', '${endInput.value}')" 
+                                class="text-sky-500 hover:text-sky-700 p-1 rounded-full hover:bg-sky-50 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </td>
+                </tr>
             `;
-            
-            summaryData.forEach(user => {
-                tableHTML += `
-                    <tr class="bg-white border-b hover:bg-gray-50">
-                        <td class="px-4 py-3 font-medium text-gray-900">${user.fullName}</td>
-                        <td class="px-2 py-3 text-center">${user.totalWorkDays}</td>
-                        
-                        <td class="px-2 py-3 text-center">${user.totalRegularHours.toFixed(2)}</td>
-                        <td class="px-2 py-3 text-center">${user.total_OT_1_5x.toFixed(1)}</td>
-                        <td class="px-2 py-3 text-center">${user.total_Holiday_2x.toFixed(2)}</td>
-                        <td class="px-2 py-3 text-center">${user.total_OT_3x.toFixed(1)}</td>
-                        
-                        <td class="px-2 py-3 text-center ${user.totalLateDays > 0 ? 'text-yellow-600 font-bold' : ''}">${user.totalLateDays}</td>
-                        <td class="px-2 py-3 text-center ${user.totalLeaveDays > 0 ? 'text-blue-600 font-bold' : ''}">${user.totalLeaveDays}</td>
-                        <td class="px-2 py-3 text-center ${user.totalAbsentDays > 0 ? 'text-red-600 font-bold' : ''}">${user.totalAbsentDays}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHTML += `</tbody></table>`;
-            container.innerHTML = tableHTML;
-            
-        } catch (error) {
+        });
+
+        tableHTML += `</tbody></table></div>`;
+        
+        // แสดงจำนวนพนักงานที่พบ
+        const countHTML = `<p class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest text-right">พบพนักงาน ${filteredData.length} ท่าน</p>`;
+        container.innerHTML = countHTML + tableHTML;
+
+    } catch (error) {
         console.error("Error loading payroll summary:", error);
-        container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาด: ' + error.message + '</p>';
+        container.innerHTML = `<div class="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center">⚠️ เกิดข้อผิดพลาด: ${error.message}</div>`;
     } finally {
-        if (spinner) {
-            spinner.style.display = 'none';
-        }
+        // --- ส่วนที่ 5: ซ่อน Spinner เสมอเมื่อทำงานเสร็จ ---
+        if (spinner) spinner.style.display = 'none';
     }
 }
 
-    // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
-    // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
+    // event loadpayroll
+document.getElementById('payroll-search-name')?.addEventListener('input', loadPayrollSummary);
+document.getElementById('payroll-filter-dept')?.addEventListener('change', loadPayrollSummary);
+
+// เพิ่มฟังก์ชันนี้ลงใน index.html
+function viewEmployeeDetail(userId, startDate, endDate) {
+    // 1. แจ้งเตือนเพื่อให้ Admin ทราบ
+    showNotification("กำลังแสดงประวัติพนักงาน...", "info");
+
+    // 2. สั่งให้ระบบเปลี่ยนหน้าไปที่ 'Timesheet Management'
+    // และเลือก Tab 'Daily Audit'
+    showPage('timesheet-management-page');
+    
+    // 3. คลิกที่แท็บ Audit ให้อัตโนมัติ (Trigger Tab Click)
+    const auditTabBtn = document.querySelector('.ts-tab-btn[data-target="tab-audit"]');
+    if (auditTabBtn) auditTabBtn.click();
+
+    // 4. ตั้งค่าวันที่ในหน้า Audit ให้ตรงกับช่วงเวลาที่เลือกใน Payroll
+    const auditDatePicker = document.getElementById('audit-date-picker');
+    if (auditDatePicker) {
+        // ตั้งค่าเป็นวันเริ่มต้นของช่วง Payroll เพื่อให้ Admin ไล่ดูได้ง่าย
+        auditDatePicker.value = startDate;
+        
+        // สั่งให้โหลดข้อมูลหน้า Audit ทันที
+        if (typeof loadDailyAuditData === 'function') {
+            loadDailyAuditData();
+        }
+    }
+    
+    console.log("Viewing Detail for:", userId, "Date:", startDate);
+}
+
+// --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
     async function exportPayrollSummaryToExcel() {
         const startInput = document.getElementById('payroll-start-date');
         const endInput = document.getElementById('payroll-end-date');
