@@ -8862,6 +8862,35 @@ function updateToken() {
     });
 }
 
+// ฟังก์ชันสำหรับดูรายละเอียดรายคน (ต้องอยู่นอกฟังก์ชันอื่น)
+window.viewEmployeeDetail = function(userId, startDate, endDate) {
+    console.log("Viewing Detail for:", userId, "Range:", startDate, "to", endDate);
+    
+    // 1. แจ้งเตือนผู้ใช้
+    if (typeof showNotification === 'function') {
+        showNotification("กำลังเปิดประวัติการลงเวลา...", "info");
+    }
+
+    // 2. สลับไปหน้า Timesheet Management (Audit)
+    if (typeof showPage === 'function') {
+        showPage('timesheet-management-page');
+    }
+
+    // 3. จำลองการคลิกแท็บ Audit
+    const auditTabBtn = document.querySelector('.ts-tab-btn[data-target="tab-audit"]');
+    if (auditTabBtn) auditTabBtn.click();
+
+    // 4. ตั้งค่าวันที่ในหน้า Audit ให้ตรงกับที่เลือก
+    const auditDatePicker = document.getElementById('audit-date-picker');
+    if (auditDatePicker) {
+        auditDatePicker.value = startDate;
+        // สั่งโหลดข้อมูลทันที
+        if (typeof loadDailyAuditData === 'function') {
+            loadDailyAuditData();
+        }
+    }
+};
+
 });
 
 </script>
