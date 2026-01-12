@@ -443,7 +443,7 @@ aside .nav-item {
         <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
             <label class="text-sm font-bold text-gray-700">📅 Report Date</label>
             <input type="date" id="report-date-input" class="w-full mt-1 p-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none font-medium text-gray-700">
-            <p class="text-xs text-gray-500 mt-1">* เลือกวันที่ย้อนหลังได้หากลืมบันทึก</p>
+            <p class="text-xs text-gray-500 mt-1">* เลือกวันที่เพื่อบันทึกงานหรือดูประวัติรายงานย้อนหลัง</p>
         </div>
                     <div>
                         <label class="text-sm font-medium text-gray-600">Detail</label>
@@ -3429,7 +3429,6 @@ saveReportBtn.addEventListener('click', async () => {
                         if (latestRecord.checkOut) {
                             checkOutTime = latestRecord.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                             
-                            // --- [จุดสำคัญ] แก้ไขการแสดงผล OT ในหน้าเว็บ ---
                             // 1. คำนวณใหม่เสมอจากเวลาเข้า-ออกจริง
                             const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(latestRecord.checkIn.timestamp.toDate(), latestRecord.checkOut.timestamp.toDate());
                             workHours = regularWorkHours.toFixed(2) + ' ชม.';
@@ -4742,13 +4741,18 @@ checkoutBtn.addEventListener('click', async () => {
                 if (typeof startWatchingPosition === 'function') startWatchingPosition();
             }
             
-            // B. หน้า Report หรือ Dashboard หรือ Timesheet
+            // B. หน้า Report หรือ Dashboard หรือ Timesheet หน้า report หรือ Dashboard หรือ Timesheet
             if (pageId === 'report-page' || pageId === 'admin-dashboard-page' || pageId === 'timesheet-management-page') {
+    
+            // ★ เพิ่มเงื่อนไข: รันฟังก์ชันเหล่านี้เฉพาะคนที่เป็น Admin เท่านั้น
+            if (currentUserData && currentUserData.role === 'admin') {
+                
                 loadAllUsersForDropdown();
+                
                 if (typeof loadPendingLeaveRequests === 'function') loadPendingLeaveRequests();
-                if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests(); // ถ้ามีฟังก์ชันนี้
+                if (typeof loadPendingOtRequests === 'function') loadPendingOtRequests();
 
-                // ★★★ Safety Check: เช็คก่อนว่ามีตารางนี้ไหม ค่อยสั่งล้าง ★★★
+                // ★★★ Safety Check สำหรับ Admin UI ★★★
                 const summaryContainer = document.getElementById('employee-summary-container-admin');
                 if (summaryContainer) {
                     summaryContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-4">กรุณาเลือกช่วงวันที่และกด "แสดงข้อมูล"</p>';
@@ -4758,7 +4762,9 @@ checkoutBtn.addEventListener('click', async () => {
                 if (pagination) {
                     pagination.innerHTML = '';
                 }
-            }
+            } 
+            // ถ้าไม่ใช่ Admin ระบบจะข้ามไปเลย ไม่เกิด Error ใน Console ครับ
+        }
 
             // C. หน้าปฏิทิน
             if (pageId === 'calendar-page') {
@@ -4907,68 +4913,116 @@ checkoutBtn.addEventListener('click', async () => {
         };
     }
 
-    
-    // --- [ปรับปรุง] Logic โหลดรายงานที่ส่งแล้ว (อ่านจาก work_records.report) ---
 async function loadSentReports() {
-    if (!currentUser) return;
+    // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
+    if (!currentUser || !currentUser.uid || !currentUserData) return;
     
     const container = document.getElementById('sent-reports-container');
     if (!container) return;
 
+    // 2. ระบุวันที่ (ถ้าไม่มีให้ใช้วันที่ปัจจุบัน)
     const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
     const docId = `${currentUser.uid}_${selectedDate}`;
     
+    // แสดง Loading สั้นๆ
+    container.innerHTML = `
+        <div class="flex justify-center py-8">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-500"></div>
+        </div>
+    `;
+
     try {
+        // 3. ดึงข้อมูลจาก work_records
         const doc = await db.collection('work_records').doc(docId).get();
         let htmlContent = '';
 
         if (doc.exists) {
             const data = doc.data();
+            // ตรวจสอบทั้งอาเรย์ใหม่ (reports) และฟิลด์เก่า (report) เพื่อความยืดหยุ่น
             const reportsArray = data.reports || (data.report ? [data.report] : []);
 
             if (reportsArray.length > 0) {
+                // ส่วนหัวแสดงจำนวนรายการ
+                htmlContent += `
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            ประวัติรายงาน (${reportsArray.length} รายการ)
+                        </span>
+                    </div>
+                `;
+
                 reportsArray.forEach((item, index) => {
-                    // แปลง object เป็น string เพื่อใช้ใน function ลบ
-                    const itemData = JSON.stringify(item).replace(/"/g, '&quot;');
-                    
                     htmlContent += `
-                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white relative group">
+                        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-3 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-sky-400 opacity-70"></div>
+                            
                             <div class="flex justify-between items-start mb-2">
-                                <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                    No.${index + 1}
-                                </span>
-                                <button class="delete-report-btn text-gray-300 hover:text-red-500 transition-colors" 
-                                        onclick="deleteReportItem('${docId}', ${item.id || index})">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div>
+                                    <span class="text-[9px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full uppercase">
+                                        รายการที่ ${index + 1}
+                                    </span>
+                                    <h4 class="font-bold text-gray-800 text-sm mt-1.5">${item.workType}</h4>
+                                </div>
+                                
+                                <button class="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" 
+                                        onclick="deleteReportItem('${docId}', ${item.id || index})"
+                                        title="ลบรายงาน">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <h4 class="font-bold text-gray-800 text-base">${item.workType}</h4>
-                            <div class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-600">
-                                <div class="flex items-center">
+
+                            <div class="space-y-1.5">
+                                <div class="flex items-center text-xs">
                                     <span class="w-16 text-gray-400">Project:</span>
-                                    <span class="font-medium text-gray-700">${item.project}</span>
+                                    <span class="font-semibold text-gray-700">${item.project || '-'}</span>
                                 </div>
-                                <div class="flex items-center">
+                                <div class="flex items-center text-xs">
                                     <span class="w-16 text-gray-400">Period:</span>
-                                    <span class="font-medium text-gray-700">${item.duration}</span>
+                                    <span class="text-gray-600 font-mono bg-gray-50 px-1.5 py-0.5 rounded">${item.duration || '-'}</span>
                                 </div>
+                                ${item.note ? `
+                                <div class="mt-2 pt-2 border-t border-gray-50">
+                                    <p class="text-xs text-gray-500 italic leading-relaxed">"${item.note}"</p>
+                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     `;
                 });
             } else {
-                htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
+                htmlContent = showEmptyState();
             }
         } else {
-            htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
+            htmlContent = showEmptyState();
         }
         container.innerHTML = htmlContent;
+
     } catch (error) {
         console.error("Error loading reports:", error);
-        container.innerHTML = `<div class="text-center py-8 text-red-400 text-sm">โหลดข้อมูลไม่สำเร็จ</div>`;
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <p class="text-xs text-red-400 bg-red-50 inline-block px-4 py-2 rounded-full font-medium">
+                    ไม่สามารถโหลดข้อมูลได้: ${error.message}
+                </p>
+            </div>
+        `;
     }
+}
+
+// ฟังก์ชันเสริมแสดงสถานะไม่มีข้อมูลให้ดูสวยงาม
+function showEmptyState() {
+    return `
+        <div class="flex flex-col items-center justify-center py-12 opacity-40">
+            <div class="bg-gray-100 p-4 rounded-full mb-3">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+            </div>
+            <p class="text-gray-500 text-[11px] font-medium tracking-wide">ยังไม่มีประวัติรายงานสำหรับวันนี้</p>
+        </div>
+    `;
 }
 
     function updateClock() {
@@ -8598,10 +8652,6 @@ navItems.forEach(item => {
     item.addEventListener('click', e => {
         
         const pageId = item.dataset.page;
-
-        // ... (โค้ดแสดงหน้า showPage) ...
-
-        // ---- เพิ่ม Logic ใหม่ตรงนี้ ----
 
         // A. ถ้าเข้าหน้า Dashboard Overview -> โหลดกราฟ
         if (pageId === 'admin-dashboard-page') {
