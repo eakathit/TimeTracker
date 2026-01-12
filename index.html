@@ -1066,7 +1066,7 @@ aside .nav-item {
         <div class="card">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h3 class="font-semibold text-lg text-gray-800">สรุปข้อมูลเรายเดือน (Payroll)</h3>
+                    <h3 class="font-semibold text-lg text-gray-800">สรุปข้อมูลรายเดือน (Payroll)</h3>
                     <p class="text-xs text-yellow-600 mt-1">
                         * ระบบจะคำนวณวันทำงาน, OT, ขาด, ลา, มาสาย ให้อัตโนมัติในช่วงวันที่เลือก
                     </p>
@@ -3734,21 +3734,21 @@ saveReportBtn.addEventListener('click', async () => {
                     </thead>
                     <tbody class="divide-y divide-gray-50">
         `;
-
+                
         filteredData.forEach(user => {
             // กำหนดสีตัวอักษร: ถ้าส่งรายงานครบเป็นสีเขียว ถ้าส่งไม่ครบเป็นสีแดง
             const reportColor = user.totalReportDays === user.totalWorkDays ? 'text-green-600' : 'text-red-500';
 
             tableHTML += `
-                <tr class="bg-white hover:bg-orange-50/30 transition-colors">
-                    <td class="px-4 py-4">
-                        <div class="font-bold text-gray-800">${user.fullName}</div>
-                        
-                        <div class="flex items-center gap-1 mt-1">
-                            <span class="bg-gray-50 text-[10px] transform scale-[0.85] leading-non px-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-bold whitespace-nowrap">
-                                Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
-                            </span>
-                        </div>
+    <tr class="bg-white hover:bg-orange-50/30 transition-colors">
+        <td class="px-4 py-4">
+            <div class="font-bold text-gray-800 text-sm leading-tight">${user.fullName}</div>
+            
+            <div class="flex items-center mt-1">
+                <span class="bg-gray-50/50 text-[8.5px] pl-1 pr-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-semibold whitespace-nowrap ml-[-4.5px] leading-none tracking-tighter antialiased">
+                    Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
+                </span>
+            </div>
                         
                         <div class="text-[10px] text-gray-400 mt-0.5">${user.department || 'ไม่ระบุแผนก'}</div>
                     </td>
