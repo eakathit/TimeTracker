@@ -975,7 +975,7 @@ aside .nav-item {
                 <label class="text-xs font-bold text-gray-500 block mb-1">กรองตามประเภทงาน</label>
                 <div class="relative w-full md:w-40">
                     <select id="audit-type-filter" class="block appearance-none w-full h-10 bg-gray-50 border border-gray-300 text-gray-700 pl-3 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-200 text-sm transition-all cursor-pointer">
-                        <option value="all">ทั้งหมด</option>
+                        <option value="all">All</option>
                         <option value="in_factory">Factory</option>
                         <option value="onsite">On-site</option>
                     </select>
@@ -1060,7 +1060,7 @@ aside .nav-item {
             </div>
         </div>
     </div>
-
+ 
     <div id="tab-payroll" class="ts-tab-content hidden space-y-6 animate-fade-in">
         <div class="card">
             <div class="flex justify-between items-center mb-4">
@@ -1072,6 +1072,7 @@ aside .nav-item {
                 </div>
             </div>
 
+            
             <div class="p-4 bg-orange-50 rounded-xl border border-orange-100 mb-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                     <div>
@@ -3632,18 +3633,20 @@ saveReportBtn.addEventListener('click', async () => {
         return payrollSummary;
     }
 
-    // --- [ฟังก์ชันใหม่] 2. ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ ---
+    //  ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ
     async function loadPayrollSummary() {
         const container = document.getElementById('payroll-summary-results-container');
         const startInput = document.getElementById('payroll-start-date');
         const endInput = document.getElementById('payroll-end-date');
-        
+        const spinner = document.getElementById('loading-spinner');
+
         if (!startInput.value || !endInput.value) {
             return showNotification('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด', 'warning');
         }
-        
+
+        if (spinner) spinner.style.display = 'flex';
         container.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังประมวลผลข้อมูลสรุป...</p>';
-        
+
         try {
             const startDate = new Date(startInput.value); startDate.setHours(0,0,0,0);
             const endDate = new Date(endInput.value); endDate.setHours(23,59,59,999);
@@ -3700,10 +3703,14 @@ saveReportBtn.addEventListener('click', async () => {
             container.innerHTML = tableHTML;
             
         } catch (error) {
-            console.error("Error loading payroll summary:", error);
-            container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาด: ' + error.message + '</p>';
+        console.error("Error loading payroll summary:", error);
+        container.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาด: ' + error.message + '</p>';
+    } finally {
+        if (spinner) {
+            spinner.style.display = 'none';
         }
     }
+}
 
     // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
     // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
