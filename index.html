@@ -3581,7 +3581,8 @@ saveReportBtn.addEventListener('click', async () => {
                 totalLateDays: 0,
                 totalLeaveDays: 0,
                 totalWorkDays: 0,
-                totalReportDays: 0
+                totalReportDays: 0,
+                totalAbsentDays: 0
             };
 
             const userRecords = recordsMap.get(userId) || new Map();
@@ -3735,11 +3736,21 @@ saveReportBtn.addEventListener('click', async () => {
         `;
 
         filteredData.forEach(user => {
+            // กำหนดสีตัวอักษร: ถ้าส่งรายงานครบเป็นสีเขียว ถ้าส่งไม่ครบเป็นสีแดง
+            const reportColor = user.totalReportDays === user.totalWorkDays ? 'text-green-600' : 'text-red-500';
+
             tableHTML += `
                 <tr class="bg-white hover:bg-orange-50/30 transition-colors">
                     <td class="px-4 py-4">
                         <div class="font-bold text-gray-800">${user.fullName}</div>
-                        <div class="text-[10px] text-gray-400">${user.department || 'ไม่ระบุแผนก'}</div>
+                        
+                        <div class="flex items-center gap-1 mt-1">
+                            <span class="bg-gray-50 text-[10px] transform scale-[0.85] leading-non px-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-bold whitespace-nowrap">
+                                Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
+                            </span>
+                        </div>
+                        
+                        <div class="text-[10px] text-gray-400 mt-0.5">${user.department || 'ไม่ระบุแผนก'}</div>
                     </td>
                     <td class="px-2 py-4 text-center font-semibold text-sky-600">${user.totalWorkDays}</td>
                     <td class="px-2 py-4 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
@@ -3755,7 +3766,7 @@ saveReportBtn.addEventListener('click', async () => {
                     </td>
                     <td class="px-4 py-4 text-center">
                         <button onclick="viewEmployeeDetail('${user.userId}', '${startInput.value}', '${endInput.value}')" 
-                                class="inline-flex p-2 text-sky-500 hover:bg-sky-50 rounded-full transition-all"
+                                class="inline-flex p-2 text-sky-500 hover:bg-sky-50 rounded-full transition-all" 
                                 title="ดูรายละเอียดรายวัน">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
