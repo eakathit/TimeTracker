@@ -4423,6 +4423,8 @@ checkoutBtn.addEventListener('click', async () => {
     try {
         // 2. ดึงข้อมูล Check-in ปัจจุบัน
         const now = new Date();
+        now.setHours(19, 8, 0);
+
         const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; 
         const workRecordRef = db.collection('work_records').doc(docId);
         const workRecordDoc = await workRecordRef.get();
@@ -4439,7 +4441,7 @@ checkoutBtn.addEventListener('click', async () => {
         const executeSaveCheckout = async (withOT, locationNote, groupUpdateData = null) => {
     try {
         if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
-        const checkoutTime = new Date();
+        const checkoutTime = new Date(now);
         const lat = latestPosition.coords.latitude;
         const lng = latestPosition.coords.longitude;
 
@@ -4498,7 +4500,7 @@ checkoutBtn.addEventListener('click', async () => {
 
         await batch.commit();
         
-        showNotification("บันทึกเวลาเลิกงานกลุ่มเรียบร้อย");
+        showNotification('บันทึกเวลาเลิกงานเรียบร้อยแล้ว', 'success');
         updateUIToCompleted();
         // ... (UI Update อื่นๆ ตามโค้ดเดิมของคุณ)
         
@@ -9068,6 +9070,8 @@ async function populatePayrollDeptDropdown() {
     if (!currentWorkRecordId) return;
 
     const now = new Date();
+    now.setHours(19, 8, 0); // หลอกระบบว่าตอนนี้คือ 19:08 น.
+
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
@@ -9098,6 +9102,9 @@ async function populatePayrollDeptDropdown() {
 
         if (result.isConfirmed) {
             // กรณีพนักงานยืนยัน OT: พาไปหน้าเขียนคำขอ OT หรือบันทึก Flag ไว้
+            // 1. สั่งบันทึกข้อมูล Check-out ลง DB ทันที โดยส่งค่า true เพื่อบอกว่าเป็น OT
+            await executeSaveCheckout(true, "factory_normal");
+
             showNotification('กรุณากรอกรายละเอียดการทำ OT ในขั้นตอนถัดไป', 'info');
             // คุณอาจจะสั่งให้เปิด Tab ขอ OT ทันที
             showTab('tab-ot-request'); 
