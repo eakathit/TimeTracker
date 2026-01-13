@@ -1,4 +1,58 @@
-const CACHE_NAME = "timetracker-v6.6"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js');
+
+// Config เดียวกับใน firebase-config.js (ต้องใส่ตรงนี้ด้วยเพราะ SW เข้าถึงตัวแปรข้างนอกไม่ได้)
+const firebaseConfig = {
+    apiKey: "AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc",
+    authDomain: "timetracker-f1e11.web.app",
+    projectId: "timetracker-f1e11",
+    storageBucket: "timetracker-f1e11.firebasestorage.app",
+    messagingSenderId: "470557940763",
+    appId: "1:470557940763:web:6de43b02b5ba42fe46acbe",
+    measurementId: "G-C83H28RLSY"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// จัดการ Background Message
+messaging.onBackgroundMessage((payload) => {
+  console.log('Received background message ', payload);
+  
+  if (payload.notification) return; // ถ้ามี notification มาแล้ว ให้ Browser จัดการ
+
+  const title = payload.data?.title || "TimeTracker Update";
+  const options = {
+    body: payload.data?.body || "คุณมีข้อความใหม่",
+    icon: '/icons/icon-192.png',
+    data: { url: payload.data?.link || '/' } // รองรับการคลิกแล้วเปิดลิงก์
+  };
+
+  self.registration.showNotification(title, options);
+});
+
+// รองรับการคลิก Notification (สำคัญมากสำหรับ iOS/Android)
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // ถ้าเปิดหน้าเว็บค้างไว้แล้ว ให้ Focus ที่หน้านั้น
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // ถ้ายังไม่เปิด ให้เปิดหน้าใหม่
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+const CACHE_NAME = "timetracker-v6.7"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",

@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="icon" href="icons/icon-192.png" type="image/png">
     <meta name="theme-color" content="#38BDF8">
 
@@ -1787,37 +1788,27 @@ async function setupNotifications() {
 
         // ฟังก์ชันสำหรับขอ Token และบันทึกลง Database
 async function saveFCMToken() {
-    // 1. ตรวจสอบว่ามี messaging และ currentUser หรือยัง และเบราว์เซอร์รองรับหรือไม่
     if (!messaging || !currentUser) return;
 
     try {
-        const isSupported = await firebase.messaging.isSupported();
-        if (!isSupported) return;
-
-        // 2. เช็คสิทธิ์แจ้งเตือน
         if (Notification.permission === 'granted') {
-            
-            // 3. ★ จุดสำคัญ: ดึง Registration ของ Service Worker มาใช้ระบุใน getToken
-            // วิธีนี้จะช่วยให้ iOS และ PWA ทำงานได้แม่นยำขึ้นมาก
-            const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+            // ★ แก้ไข: เรียกหา Service Worker ตัวหลัก (sw.js) ที่กำลังทำงานอยู่
+            const registration = await navigator.serviceWorker.ready;
             
             const token = await messaging.getToken({ 
                 vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s",
-                serviceWorkerRegistration: registration // ใส่เพิ่มเข้าไป
+                serviceWorkerRegistration: registration // ส่ง sw.js เข้าไป
             });
 
             if (token) {
                 console.log("FCM Token Updated:", token);
-                
-                // 4. บันทึกลง Firestore
                 await db.collection('users').doc(currentUser.uid).update({
                     fcmToken: token,
-                    tokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+                    tokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         }
     } catch (error) {
-        // ถ้าเกิด Error 'messaging/token-subscribe-failed' ส่วนใหญ่เกิดจาก VAPID Key ไม่ตรง
         console.error("Error auto-saving token:", error);
     }
 }
@@ -1842,14 +1833,16 @@ async function saveFCMToken() {
     // ผูก Event ปุ่มกด
     const notifyBtn = document.getElementById('enable-notify-btn');
     if (notifyBtn) {
-        notifyBtn.addEventListener('click', async () => {
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    // *** อย่าลืมใส่ VAPID Key ของคุณตรงนี้ ***
-                    const token = await messaging.getToken({ 
-                        vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" 
-                    });
+    notifyBtn.addEventListener('click', async () => {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const registration = await navigator.serviceWorker.ready; // ★ เพิ่มบรรทัดนี้
+                
+                const token = await messaging.getToken({ 
+                    vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s",
+                    serviceWorkerRegistration: registration // ★ ใส่เพิ่ม
+                });
                     
                     if (token) {
                         console.log("Token:", token);
