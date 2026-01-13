@@ -330,7 +330,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">TimeTracker System</p>
+                        <p class="text-gray-500">TimeTracker</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -1725,12 +1725,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // เพิ่มโค้ดนี้เพื่อให้แจ้งเตือนเด้งตอนเปิดเว็บอยู่
         if (messaging) {
-            messaging.onMessage((payload) => {
-                console.log('ได้รับข้อความขณะเปิดแอป: ', payload);
-                // แสดงการแจ้งเตือนโดยใช้ฟังก์ชัน showNotification ที่คุณมีอยู่แล้ว
-                showNotification(payload.notification.title + ": " + payload.notification.body, "info");
+    messaging.onMessage((payload) => {
+        console.log('ได้รับข้อความขณะเปิดแอป: ', payload);
+
+        const title = payload.notification.title;
+        const body = payload.notification.body;
+
+        // 1. แสดงในแอป (Toast เดิมของคุณ)
+        showNotification(title + ": " + body, "info");
+
+        // 2. สั่งให้ระบบเด้งแถบแจ้งเตือนบนหน้าจอ (System Banner)
+        // หมายเหตุ: iOS ในโหมด PWA อาจจะไม่เด้งซ้ำถ้าเปิดหน้าจออยู่ แต่ในคอมและ Android จะเด้งครับ
+        if (Notification.permission === 'granted') {
+            new Notification(title, {
+                body: body,
+                icon: '/icons/icon-192.png' // ใส่ path ไอคอนของคุณ
             });
         }
+    });
+}
     
         // ฟังก์ชันสำหรับขอ Token และบันทึกลง Database
 async function saveFCMToken() {

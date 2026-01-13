@@ -1,7 +1,10 @@
-// ใช้เวอร์ชั่น 12.3.0 (Compat) ให้ตรงกับหน้าเว็บ
+// firebase-messaging-sw.js
+
+// 1. นำเข้าสคริปต์
 importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js');
 
+// 2. ใช้ Config ชุดเดียวกับหน้าเว็บ
 const firebaseConfig = {
     apiKey: "AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc",
     authDomain: "timetracker-f1e11.web.app",
@@ -13,26 +16,43 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
-// ประกาศ messaging ใน Background
 const messaging = firebase.messaging();
 
-// (Optional) จัดการเมือได้รับแจ้งเตือนตอนปิดหน้าเว็บ
+// 3. จัดการ Notification เมื่อแอปอยู่ Background
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
+  console.log('Received background message ', payload);
+  
+  // ตรวจสอบว่า payload มีข้อมูล notification มาไหม
+  const title = payload.notification?.title || "TimeTracker Update";
+  const options = {
+    body: payload.notification?.body || "คุณมีข้อความใหม่",
     icon: '/icons/icon-192.png',
-    data: { url: 'https://timetracker-f1e11.web.app' } // ใส่ URL ของแอปคุณ
+    badge: '/icons/icon-192.png', // ไอคอนเล็กๆ บนแถบสถานะ (Android)
+    data: { 
+        url: payload.data?.link || 'https://timetracker-f1e11.web.app' 
+    },
+    vibrate: [200, 100, 200] // สั่นเครื่องสำหรับมือถือ
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(title, options);
 });
 
-// เพิ่ม Event Listener สำหรับการคลิก
+// 4. จัดการการคลิกที่ Notification
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
+  
+  // ตรวจสอบว่าหน้าเว็บเปิดอยู่แล้วหรือไม่ ถ้าเปิดอยู่ให้ Focus ถ้าไม่ให้เปิดใหม่
   event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (var i = 0; i < windowClients.length; i++) {
+        var client = windowClients[i];
+        if (client.url === event.notification.data.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(event.notification.data.url);
+      }
+    })
   );
 });

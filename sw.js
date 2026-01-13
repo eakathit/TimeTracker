@@ -1,4 +1,4 @@
-const CACHE_NAME = "timetracker-v6.2"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v6.4"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -35,7 +35,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // ★ แก้ไขจุดนี้: ป้องกัน Error สำหรับ request ที่ไม่ใช่ GET (เช่น POST สำหรับ Login หรือส่งข้อมูล)
+  // แก้ไขจุดนี้: ป้องกัน Error สำหรับ request ที่ไม่ใช่ GET (เช่น POST สำหรับ Login หรือส่งข้อมูล)
   if (event.request.method !== 'GET') {
     return; // ปล่อยให้เบราว์เซอร์ส่งข้อมูลผ่านเน็ตปกติ ไม่ต้องยุ่งกับ Cache
   }
