@@ -1,5 +1,5 @@
-importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 // Config เดียวกับใน firebase-config.js (ต้องใส่ตรงนี้ด้วยเพราะ SW เข้าถึงตัวแปรข้างนอกไม่ได้)
 const firebaseConfig = {
@@ -19,7 +19,9 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message ', payload);
   
-  if (payload.notification) return; // ถ้ามี notification มาแล้ว ให้ Browser จัดการ
+  if (payload.notification) {
+    return; 
+  }
 
   const title = payload.data?.title || "TimeTracker Update";
   const options = {
@@ -52,7 +54,7 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-const CACHE_NAME = "timetracker-v6.7"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v7.0"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
