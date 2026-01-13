@@ -1,10 +1,8 @@
 // firebase-messaging-sw.js
 
-// 1. นำเข้าสคริปต์
 importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js');
 
-// 2. ใช้ Config ชุดเดียวกับหน้าเว็บ
 const firebaseConfig = {
     apiKey: "AIzaSyA1fdFsyaFlEEJKCpSU50bm78SeTrj9Ngc",
     authDomain: "timetracker-f1e11.web.app",
@@ -18,40 +16,51 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// 3. จัดการ Notification เมื่อแอปอยู่ Background
+// จัดการ Notification เมื่อแอปอยู่ Background
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message ', payload);
-  
-  // ตรวจสอบว่า payload มีข้อมูล notification มาไหม
-  const title = payload.notification?.title || "TimeTracker Update";
+
+  // ถ้าใน payload มี notification มาแล้ว เบราว์เซอร์จะจัดการเอง 
+  // เราจะเขียน code ส่วนนี้เผื่อไว้กรณีที่ notification ไม่แสดงอัตโนมัติเท่านั้น
+  if (payload.notification) {
+      return; 
+  }
+
+  const title = payload.data?.title || "TimeTracker Update";
   const options = {
-    body: payload.notification?.body || "คุณมีข้อความใหม่",
+    body: payload.data?.body || "คุณมีข้อความใหม่",
     icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png', // ไอคอนเล็กๆ บนแถบสถานะ (Android)
+    badge: '/icons/icon-192.png',
     data: { 
-        url: payload.data?.link || 'https://timetracker-f1e11.web.app' 
+        // ตรวจสอบทั้ง fcmOptions.link (จาก webpush) และ data.link
+        url: payload.fcmOptions?.link || payload.data?.link || 'https://timetracker-f1e11.web.app' 
     },
-    vibrate: [200, 100, 200] // สั่นเครื่องสำหรับมือถือ
+    vibrate: [200, 100, 200],
+    tag: 'checkout-reminder' // ใช้ tag เพื่อให้แจ้งเตือนใหม่ทับอันเก่า ไม่ขึ้นรกเต็มหน้าจอ
   };
 
   return self.registration.showNotification(title, options);
 });
 
-// 4. จัดการการคลิกที่ Notification
+// จัดการการคลิกที่ Notification
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   
-  // ตรวจสอบว่าหน้าเว็บเปิดอยู่แล้วหรือไม่ ถ้าเปิดอยู่ให้ Focus ถ้าไม่ให้เปิดใหม่
+  // ดึง URL จาก data ที่เราแนบไว้
+  const targetUrl = event.notification.data?.url || 'https://timetracker-f1e11.web.app';
+  
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // 1. ถ้าเปิดหน้าเว็บค้างไว้อยู่แล้ว ให้ Focus ไปที่หน้านั้น
       for (var i = 0; i < windowClients.length; i++) {
         var client = windowClients[i];
-        if (client.url === event.notification.data.url && 'focus' in client) {
+        if (client.url === targetUrl && 'focus' in client) {
           return client.focus();
         }
       }
+      // 2. ถ้ายังไม่ได้เปิดหน้าเว็บ ให้เปิดหน้าใหม่
       if (clients.openWindow) {
-        return clients.openWindow(event.notification.data.url);
+        return clients.openWindow(targetUrl);
       }
     })
   );

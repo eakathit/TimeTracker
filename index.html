@@ -1745,26 +1745,79 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 }
     
+async function setupNotifications() {
+    try {
+        // 1. ตรวจสอบว่าเบราว์เซอร์รองรับ Firebase Messaging หรือไม่ (ป้องกัน Error บน iOS/Safari รุ่นเก่า)
+        const isSupported = await firebase.messaging.isSupported();
+        if (!isSupported) {
+            console.log("FCM ไม่รองรับบนเบราว์เซอร์นี้");
+            return;
+        }
+
+        const messaging = firebase.messaging();
+
+        // 2. ขอสิทธิ์แจ้งเตือนจากผู้ใช้
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
+            console.log('ได้รับอนุญาตให้แจ้งเตือนเรียบร้อย');
+
+            // 3. ลงทะเบียน Service Worker (ไฟล์ firebase-messaging-sw.js ต้องอยู่ที่ root)
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            
+            // 4. รับ Token (VAPID Key ต้องตรงกับใน Firebase Console ของคุณ)
+            const currentToken = await messaging.getToken({
+                vapidKey: 'BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s', // <--- ตรวจสอบรหัสนี้ให้ตรงกับใน Console
+                serviceWorkerRegistration: registration
+            });
+
+            if (currentToken) {
+                console.log('FCM Token:', currentToken);
+                await saveFCMToken(currentToken);
+            } else {
+                console.warn('ไม่สามารถสร้าง Token ได้ กรุณาตรวจสอบการตั้งค่า Firebase');
+            }
+        } else if (permission === 'denied') {
+            console.warn('ผู้ใช้ปฏิเสธการแจ้งเตือน');
+        }
+    } catch (err) {
+        console.error('เกิดข้อผิดพลาดในการตั้งค่า Notification:', err);
+    }
+}
+
         // ฟังก์ชันสำหรับขอ Token และบันทึกลง Database
 async function saveFCMToken() {
+    // 1. ตรวจสอบว่ามี messaging และ currentUser หรือยัง และเบราว์เซอร์รองรับหรือไม่
     if (!messaging || !currentUser) return;
 
     try {
-        // เช็คสิทธิ์ก่อน ถ้าได้รับอนุญาตแล้วค่อยขอ Token
+        const isSupported = await firebase.messaging.isSupported();
+        if (!isSupported) return;
+
+        // 2. เช็คสิทธิ์แจ้งเตือน
         if (Notification.permission === 'granted') {
+            
+            // 3. ★ จุดสำคัญ: ดึง Registration ของ Service Worker มาใช้ระบุใน getToken
+            // วิธีนี้จะช่วยให้ iOS และ PWA ทำงานได้แม่นยำขึ้นมาก
+            const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+            
             const token = await messaging.getToken({ 
-                vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s" 
+                vapidKey: "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s",
+                serviceWorkerRegistration: registration // ใส่เพิ่มเข้าไป
             });
 
             if (token) {
-                console.log("Auto-refreshing Token:", token);
+                console.log("FCM Token Updated:", token);
+                
+                // 4. บันทึกลง Firestore
                 await db.collection('users').doc(currentUser.uid).update({
                     fcmToken: token,
-                    lastTokenUpdate: firebase.firestore.FieldValue.serverTimestamp() // เก็บเวลาที่อัปเดตล่าสุดไว้ดูด้วย
+                    tokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() 
                 });
             }
         }
     } catch (error) {
+        // ถ้าเกิด Error 'messaging/token-subscribe-failed' ส่วนใหญ่เกิดจาก VAPID Key ไม่ตรง
         console.error("Error auto-saving token:", error);
     }
 }
