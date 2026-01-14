@@ -4483,7 +4483,7 @@ checkoutBtn.addEventListener('click', async () => {
     try {
         // 2. ดึงข้อมูล Check-in ปัจจุบัน
         const now = new Date();
-        now.setHours(19, 8, 0);
+        // now.setHours(19, 8, 0);
 
         const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; 
         const workRecordRef = db.collection('work_records').doc(docId);
@@ -9130,7 +9130,7 @@ async function populatePayrollDeptDropdown() {
     if (!currentWorkRecordId) return;
 
     const now = new Date();
-    now.setHours(19, 8, 0); // หลอกระบบว่าตอนนี้คือ 19:08 น.
+    // now.setHours(19, 8, 0); // หลอกระบบว่าตอนนี้คือ 19:08 น.
 
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
