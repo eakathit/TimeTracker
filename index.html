@@ -282,6 +282,76 @@ aside .nav-item {
         cursor: not-allowed;
     }
     
+    /* --- Dark Mode Styles --- */
+
+/* กำหนดค่าตัวแปรเมื่ออยู่ในโหมด Dark */
+[data-theme="dark"] {
+    --bg-color: #111827;      /* พื้นหลังหลัก (Gray-900) */
+    --card-bg: #1F2937;       /* พื้นหลังการ์ด (Gray-800) */
+    --text-primary: #F9FAFB;  /* ตัวหนังสือหลัก (Gray-50) */
+    --text-secondary: #9CA3AF; /* ตัวหนังสือรอง (Gray-400) */
+    --border-color: #374151;  /* สีเส้นขอบ (Gray-700) */
+    --input-bg: #374151;      /* พื้นหลังช่องกรอกข้อมูล */
+}
+
+/* บังคับเปลี่ยนสี Elements ต่างๆ เมื่อเปิด Dark Mode */
+[data-theme="dark"] body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .card, 
+[data-theme="dark"] .bg-white {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .bg-gray-50, 
+[data-theme="dark"] .bg-gray-100 {
+    background-color: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ปรับสีตัวหนังสือ */
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-600 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400 {
+    color: var(--text-secondary) !important;
+}
+
+/* ปรับสีเส้นขอบ */
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-gray-300,
+[data-theme="dark"] .border-gray-100 {
+    border-color: var(--border-color) !important;
+}
+
+/* ปรับช่องกรอกข้อมูล (Input/Select) */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: var(--input-bg) !important;
+    color: white !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ปรับ Sidebar และ Menu */
+[data-theme="dark"] aside {
+    background-color: var(--card-bg) !important;
+    border-right-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #mobile-floating-menu {
+    background-color: var(--card-bg) !important;
+    border-top-color: var(--border-color) !important;
+}
+
     </style>
 </head>
 <body class="antialiased">
@@ -1297,7 +1367,24 @@ aside .nav-item {
             <p id="notify-status-label" class="text-xs text-gray-400">ปิดใช้งาน</p>
         </div>
     </div>
+
+    <div class="col-span-2 mt-3 p-4 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-gray-100 text-gray-600 rounded-full dark-icon-bg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </div>
+        <div>
+            <p class="font-bold text-gray-800 text-sm">โหมดกลางคืน (Dark Mode)</p>
+            <p id="dark-mode-status" class="text-xs text-gray-400">ปิดใช้งาน</p>
+        </div>
+    </div>
     
+    <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in">
+        <input type="checkbox" name="toggle" id="dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
+        <label for="dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+    </div>
+</div>
+
     <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in">
         <input type="checkbox" name="toggle" id="notify-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
         <label for="notify-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
@@ -9351,6 +9438,56 @@ async function populatePayrollDeptDropdown() {
         console.error("Check-out Error:", error);
     }
 }
+
+// --- Dark Mode Logic ---
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+const darkModeStatus = document.getElementById('dark-mode-status');
+
+// 1. ฟังก์ชันตรวจสอบและเริ่มใช้งานธีม
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    
+    // ถ้าเคยบันทึกว่าเป็น dark หรือ ไม่เคยบันทึกแต่เครื่องตั้งค่าเป็น dark mode ไว้
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (darkModeToggle) darkModeToggle.checked = true;
+        updateDarkModeStatus(true);
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (darkModeToggle) darkModeToggle.checked = false;
+        updateDarkModeStatus(false);
+    }
+}
+
+// 2. ฟังก์ชันอัปเดตข้อความสถานะ
+function updateDarkModeStatus(isDark) {
+    if (!darkModeStatus) return;
+    if (isDark) {
+        darkModeStatus.textContent = "เปิดใช้งาน";
+        darkModeStatus.classList.add('text-green-500');
+    } else {
+        darkModeStatus.textContent = "ปิดใช้งาน";
+        darkModeStatus.classList.remove('text-green-500');
+    }
+}
+
+// 3. Event Listener เมื่อกดปุ่ม Toggle
+if (darkModeToggle) {
+    darkModeToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            updateDarkModeStatus(true);
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            updateDarkModeStatus(false);
+        }
+    });
+}
+
+// เรียกใช้งานทันทีเมื่อโหลดหน้าเว็บ
+initTheme();
 
 });
 
