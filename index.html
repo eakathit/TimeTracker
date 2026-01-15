@@ -301,6 +301,8 @@ aside .nav-item {
 [data-theme="dark"] .bg-red-50,
 [data-theme="dark"] .bg-gray-50,
 [data-theme="dark"] .bg-sky-50,
+[data-theme="dark"] .bg-purple-50,
+[data-theme="dark"] .text-gray-500,
 [data-theme="dark"] .bg-orange-50, /* เผื่อไว้สำหรับช่อง Overtime */
 [data-theme="dark"] .bg-green-50,  /* เผื่อไว้สำหรับช่อง Days */
 [data-theme="dark"] .bg-teal-50    /* เผื่อไว้สำหรับสีอื่นๆ */
@@ -308,6 +310,12 @@ aside .nav-item {
     background-color: var(--card-bg) !important;  /* ใช้สีเดียวกับพื้นหลังการ์ด */
     border-color: var(--border-color) !important; /* เปลี่ยนสีเส้นขอบให้กลืนกัน */
     color: var(--text-primary) !important;        /* เปลี่ยนสีตัวหนังสือเป็นสีขาว/เทาอ่อน */
+}
+
+[data-theme="dark"] .bg-gray-50\/50 {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
 }
 
 /* 2. แก้ไขช่องกรอกข้อมูล (Input) ในหน้า Report ไม่ให้เป็นสีขาวโดด */
@@ -421,6 +429,83 @@ aside .nav-item {
     background-color: var(--card-bg) !important;
     border-top-color: var(--border-color) !important;
 }
+
+/* =========================================
+   แก้ไขหน้า Approvals Center (Admin) - แก้ไข ID ให้ถูกต้อง
+   ========================================= */
+
+/* 1. พื้นหลังการ์ดหลัก และลบ Gradient สีขาวออก */
+[data-theme="dark"] #admin-approvals-page .card,
+[data-theme="dark"] #admin-approvals-page .bg-white {
+    background-color: var(--card-bg) !important;
+    background-image: none !important; /* ลบสีไล่เฉด (Gradient) ออก */
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* 2. แก้ไขส่วนหัวการ์ด (ที่มีสีไล่เฉด Sky/Orange) */
+/* หัวข้อ Leave Management (สีฟ้า) */
+[data-theme="dark"] #admin-approvals-page .from-sky-50 {
+    background-color: rgba(56, 189, 248, 0.1) !important; /* Sky-500 แบบโปร่งแสง */
+    background-image: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* หัวข้อ OT Management (สีส้ม) */
+[data-theme="dark"] #admin-approvals-page .from-orange-50 {
+    background-color: rgba(249, 115, 22, 0.1) !important; /* Orange-500 แบบโปร่งแสง */
+    background-image: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* 3. ปรับสี Tab (รออนุมัติ / ประวัติ) */
+[data-theme="dark"] #admin-approvals-page .leave-tab-btn,
+[data-theme="dark"] #admin-approvals-page .ot-tab-btn {
+    border-bottom-color: transparent; /* ปกติไม่มีเส้น */
+}
+
+/* Tab ที่ถูกเลือก (Active) */
+[data-theme="dark"] #admin-approvals-page .border-sky-500 {
+    border-bottom-color: #38bdf8 !important; /* สีฟ้าสว่าง */
+    color: #38bdf8 !important;
+}
+[data-theme="dark"] #admin-approvals-page .border-orange-500 {
+    border-bottom-color: #fb923c !important; /* สีส้มสว่าง */
+    color: #fb923c !important;
+}
+
+/* Tab ที่ไม่ได้เลือก (Inactive) */
+[data-theme="dark"] #admin-approvals-page .text-gray-400 {
+    color: var(--text-secondary) !important;
+}
+[data-theme="dark"] #admin-approvals-page .text-gray-400:hover {
+    color: var(--text-primary) !important;
+}
+
+/* 4. พื้นหลังส่วนเนื้อหา (Content Area) */
+[data-theme="dark"] #admin-approvals-page .bg-gray-50 {
+    background-color: var(--bg-color) !important; /* ให้กลืนกับพื้นหลังหลัก */
+}
+
+/* 5. Dropdown เลือกสถานะ/พนักงาน (Select inputs) */
+[data-theme="dark"] #admin-approvals-page select {
+    background-color: var(--input-bg) !important;
+    color: white !important;
+    border-color: var(--border-color) !important;
+}
+
+/* 6. การ์ดรายการคำขอ (Item Cards) ที่ Javascript สร้างขึ้นมา */
+/* บังคับให้การ์ดลูก (ที่อาจจะสร้างทีหลัง) เป็นสีมืด */
+[data-theme="dark"] #admin-approvals-page .space-y-3 > div {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+/* เปลี่ยนสีป้ายสถานะ (Badge) ให้ไม่แสบตา */
+[data-theme="dark"] .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.2) !important; color: #fef08a !important; }
+[data-theme="dark"] .bg-green-100 { background-color: rgba(34, 197, 94, 0.2) !important; color: #86efac !important; }
+[data-theme="dark"] .bg-red-100 { background-color: rgba(239, 68, 68, 0.2) !important; color: #fca5a5 !important; }
 
     </style>
 </head>
@@ -728,6 +813,20 @@ aside .nav-item {
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+    <div class="col-span-2 card p-4 flex flex-col items-center justify-center min-h-[300px]">
+        <h3 class="font-bold text-gray-700 mb-4 w-full text-left">📊 สัดส่วนการเข้างานวันนี้</h3>
+        <div id="attendance-chart" class="w-full h-full flex justify-center"></div>
+    </div>
+
+    <div class="card p-4">
+        <h3 class="font-bold text-gray-700 mb-3">🏆 มาสายบ่อย (เดือนนี้)</h3>
+        <ul id="top-late-list" class="space-y-3 text-sm text-gray-600">
+            <li class="text-center text-gray-400 py-4">กำลังคำนวณ...</li>
+        </ul>
+    </div>
+</div>
+
         <div class="card bg-green-50 border border-green-100 flex flex-col items-center justify-center p-6">
             <div class="p-3 bg-green-100 text-green-600 rounded-full mb-3">
                 <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -1845,7 +1944,7 @@ aside .nav-item {
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script> -->
-
+    <script defer src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
@@ -8901,6 +9000,7 @@ async function loadAdminDashboardOverview() {
     const absentListContainer = document.getElementById('dashboard-absent-list');
     const leaveListContainer = document.getElementById('dashboard-leave-list');
 
+    
     if (!statPresent) return;
 
     if (refreshBtn) {
@@ -9558,6 +9658,23 @@ if (darkModeToggle) {
 
 // เรียกใช้งานทันทีเมื่อโหลดหน้าเว็บ
 initTheme();
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    
+    // เงื่อนไข: ถ้าเคยบันทึกว่าเป็น 'dark' ถึงจะเปิด Dark Mode
+    // นอกนั้น (ไม่เคยบันทึก หรือบันทึกเป็น light) ให้เปิด Light Mode เสมอ
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if (darkModeToggle) darkModeToggle.checked = true;
+        updateDarkModeStatus(true);
+    } else {
+        // กรณีเข้าครั้งแรก (savedTheme เป็น null) -> เข้าเงื่อนไขนี้ (Light)
+        document.documentElement.setAttribute('data-theme', 'light');
+        if (darkModeToggle) darkModeToggle.checked = false;
+        updateDarkModeStatus(false);
+    }
+}
 
 });
 
