@@ -502,6 +502,7 @@ aside .nav-item {
     color: var(--text-primary) !important;
 }
 
+
 /* เปลี่ยนสีป้ายสถานะ (Badge) ให้ไม่แสบตา */
 [data-theme="dark"] .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.2) !important; color: #fef08a !important; }
 [data-theme="dark"] .bg-green-100 { background-color: rgba(34, 197, 94, 0.2) !important; color: #86efac !important; }
@@ -812,7 +813,7 @@ aside .nav-item {
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         
-        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-sm rounded-xl">
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-green-600 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">เข้างานปกติ</p>
@@ -836,7 +837,7 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-500 shadow-sm rounded-xl">
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-400 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ลา</p>
@@ -848,7 +849,7 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-500 shadow-sm rounded-xl">
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-700 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ขาดงาน</p>
@@ -9012,11 +9013,7 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
         });
     }
     
-// 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
-// ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
-// --- ค้นหาฟังก์ชัน loadAdminDashboardOverview และวางทับด้วยโค้ดด้านล่างนี้ ---
-// ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุง: เพิ่มกราฟวงกลม)
-// ฟังก์ชันโหลดข้อมูล Dashboard (ฉบับแก้ไข Bug การนับยอดและรายชื่อ)
+// ฟังก์ชันโหลดข้อมูล Dashboard (ฉบับแก้ไข: เช็คใบลาชั่วโมง ไม่นับสายถ้ายื่นใบลา)
 async function loadAdminDashboardOverview() {
     // 1. Element References
     const statPresent = document.getElementById('stat-present');
@@ -9026,14 +9023,12 @@ async function loadAdminDashboardOverview() {
     const dateDisplay = document.getElementById('dashboard-date-display');
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
     
-    // List Containers
     const absentListContainer = document.getElementById('dashboard-absent-list');
     const leaveListContainer = document.getElementById('dashboard-leave-list');
-    const lateListContainer = document.getElementById('dashboard-late-list'); // เพิ่มตัวนี้
+    const lateListContainer = document.getElementById('dashboard-late-list');
 
     if (!statPresent) return;
 
-    // Set Loading State
     if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.querySelector('svg').classList.add('animate-spin');
@@ -9045,14 +9040,13 @@ async function loadAdminDashboardOverview() {
         const startOfDay = new Date(today); startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(today); endOfDay.setHours(23, 59, 59, 999);
 
-        // แสดงวันที่
         if (dateDisplay) {
             dateDisplay.textContent = today.toLocaleDateString('th-TH', { 
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
             });
         }
 
-        // 3. ดึงข้อมูล (Users, Records, Leaves)
+        // 3. ดึงข้อมูล
         const [usersSnap, recordsSnap, leavesSnap] = await Promise.all([
             db.collection('users').get(),
             db.collection('work_records')
@@ -9066,49 +9060,74 @@ async function loadAdminDashboardOverview() {
                 .get()
         ]);
 
-        // สร้าง Map ชื่อพนักงาน (uid -> name)
         const userMap = {};
         usersSnap.forEach(doc => userMap[doc.id] = doc.data().fullName || "Unknown");
 
-        // ตัวแปรนับยอด
-        let countPresentTotal = 0; // มาทำงานทั้งหมด (ทัน + สาย)
-        let countOnTime = 0;       // มาทันเวลา
-        let countLate = 0;         // มาสาย
-        let countLeave = 0;        // ลา
-        let countAbsent = 0;       // ขาด
+        // --- [STEP A] สร้าง Map เก็บข้อมูลลาชั่วโมงก่อน ---
+        // เพื่อเอาไว้เช็คว่าใครมี "สิทธิ์มาสายได้" บ้าง
+        const userHourlyLeaveMap = {}; 
+        leavesSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.status === 'approved' && data.durationType === 'hourly') {
+                // เก็บเวลาเริ่มและจบการลาไว้ (เช่น start: "08:30", end: "11:30")
+                userHourlyLeaveMap[data.userId] = {
+                    start: data.startTime,
+                    end: data.endTime
+                };
+            }
+        });
 
-        // เซ็ตเก็บ UID เพื่อกันนับซ้ำ
+        // ตัวแปรนับยอด
+        let countOnTime = 0;
+        let countLate = 0;
+        let countLeave = 0;
+        let countAbsent = 0;
+
         const checkedInOrLeaveUserIds = new Set();
-        
-        // อาร์เรย์เก็บรายชื่อ
-        const lateEmployeesList = []; // (เพิ่มใหม่) เก็บชื่อคนสาย
+        const lateEmployeesList = [];
         const leaveEmployeesList = [];
         const absentEmployeesList = [];
 
-        // --- A. ประมวลผลคนมาทำงาน (Records) ---
+        // --- [STEP B] ประมวลผลคนมาทำงาน (เช็คสายแบบฉลาดขึ้น) ---
         recordsSnap.forEach(doc => {
             const data = doc.data();
             const uid = data.userId;
-            const userName = userMap[uid] || "Unknown"; // ดึงชื่อจาก Map
+            const userName = userMap[uid] || "Unknown";
 
-            // ถือว่ามาทำงานแล้ว
             checkedInOrLeaveUserIds.add(uid);
 
             if (data.checkIn && data.checkIn.timestamp) {
-                countPresentTotal++; // นับรวมทั้งหมดก่อน
-
-                // เช็คเวลาสาย (08:30)
                 const checkInTime = data.checkIn.timestamp.toDate();
-                const lateLimit = new Date(checkInTime);
-                lateLimit.setHours(8, 30, 0, 0);
+                
+                // 1. ตั้งเกณฑ์เวลาสายมาตรฐาน (08:30)
+                let lateThreshold = new Date(checkInTime);
+                lateThreshold.setHours(8, 30, 0, 0);
 
-                if (checkInTime > lateLimit) {
+                // 2. เช็คว่ามีใบลาชั่วโมงไหม? (Override Logic)
+                if (userHourlyLeaveMap[uid]) {
+                    const leave = userHourlyLeaveMap[uid];
+                    
+                    // แปลงเวลาเริ่มลาเป็น Date Object เพื่อเปรียบเทียบ
+                    const [sH, sM] = leave.start.split(':').map(Number);
+                    const leaveStartDate = new Date(checkInTime);
+                    leaveStartDate.setHours(sH, sM, 0, 0);
+
+                    // กฎ: ถ้า "เริ่มลา" ก่อนหรือเท่ากับ 08:30 -> ให้ขยับเส้นตายไปเป็น "เวลาจบการลา"
+                    // (เช่น ลา 8:30-11:30 -> เส้นตายใหม่คือ 11:30)
+                    if (leaveStartDate <= lateThreshold) {
+                        const [eH, eM] = leave.end.split(':').map(Number);
+                        lateThreshold.setHours(eH, eM, 0, 0);
+                    }
+                }
+
+                // 3. เปรียบเทียบเวลาเช็คอินกับเส้นตาย (ที่อาจถูกขยับแล้ว)
+                if (checkInTime > lateThreshold) {
                     countLate++;
-                    // คำนวณเวลาที่สาย (เช่น "สาย 15 นาที")
-                    const diffMs = checkInTime - lateLimit;
+                    
+                    // คำนวณเวลาที่เกินมา
+                    const diffMs = checkInTime - lateThreshold;
                     const lateMin = Math.floor(diffMs / 60000);
                     
-                    // เก็บชื่อเข้า List คนสาย
                     lateEmployeesList.push(`
                         ${userName} 
                         <span class="text-xs text-orange-500 ml-1">(+${lateMin} น.)</span>
@@ -9120,13 +9139,13 @@ async function loadAdminDashboardOverview() {
             }
         });
 
-        // --- B. ประมวลผลคนลา (Leaves) ---
+        // --- [STEP C] ประมวลผลคนลา (นับเฉพาะคนที่ไม่ได้มาทำงาน) ---
         leavesSnap.forEach(doc => {
             const data = doc.data();
             const uid = data.userId;
 
-            // ถ้านับว่าเป็นคนทำงานไปแล้ว (เช็คอินแล้ว) ไม่ต้องนับเป็นคนลาอีก (ยึดตามหน้างานจริง)
-            // หรือถ้าจะเอาละเอียด: ลาครึ่งวันเช้า แต่บ่ายมาตอกบัตร -> อันนี้แล้วแต่ Policy (ในที่นี้ขอยึดว่าถ้าเช็คอินแล้วคือนับเป็นมาทำงาน)
+            // ถ้านับว่าเป็นคนมาทำงานแล้ว (เช็คอินแล้ว) จะไม่นับเป็นคนลาในยอดรวม
+            // (แต่ยังอาจจะโชว์ในลิสต์ได้ถ้าต้องการ แต่ Dashboard โดยทั่วไปจะนับ Headcount หลักคือ "มาทำงาน")
             if (!checkedInOrLeaveUserIds.has(uid)) {
                 countLeave++;
                 checkedInOrLeaveUserIds.add(uid);
@@ -9138,8 +9157,7 @@ async function loadAdminDashboardOverview() {
             }
         });
 
-        // --- C. ประมวลผลคนขาด (Absent) ---
-        // วนลูปพนักงานทุกคน ใครไม่มีชื่อใน (มา + ลา) = ขาด
+        // --- [STEP D] ประมวลผลคนขาด ---
         for (const [uid, name] of Object.entries(userMap)) {
             if (!checkedInOrLeaveUserIds.has(uid)) {
                 absentEmployeesList.push(name);
@@ -9147,43 +9165,28 @@ async function loadAdminDashboardOverview() {
         }
         countAbsent = absentEmployeesList.length;
 
-        // --- 4. อัปเดต UI (ตัวเลข) ---
-        // การ์ดแสดงผล: อยากโชว์ "มาทำงานทั้งหมด" หรือ "มาทันเวลา" ก็ได้ 
-        // ปกติ Dashboard มักโชว์ "มาทำงานทั้งหมด" (Present Total)
-        if (statPresent) statPresent.textContent = countOnTime;
+        // --- 4. อัปเดต UI ---
+        if (statPresent) statPresent.textContent = countOnTime; // โชว์เฉพาะมาทันเวลา (จะได้ไม่สับสน)
         if (statLate) statLate.textContent = countLate;
         if (statLeave) statLeave.textContent = countLeave;
         if (statAbsent) statAbsent.textContent = countAbsent;
 
-        // --- 5. อัปเดต UI (รายชื่อ) ---
-        
-        // 5.1 รายชื่อคนสาย (New Fix)
-        if (lateListContainer) {
-            lateListContainer.innerHTML = lateEmployeesList.length > 0
-                ? lateEmployeesList.map(item => `<li class="border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">${item}</li>`).join('')
-                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนสาย -</li>`;
-        }
+        // 5. อัปเดตรายชื่อ (Lists)
+        const updateList = (el, list, emptyMsg) => {
+            if (el) {
+                el.innerHTML = list.length > 0
+                    ? list.map(item => `<li class="border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">${item}</li>`).join('')
+                    : `<li class="text-center text-gray-400 text-xs py-4">${emptyMsg}</li>`;
+            }
+        };
 
-        // 5.2 รายชื่อคนลา
-        if (leaveListContainer) {
-            leaveListContainer.innerHTML = leaveEmployeesList.length > 0 
-                ? leaveEmployeesList.map(item => `<li class="text-blue-600 dark:text-blue-400 text-sm border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">• ${item}</li>`).join('') 
-                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนลา -</li>`;
-        }
+        updateList(lateListContainer, lateEmployeesList, "- ไม่มีคนสาย -");
+        updateList(leaveListContainer, leaveEmployeesList, "- ไม่มีคนลา -");
+        updateList(absentListContainer, absentEmployeesList, "- ไม่มีคนขาด -");
 
-        // 5.3 รายชื่อคนขาด
-        if (absentListContainer) {
-            absentListContainer.innerHTML = absentEmployeesList.length > 0 
-                ? absentEmployeesList.map(name => `<li class="text-red-600 dark:text-red-400 text-sm border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">• ${name}</li>`).join('') 
-                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนขาด -</li>`;
-        }
-
-        // --- 6. วาดกราฟ (Chart) ---
+        // 6. วาดกราฟ ApexCharts
         if (typeof ApexCharts !== 'undefined') {
-            // สำคัญ! ข้อมูลกราฟต้องเป็น Mutually Exclusive (รวมกันได้ 100%)
-            // ใช้ countOnTime (มาทัน) แทน countPresentTotal (มาทั้งหมด)
             const seriesData = [countOnTime, countLate, countLeave, countAbsent];
-            
             const chartOptions = {
                 series: seriesData,
                 labels: ['มาทันเวลา', 'มาสาย', 'ลา', 'ขาดงาน'],
@@ -9204,7 +9207,7 @@ async function loadAdminDashboardOverview() {
                                 value: { show: true },
                                 total: {
                                     show: true,
-                                    label: 'พนักงานทั้งหมด',
+                                    label: 'พนักงาน',
                                     formatter: function (w) {
                                         return w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " คน"
                                     }
@@ -9214,15 +9217,9 @@ async function loadAdminDashboardOverview() {
                     }
                 },
                 dataLabels: { enabled: false },
-                legend: { position: 'bottom' },
+                legend: { position: 'bottom', labels: { colors: 'var(--text-primary)' } }, // แก้สี Legend ให้ชัดใน Dark Mode
                 stroke: { show: false },
-                tooltip: {
-                    y: {
-                        formatter: function(val) {
-                            return val + " คน"
-                        }
-                    }
-                }
+                tooltip: { y: { formatter: (val) => val + " คน" } }
             };
 
             if (window.attendanceChart) {
