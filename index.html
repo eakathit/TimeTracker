@@ -798,92 +798,117 @@ aside .nav-item {
                 </div>
             </div>
             
-           <div id="admin-dashboard-page" class="page space-y-6">
+           <div id="admin-dashboard-page" class="page hidden space-y-6 pb-24">
     
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="flex items-center justify-between mb-2">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Today's Overview</h2>
-            <p id="dashboard-date-display" class="text-gray-500 text-sm mt-1">-</p>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Today's Overview</h2>
+            <p id="dashboard-date-display" class="text-sm text-gray-500 dark:text-gray-400">กำลังโหลด...</p>
         </div>
-        <button id="refresh-dashboard-btn" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl shadow-sm hover:bg-gray-50 hover:text-sky-600 transition-all active:scale-95">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            <span>อัปเดตข้อมูล</span>
+        <button onclick="loadAdminDashboardOverview()" id="refresh-dashboard-btn" class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         </button>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-    <div class="col-span-2 card p-4 flex flex-col items-center justify-center min-h-[300px]">
-        <h3 class="font-bold text-gray-700 mb-4 w-full text-left">📊 สัดส่วนการเข้างานวันนี้</h3>
-        <div id="attendance-chart" class="w-full h-full flex justify-center"></div>
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-green-500 shadow-sm rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">เข้างานปกติ</p>
+                    <h3 id="stat-present" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
+                </div>
+                <div class="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-orange-500 shadow-sm rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">มาสาย</p>
+                    <h3 id="stat-late" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
+                </div>
+                <div class="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-500 shadow-sm rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ลา</p>
+                    <h3 id="stat-leave" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
+                </div>
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-500 shadow-sm rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ขาดงาน</p>
+                    <h3 id="stat-absent" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
+                </div>
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="card p-4">
-        <h3 class="font-bold text-gray-700 mb-3">🏆 มาสายบ่อย (เดือนนี้)</h3>
-        <ul id="top-late-list" class="space-y-3 text-sm text-gray-600">
-            <li class="text-center text-gray-400 py-4">กำลังคำนวณ...</li>
-        </ul>
-    </div>
-</div>
-
-        <div class="card bg-green-50 border border-green-100 flex flex-col items-center justify-center p-6">
-            <div class="p-3 bg-green-100 text-green-600 rounded-full mb-3">
-                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <p class="text-3xl font-bold text-green-700" id="stat-present">0</p>
-            <p class="text-xs text-green-600 font-medium">เข้างานแล้ว</p>
-        </div>
-
-        <div class="card bg-orange-50 border border-orange-100 flex flex-col items-center justify-center p-6">
-            <div class="p-3 bg-orange-100 text-orange-600 rounded-full mb-3">
-                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <p class="text-3xl font-bold text-orange-700" id="stat-late">0</p>
-            <p class="text-xs text-orange-600 font-medium">มาสาย</p>
-        </div>
-
-        <div class="card bg-blue-50 border border-blue-100 flex flex-col items-center justify-center p-6">
-            <div class="p-3 bg-blue-100 text-blue-600 rounded-full mb-3">
-                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-            <p class="text-3xl font-bold text-blue-600" id="stat-leave">0</p>
-            <p class="text-xs text-blue-600 font-medium">ลา (อนุมัติแล้ว)</p>
-        </div>
-
-        <div class="card bg-red-50 border border-red-100 flex flex-col items-center justify-center p-6">
-            <div class="p-3 bg-red-100 text-red-600 rounded-full mb-3">
-                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-            </div>
-            <p class="text-3xl font-bold text-red-700" id="stat-absent">0</p>
-            <p class="text-xs text-red-600 font-medium">ขาด / ยังไม่มา</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="card border border-red-100 bg-red-50/30">
-            <h3 class="font-bold text-red-700 mb-3 border-b border-red-200 pb-2 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                ขาด / ยังไม่เข้างาน
+        <div class="lg:col-span-2 card p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col min-h-[400px]">
+            <h3 class="font-bold text-gray-700 dark:text-white mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                สัดส่วนการลงเวลา
             </h3>
-            <ul id="dashboard-absent-list" class="space-y-2 text-sm text-gray-600 max-h-60 overflow-y-auto">
-                <li class="text-center text-gray-400 py-2">กำลังโหลด...</li>
-            </ul>
+            <div id="attendance-chart" class="flex-grow w-full flex items-center justify-center">
+                </div>
         </div>
 
-        <div class="card border border-blue-100 bg-blue-50/30">
-            <h3 class="font-bold text-blue-600 mb-3 border-b border-blue-200 pb-2 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                ลา (อนุมัติแล้ว)
-            </h3>
-            <ul id="dashboard-leave-list" class="space-y-2 text-sm text-gray-600 max-h-60 overflow-y-auto">
-                <li class="text-center text-gray-400 py-2">กำลังโหลด...</li>
-            </ul>
-        </div>
+        <div class="flex flex-col gap-4">
+            
+            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
+                <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-orange-500"></span> รายชื่อคนสาย
+                </h3>
+                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    <ul id="dashboard-late-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนสาย -</li>
+                    </ul>
+                </div>
+            </div>
 
+            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
+                <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> รายชื่อคนลา
+                </h3>
+                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    <ul id="dashboard-leave-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนลา -</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
+                <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> ขาดงาน (ยังไม่ Check-in)
+                </h3>
+                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
+                    <ul id="dashboard-absent-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนขาด -</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
     </div>
-
 </div>
 
 <div id="admin-approvals-page" class="page space-y-6 pb-20">
@@ -8990,122 +9015,225 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
 // 1. ฟังก์ชันโหลดข้อมูล Dashboard (กึ่ง Realtime)
 // ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุงเพื่อ Morning Talk)
 // --- ค้นหาฟังก์ชัน loadAdminDashboardOverview และวางทับด้วยโค้ดด้านล่างนี้ ---
+// ฟังก์ชันโหลดข้อมูล Dashboard (ปรับปรุง: เพิ่มกราฟวงกลม)
+// ฟังก์ชันโหลดข้อมูล Dashboard (ฉบับแก้ไข Bug การนับยอดและรายชื่อ)
 async function loadAdminDashboardOverview() {
+    // 1. Element References
     const statPresent = document.getElementById('stat-present');
     const statLate = document.getElementById('stat-late');
     const statLeave = document.getElementById('stat-leave');
     const statAbsent = document.getElementById('stat-absent');
     const dateDisplay = document.getElementById('dashboard-date-display');
     const refreshBtn = document.getElementById('refresh-dashboard-btn');
+    
+    // List Containers
     const absentListContainer = document.getElementById('dashboard-absent-list');
     const leaveListContainer = document.getElementById('dashboard-leave-list');
+    const lateListContainer = document.getElementById('dashboard-late-list'); // เพิ่มตัวนี้
 
-    
     if (!statPresent) return;
 
+    // Set Loading State
     if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.querySelector('svg').classList.add('animate-spin');
     }
 
     try {
+        // 2. กำหนดเวลาวันนี้
         const today = new Date();
-        const startOfDay = new Date(today);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(today);
-        endOfDay.setHours(23, 59, 59, 999);
+        const startOfDay = new Date(today); startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today); endOfDay.setHours(23, 59, 59, 999);
 
-        dateDisplay.textContent = today.toLocaleDateString('th-TH', { 
-            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-        });
+        // แสดงวันที่
+        if (dateDisplay) {
+            dateDisplay.textContent = today.toLocaleDateString('th-TH', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+        }
 
-        // 1. ดึงข้อมูลพื้นฐาน
+        // 3. ดึงข้อมูล (Users, Records, Leaves)
         const [usersSnap, recordsSnap, leavesSnap] = await Promise.all([
             db.collection('users').get(),
-            db.collection('work_records').where('date', '>=', startOfDay).where('date', '<=', endOfDay).get(),
-            db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endOfDay).where('endDate', '>=', startOfDay).get()
+            db.collection('work_records')
+                .where('date', '>=', startOfDay)
+                .where('date', '<=', endOfDay)
+                .get(),
+            db.collection('leave_requests')
+                .where('status', '==', 'approved')
+                .where('startDate', '<=', endOfDay)
+                .where('endDate', '>=', startOfDay)
+                .get()
         ]);
 
+        // สร้าง Map ชื่อพนักงาน (uid -> name)
         const userMap = {};
         usersSnap.forEach(doc => userMap[doc.id] = doc.data().fullName || "Unknown");
 
-        // --- 2. ประกาศตัวแปรก่อนเริ่มประมวลผล (สำคัญ: ห้ามย้ายลำดับ) ---
-        let countPresent = 0;
-        let countLate = 0;
-        let countLeave = 0;
-        const checkedInOrLeaveUserIds = new Set();
-        const leaveEmployeesList = [];
-        const hourlyLeaveMap = {};
+        // ตัวแปรนับยอด
+        let countPresentTotal = 0; // มาทำงานทั้งหมด (ทัน + สาย)
+        let countOnTime = 0;       // มาทันเวลา
+        let countLate = 0;         // มาสาย
+        let countLeave = 0;        // ลา
+        let countAbsent = 0;       // ขาด
 
-        // A. ประมวลผลคนมาทำงาน (Records)
+        // เซ็ตเก็บ UID เพื่อกันนับซ้ำ
+        const checkedInOrLeaveUserIds = new Set();
+        
+        // อาร์เรย์เก็บรายชื่อ
+        const lateEmployeesList = []; // (เพิ่มใหม่) เก็บชื่อคนสาย
+        const leaveEmployeesList = [];
+        const absentEmployeesList = [];
+
+        // --- A. ประมวลผลคนมาทำงาน (Records) ---
         recordsSnap.forEach(doc => {
             const data = doc.data();
-            checkedInOrLeaveUserIds.add(data.userId);
+            const uid = data.userId;
+            const userName = userMap[uid] || "Unknown"; // ดึงชื่อจาก Map
+
+            // ถือว่ามาทำงานแล้ว
+            checkedInOrLeaveUserIds.add(uid);
 
             if (data.checkIn && data.checkIn.timestamp) {
-                countPresent++;
+                countPresentTotal++; // นับรวมทั้งหมดก่อน
+
+                // เช็คเวลาสาย (08:30)
                 const checkInTime = data.checkIn.timestamp.toDate();
                 const lateLimit = new Date(checkInTime);
                 lateLimit.setHours(8, 30, 0, 0);
 
                 if (checkInTime > lateLimit) {
-                    let isTrulyLate = true;
-                    // ตรวจสอบลาชั่วโมง (ถ้ามี)
-                    if (hourlyLeaveMap[data.userId]) {
-                        const leaveEnd = hourlyLeaveMap[data.userId].endTimeObj;
-                        if (checkInTime <= leaveEnd) isTrulyLate = false;
-                    }
-                    if (isTrulyLate) countLate++;
+                    countLate++;
+                    // คำนวณเวลาที่สาย (เช่น "สาย 15 นาที")
+                    const diffMs = checkInTime - lateLimit;
+                    const lateMin = Math.floor(diffMs / 60000);
+                    
+                    // เก็บชื่อเข้า List คนสาย
+                    lateEmployeesList.push(`
+                        ${userName} 
+                        <span class="text-xs text-orange-500 ml-1">(+${lateMin} น.)</span>
+                        <br><span class="text-[10px] text-gray-400">เวลา: ${checkInTime.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'})}</span>
+                    `);
+                } else {
+                    countOnTime++;
                 }
             }
         });
 
-        // B. ประมวลผลคนลา (Leaves)
+        // --- B. ประมวลผลคนลา (Leaves) ---
         leavesSnap.forEach(doc => {
             const data = doc.data();
-            
-            // นับยอดคนลา (นับเฉพาะคนที่ไม่ได้เช็คอิน)
-            if (!checkedInOrLeaveUserIds.has(data.userId)) {
-                countLeave++;
-                checkedInOrLeaveUserIds.add(data.userId);
-            }
+            const uid = data.userId;
 
-            // เก็บข้อมูลสำหรับการแสดงผลเหตุผล
-            const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
-            let timeInfo = data.durationType === 'hourly' ? ` (${data.startTime}-${data.endTime})` : '';
-            
-            leaveEmployeesList.push(`
-                ${data.userName} 
-                <span class="text-[10px] text-gray-400">(${leaveType}${timeInfo})</span>
-                <br>
-                <span class="text-[10px] text-gray-500 italic ml-4">เหตุผล: ${data.reason || '-'}</span>
-            `);
+            // ถ้านับว่าเป็นคนทำงานไปแล้ว (เช็คอินแล้ว) ไม่ต้องนับเป็นคนลาอีก (ยึดตามหน้างานจริง)
+            // หรือถ้าจะเอาละเอียด: ลาครึ่งวันเช้า แต่บ่ายมาตอกบัตร -> อันนี้แล้วแต่ Policy (ในที่นี้ขอยึดว่าถ้าเช็คอินแล้วคือนับเป็นมาทำงาน)
+            if (!checkedInOrLeaveUserIds.has(uid)) {
+                countLeave++;
+                checkedInOrLeaveUserIds.add(uid);
+                
+                const leaveType = LEAVE_TYPE_MAP[data.leaveType] || data.leaveType;
+                leaveEmployeesList.push(`
+                    ${data.userName} <span class="text-[10px] text-gray-400">(${leaveType})</span>
+                `);
+            }
         });
 
-        // C. หารายชื่อคนขาด
-        const absentEmployeesList = [];
+        // --- C. ประมวลผลคนขาด (Absent) ---
+        // วนลูปพนักงานทุกคน ใครไม่มีชื่อใน (มา + ลา) = ขาด
         for (const [uid, name] of Object.entries(userMap)) {
             if (!checkedInOrLeaveUserIds.has(uid)) {
                 absentEmployeesList.push(name);
             }
         }
+        countAbsent = absentEmployeesList.length;
 
-        // --- 3. อัปเดต UI ---
-        statPresent.textContent = countPresent;
-        statLate.textContent = countLate;
-        statLeave.textContent = countLeave;
-        statAbsent.textContent = absentEmployeesList.length;
+        // --- 4. อัปเดต UI (ตัวเลข) ---
+        // การ์ดแสดงผล: อยากโชว์ "มาทำงานทั้งหมด" หรือ "มาทันเวลา" ก็ได้ 
+        // ปกติ Dashboard มักโชว์ "มาทำงานทั้งหมด" (Present Total)
+        if (statPresent) statPresent.textContent = countOnTime;
+        if (statLate) statLate.textContent = countLate;
+        if (statLeave) statLeave.textContent = countLeave;
+        if (statAbsent) statAbsent.textContent = countAbsent;
 
-        if (absentListContainer) {
-            absentListContainer.innerHTML = absentEmployeesList.length > 0 
-                ? absentEmployeesList.map(name => `<li class="text-red-600 font-medium border-b border-gray-50 pb-1">• ${name}</li>`).join('') 
-                : `<li class="text-center text-gray-400 py-2">- ไม่มีคนขาด -</li>`;
+        // --- 5. อัปเดต UI (รายชื่อ) ---
+        
+        // 5.1 รายชื่อคนสาย (New Fix)
+        if (lateListContainer) {
+            lateListContainer.innerHTML = lateEmployeesList.length > 0
+                ? lateEmployeesList.map(item => `<li class="border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">${item}</li>`).join('')
+                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนสาย -</li>`;
         }
 
+        // 5.2 รายชื่อคนลา
         if (leaveListContainer) {
             leaveListContainer.innerHTML = leaveEmployeesList.length > 0 
-                ? leaveEmployeesList.map(item => `<li class="text-blue-600 font-medium border-b border-gray-50 pb-1 last:border-0">• ${item}</li>`).join('') 
-                : `<li class="text-center text-gray-400 py-2">- ไม่มีคนลา -</li>`;
+                ? leaveEmployeesList.map(item => `<li class="text-blue-600 dark:text-blue-400 text-sm border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">• ${item}</li>`).join('') 
+                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนลา -</li>`;
+        }
+
+        // 5.3 รายชื่อคนขาด
+        if (absentListContainer) {
+            absentListContainer.innerHTML = absentEmployeesList.length > 0 
+                ? absentEmployeesList.map(name => `<li class="text-red-600 dark:text-red-400 text-sm border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0">• ${name}</li>`).join('') 
+                : `<li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนขาด -</li>`;
+        }
+
+        // --- 6. วาดกราฟ (Chart) ---
+        if (typeof ApexCharts !== 'undefined') {
+            // สำคัญ! ข้อมูลกราฟต้องเป็น Mutually Exclusive (รวมกันได้ 100%)
+            // ใช้ countOnTime (มาทัน) แทน countPresentTotal (มาทั้งหมด)
+            const seriesData = [countOnTime, countLate, countLeave, countAbsent];
+            
+            const chartOptions = {
+                series: seriesData,
+                labels: ['มาทันเวลา', 'มาสาย', 'ลา', 'ขาดงาน'],
+                colors: ['#34D399', '#FB923C', '#60A5FA', '#F87171'], 
+                chart: {
+                    type: 'donut',
+                    height: 280,
+                    fontFamily: 'Prompt, sans-serif',
+                    background: 'transparent'
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                name: { show: true },
+                                value: { show: true },
+                                total: {
+                                    show: true,
+                                    label: 'พนักงานทั้งหมด',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0) + " คน"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                dataLabels: { enabled: false },
+                legend: { position: 'bottom' },
+                stroke: { show: false },
+                tooltip: {
+                    y: {
+                        formatter: function(val) {
+                            return val + " คน"
+                        }
+                    }
+                }
+            };
+
+            if (window.attendanceChart) {
+                window.attendanceChart.destroy();
+            }
+
+            const chartEl = document.querySelector("#attendance-chart");
+            if (chartEl) {
+                window.attendanceChart = new ApexCharts(chartEl, chartOptions);
+                window.attendanceChart.render();
+            }
         }
 
     } catch (error) {
