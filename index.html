@@ -372,9 +372,49 @@ aside .nav-item {
 }
 
 /* ปรับ Sidebar และ Menu */
+/* 1. ปรับพื้นหลัง Sidebar ให้เข้มและมีเส้นแบ่งชัดเจน */
 [data-theme="dark"] aside {
-    background-color: var(--card-bg) !important;
-    border-right-color: var(--border-color) !important;
+    background-color: #111827 !important; /* ใช้สีเข้ม (Gray-900) */
+    border-right: 1px solid var(--border-color) !important;
+}
+
+/* 2. ปรับตัวหนังสือเมนูและไอคอน (ปกติ) */
+[data-theme="dark"] aside nav a,
+[data-theme="dark"] aside nav button {
+    color: #9ca3af !important; /* สีเทากลาง (Gray-400) */
+}
+
+[data-theme="dark"] aside nav a svg,
+[data-theme="dark"] aside nav button svg {
+    color: #6b7280 !important; /* ไอคอนสีเทาเข้มหน่อย */
+}
+
+/* 3. ตอนเอาเมาส์ชี้ (Hover) - ให้สว่างขึ้นเล็กน้อย */
+[data-theme="dark"] aside nav a:hover,
+[data-theme="dark"] aside nav button:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important; /* สีขาวจางๆ 5% */
+    color: #f3f4f6 !important; /* ตัวหนังสือขาว */
+}
+
+/* 4. เมนูที่ "กำลังเลือกอยู่" (Active State) */
+/* แก้ไขคลาส bg-blue-50 หรือ bg-gray-100 ที่ใช้อยู่เดิม */
+[data-theme="dark"] aside nav a.bg-blue-50,
+[data-theme="dark"] aside nav a.bg-gray-100,
+[data-theme="dark"] aside nav a.text-blue-600 {
+    background-color: rgba(59, 130, 246, 0.15) !important; /* สีฟ้าโปร่งแสงบนพื้นดำ */
+    color: #60a5fa !important; /* สีฟ้าสว่าง (Blue-400) อ่านง่ายกว่า Blue-600 */
+    border: 1px solid rgba(59, 130, 246, 0.3) !important; /* เพิ่มขอบสีฟ้าจางๆ */
+}
+
+/* ปรับสีไอคอนของเมนูที่เลือกอยู่ */
+[data-theme="dark"] aside nav a.bg-blue-50 svg,
+[data-theme="dark"] aside nav a.text-blue-600 svg {
+    color: #60a5fa !important; /* ไอคอนสีฟ้าสว่าง */
+}
+
+/* 5. ส่วนหัว Logo ด้านบนซ้าย */
+[data-theme="dark"] aside .text-gray-800 {
+    color: white !important;
 }
 
 [data-theme="dark"] #mobile-floating-menu {
@@ -1387,39 +1427,39 @@ aside .nav-item {
         <span class="font-bold">Leave Request</span>
     </button>
     
-    <div class="col-span-2 mt-4 p-4 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-sm">
-    <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-full">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+    <div class="col-span-1 mt-4 p-3 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 text-sm">แจ้งเตือน</p>
+                <p id="notify-status-label" class="text-[10px] text-gray-400 leading-tight">ปิดใช้งาน</p>
+            </div>
         </div>
-        <div>
-            <p class="font-bold text-gray-800 text-sm">การแจ้งเตือน</p>
-            <p id="notify-status-label" class="text-xs text-gray-400">ปิดใช้งาน</p>
+        
+        <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+            <input type="checkbox" name="toggle" id="notify-toggle" class="toggle-checkbox absolute block w-5 h-5 top-0.5 left-0.5 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
+            <label for="notify-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
         </div>
     </div>
 
-    <div class="col-span-2 mt-3 p-4 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-sm">
-    <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-gray-100 text-gray-600 rounded-full dark-icon-bg">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+    <div class="col-span-1 mt-4 p-3 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="p-2 bg-gray-100 text-gray-600 rounded-full dark-icon-bg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800 text-sm">โหมดมืด</p>
+                <p id="dark-mode-status" class="text-[10px] text-gray-400 leading-tight">ปิดใช้งาน</p>
+            </div>
         </div>
-        <div>
-            <p class="font-bold text-gray-800 text-sm">โหมดกลางคืน (Dark Mode)</p>
-            <p id="dark-mode-status" class="text-xs text-gray-400">ปิดใช้งาน</p>
+        
+        <div class="relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in">
+            <input type="checkbox" name="toggle" id="dark-mode-toggle" class="toggle-checkbox absolute block w-5 h-5 top-0.5 left-0.5 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
+            <label for="dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
         </div>
     </div>
-    
-    <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in">
-        <input type="checkbox" name="toggle" id="dark-mode-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
-        <label for="dark-mode-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-    </div>
-</div>
-
-    <div class="relative inline-block w-11 h-6 align-middle select-none transition duration-200 ease-in">
-        <input type="checkbox" name="toggle" id="notify-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
-        <label for="notify-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-    </div>
-</div>
 
             </div>
 
