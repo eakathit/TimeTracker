@@ -294,6 +294,36 @@ aside .nav-item {
     --input-bg: #374151;      /* พื้นหลังช่องกรอกข้อมูล */
 }
 
+[data-theme="dark"] .bg-yellow-50,
+[data-theme="dark"] .bg-violet-50,
+[data-theme="dark"] .bg-blue-50,
+[data-theme="dark"] .bg-green-50,
+[data-theme="dark"] .bg-red-50,
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-sky-50,
+[data-theme="dark"] .bg-orange-50, /* เผื่อไว้สำหรับช่อง Overtime */
+[data-theme="dark"] .bg-green-50,  /* เผื่อไว้สำหรับช่อง Days */
+[data-theme="dark"] .bg-teal-50    /* เผื่อไว้สำหรับสีอื่นๆ */
+[data-theme="dark"] .bg-orange-50 {
+    background-color: var(--card-bg) !important;  /* ใช้สีเดียวกับพื้นหลังการ์ด */
+    border-color: var(--border-color) !important; /* เปลี่ยนสีเส้นขอบให้กลืนกัน */
+    color: var(--text-primary) !important;        /* เปลี่ยนสีตัวหนังสือเป็นสีขาว/เทาอ่อน */
+}
+
+/* 2. แก้ไขช่องกรอกข้อมูล (Input) ในหน้า Report ไม่ให้เป็นสีขาวโดด */
+[data-theme="dark"] #report-page input,
+[data-theme="dark"] #report-page select,
+[data-theme="dark"] #report-page textarea {
+    background-color: var(--input-bg) !important; /* พื้นหลังสีเทาเข้ม */
+    border-color: var(--border-color) !important;
+    color: white !important;
+}
+
+/* 3. (เสริม) ถ้ามีตารางในหน้า Report ให้หัวตารางสีเข้มลง */
+[data-theme="dark"] #report-page table thead tr {
+    background-color: var(--card-bg) !important;
+}
+
 /* บังคับเปลี่ยนสี Elements ต่างๆ เมื่อเปิด Dark Mode */
 [data-theme="dark"] body {
     background-color: var(--bg-color);
