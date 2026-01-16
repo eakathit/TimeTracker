@@ -804,96 +804,108 @@ aside .nav-item {
     
     <div class="flex items-center justify-between mb-2">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Today's Overview</h2>
-            
-            <p id="dashboard-date-display" class="text-sm text-gray-500">กำลังโหลด...</p>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Today's Overview</h2>
+            <p id="dashboard-date-display" class="text-sm text-gray-500 dark:text-gray-400">กำลังโหลด...</p>
         </div>
-        
-        </div>
+        <button onclick="loadAdminDashboardOverview()" id="refresh-dashboard-btn" class="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+    </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        
         <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-green-600 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">เข้างานปกติ</p>
-                    <h3 id="stat-present" class="text-2xl font-bold text-gray-800 mt-1">-</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">เข้างานปกติ</p>
+                    <h3 id="stat-present" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
                 </div>
+                <div class="p-2 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
+            </div>
         </div>
 
         <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-orange-500 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">มาสาย</p>
-                    <h3 id="stat-late" class="text-2xl font-bold text-gray-800 mt-1">-</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">มาสาย</p>
+                    <h3 id="stat-late" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
                 </div>
+                <div class="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
+            </div>
         </div>
 
         <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-400 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">ลา</p>
-                    <h3 id="stat-leave" class="text-2xl font-bold text-gray-800 mt-1">-</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ลา</p>
+                    <h3 id="stat-leave" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
                 </div>
+                <div class="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
+            </div>
         </div>
 
         <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-700 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-bold">ขาดงาน</p>
-                    <h3 id="stat-absent" class="text-2xl font-bold text-gray-800 mt-1">-</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ขาดงาน</p>
+                    <h3 id="stat-absent" class="text-2xl font-bold text-gray-800 dark:text-white mt-1">-</h3>
                 </div>
+                <div class="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 card p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col min-h-[400px]">
-            <h3 class="font-bold text-gray-700 mb-6 flex items-center gap-2">
+    <div class="flex flex-col gap-6">
+        
+        <div class="card p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col min-h-[350px]">
+            <h3 class="font-bold text-gray-700 dark:text-white mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
                 สัดส่วนการลงเวลา
             </h3>
             <div id="attendance-chart" class="flex-grow w-full flex items-center justify-center">
             </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
-                <h3 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-orange-500"></span> รายชื่อคนสาย
-                </h3>
-                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
-                    <ul id="dashboard-late-list" class="space-y-2 text-sm text-gray-600">
-                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนสาย -</li>
-                    </ul>
-                </div>
+        <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
+            <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-orange-500"></span> รายชื่อคนสาย
+            </h3>
+            <div class="max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <ul id="dashboard-late-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                     <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนสาย -</li>
+                </ul>
             </div>
-
-            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
-                <h3 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> รายชื่อคนลา
-                </h3>
-                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
-                    <ul id="dashboard-leave-list" class="space-y-2 text-sm text-gray-600">
-                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนลา -</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-1">
-                <h3 class="font-bold text-gray-700 mb-3 text-sm flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span> ขาดงาน (ยังไม่ Check-in)
-                </h3>
-                <div class="h-40 overflow-y-auto pr-1 custom-scrollbar">
-                    <ul id="dashboard-absent-list" class="space-y-2 text-sm text-gray-600">
-                         <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนขาด -</li>
-                    </ul>
-                </div>
-            </div>
-
         </div>
+
+        <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
+            <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span> รายชื่อคนลา
+            </h3>
+            <div class="max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <ul id="dashboard-leave-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                     <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนลา -</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
+            <h3 class="font-bold text-gray-700 dark:text-white mb-3 text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span> ขาดงาน (ยังไม่ Check-in)
+            </h3>
+            <div class="max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <ul id="dashboard-absent-list" class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                     <li class="text-center text-gray-400 text-xs py-4">- ไม่มีคนขาด -</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 
