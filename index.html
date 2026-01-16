@@ -530,6 +530,158 @@ aside .nav-item {
     border-color: rgb(74 222 128 / var(--tw-border-opacity, 1));
 }
 
+/* =========================================
+   [FIX] Approvals Center Modern Design (Dark Mode Override)
+   วางส่วนนี้ไว้ล่างสุดของไฟล์ style.css เพื่อให้ทับกฎเดิม
+   ========================================= */
+
+/* 1. อนุญาตให้แสดงสีไล่เฉด (Gradient) ในส่วนหัว */
+[data-theme="dark"] #admin-approvals-page .bg-gradient-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
+    color: white !important; /* บังคับตัวหนังสือในหัวข้อให้ขาวเสมอ */
+    border-bottom: none !important;
+}
+
+/* 2. แก้ไขพื้นหลังของ Content Area ที่จางเกินไป (bg-gray-50/30) */
+[data-theme="dark"] #admin-approvals-page .bg-gray-50\/30 {
+    background-color: rgba(17, 24, 39, 0.5) !important; /* ปรับเป็นสีมืดโปร่งแสง */
+}
+
+/* 3. ปรับสีปุ่ม Tab แบบใหม่ (Pill Style) */
+/* ปุ่มที่ถูกเลือก (Active) */
+[data-theme="dark"] #admin-approvals-page .leave-tab-btn.bg-white,
+[data-theme="dark"] #admin-approvals-page .ot-tab-btn.bg-white {
+    background-color: #374151 !important; /* สีเทาเข้ม (Gray-700) */
+    color: #60A5FA !important; /* สีฟ้าสว่าง (Blue-400) */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+    border: 1px solid #4B5563 !important;
+}
+
+/* ปุ่มที่ไม่ได้เลือก (Inactive) */
+[data-theme="dark"] #admin-approvals-page .leave-tab-btn.text-gray-500,
+[data-theme="dark"] #admin-approvals-page .ot-tab-btn.text-gray-500 {
+    color: #9CA3AF !important; /* สีเทาอ่อน (Gray-400) */
+    background-color: transparent !important;
+}
+[data-theme="dark"] #admin-approvals-page .leave-tab-btn.text-gray-500:hover,
+[data-theme="dark"] #admin-approvals-page .ot-tab-btn.text-gray-500:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: white !important;
+}
+
+/* 4. ปรับพื้นหลังแถบเมนู Tab (Tab Container) */
+[data-theme="dark"] #admin-approvals-page nav[aria-label="Tabs"] {
+    background-color: #111827 !important; /* พื้นหลังรางปุ่มให้เข้ม */
+    border: 1px solid #374151;
+}
+
+/* 5. แก้ไขช่องค้นหาและ Dropdown ให้ชัดเจน */
+[data-theme="dark"] #admin-approvals-page .bg-white.rounded-xl.border {
+    background-color: #1F2937 !important; /* พื้นหลังกล่องค้นหา */
+    border-color: #374151 !important;
+}
+
+/* 6. แก้ไขสีตัวอักษรในรายการ (List Item) ไม่ให้กลืนกับพื้นหลัง */
+[data-theme="dark"] #admin-approvals-page h4.text-gray-800,
+[data-theme="dark"] #admin-approvals-page p.text-gray-800 {
+    color: #F3F4F6 !important; /* สีขาวเกือบสุด */
+}
+[data-theme="dark"] #admin-approvals-page p.text-gray-600,
+[data-theme="dark"] #admin-approvals-page span.text-gray-500 {
+    color: #9CA3AF !important; /* สีเทากลาง */
+}
+
+/* 1. บังคับให้การ์ดมีมุมมนและตัดส่วนเกิน */
+#admin-approvals-page .card {
+    border-radius: 20px !important; /* ปรับความมนตามต้องการ */
+    overflow: hidden !important;    /* สำคัญ! คำสั่งนี้จะตัดมุมส่วนหัวสีๆ ให้มนตามกรอบการ์ด */
+    transform: translateZ(0);
+}
+
+/* 2. (เสริม) เพื่อความชัวร์ ให้ส่วนหัวมนด้านบนด้วย */
+#admin-approvals-page .card > div:first-child {
+    border-top-left-radius: 20px !important;
+    border-top-right-radius: 20px !important;
+}
+
+/* 1. สั่งให้ส่วนเนื้อหา (อันสุดท้ายในการ์ด) มีมุมล่างมน */
+#admin-approvals-page .card > div:last-child {
+    border-bottom-left-radius: 20px !important;
+    border-bottom-right-radius: 20px !important;
+    
+    /* ป้องกันเนื้อหาล้นจนบังมุมมน */
+    overflow: hidden !important; 
+}
+
+/* 3. ปรับปุ่ม Tab และช่องค้นหาให้มนรับกัน */
+#admin-approvals-page .leave-tab-btn,
+#admin-approvals-page .ot-tab-btn,
+#admin-approvals-page input,
+#admin-approvals-page select,
+#admin-approvals-page .rounded-xl {
+    border-radius: 12px !important; /* ปรับความมนขององค์ประกอบภายใน */
+}
+
+/* 1. กำหนดความสูงสูงสุดของกล่องรายการ */
+#leave-approval-list, 
+#leave-history-list,
+#ot-approval-list, 
+#ot-history-list {
+    max-height: 300px;       /* ถ้าเนื้อหายาวเกิน 450px จะเริ่มมี Scrollbar (ปรับตัวเลขได้) */
+    overflow-y: auto;        /* สั่งให้ Scroll แนวตั้ง */
+    overflow-x: hidden;      /* ปิด Scroll แนวนอน */
+    padding-right: 6px;      /* เว้นระยะขวานิดนึงไม่ให้ตัวหนังสือติด Scrollbar */
+    scroll-behavior: smooth; /* เลื่อนนุ่มนวล */
+}
+
+/* 2. ปรับแต่งหน้าตา Scrollbar ให้สวย (ไม่ให้เป็นแท่งสีเทาแบบโบราณ) */
+/* สำหรับ Chrome, Safari, Edge */
+#leave-approval-list::-webkit-scrollbar, 
+#leave-history-list::-webkit-scrollbar,
+#ot-approval-list::-webkit-scrollbar, 
+#ot-history-list::-webkit-scrollbar {
+    width: 6px;              /* ขนาดเส้น Scrollbar เล็กๆ มินิมอล */
+}
+
+/* ราง Scrollbar */
+#leave-approval-list::-webkit-scrollbar-track, 
+#leave-history-list::-webkit-scrollbar-track,
+#ot-approval-list::-webkit-scrollbar-track, 
+#ot-history-list::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.03); /* สีพื้นรางจางๆ */
+    border-radius: 10px;
+}
+
+/* ตัวเลื่อน Scrollbar */
+#leave-approval-list::-webkit-scrollbar-thumb, 
+#leave-history-list::-webkit-scrollbar-thumb,
+#ot-approval-list::-webkit-scrollbar-thumb, 
+#ot-history-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;     /* สีเทาอ่อน (เข้ากับธีม) */
+    border-radius: 10px;
+}
+
+/* ตอนเอาเมาส์ชี้ที่ตัวเลื่อน */
+#leave-approval-list::-webkit-scrollbar-thumb:hover, 
+#leave-history-list::-webkit-scrollbar-thumb:hover,
+#ot-approval-list::-webkit-scrollbar-thumb:hover, 
+#ot-history-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;     /* สีเข้มขึ้นเล็กน้อย */
+}
+
+/* เจาะจงไปที่กล่อง Content ด้านล่าง (ที่มีคลาส flex-1) */
+#admin-approvals-page .card > .flex-1 {
+    border-bottom-left-radius: 1rem !important;  /* 16px เท่ากับ rounded-2xl */
+    border-bottom-right-radius: 1rem !important; /* 16px เท่ากับ rounded-2xl */
+    overflow: hidden; /* ป้องกันเนื้อหาภายในล้นออกมา */
+}
+
+/* (เผื่อไว้) ถ้าใน Dark Mode มีการเปลี่ยนสีพื้นหลัง */
+#admin-approvals-page .card > .flex-1.bg-gray-50\/30 {
+    border-bottom-left-radius: 1rem !important;
+    border-bottom-right-radius: 1rem !important;
+}
+
     </style>
 </head>
 <body class="antialiased">
@@ -933,153 +1085,187 @@ aside .nav-item {
     </div>
 </div>
 
-<div id="admin-approvals-page" class="page space-y-6 pb-20">
-    <div class="max-w-full mx-auto space-y-6 px-4 md:px-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <svg class="w-8 h-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Approvals Center
-            </h2>
-            <p class="text-gray-500 text-sm mt-1">จัดการคำขออนุมัติและตรวจสอบประวัติย้อนหลัง</p>
+<div id="admin-approvals-page" class="page space-y-8 pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                    <div class="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                        <svg class="w-8 h-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span>Approvals Center</span>
+                </h2>
+                <p class="text-gray-500 text-sm mt-2 ml-1">จัดการคำขออนุมัติและตรวจสอบประวัติย้อนหลัง</p>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2" style="gap: 25px;">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]"> 
-            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
-                <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                    📄 Leave Management
-                </h3>
-                <span id="leave-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
-            </div>
-            
-            <div class="px-4 pt-2 border-b border-gray-100">
-                <nav id="leave-tab-nav" class="flex gap-6" aria-label="Tabs">
-                    <a href="#" data-target="leave-pending-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-sky-500 text-sky-600">
-                        รออนุมัติ
-                    </a>
-                    <a href="#" data-target="leave-history-content" class="leave-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
-                        ประวัติ / ค้นหา
-                    </a>
-                </nav>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
-                
-                <div id="leave-pending-content" class="leave-tab-content space-y-4">
-                    <div id="leave-approval-list" class="space-y-3">
-                        <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-20">กำลังโหลด...</p>
+            <div class="card bg-white border-0 rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-shadow duration-300">
+                <div class="p-5 bg-gradient-to-r from-blue-500 to-sky-500 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg leading-tight">Leave Management</h3>
+                            <p class="text-blue-100 text-xs opacity-90">จัดการการลา</p>
+                        </div>
                     </div>
+                    <span id="leave-badge-count" class="hidden px-3 py-1 bg-white text-blue-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
                 </div>
                 
-                <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
-    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
-        
-        <div class="grid grid-cols-2 gap-3">
-            <div class="relative">
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
-                <select id="leave-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                    <option value="">ทั้งหมด (All Status)</option>
-                    <option value="pending">รออนุมัติ</option>
-                    <option value="approved">อนุมัติแล้ว</option>
-                    <option value="rejected">ไม่อนุมัติ</option>
-                </select>
-            </div>
-
-            
-            <div class="relative">
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
-                <select id="leave-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-sky-100 focus:border-sky-400 outline-none">
-                    <option value="">ทุกคน (All Staff)</option>
-                </select>
-            </div>
-        </div>
-
-        <button id="leave-history-search-btn" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            ค้นหาประวัติการลา
-        </button>
-    </div>
-
-    <div id="leave-history-list" class="space-y-3 pb-4">
-        <div class="text-center py-10">
-            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-        </div>
-    </div>
-</div>
-            </div>
-        </div>
-
-        <div class="card border border-gray-200 shadow-md bg-white overflow-hidden flex flex-col min-h-[450px] max-h-[650px]">
-            <div class="p-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-white flex justify-between items-center">
-                <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
-                    ⏰ OT Management
-                </h3>
-                <span id="ot-badge-count" class="hidden px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">0</span>
-            </div>
-
-            <div class="px-4 pt-2 border-b border-gray-100">
-                <nav id="ot-tab-nav" class="flex gap-6" aria-label="Tabs">
-                    <a href="#" data-target="ot-pending-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-semibold text-sm transition-colors border-orange-500 text-orange-600">
-                        รออนุมัติ
-                    </a>
-                    <a href="#" data-target="ot-history-content" class="ot-tab-btn flex-1 text-center pb-3 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-400 hover:text-gray-600">
-                        ประวัติ / ค้นหา
-                    </a>
-                </nav>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50/50">
-                
-                <div id="ot-pending-content" class="ot-tab-content space-y-4">
-                    <div id="ot-approval-list" class="space-y-3">
-                        <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-20">กำลังโหลด...</p>
-                    </div>
+                <div class="px-5 pt-5">
+                    <nav id="leave-tab-nav" class="flex p-1 space-x-1 bg-gray-100 rounded-xl" aria-label="Tabs">
+                        <a href="#" data-target="leave-pending-content" class="leave-tab-btn flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white text-blue-600 transition-all duration-200">
+                            รออนุมัติ
+                        </a>
+                        <a href="#" data-target="leave-history-content" class="leave-tab-btn flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200">
+                            ประวัติ / ค้นหา
+                        </a>
+                    </nav>
                 </div>
 
-                <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
-    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
-        <div class="grid grid-cols-2 gap-3">
-            <div class="relative">
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">สถานะ</label>
-                <select id="ot-history-status-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                    <option value="">ทั้งหมด (All Status)</option>
-                    <option value="pending">🟡 รออนุมัติ</option>
-                    <option value="approved">🟢 อนุมัติแล้ว</option>
-                    <option value="rejected">🔴 ไม่อนุมัติ</option>
-                </select>
-            </div>
-            <div class="relative">
-                <label class="text-[10px] font-semibold text-gray-400 uppercase ml-1">พนักงาน</label>
-                <select id="ot-history-user-filter" class="w-full mt-0.5 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-orange-100 focus:border-orange-400 outline-none">
-                    <option value="">ทุกคน (All Staff)</option>
-                </select>
-            </div>
-        </div>
-        
-        <button id="ot-history-search-btn" class="w-full py-3 text-white text-base font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2" style="background-color: #F97316;">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            ค้นหาประวัติ
-        </button>
-    </div>
+                <div class="flex-1 p-5 bg-gray-50/30">
+                    
+                    <div id="leave-pending-content" class="leave-tab-content space-y-4">
+                        <div id="leave-approval-list" class="space-y-3">
+                            <p id="leave-loading-msg" class="text-center text-gray-400 text-sm py-20 flex flex-col items-center">
+                                <svg class="w-10 h-10 mb-3 text-gray-300 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                กำลังโหลดข้อมูล...
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
+                                    <div class="relative">
+                                        <select id="leave-history-status-filter" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                                            <option value="">ทั้งหมด (All)</option>
+                                            <option value="pending">รออนุมัติ</option>
+                                            <option value="approved">อนุมัติแล้ว</option>
+                                            <option value="rejected">ไม่อนุมัติ</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
+                                    <div class="relative">
+                                        <select id="leave-history-user-filter" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                                            <option value="">ทุกคน (All Staff)</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-    <div id="ot-history-list" class="space-y-3 pb-4">
-        <div class="text-center py-10">
-            <div class="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <p class="text-gray-400 text-sm">เลือกเงื่อนไขและกดค้นหา</p>
-        </div>
+                            <button id="leave-history-search-btn" class="w-full py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white text-sm font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                ค้นหาประวัติ
+                            </button>
+                        </div>
+
+                        <div id="leave-history-list" class="space-y-3 pb-4">
+                            <div class="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
+                                <svg class="w-16 h-16 mb-2 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                <span class="text-sm">เลือกเงื่อนไขและกดค้นหา</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <div class="card bg-white border-0 rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-shadow duration-300">
+                <div class="p-5 bg-gradient-to-r from-orange-500 to-amber-500 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg leading-tight">OT Management</h3>
+                            <p class="text-orange-100 text-xs opacity-90">จัดการล่วงเวลา</p>
+                        </div>
+                    </div>
+                    <span id="ot-badge-count" class="hidden px-3 py-1 bg-white text-orange-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
+                </div>
+
+                <div class="px-5 pt-5">
+                    <nav id="ot-tab-nav" class="flex p-1 space-x-1 bg-gray-100 rounded-xl" aria-label="Tabs">
+                        <a href="#" data-target="ot-pending-content" class="ot-tab-btn flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white text-orange-600 transition-all duration-200">
+                            รออนุมัติ
+                        </a>
+                        <a href="#" data-target="ot-history-content" class="ot-tab-btn flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200">
+                            ประวัติ / ค้นหา
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="flex-1 p-5 bg-gray-50/30">
+                    
+                    <div id="ot-pending-content" class="ot-tab-content space-y-4">
+                        <div id="ot-approval-list" class="space-y-3">
+                            <p id="ot-loading-msg" class="text-center text-gray-400 text-sm py-20 flex flex-col items-center">
+                                <svg class="w-10 h-10 mb-3 text-gray-300 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                กำลังโหลดข้อมูล...
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
+                                    <div class="relative">
+                                        <select id="ot-history-status-filter" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                                            <option value="">ทั้งหมด (All)</option>
+                                            <option value="pending">🟡 รออนุมัติ</option>
+                                            <option value="approved">🟢 อนุมัติแล้ว</option>
+                                            <option value="rejected">🔴 ไม่อนุมัติ</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
+                                    <div class="relative">
+                                        <select id="ot-history-user-filter" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                                            <option value="">ทุกคน (All Staff)</option>
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button id="ot-history-search-btn" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                ค้นหาประวัติ
+                            </button>
+                        </div>
+
+                        <div id="ot-history-list" class="space-y-3 pb-4">
+                            <div class="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
+                                <svg class="w-16 h-16 mb-2 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="text-sm">เลือกเงื่อนไขและกดค้นหา</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -3173,43 +3359,51 @@ saveReportBtn.addEventListener('click', async () => {
             otHistorySearchBtn.addEventListener('click', loadOtHistory);
         }
 
-        const leaveTabNav = document.getElementById('leave-tab-nav');
-        if (leaveTabNav) {
-            // ดึงปุ่มแท็บทั้งหมด (ปุ่ม <a>)
-            const tabs = leaveTabNav.querySelectorAll('a.leave-tab-btn');
-            // ดึงเนื้อหาแท็บทั้งหมด (div .leave-tab-content)
-            const contents = leaveTabNav.closest('.card').querySelectorAll('.leave-tab-content');
+        // ค้นหาโค้ดส่วน Tab เดิม แล้วแทนที่ด้วยโค้ดชุดนี้
+const leaveTabNav = document.getElementById('leave-tab-nav');
+const otTabNav = document.getElementById('ot-tab-nav');
 
-            tabs.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetId = tab.dataset.target; // เช่น "leave-pending-content"
+// ฟังก์ชันสำหรับจัดการ Tab ทั้ง Leave และ OT
+const setupTabs = (navElement) => {
+    if (!navElement) return;
+    
+    const tabs = navElement.querySelectorAll('a');
+    const container = navElement.closest('.card');
+    const contents = container.querySelectorAll('.leave-tab-content, .ot-tab-content');
+    
+    // ตรวจสอบ Theme สี (ฟ้า หรือ ส้ม)
+    const isLeave = navElement.id === 'leave-tab-nav';
+    const activeTextColor = isLeave ? 'text-blue-600' : 'text-orange-600';
 
-                    // 1. (รีเซ็ต) ซ่อนเนื้อหาทั้งหมด และ ลบคลาส active ออกจากแท็บทั้งหมด
-                    tabs.forEach(t => {
-                        // เปลี่ยนปุ่มแท็บอื่นให้เป็นสีเทา (ไม่ active)
-                        t.classList.remove('border-sky-500', 'text-sky-600', 'font-semibold');
-                        t.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
-                    });
-                    contents.forEach(c => {
-                        // ซ่อนเนื้อหาทั้งหมด
-                        c.classList.add('hidden');
-                    });
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = tab.dataset.target;
 
-                    // 2. (ตั้งค่า) แสดงแท็บและเนื้อหาที่ถูกเลือก
-                    
-                    // ทำให้ปุ่มที่คลิกเป็นสีฟ้า (active)
-                    tab.classList.add('border-sky-500', 'text-sky-600', 'font-semibold');
-                    tab.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
-                    
-                    // แสดงเนื้อหาที่ตรงกับปุ่มที่คลิก
-                    const targetContent = document.getElementById(targetId);
-                    if (targetContent) {
-                        targetContent.classList.remove('hidden');
-                    }
-                });
+            // 1. Reset Tabs
+            tabs.forEach(t => {
+                t.className = `flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200`;
             });
-        }
+
+            // 2. Hide All Contents
+            contents.forEach(c => {
+                c.classList.add('hidden');
+            });
+
+            // 3. Set Active Tab Style
+            tab.className = `flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white ${activeTextColor} transition-all duration-200`;
+
+            // 4. Show Target Content
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+        });
+    });
+};
+
+setupTabs(leaveTabNav);
+setupTabs(otTabNav);
 
         // [ฉบับแก้ไขสมบูรณ์] ฟังก์ชัน initializeProjectSummary
     const initializeProjectSummary = () => {
@@ -7152,34 +7346,6 @@ if (otListContainer) {
             submitOtBtn.textContent = 'ส่งคำขอ';
         }
     });
-
-    // 1. การสลับแท็บ (Pending/History)
-    const otTabNav = document.getElementById('ot-tab-nav');
-    if (otTabNav) {
-        const tabs = otTabNav.querySelectorAll('a.ot-tab-btn');
-        const contents = otTabNav.closest('.p-4').querySelectorAll('.ot-tab-content');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = tab.dataset.target;
-
-                tabs.forEach(t => {
-                    t.classList.remove('border-orange-500', 'text-orange-600', 'font-semibold');
-                    t.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
-                });
-                contents.forEach(c => c.classList.add('hidden'));
-
-                tab.classList.add('border-orange-500', 'text-orange-600', 'font-semibold');
-                tab.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
-                
-                const targetContent = document.getElementById(targetId);
-                if (targetContent) {
-                    targetContent.classList.remove('hidden');
-                }
-            });
-        });
-    }
 
     // [อัปเดต] โหลดรายการ OT (กรองตามแผนก)
 async function loadPendingOtRequests() {
