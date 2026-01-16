@@ -140,10 +140,12 @@
 
         /* 3. สไตล์เฉพาะเมนูมือถือ (คงความ Minimal ไว้ตามที่คุณชอบ) */
         @media (max-width: 767px) {
+            
             .nav-item.active {
                 color: var(--primary-color);
                 transform: translateY(-2px);
             }
+
             .nav-item.active svg {
                 filter: drop-shadow(0 4px 6px rgba(56, 189, 248, 0.4));
             }
@@ -283,7 +285,6 @@ aside .nav-item {
     }
     
     /* --- Dark Mode Styles --- */
-
 /* กำหนดค่าตัวแปรเมื่ออยู่ในโหมด Dark */
 [data-theme="dark"] {
     --bg-color: #111827;      /* พื้นหลังหลัก (Gray-900) */
@@ -305,7 +306,7 @@ aside .nav-item {
 [data-theme="dark"] .text-gray-500,
 [data-theme="dark"] .bg-orange-50, /* เผื่อไว้สำหรับช่อง Overtime */
 [data-theme="dark"] .bg-green-50,  /* เผื่อไว้สำหรับช่อง Days */
-[data-theme="dark"] .bg-teal-50    /* เผื่อไว้สำหรับสีอื่นๆ */
+[data-theme="dark"] .bg-teal-50,   /* เผื่อไว้สำหรับสีอื่นๆ */
 [data-theme="dark"] .bg-orange-50 {
     background-color: var(--card-bg) !important;  /* ใช้สีเดียวกับพื้นหลังการ์ด */
     border-color: var(--border-color) !important; /* เปลี่ยนสีเส้นขอบให้กลืนกัน */
@@ -837,7 +838,7 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-600 shadow-sm rounded-xl">
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-blue-400 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ลา</p>
@@ -849,7 +850,7 @@ aside .nav-item {
             </div>
         </div>
 
-        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-600 shadow-sm rounded-xl">
+        <div class="card p-4 bg-white dark:bg-gray-800 border-l-4 border-red-700 shadow-sm rounded-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold">ขาดงาน</p>
