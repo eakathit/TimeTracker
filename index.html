@@ -4272,145 +4272,155 @@ setupTabs(otTabNav);
 }
 
     // 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
-    async function fetchPayrollData(startDate, endDate) {
+    // ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll (แก้ไขแล้ว)
+async function fetchPayrollData(startDate, endDate) {
+    // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
+    const [usersSnapshot, recordsSnapshot, approvedLeaveSnapshot, calendarDoc] = await Promise.all([
+        db.collection('users').orderBy('fullName').get(),
+        db.collection('work_records').where('date', '>=', startDate).where('date', '<=', endDate).get(),
+        db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endDate).get(),
+        db.collection('system_settings').doc('calendar_rules').get()
+    ]);
+
+    // 2. ประมวลผลกฎปฏิทิน (วันหยุด, วันทำงาน)
+    const holidayMap = new Map();
+    const workingSaturdayMap = new Map();
+    if (calendarDoc.exists) {
+        (calendarDoc.data().holidays || []).forEach(d => holidayMap.set(d, true));
+        (calendarDoc.data().workingSaturdays || []).forEach(d => workingSaturdayMap.set(d, true));
+    }
+
+    // 3. ประมวลผลใบลาที่อนุมัติแล้ว
+    const approvedLeaveMap = new Map();
+    for (const doc of approvedLeaveSnapshot.docs) {
+        const leave = doc.data();
+        const start = leave.startDate.toDate();
+        const end = leave.endDate.toDate();
         
-        // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
-        const [usersSnapshot, recordsSnapshot, approvedLeaveSnapshot, calendarDoc] = await Promise.all([
-            db.collection('users').orderBy('fullName').get(),
-            db.collection('work_records').where('date', '>=', startDate).where('date', '<=', endDate).get(),
-            db.collection('leave_requests').where('status', '==', 'approved').where('startDate', '<=', endDate).get(),
-            db.collection('system_settings').doc('calendar_rules').get()
-        ]);
-
-        // 2. ประมวลผลกฎปฏิทิน (วันหยุด, วันทำงาน)
-        const holidayMap = new Map();
-        const workingSaturdayMap = new Map();
-        if (calendarDoc.exists) {
-            (calendarDoc.data().holidays || []).forEach(d => holidayMap.set(d, true));
-            (calendarDoc.data().workingSaturdays || []).forEach(d => workingSaturdayMap.set(d, true));
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            if (d < startDate || d > endDate) continue;
+            const dateKey = toLocalDateKey(new Date(d));
+            const key = `${leave.userId}_${dateKey}`;
+            approvedLeaveMap.set(key, leave);
         }
+    }
 
-        // 3. ประมวลผลใบลาที่อนุมัติแล้ว
-        const approvedLeaveMap = new Map();
-        for (const doc of approvedLeaveSnapshot.docs) {
-            const leave = doc.data();
-            const start = leave.startDate.toDate();
-            const end = leave.endDate.toDate();
-            
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                if (d < startDate || d > endDate) continue;
-                const dateKey = toLocalDateKey(new Date(d));
-                const key = `${leave.userId}_${dateKey}`;
-                approvedLeaveMap.set(key, leave);
-            }
+    // 4. ประมวลผลเวลาทำงาน (Map ข้อมูลเข้ากับ User)
+    const recordsMap = new Map();
+    recordsSnapshot.forEach(doc => {
+        const record = doc.data();
+        const dateKey = toLocalDateKey(record.date.toDate());
+        if (!recordsMap.has(record.userId)) {
+            recordsMap.set(record.userId, new Map());
         }
+        recordsMap.get(record.userId).set(dateKey, record);
+    });
 
-        // 4. ประมวลผลเวลาทำงาน
-        const recordsMap = new Map();
-        recordsSnapshot.forEach(doc => {
-            const record = doc.data();
-            const dateKey = toLocalDateKey(record.date.toDate());
-            if (!recordsMap.has(record.userId)) {
-                recordsMap.set(record.userId, new Map());
-            }
-            recordsMap.get(record.userId).set(dateKey, record);
-        });
+    // 5. เริ่มการรวบรวมข้อมูลสรุป
+    const payrollSummary = [];
 
-        // 5. เริ่มการรวบรวมข้อมูลสรุป
-        const payrollSummary = [];
-        for (const userDoc of usersSnapshot.docs) {
-            const userId = userDoc.id;
-            const user = userDoc.data();
-            
-            let summary = {
-                userId: userId,
-                fullName: user.fullName || 'N/A',
-                department: user.department || 'N/A',
-                employeeType: user.employeeType || 'N/A',
-                totalRegularHours: 0,
-                total_OT_1_5x: 0,       
-                total_Holiday_1x: 0,    
-                total_Holiday_2x: 0,    
-                total_OT_3x: 0,         
-                totalLateDays: 0,
-                totalLeaveDays: 0,
-                totalWorkDays: 0,
-                totalReportDays: 0,
-                totalAbsentDays: 0
-            };
+    for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+        const user = userDoc.data();
 
-            const userRecords = recordsMap.get(userId) || new Map();
+        let summary = {
+            userId: userId,
+            fullName: user.fullName || 'N/A',
+            department: user.department || 'N/A',
+            employeeType: user.employeeType || 'N/A',
+            totalRegularHours: 0,
+            total_OT_1_5x: 0,
+            total_Holiday_1x: 0,
+            total_Holiday_2x: 0,
+            total_OT_3x: 0,
+            totalLateDays: 0,
+            totalLeaveDays: 0,
+            totalWorkDays: 0,
+            totalReportDays: 0,
+            totalAbsentDays: 0
+        };
 
-            for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-                const dateKey = toLocalDateKey(new Date(day));
-                const dayOfWeek = day.getDay();
-                
-                const isHoliday = holidayMap.has(dateKey);
-                const isWorkingSat = workingSaturdayMap.has(dateKey);
-                const isWeekend = (dayOfWeek === 0 || (dayOfWeek === 6 && !isWorkingSat));
-                const isWorkingDay = !isHoliday && !isWeekend; 
+        const userRecords = recordsMap.get(userId) || new Map();
 
-                const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
-                const record = userRecords.get(dateKey);
+        // วนลูปทุกวันในช่วงวันที่เลือก
+        for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+            const dateKey = toLocalDateKey(new Date(day));
+            const dayOfWeek = day.getDay();
 
-                if (leave) {
-                    if (leave.durationType !== 'hourly') {
-                        summary.totalLeaveDays++;
+            const isHoliday = holidayMap.has(dateKey);
+            const isWorkingSat = workingSaturdayMap.has(dateKey);
+            const isWeekend = (dayOfWeek === 0 || (dayOfWeek === 6 && !isWorkingSat));
+            const isWorkingDay = !isHoliday && !isWeekend;
+
+            const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
+            const record = userRecords.get(dateKey);
+
+            if (leave) {
+                // ถ้ามีใบลา
+                if (leave.durationType !== 'hourly') {
+                    summary.totalLeaveDays++;
+                }
+            } else if (record) {
+                // ถ้ามีการลงเวลา (หรือส่ง Report)
+                summary.totalWorkDays++;
+
+                const reportsArray = record.reports || (record.report ? [record.report] : []);
+                if (reportsArray.length > 0) {
+                    summary.totalReportDays++;
+                }
+
+                // คำนวณชั่วโมงงานและ OT (เฉพาะรายการที่ Check-in/out สมบูรณ์)
+                if (record.status === 'completed' && record.checkOut && record.checkIn && record.checkIn.timestamp) {
+                    const checkinTime = record.checkIn.timestamp.toDate();
+                    const checkoutTime = record.checkOut.timestamp.toDate();
+
+                    const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(checkinTime, checkoutTime);
+                    
+                    let otHoursToday = 0;
+                    // เชื่อค่า OT จาก Database ก่อน (ถ้ามีและมากกว่า 0)
+                    if (record.overtime && typeof record.overtime.hours === 'number') {
+                        otHoursToday = record.overtime.hours;
+                    } else {
+                        otHoursToday = calculatedOt; // ถ้าไม่มีใช้ค่าที่คำนวณเอง
                     }
-                } else if (record) {
-                    summary.totalWorkDays++;
 
-                    const reportsArray = record.reports || (record.report ? [record.report] : []);
-                    if (reportsArray.length > 0) {
-                        summary.totalReportDays++;
-                    }
-
-                    if (record.status === 'completed' && record.checkOut) {
-                        const checkinTime = record.checkIn.timestamp.toDate();
-                        const checkoutTime = record.checkOut.timestamp.toDate();
-                        
-                        // --- [START FIX] คำนวณใหม่ถ้า DB เป็น 0 ---
-                        const { regularWorkHours, overtimeHours: calculatedOt } = calculateWorkHours(checkinTime, checkoutTime);
-                        
-                        let otHoursToday = 0;
-                        if (record.overtime && typeof record.overtime.hours === 'number') {
-                            otHoursToday = record.overtime.hours;
+                    if (isWorkingDay) {
+                        summary.totalRegularHours += regularWorkHours;
+                        summary.total_OT_1_5x += otHoursToday;
+                    } else {
+                        // วันหยุด
+                        if (user.employeeType === 'monthly') {
+                            summary.total_Holiday_1x += regularWorkHours;
                         } else {
-                            otHoursToday = calculatedOt; // ใช้ค่าคำนวณถ้า DB เป็น 0
+                            summary.total_Holiday_2x += regularWorkHours;
                         }
-                        // --- [END FIX] ---
-
-                        if (isWorkingDay) {
-                            summary.totalRegularHours += regularWorkHours;
-                            summary.total_OT_1_5x += otHoursToday;
-                        } else {
-                            if (user.employeeType === 'monthly') {
-                                summary.total_Holiday_1x += regularWorkHours; 
-                            } else { 
-                                summary.total_Holiday_2x += regularWorkHours; 
-                            }
-                            summary.total_OT_3x += otHoursToday;
-                        }
+                        summary.total_OT_3x += otHoursToday;
                     }
+                }
 
+                // ★★★ แก้ไขจุดนี้: เช็คว่ามีการ Check-in จริงๆ ถึงจะคำนวณสาย (ป้องกัน Error) ★★★
+                if (record.checkIn && record.checkIn.timestamp) {
                     const checkinTime = record.checkIn.timestamp.toDate();
                     const checkInMinutes = checkinTime.getHours() * 60 + checkinTime.getMinutes();
-                    const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; 
-                    
+                    const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
+
                     if (isWorkingDay && checkInMinutes > LATE_THRESHOLD_MINUTES) {
                         summary.totalLateDays++;
                     }
-
-                } else if (isWorkingDay) {
-                    summary.totalAbsentDays++;
                 }
-            } 
+                // ถ้าเป็น Report Only (ไม่มี checkIn) จะข้ามส่วนนี้ไป ไม่ Error
 
-            payrollSummary.push(summary);
-        } 
+            } else if (isWorkingDay) {
+                // ถ้าเป็นวันทำงานแต่ไม่มี record และไม่มีใบลา = ขาดงาน
+                summary.totalAbsentDays++;
+            }
+        }
 
-        return payrollSummary;
+        payrollSummary.push(summary);
     }
+
+    return payrollSummary;
+}
 
     //  ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ
     async function loadPayrollSummary() {
@@ -5170,7 +5180,7 @@ checkoutBtn.addEventListener('click', async () => {
     try {
         // 2. ดึงข้อมูล Check-in ปัจจุบัน
         const now = new Date();
-        now.setHours(19, 8, 0);
+        // now.setHours(19, 8, 0);
 
         const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; 
         const workRecordRef = db.collection('work_records').doc(docId);
