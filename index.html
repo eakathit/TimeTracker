@@ -682,6 +682,36 @@ aside .nav-item {
     border-bottom-right-radius: 1rem !important;
 }
 
+/* เพิ่มสี Gradient ที่ขาดหายไป */
+.from-blue-500 {
+    --tw-gradient-from: #3b82f6 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(59 130 246 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.to-sky-500 {
+    --tw-gradient-to: #0ea5e9 var(--tw-gradient-to-position);
+}
+.from-orange-500 {
+    --tw-gradient-from: #f97316 var(--tw-gradient-from-position);
+    --tw-gradient-to: rgb(249 115 22 / 0) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.to-amber-500 {
+    --tw-gradient-to: #f59e0b var(--tw-gradient-to-position);
+}
+
+/* แก้ไขการแสดงผล Dark Mode ให้ตรงกับ Class ใหม่ */
+[data-theme="dark"] #admin-approvals-page .from-blue-500 {
+    background-color: rgba(56, 189, 248, 0.1) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+[data-theme="dark"] #admin-approvals-page .from-orange-500 {
+    background-color: rgba(249, 115, 22, 0.1) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
     </style>
 </head>
 <body class="antialiased">
@@ -4819,6 +4849,7 @@ if (exportPayrollBtn) {
                                 const checkoutDate = record.checkOut.timestamp.toDate();
                                 checkOutTime = localTimeFormatter.format(checkoutDate);
                                 
+
                                 // คำนวณ OT (Fallback logic)
                                 const hours = calculateWorkHours(checkinDate, checkoutDate);
                                 regularWorkHours = hours.regularWorkHours;
@@ -5078,7 +5109,7 @@ if (exportPayrollBtn) {
             // อัปเดต Summary ด้านบน
             summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
             summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
-            summaryDaysEl.textContent = `${totalDays} วัน`;
+            summaryDaysEl.textContent = `${totalDays}`;
 
         } catch (error) {
             console.error("Error loading work history:", error);
@@ -5139,7 +5170,7 @@ checkoutBtn.addEventListener('click', async () => {
     try {
         // 2. ดึงข้อมูล Check-in ปัจจุบัน
         const now = new Date();
-        // now.setHours(19, 8, 0);
+        now.setHours(19, 8, 0);
 
         const docId = `${currentUser.uid}_${toLocalDateKey(now)}`; 
         const workRecordRef = db.collection('work_records').doc(docId);
@@ -5268,7 +5299,7 @@ checkoutBtn.addEventListener('click', async () => {
                 // [Leader Logic]: เป็นคนเลือกสถานที่ปิดงาน
                 
                 showConfirmDialog(
-                    "หัวหน้ากลุ่ม: จบงานที่ไหน? (สมาชิกจะยึดตามคุณ)", 
+                    "Leader: จบงานที่ไหน? (สมาชิกจะยึดตามคุณ)", 
                     
                     // Choice A: กลับโรงงาน (ขวา)
                     async () => {
@@ -9906,7 +9937,6 @@ async function populatePayrollDeptDropdown() {
 
     // 4. ทำกระบวนการ Check-out ปกติ (โค้ดเดิมของคุณ)
     try {
-        // ... (โค้ดส่วนบันทึก Firebase .update() เดิมของคุณ) ...
         // ตัวอย่างเพิ่ม Note เข้าไปใน Record
         await db.collection('work_records').doc(currentWorkRecordId).update({
             checkOutTime: `${currentHour}:${currentMinute.toString().padStart(2, '0')}`,
@@ -9989,6 +10019,7 @@ function initTheme() {
 }
 
 });
+
 
 </script>
 </body>
