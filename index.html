@@ -2087,6 +2087,35 @@ aside .nav-item {
                 </div>
             </div>
 
+            <div>
+                <label class="text-sm font-medium text-gray-600">Working Period (ระยะเวลา)</label>
+                <div class="relative mt-1">
+                    <button id="checkin-duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
+                        <span id="checkin-duration-text" class="text-gray-500">เลือกช่วงเวลา...</span>
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="checkin-duration-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div id="checkin-duration-options" class="p-1">
+                            <div class="p-2 rounded-lg hover:bg-sky-50 cursor-pointer">ALL (08:30 - 17:30)</div>
+                            <div class="p-2 rounded-lg hover:bg-sky-50 cursor-pointer">HALF DAY (08:30 - 12:00)</div>
+                            <div class="p-2 rounded-lg hover:bg-sky-50 cursor-pointer">HALF DAY (13:00 - 17:30)</div>
+                            <div class="p-2 rounded-lg hover:bg-sky-50 cursor-pointer">SOME TIME</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="checkin-custom-time" class="hidden mt-2 grid grid-cols-2 gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                    <div>
+                        <span class="text-xs text-gray-500">เริ่ม</span>
+                        <input type="time" id="checkin-start-time" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500">ถึง</span>
+                        <input type="time" id="checkin-end-time" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                </div>
+            </div>
+            
             <div class="flex justify-end gap-3 pt-4">
                 <button id="cancel-checkin-modal-btn" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold">ยกเลิก</button>
                 <button id="confirm-checkin-btn" class="flex-[2] py-3 bg-sky-500 text-white rounded-xl font-semibold shadow-lg">ยืนยัน Check-in</button>
@@ -3731,8 +3760,8 @@ setupTabs(otTabNav);
         checkinBtn.disabled = true;
         if (checkinSpan) checkinSpan.textContent = "ตรวจสอบตำแหน่ง...";
 
-        // (ฟังก์ชัน proceedWithCheckin นี้ไม่ต้องแก้ไข)
-        const proceedWithCheckin = async (finalWorkType) => {
+        // ฟังก์ชัน proceedWithCheckin
+        const proceedWithCheckin = async (finalWorkType, reportData = null) => {
             try {
                 if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
                 const now = new Date(); 
@@ -3791,6 +3820,28 @@ setupTabs(otTabNav);
         }
     };
 
+    document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
+    const workType = document.getElementById('checkin-work-type-text').textContent;
+    const project = document.getElementById('checkin-project-text').textContent;
+
+    // ตรวจสอบว่าเลือกครบไหม
+    if (workType.includes('เลือก') || project.includes('เลือก')) {
+        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
+        return;
+    }
+
+    // ปิด Modal
+    document.getElementById('checkin-report-modal').classList.add('hidden');
+    
+    // เรียกฟังก์ชันบันทึกลง Database (ส่งข้อมูล Report ไปด้วย)
+    // ตรงนี้เราบังคับ Duration เป็น "ALL" ไปก่อนสำหรับงานเช้า
+    await proceedWithCheckin('in_factory', {
+        workType: workType,
+        project: project,
+        duration: 'ALL (08:30 - 17:30)' 
+    });
+});
+
         // [แก้ไข] แก้ไข logic การตรวจสอบ
         try {
             const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
@@ -3820,7 +3871,8 @@ setupTabs(otTabNav);
 // 1. ตั้งค่าให้ Dropdown ใน Modal ทำงาน (เลือกแล้วเปลี่ยนข้อความ)
 const checkinDropdowns = [
     { panelId: 'checkin-work-type-panel', selectBtnId: 'checkin-work-type-btn', textId: 'checkin-work-type-text', optionsId: 'checkin-work-type-options' },
-    { panelId: 'checkin-project-panel', selectBtnId: 'checkin-project-btn', textId: 'checkin-project-text', optionsId: 'checkin-project-options', searchId: 'checkin-project-search' }
+    { panelId: 'checkin-project-panel', selectBtnId: 'checkin-project-btn', textId: 'checkin-project-text', optionsId: 'checkin-project-options', searchId: 'checkin-project-search' },
+    { panelId: 'checkin-duration-panel', selectBtnId: 'checkin-duration-btn', textId: 'checkin-duration-text', optionsId: 'checkin-duration-options' }
 ];
 
 checkinDropdowns.forEach(config => {
@@ -3870,29 +3922,6 @@ document.getElementById('cancel-checkin-modal-btn').addEventListener('click', ()
     if (checkinSpan) checkinSpan.textContent = "Check In";
 });
 
-// 3. ปุ่ม Confirm (ยืนยันแล้วบันทึกจริง)
-document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
-    const workType = document.getElementById('checkin-work-type-text').textContent;
-    const project = document.getElementById('checkin-project-text').textContent;
-
-    // ตรวจสอบว่าเลือกครบไหม
-    if (workType.includes('เลือก') || project.includes('เลือก')) {
-        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
-        return;
-    }
-
-    // ปิด Modal
-    document.getElementById('checkin-report-modal').classList.add('hidden');
-    
-    // เรียกฟังก์ชันบันทึกลง Database (ส่งข้อมูล Report ไปด้วย)
-    // ตรงนี้เราบังคับ Duration เป็น "ALL" ไปก่อนสำหรับงานเช้า
-    await proceedWithCheckin('in_factory', {
-        workType: workType,
-        project: project,
-        duration: 'ALL (08:30 - 17:30)' 
-    });
-});
-
 // 2. แก้ไขปุ่ม Check-in หลัก (ให้เปิด Modal แทน)
 // (คุณต้องไป Comment หรือแก้ Event Listener เดิมของ checkinBtn ออกก่อน หรือแก้ทับดังนี้)
 checkinBtn.addEventListener('click', async () => {
@@ -3913,25 +3942,55 @@ checkinBtn.addEventListener('click', async () => {
 });
 
 // 3. ปุ่ม "ยืนยัน Check-in" ใน Modal
+// --- Logic เพิ่มเติมสำหรับ Duration (Check-in) ---
+
+// 1. ดักจับเมื่อมีการเลือก Duration เพื่อดูว่าต้องโชว์ช่องกรอกเวลาไหม
+document.getElementById('checkin-duration-options').addEventListener('click', (e) => {
+    // เช็คว่าคลิกที่ตัวเลือกไหม
+    if (e.target.tagName === 'DIV') {
+        const selectedValue = e.target.textContent;
+        const customTimeDiv = document.getElementById('checkin-custom-time');
+        
+        // ถ้าเลือก SOME TIME ให้โชว์ช่องกรอกเวลา
+        if (selectedValue === 'SOME TIME') {
+            customTimeDiv.classList.remove('hidden');
+        } else {
+            customTimeDiv.classList.add('hidden');
+        }
+    }
+});
+
+// 2. อัปเดตปุ่ม "ยืนยัน Check-in" (รวม logic Duration เข้าไป)
 document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
     const workType = document.getElementById('checkin-work-type-text').textContent;
     const project = document.getElementById('checkin-project-text').textContent;
+    let duration = document.getElementById('checkin-duration-text').textContent;
 
-    // ตรวจสอบว่าเลือกครบหรือยัง
-    if (workType.includes('เลือก') || project.includes('เลือก')) {
-        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
+    // ตรวจสอบข้อมูลว่าครบไหม
+    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
+        showNotification('กรุณากรอกข้อมูลให้ครบถ้วน (รายละเอียด, โปรเจกต์, เวลา)', 'warning');
         return;
     }
 
-    // ปิด Modal และเริ่มบันทึก
+    // ถ้าเลือก SOME TIME ให้เอาค่าจากช่องเวลามาใช้
+    if (duration === 'SOME TIME') {
+        const startT = document.getElementById('checkin-start-time').value;
+        const endT = document.getElementById('checkin-end-time').value;
+        if (!startT || !endT) {
+            showNotification('กรุณาระบุเวลาเริ่มต้นและสิ้นสุด', 'warning');
+            return;
+        }
+        duration = `${startT} - ${endT}`; // แปลงเป็นรูปแบบ "09:00 - 10:00"
+    }
+
+    // ปิด Modal
     document.getElementById('checkin-report-modal').classList.add('hidden');
     
-    // เรียกฟังก์ชันบันทึก (ส่งข้อมูล Report ไปด้วย)
-    // ตรงนี้เราต้องแก้ proceedWithCheckin ให้รับ parameter เพิ่ม
+    // บันทึกข้อมูล
     await proceedWithCheckin('in_factory', {
         workType: workType,
         project: project,
-        duration: 'ALL (08:30 - 17:30)' // ตั้งค่า Default ไว้เลยเพื่อลดขั้นตอน
+        duration: duration // ส่งค่าเวลาที่เลือกไปด้วย
     });
 });
 
