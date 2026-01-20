@@ -800,7 +800,7 @@ aside .nav-item {
             <div id="check-in-out-page" class="page space-y-6">
                 <div class="flex justify-between items-center relative">
                     <div>
-                        <p class="text-gray-500">TimeTracker</p>
+                        <p class="text-gray-500">TimeTracker System</p>
                         <h2 id="user-display-name" class="text-2xl font-bold"></h2>
                     </div>
                     
@@ -1259,9 +1259,9 @@ aside .nav-item {
                                     <div class="relative">
                                         <select id="ot-history-status-filter" class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5">
                                             <option value="">ทั้งหมด (All)</option>
-                                            <option value="pending">🟡 รออนุมัติ</option>
-                                            <option value="approved">🟢 อนุมัติแล้ว</option>
-                                            <option value="rejected">🔴 ไม่อนุมัติ</option>
+                                            <option value="pending">รออนุมัติ</option>
+                                            <option value="approved">อนุมัติแล้ว</option>
+                                            <option value="rejected">ไม่อนุมัติ</option>
                                         </select>
                                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -7558,7 +7558,7 @@ async function loadOtHistory() {
             let borderColor = 'border-gray-200';
 
             if (ot.status === 'approved') {
-                statusBadge = `<span class="px-2 py-0.5 rounded-md bg-green-50 text-green-700 text-[10px] font-bold border border-green-100 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>อนุมัติ</span>`;
+                statusBadge = `<span class="px-2 py-0.5 rounded-md bg-green-50 text-green-700 text-[10px] font-bold border border-green-100 flex items-center gap-1">อนุมัติ</span>`;
                 borderColor = 'border-green-200';
             } else if (ot.status === 'rejected') {
                 statusBadge = `<span class="px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold border border-red-100">ไม่อนุมัติ</span>`;
@@ -9113,61 +9113,78 @@ if (auditTypeFilter) auditTypeFilter.addEventListener('change', loadDailyAuditDa
 if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditData);
 
 
-// --- [เพิ่มใหม่] ฟังก์ชันสำหรับปุ่ม Export Daily Audit ---
+// --- [อัปเดต: เวอร์ชันคำนวณจากข้อความเวลา (WYSIWYG)] ---
     const exportAuditBtn = document.getElementById('export-audit-btn');
-    
-    if (exportAuditBtn) {
-        exportAuditBtn.addEventListener('click', async () => {
+    // ใช้การ replace node เพื่อลบ event listener เก่าที่อาจค้างอยู่ออกให้หมด
+    const newExportBtn = exportAuditBtn.cloneNode(true);
+    exportAuditBtn.parentNode.replaceChild(newExportBtn, exportAuditBtn);
+
+    if (newExportBtn) {
+        newExportBtn.addEventListener('click', async () => {
             const dateStr = document.getElementById('audit-date-picker').value;
             const typeFilter = document.getElementById('audit-type-filter').value;
-            
+
             if (!dateStr) {
                 return showNotification('กรุณาเลือกวันที่ก่อน Export', 'warning');
             }
 
-            // 1. แจ้งเตือนผู้ใช้และโหลด Library Excel
             showNotification('กำลังเตรียมไฟล์ Excel...', 'warning');
+
             if (typeof XLSX === 'undefined') {
                 try {
                     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
                 } catch (e) {
-                    alert("ไม่สามารถโหลดระบบ Export ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
-                    return;
+                    return showNotification("ไม่สามารถโหลด Library Excel ได้", "error");
                 }
             }
 
             try {
-                // 2. ดึงข้อมูลจาก Firestore (เหมือนกับที่ดึงมาโชว์ในตาราง)
-                const startDate = new Date(dateStr); startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(dateStr); endDate.setHours(23, 59, 59, 999);
+                const startDate = new Date(dateStr);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(dateStr);
+                endDate.setHours(23, 59, 59, 999);
 
                 const [usersSnapshot, recordsSnapshot] = await Promise.all([
                     db.collection('users').orderBy('fullName').get(),
                     db.collection('work_records')
-                      .where('date', '>=', startDate)
-                      .where('date', '<=', endDate)
-                      .get()
+                    .where('date', '>=', startDate)
+                    .where('date', '<=', endDate)
+                    .get()
                 ]);
 
-                // Map ข้อมูล User
                 const usersMap = {};
                 usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data());
 
-                // 3. เตรียม Header ของ Excel
                 const dataForExcel = [
-                    ["Date", "Employee", "Department", "Check-In", "Check-Out", "Status","Report Status", "Work Type", "Onsite Details", "Location"]
+                    ["Date", "Employee", "Department", "Check-In", "Check-Out", "Total Hrs (Net)", "OT (Hrs)", "Status", "Report Status", "Work Type", "Onsite Details"]
                 ];
 
-                // 4. วนลูปข้อมูลและกรองตาม Filter ที่เลือกหน้าเว็บ
+                // ฟังก์ชันแปลงเวลาจาก Date -> String (HH:mm) แบบบังคับโซนเวลาไทย
+                const getTimeString = (dateObj) => {
+                    if (!dateObj) return '-';
+                    return dateObj.toLocaleTimeString('th-TH', { 
+                        timeZone: 'Asia/Bangkok', 
+                        hour12: false, 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                };
+
+                // ฟังก์ชันแปลง String (HH:mm) -> นาที (เพื่อคำนวณ)
+                const parseTimeToMinutes = (timeStr) => {
+                    if (!timeStr || timeStr === '-') return 0;
+                    const parts = timeStr.split(':');
+                    if (parts.length < 2) return 0;
+                    const h = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10);
+                    return (h * 60) + m;
+                };
+
                 recordsSnapshot.forEach(doc => {
                     const record = doc.data();
                     const checkIn = record.checkIn;
-                    
-                    const reportsArray = record.reports || (record.report ? [record.report] : []);
-                    const hasReport = reportsArray.length > 0;
-                    const reportStatusExcel = hasReport ? "Submitted" : "Not Submitted";
 
-                    // Filter Logic (กรองให้ตรงกับหน้าเว็บ)
+                    // Filter
                     if (typeFilter !== 'all') {
                         if (typeFilter === 'in_factory' && checkIn.workType !== 'in_factory') return;
                         if (typeFilter === 'onsite' && !checkIn.workType.includes('onsite') && !checkIn.workType.includes('on_site')) return;
@@ -9176,67 +9193,87 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
                     const user = usersMap[record.userId] || {};
                     const userName = user.fullName || 'Unknown';
                     const userDept = user.department || '-';
-
-                    // จัดรูปแบบข้อมูล
                     const dateDisplay = record.date.toDate().toLocaleDateString('th-TH');
-                    const timeIn = checkIn.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                    const timeOut = record.checkOut ? record.checkOut.timestamp.toDate().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
-                    
-                    // เช็คสาย
-                    const lateThreshold = new Date(checkIn.timestamp.toDate());
-                    lateThreshold.setHours(8, 30, 0, 0);
-                    const isLate = checkIn.timestamp.toDate() > lateThreshold;
-                    const statusText = isLate ? "late" : "normal";
 
+                    // 1. ดึงเวลาเป็น String ก่อน (นี่คือสิ่งที่โชว์ใน Excel)
+                    const timeInStr = checkIn && checkIn.timestamp ? getTimeString(checkIn.timestamp.toDate()) : '-';
+                    const timeOutStr = record.checkOut && record.checkOut.timestamp ? getTimeString(record.checkOut.timestamp.toDate()) : '-';
 
+                    let totalNetText = '0.00';
+                    let otText = '0.00';
+
+                    // 2. คำนวณจาก String ที่ได้มา (ตัดปัญหาเรื่อง Date Object เพี้ยน)
+                    if (timeInStr !== '-' && timeOutStr !== '-') {
+                        const startMin = parseTimeToMinutes(timeInStr); // เช่น 8:30 -> 510
+                        const endMin = parseTimeToMinutes(timeOutStr);   // เช่น 17:30 -> 1050
+                        
+                        // คำนวณระยะเวลา (นาที)
+                        let durationMin = endMin - startMin; 
+
+                        // 3. หักพักเที่ยง 1 ชม. (ถ้าทำเกิน 4 ชม.)
+                        if (durationMin > 240) {
+                            durationMin -= 60;
+                        }
+                        if (durationMin < 0) durationMin = 0;
+
+                        // 4. คำนวณ OT (เกณฑ์ 17:30 น. = 1050 นาที)
+                        const standardEndMin = (17 * 60) + 30; // 1050
+                        let otMin = 0;
+
+                        // ใช้ OT จาก DB ถ้ามี
+                        if (record.overtime && typeof record.overtime.hours === 'number') {
+                            otText = record.overtime.hours.toFixed(2);
+                        } else {
+                            // คำนวณเอง: ถ้าเวลาออก (endMin) มากกว่า 17:30 (1050)
+                            if (endMin > standardEndMin) {
+                                otMin = endMin - standardEndMin;
+                            }
+                            otText = (otMin / 60).toFixed(2);
+                        }
+
+                        totalNetText = (durationMin / 60).toFixed(2);
+                    }
+
+                    const reportsArray = record.reports || (record.report ? [record.report] : []);
+                    const reportStatusExcel = reportsArray.length > 0 ? "Submitted" : "Not Submitted";
+                    const statusText = record.status === 'completed' ? "Completed" : "Working";
                     const workTypeDisplay = checkIn.workType === 'in_factory' ? 'Factory' : 'On-site';
                     const onsiteDetail = checkIn.onSiteDetails || '-';
-                    const mapLink = checkIn.googleMapLink || '-';
 
-                    // ใส่ข้อมูลลง Array
                     dataForExcel.push([
                         dateDisplay,
                         userName,
                         userDept,
-                        timeIn,
-                        timeOut,
+                        timeInStr,    // โชว์ค่านี้
+                        timeOutStr,   // โชว์ค่านี้
+                        totalNetText, // คำนวณจากค่าข้างบน
+                        otText,       // คำนวณจากค่าข้างบน
                         statusText,
                         reportStatusExcel,
                         workTypeDisplay,
-                        onsiteDetail,
-                        mapLink
+                        onsiteDetail
                     ]);
                 });
 
-                if (dataForExcel.length <= 1) {
-                    return showNotification('ไม่พบข้อมูลตามเงื่อนไขที่เลือก', 'error');
+                if (dataForExcel.length === 1) {
+                    return showNotification('ไม่พบข้อมูลสำหรับวันที่เลือก', 'info');
                 }
 
-                // 5. สร้างไฟล์ Excel และดาวน์โหลด
                 const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-                // ปรับความกว้างคอลัมน์นิดหน่อยให้สวยงาม
                 ws['!cols'] = [
-                { wch: 12 }, // Date
-                { wch: 25 }, // Employee
-                { wch: 15 }, // Department
-                { wch: 10 }, // Check-In
-                { wch: 10 }, // Check-Out
-                { wch: 10 }, // Status
-                { wch: 15 }, // Report Status (เพิ่มจุดนี้)
-                { wch: 10 }, // Work Type
-                { wch: 30 }, // Onsite Details
-                { wch: 50 }  // Location
-            ];
+                    { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
+                    { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 20 }
+                ];
 
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Daily_Audit");
-                XLSX.writeFile(wb, `Audit_Data_${dateStr}.xlsx`);
+                XLSX.writeFile(wb, `DailyAudit_${dateStr}.xlsx`);
 
                 showNotification('ดาวน์โหลดไฟล์สำเร็จ!', 'success');
 
             } catch (error) {
                 console.error("Export Error:", error);
-                alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
+                showNotification('เกิดข้อผิดพลาดในการ Export', 'error');
             }
         });
     }
@@ -9321,9 +9358,11 @@ async function loadAdminDashboardOverview() {
             const data = doc.data();
             const uid = data.userId;
             const userName = userMap[uid] || "Unknown";
-
+            
+            // เพิ่ม UID ลงใน Set เพื่อบอกว่า "คนนี้ไม่ขาดงานนะ"
             checkedInOrLeaveUserIds.add(uid);
 
+            // Case 1: มีการ Check-in ปกติ
             if (data.checkIn && data.checkIn.timestamp) {
                 const checkInTime = data.checkIn.timestamp.toDate();
                 
@@ -9334,36 +9373,34 @@ async function loadAdminDashboardOverview() {
                 // 2. เช็คว่ามีใบลาชั่วโมงไหม? (Override Logic)
                 if (userHourlyLeaveMap[uid]) {
                     const leave = userHourlyLeaveMap[uid];
-                    
-                    // แปลงเวลาเริ่มลาเป็น Date Object เพื่อเปรียบเทียบ
                     const [sH, sM] = leave.start.split(':').map(Number);
                     const leaveStartDate = new Date(checkInTime);
                     leaveStartDate.setHours(sH, sM, 0, 0);
 
-                    // กฎ: ถ้า "เริ่มลา" ก่อนหรือเท่ากับ 08:30 -> ให้ขยับเส้นตายไปเป็น "เวลาจบการลา"
-                    // (เช่น ลา 8:30-11:30 -> เส้นตายใหม่คือ 11:30)
+                    // กฎ: ถ้าลาชั่วโมงช่วงเช้า ให้ขยับเส้นตายการมาสายออกไป
                     if (leaveStartDate <= lateThreshold) {
                         const [eH, eM] = leave.end.split(':').map(Number);
                         lateThreshold.setHours(eH, eM, 0, 0);
                     }
                 }
 
-                // 3. เปรียบเทียบเวลาเช็คอินกับเส้นตาย (ที่อาจถูกขยับแล้ว)
+                // 3. เปรียบเทียบเวลา
                 if (checkInTime > lateThreshold) {
                     countLate++;
-                    
-                    // คำนวณเวลาที่เกินมา
                     const diffMs = checkInTime - lateThreshold;
                     const lateMin = Math.floor(diffMs / 60000);
-                    
                     lateEmployeesList.push(`
-                        ${userName} 
-                        <span class="text-xs text-orange-500 ml-1">(+${lateMin} น.)</span>
+                        ${userName} <span class="text-xs text-orange-500 ml-1">(+${lateMin} น.)</span>
                         <br><span class="text-[10px] text-gray-400">เวลา: ${checkInTime.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'})}</span>
                     `);
                 } else {
-                    countOnTime++;
+                    countOnTime++; // มาทันเวลา
                 }
+            } 
+            // ★★★ Case 2: (เพิ่มใหม่) ไม่ได้ Check-in แต่ส่ง Report (Report Only) ★★★
+            else if ((data.reports && data.reports.length > 0) || data.report) {
+                // นับว่าเป็น "มาทำงานปกติ" (สีเขียว)
+                countOnTime++; 
             }
         });
 
