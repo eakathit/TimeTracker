@@ -2052,6 +2052,49 @@ aside .nav-item {
         </div>
     </div>
 
+    <div id="checkin-report-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
+    <div class="card relative z-10 w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4 text-center">รายละเอียดงาน (Check-in)</h3>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-gray-600">Detail (รายละเอียด)</label>
+                <div class="relative mt-1">
+                    <button id="checkin-work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
+                        <span id="checkin-work-type-text" class="text-gray-500">เลือกรายละเอียด...</span>
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="checkin-work-type-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div id="checkin-work-type-options" class="max-h-40 overflow-y-auto p-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-sm font-medium text-gray-600">Project No.</label>
+                <div class="relative mt-1">
+                    <button id="checkin-project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
+                        <span id="checkin-project-text" class="text-gray-500">เลือกโปรเจกต์...</span>
+                        <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="checkin-project-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div class="p-2 border-b border-gray-100">
+                             <input id="checkin-project-search" type="text" placeholder="ค้นหา..." class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div id="checkin-project-options" class="max-h-40 overflow-y-auto p-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4">
+                <button id="cancel-checkin-modal-btn" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold">ยกเลิก</button>
+                <button id="confirm-checkin-btn" class="flex-[2] py-3 bg-sky-500 text-white rounded-xl font-semibold shadow-lg">ยืนยัน Check-in</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <div id="leave-request-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4">
     <div id="leave-overlay" class="absolute inset-0 bg-black opacity-50"></div>
     <div class="card relative z-10 w-full max-w-md">
@@ -3152,7 +3195,9 @@ saveReportBtn.addEventListener('click', async () => {
             { docId: 'workTypes', optionsId: 'delete-work-type-options' },
             { docId: 'projects', optionsId: 'delete-project-options' },
             { docId: 'workTypes', optionsId: 'edit-modal-work-type-options' },
-            { docId: 'projects', optionsId: 'edit-modal-project-options' }
+            { docId: 'projects', optionsId: 'edit-modal-project-options' },
+            { docId: 'workTypes', optionsId: 'checkin-work-type-options' },
+            { docId: 'projects', optionsId: 'checkin-project-options' }
         ];
 
         for (const config of configs) {
@@ -3694,8 +3739,8 @@ setupTabs(otTabNav);
                 const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
 
                 let photoUrl = null;
-                // [ลบ] ลบ if (finalWorkType === 'on_site' && photoFile) ... ออก
 
+                // สร้าง Object
                 const workRecord = {
                     userId: currentUser.uid,
                     date: firebase.firestore.Timestamp.fromDate(now),
@@ -3709,7 +3754,13 @@ setupTabs(otTabNav);
                         photoUrl: photoUrl
                     },
                     status: "checked_in",
-                    report: null,
+                    reports: reportData ? [
+                {
+                        ...reportData,
+                        id: Date.now(), // สร้าง ID ให้รายการ
+                        submittedAt: firebase.firestore.Timestamp.fromDate(now)
+                    }
+                ] : [],
                     checkOut: null,
                     overtime: null
                 };
@@ -3732,13 +3783,13 @@ setupTabs(otTabNav);
                 }
 
             } catch (error) {
-                console.error("Check-in error:", error);
-                showNotification("เกิดข้อผิดพลาด: " + error.message, 'error');
-            } finally {
-                checkinBtn.disabled = false;
-                if (checkinSpan) checkinSpan.textContent = "Check In";
-            }
-        };
+            console.error("Error:", error);
+            showNotification("Error: " + error.message, 'error');
+            // คืนค่าปุ่มหาก error
+            checkinBtn.disabled = false;
+            if(checkinSpan) checkinSpan.textContent = "Check In";
+        }
+    };
 
         // [แก้ไข] แก้ไข logic การตรวจสอบ
         try {
@@ -3763,6 +3814,131 @@ setupTabs(otTabNav);
             if (checkinSpan) checkinSpan.textContent = "Check In";
         }
     });
+
+// --- Logic สำหรับ Modal Check-in (เพิ่มใหม่) ---
+
+// 1. ตั้งค่าให้ Dropdown ใน Modal ทำงาน (เลือกแล้วเปลี่ยนข้อความ)
+const checkinDropdowns = [
+    { panelId: 'checkin-work-type-panel', selectBtnId: 'checkin-work-type-btn', textId: 'checkin-work-type-text', optionsId: 'checkin-work-type-options' },
+    { panelId: 'checkin-project-panel', selectBtnId: 'checkin-project-btn', textId: 'checkin-project-text', optionsId: 'checkin-project-options', searchId: 'checkin-project-search' }
+];
+
+checkinDropdowns.forEach(config => {
+    const btn = document.getElementById(config.selectBtnId);
+    const panel = document.getElementById(config.panelId);
+    const textSpan = document.getElementById(config.textId);
+    const optionsContainer = document.getElementById(config.optionsId);
+
+    // เปิด/ปิด Dropdown
+    if(btn) btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('hidden');
+    });
+
+    // เลือกรายการ
+    if(optionsContainer) {
+        optionsContainer.addEventListener('click', (e) => {
+            if(e.target.tagName === 'DIV') { 
+                textSpan.textContent = e.target.textContent;
+                textSpan.classList.remove('text-gray-500');
+                textSpan.classList.add('text-gray-800');
+                panel.classList.add('hidden');
+            }
+        });
+    }
+    
+    // ค้นหา (Search)
+    if(config.searchId) {
+        const searchInput = document.getElementById(config.searchId);
+        if(searchInput) {
+            searchInput.addEventListener('input', () => {
+                const filter = searchInput.value.toLowerCase();
+                for (let opt of optionsContainer.children) {
+                    opt.style.display = opt.textContent.toLowerCase().includes(filter) ? '' : 'none';
+                }
+            });
+        }
+    }
+});
+
+// 2. ปุ่ม Cancel (ปิด Modal)
+document.getElementById('cancel-checkin-modal-btn').addEventListener('click', () => {
+    document.getElementById('checkin-report-modal').classList.add('hidden');
+    // เปิดปุ่ม Check-in กลับมาให้กดใหม่ได้
+    checkinBtn.disabled = false;
+    const checkinSpan = checkinBtn.querySelector('span');
+    if (checkinSpan) checkinSpan.textContent = "Check In";
+});
+
+// 3. ปุ่ม Confirm (ยืนยันแล้วบันทึกจริง)
+document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
+    const workType = document.getElementById('checkin-work-type-text').textContent;
+    const project = document.getElementById('checkin-project-text').textContent;
+
+    // ตรวจสอบว่าเลือกครบไหม
+    if (workType.includes('เลือก') || project.includes('เลือก')) {
+        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
+        return;
+    }
+
+    // ปิด Modal
+    document.getElementById('checkin-report-modal').classList.add('hidden');
+    
+    // เรียกฟังก์ชันบันทึกลง Database (ส่งข้อมูล Report ไปด้วย)
+    // ตรงนี้เราบังคับ Duration เป็น "ALL" ไปก่อนสำหรับงานเช้า
+    await proceedWithCheckin('in_factory', {
+        workType: workType,
+        project: project,
+        duration: 'ALL (08:30 - 17:30)' 
+    });
+});
+
+// 2. แก้ไขปุ่ม Check-in หลัก (ให้เปิด Modal แทน)
+// (คุณต้องไป Comment หรือแก้ Event Listener เดิมของ checkinBtn ออกก่อน หรือแก้ทับดังนี้)
+checkinBtn.addEventListener('click', async () => {
+    if (!latestPosition) {
+        showNotification("กำลังรอสัญญาณ GPS...", "warning");
+        return;
+    }
+    
+    // ตรวจสอบระยะทาง (ตาม Logic เดิมของคุณ)
+    const distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+    if (distance > ALLOWED_RADIUS_METERS) {
+        showNotification(`อยู่นอกพื้นที่ (${distance.toFixed(0)} ม.)`, 'error');
+        return;
+    }
+
+    // เปิด Modal แทนการบันทึกทันที
+    document.getElementById('checkin-report-modal').classList.remove('hidden');
+});
+
+// 3. ปุ่ม "ยืนยัน Check-in" ใน Modal
+document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
+    const workType = document.getElementById('checkin-work-type-text').textContent;
+    const project = document.getElementById('checkin-project-text').textContent;
+
+    // ตรวจสอบว่าเลือกครบหรือยัง
+    if (workType.includes('เลือก') || project.includes('เลือก')) {
+        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
+        return;
+    }
+
+    // ปิด Modal และเริ่มบันทึก
+    document.getElementById('checkin-report-modal').classList.add('hidden');
+    
+    // เรียกฟังก์ชันบันทึก (ส่งข้อมูล Report ไปด้วย)
+    // ตรงนี้เราต้องแก้ proceedWithCheckin ให้รับ parameter เพิ่ม
+    await proceedWithCheckin('in_factory', {
+        workType: workType,
+        project: project,
+        duration: 'ALL (08:30 - 17:30)' // ตั้งค่า Default ไว้เลยเพื่อลดขั้นตอน
+    });
+});
+
+// ปุ่มยกเลิก
+document.getElementById('cancel-checkin-modal-btn').addEventListener('click', () => {
+    document.getElementById('checkin-report-modal').classList.add('hidden');
+});
 
     function updateProfilePage(userData) {
         const profilePic = document.getElementById('profile-page-pic');
