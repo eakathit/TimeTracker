@@ -2055,14 +2055,14 @@ aside .nav-item {
     <div id="checkin-report-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black opacity-50 modal-overlay"></div>
     <div class="card relative z-10 w-full max-w-md">
-        <h3 class="text-xl font-bold mb-4 text-center">รายละเอียดงาน (Check-in)</h3>
+        <h3 class="text-xl font-bold mb-4 text-center">Daily Report (Check-in)</h3>
         
         <div class="space-y-4">
             <div>
-                <label class="text-sm font-medium text-gray-600">Detail (รายละเอียด)</label>
+                <label class="text-sm font-medium text-gray-600">Detail</label>
                 <div class="relative mt-1">
                     <button id="checkin-work-type-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
-                        <span id="checkin-work-type-text" class="text-gray-500">เลือกรายละเอียด...</span>
+                        <span id="checkin-work-type-text" class="text-gray-500">Select Detail...</span>
                         <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                     <div id="checkin-work-type-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -2075,7 +2075,7 @@ aside .nav-item {
                 <label class="text-sm font-medium text-gray-600">Project No.</label>
                 <div class="relative mt-1">
                     <button id="checkin-project-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
-                        <span id="checkin-project-text" class="text-gray-500">เลือกโปรเจกต์...</span>
+                        <span id="checkin-project-text" class="text-gray-500">Select Project No...</span>
                         <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                     <div id="checkin-project-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -2088,10 +2088,10 @@ aside .nav-item {
             </div>
 
             <div>
-                <label class="text-sm font-medium text-gray-600">Working Period (ระยะเวลา)</label>
+                <label class="text-sm font-medium text-gray-600">Working Period</label>
                 <div class="relative mt-1">
                     <button id="checkin-duration-btn" type="button" class="w-full p-3 bg-white border border-gray-300 rounded-xl text-left flex justify-between items-center">
-                        <span id="checkin-duration-text" class="text-gray-500">เลือกช่วงเวลา...</span>
+                        <span id="checkin-duration-text" class="text-gray-500">Select Period...</span>
                         <svg class="w-5 h-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                     </button>
                     <div id="checkin-duration-panel" class="hidden absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
@@ -2106,11 +2106,11 @@ aside .nav-item {
                 
                 <div id="checkin-custom-time" class="hidden mt-2 grid grid-cols-2 gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
                     <div>
-                        <span class="text-xs text-gray-500">เริ่ม</span>
+                        <span class="text-xs text-gray-500">Start:</span>
                         <input type="time" id="checkin-start-time" class="w-full p-2 border rounded-lg text-sm">
                     </div>
                     <div>
-                        <span class="text-xs text-gray-500">ถึง</span>
+                        <span class="text-xs text-gray-500">End:    </span>
                         <input type="time" id="checkin-end-time" class="w-full p-2 border rounded-lg text-sm">
                     </div>
                 </div>
@@ -2118,7 +2118,7 @@ aside .nav-item {
             
             <div class="flex justify-end gap-3 pt-4">
                 <button id="cancel-checkin-modal-btn" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold">ยกเลิก</button>
-                <button id="confirm-checkin-btn" class="flex-[2] py-3 bg-sky-500 text-white rounded-xl font-semibold shadow-lg">ยืนยัน Check-in</button>
+                <button id="confirm-checkin-btn" class="flex-[2] py-3 bg-sky-500 text-white rounded-xl font-semibold shadow-lg">Save Report</button>
             </div>
         </div>
     </div>
@@ -3144,19 +3144,41 @@ saveReportBtn.addEventListener('click', async () => {
 
     const workType = workTypeSelectedText.textContent;
     const project = projectSelectedText.textContent;
-    const duration = durationSelectedText.textContent;
-    let timeRange = duration;
+    const durationText = durationSelectedText.textContent; // เปลี่ยนชื่อตัวแปรกันงง
+    let timeRange = durationText;
+    let hoursUsed = 0; // ★ ตัวแปรเก็บชั่วโมง (สำหรับ HR)
 
+    // ตรวจสอบข้อมูล
     if (workType.includes('เลือก...')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
     if (project.includes('เลือก...')) return showNotification("กรุณาเลือกโครงการ", "warning");
-    if (duration.includes('เลือก...')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
+    if (durationText.includes('เลือก...')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
 
-    if (duration === 'SOME TIME') {
-        if (!customTimeStartInput.value || !customTimeEndInput.value) {
-            return showNotification("กรุณากรอกเวลา", "warning");
+    // --- ส่วนคำนวณเวลา (เหมือน Check-in เป๊ะๆ) ---
+    if (durationText === 'SOME TIME') {
+        const startT = customTimeStartInput.value;
+        const endT = customTimeEndInput.value;
+
+        if (!startT || !endT) {
+            return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
         }
-        timeRange = `${customTimeStartInput.value} - ${customTimeEndInput.value}`;
+
+        // คำนวณชั่วโมง
+        const start = new Date(`2000-01-01T${startT}`);
+        const end = new Date(`2000-01-01T${endT}`);
+        const diffMs = end - start;
+        const diffHrs = diffMs / (1000 * 60 * 60);
+
+        if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+        
+        hoursUsed = parseFloat(diffHrs.toFixed(2)); // เช่น 2.5
+        timeRange = `SOME TIME (${startT} - ${endT})`; // จัด Format สวยๆ
+
+    } else if (durationText.includes('HALF')) {
+        hoursUsed = 4.0;
+    } else {
+        hoursUsed = 8.0; // ALL
     }
+    // -------------------------------------------
     
     saveReportBtn.disabled = true;
     saveReportBtn.textContent = 'กำลังบันทึก...';
@@ -3165,24 +3187,22 @@ saveReportBtn.addEventListener('click', async () => {
         const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
         const workRecordRef = db.collection('work_records').doc(workRecordDocId);
         
-        // สร้าง Object รายงานใหม่ พร้อม ID สุ่ม (ใช้ timestamp) เพื่อให้ลบรายตัวได้ในอนาคต
         const newReportEntry = {
             id: Date.now(),
             submittedAt: new Date(),
             workType: workType,
             project: project,
-            duration: timeRange
+            duration: timeRange,
+            hours: hoursUsed // ★ บันทึกค่าชั่วโมงลงไปด้วย!
         };
 
         const doc = await workRecordRef.get();
         
         if (doc.exists) {
-            // ใช้ arrayUnion เพื่อเพิ่มสมาชิกใหม่เข้าไปใน Array 'reports'
             await workRecordRef.update({
                 reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry)
             });
         } else {
-            // ถ้ายังไม่มี Record ของวันนี้ ให้สร้างใหม่พร้อมใส่ Array รายการแรก
             await workRecordRef.set({
                 userId: currentUser.uid,
                 date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
@@ -3193,10 +3213,10 @@ saveReportBtn.addEventListener('click', async () => {
 
         showNotification('เพิ่มรายงานเรียบร้อยแล้ว');
         resetReportForm(); 
-        loadSentReports(); // โหลดรายการที่เพิ่งเพิ่มมาโชว์
+        loadSentReports(); // รีโหลดรายการ
         
     } catch (error) {
-        console.error("Error saving report: ", error);
+        console.error("Error:", error);
         showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
     } finally {
         saveReportBtn.disabled = false;
@@ -3820,25 +3840,64 @@ setupTabs(otTabNav);
         }
     };
 
-    document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
-    const workType = document.getElementById('checkin-work-type-text').textContent;
-    const project = document.getElementById('checkin-project-text').textContent;
+    // วางต่อท้ายฟังก์ชัน proceedWithCheckin
+// แก้ไขส่วนปุ่มยืนยัน (อันที่ถูกต้อง อันล่างสุด)
+document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
+    // 1. ดึงค่า (เหมือนเดิม)
+    const workType = document.getElementById('checkin-work-type-text').textContent.trim();
+    const project = document.getElementById('checkin-project-text').textContent.trim();
+    let duration = document.getElementById('checkin-duration-text').textContent.trim();
+    
+    // ตัวแปรสำหรับเก็บจำนวนชั่วโมง (เพื่อเอาใจ HR)
+    let hoursUsed = 0; 
 
-    // ตรวจสอบว่าเลือกครบไหม
-    if (workType.includes('เลือก') || project.includes('เลือก')) {
-        showNotification('กรุณาเลือกรายละเอียดและโปรเจกต์', 'warning');
+    // 2. ตรวจสอบค่าว่าง (เหมือนเดิม)
+    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
+        showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
         return;
     }
 
-    // ปิด Modal
+    // 3. จัดการเวลา + คำนวณชั่วโมง (ปรับปรุงใหม่)
+    if (duration === 'SOME TIME') {
+        const startT = document.getElementById('checkin-start-time').value; // "08:30"
+        const endT = document.getElementById('checkin-end-time').value;     // "10:30"
+        
+        if (!startT || !endT) {
+            showNotification('กรุณาระบุเวลาเริ่มต้นและสิ้นสุด', 'warning');
+            return;
+        }
+
+        // --- สูตรคำนวณชั่วโมง (Start) ---
+        const start = new Date(`2000-01-01T${startT}`);
+        const end = new Date(`2000-01-01T${endT}`);
+        const diffMs = end - start; // ผลต่างเป็น Milliseconds
+        const diffHrs = diffMs / (1000 * 60 * 60); // แปลงเป็นชั่วโมง
+        
+        if (diffHrs <= 0) {
+            showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+            return;
+        }
+        
+        hoursUsed = parseFloat(diffHrs.toFixed(2)); // เก็บทศนิยม 2 ตำแหน่ง (เช่น 2.00 หรือ 1.50)
+        // --- สูตรคำนวณชั่วโมง (End) ---
+
+        duration = `SOME TIME (${startT} - ${endT})`; // Format ข้อความ
+        
+    } else if (duration.includes('HALF')) {
+        hoursUsed = 4.0; // ครึ่งวันตีไปเลย 4 ชม.
+    } else {
+        hoursUsed = 8.0; // เต็มวันตีไปเลย 8 ชม.
+    }
+
+    // 4. ปิด Modal
     document.getElementById('checkin-report-modal').classList.add('hidden');
     
-    // เรียกฟังก์ชันบันทึกลง Database (ส่งข้อมูล Report ไปด้วย)
-    // ตรงนี้เราบังคับ Duration เป็น "ALL" ไปก่อนสำหรับงานเช้า
+    // 5. บันทึกข้อมูล (ส่ง hoursUsed ไปด้วย)
     await proceedWithCheckin('in_factory', {
         workType: workType,
         project: project,
-        duration: 'ALL (08:30 - 17:30)' 
+        duration: duration,    // ข้อความ (ให้คนอ่าน)
+        hours: hoursUsed       // ตัวเลข (ให้ HR คำนวณ) ★
     });
 });
 
@@ -3958,40 +4017,6 @@ document.getElementById('checkin-duration-options').addEventListener('click', (e
             customTimeDiv.classList.add('hidden');
         }
     }
-});
-
-// 2. อัปเดตปุ่ม "ยืนยัน Check-in" (รวม logic Duration เข้าไป)
-document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
-    const workType = document.getElementById('checkin-work-type-text').textContent;
-    const project = document.getElementById('checkin-project-text').textContent;
-    let duration = document.getElementById('checkin-duration-text').textContent;
-
-    // ตรวจสอบข้อมูลว่าครบไหม
-    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
-        showNotification('กรุณากรอกข้อมูลให้ครบถ้วน (รายละเอียด, โปรเจกต์, เวลา)', 'warning');
-        return;
-    }
-
-    // ถ้าเลือก SOME TIME ให้เอาค่าจากช่องเวลามาใช้
-    if (duration === 'SOME TIME') {
-        const startT = document.getElementById('checkin-start-time').value;
-        const endT = document.getElementById('checkin-end-time').value;
-        if (!startT || !endT) {
-            showNotification('กรุณาระบุเวลาเริ่มต้นและสิ้นสุด', 'warning');
-            return;
-        }
-        duration = `${startT} - ${endT}`; // แปลงเป็นรูปแบบ "09:00 - 10:00"
-    }
-
-    // ปิด Modal
-    document.getElementById('checkin-report-modal').classList.add('hidden');
-    
-    // บันทึกข้อมูล
-    await proceedWithCheckin('in_factory', {
-        workType: workType,
-        project: project,
-        duration: duration // ส่งค่าเวลาที่เลือกไปด้วย
-    });
 });
 
 // ปุ่มยกเลิก
