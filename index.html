@@ -10016,10 +10016,13 @@
                         }
 
                         const checkInDate = checkIn.timestamp.toDate();
-                        const lateThreshold = new Date(checkInDate);
-                        lateThreshold.setHours(8, 30, 0, 0);
 
-                        let isLate = checkInDate > lateThreshold;
+                        // --- [แก้ใหม่] เปลี่ยนมาเทียบเป็นนาที เพื่อให้ 8:30:59 ไม่สาย ---
+                        const checkInMinutes = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+                        const thresholdMinutes = 8 * 60 + 30; // 8:30 = 510 นาที
+
+                        // ต้องเกิน 510 นาทีจริงๆ ถึงจะนับว่าสาย (เช่น 8:31 คือ 511 นาที)
+                        let isLate = checkInMinutes > thresholdMinutes;
 
                         // เช็คว่าลาครึ่งเช้าหรือไม่ (ถ้าใช่ ไม่นับว่าสาย)
                         const userLeave = leaveMap[record.userId];
