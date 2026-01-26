@@ -4154,16 +4154,28 @@
                 setupAdminAction('delete-project-btn', 'delete-project-selected-text', 'projects', 'delete');
 
                 document.getElementById('duration-options').addEventListener('click', (e) => {
-                    if (e.target && e.target.classList.contains('duration-option')) {
-                        const selectedValue = e.target.textContent;
-                        durationSelectedText.textContent = selectedValue;
-                        durationSelectedText.classList.remove('text-gray-500');
-                        document.getElementById('duration-panel').classList.add('hidden');
-
-                        // แก้ไขบรรทัดนี้: เปลี่ยน 'กำหนดเวลา' เป็น 'SOME TIME'
-                        customTimeInputs.classList.toggle('hidden', selectedValue !== 'SOME TIME');
+                // ใช้ closest เพื่อหาตัวปุ่มที่แท้จริง (ป้องกันปัญหากดโดนขอบหรือไอคอนแล้วไม่ติด)
+                const option = e.target.closest('.duration-option');
+                
+                if (option) {
+                    // ใช้ .trim() ตัดช่องว่างหน้าหลังออก เพื่อความชัวร์ในการเปรียบเทียบ
+                    const selectedValue = option.textContent.trim();
+                    
+                    // อัปเดตข้อความบนปุ่ม
+                    durationSelectedText.textContent = selectedValue;
+                    durationSelectedText.classList.remove('text-gray-500');
+                    
+                    // ซ่อน Panel
+                    document.getElementById('duration-panel').classList.add('hidden');
+                    
+                    // ตรวจสอบเงื่อนไขเปิด/ปิดช่องกรอกเวลา
+                    if (selectedValue === 'SOME TIME') {
+                        customTimeInputs.classList.remove('hidden'); // แสดงช่องกรอกเวลา
+                    } else {
+                        customTimeInputs.classList.add('hidden');    // ซ่อนช่องกรอกเวลา
                     }
-                });
+                }
+            });
 
                 document.getElementById('calendar-admin-add-holiday')?.addEventListener('click', () => {
                     handleAddCalendarRule('holidays');
