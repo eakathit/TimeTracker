@@ -2553,7 +2553,7 @@ async function saveFCMToken() {
     };
     
     const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
-    const ALLOWED_RADIUS_METERS = 200;
+    const ALLOWED_RADIUS_METERS = 150;
 
     // --- UI Elements ---
     const loadingSpinner = document.getElementById('loading-spinner');
@@ -3137,24 +3137,32 @@ auth.onAuthStateChanged(async (user) => {
 
     // ค้นหา save-report-btn.addEventListener('click', ...) และแทนที่ด้วยโค้ดนี้:
 saveReportBtn.addEventListener('click', async () => {
+    // 1. ตรวจสอบการ Login
     if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
 
+    // 2. ตรวจสอบวันที่
     const selectedDateStr = reportDateInput.value;
     if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
 
+    // 3. ดึงค่าจากหน้าจอ
     const workType = workTypeSelectedText.textContent;
     const project = projectSelectedText.textContent;
-    const durationText = durationSelectedText.textContent; // เปลี่ยนชื่อตัวแปรกันงง
-    let timeRange = durationText;
-    let hoursUsed = 0; // ★ ตัวแปรเก็บชั่วโมง (สำหรับ HR)
+    const durationText = durationSelectedText.textContent;
+    
+    // ตัวแปรสำหรับเก็บข้อมูลที่จะบันทึก
+    let timeRange = durationText; // ข้อความที่จะโชว์ (เช่น "ALL (08:30 - 17:30)")
+    let hoursUsed = 0;            // จำนวนชั่วโมง (เช่น 8.0)
+    let saveStartTime = null;     // เวลาเริ่ม (เช่น "08:30")
+    let saveEndTime = null;       // เวลาจบ (เช่น "17:30")
 
-    // ตรวจสอบข้อมูล
-    if (workType.includes('เลือก...')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
-    if (project.includes('เลือก...')) return showNotification("กรุณาเลือกโครงการ", "warning");
-    if (durationText.includes('เลือก...')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
+    // 4. ตรวจสอบว่าเลือกครบไหม
+    if (workType.includes('เลือก') || workType.includes('Select')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
+    if (project.includes('เลือก') || project.includes('Select')) return showNotification("กรุณาเลือกโครงการ", "warning");
+    if (durationText.includes('เลือก') || durationText.includes('Select')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
 
-    // --- ส่วนคำนวณเวลา (เหมือน Check-in เป๊ะๆ) ---
+    // 5. --- ส่วนคำนวณเวลาและกำหนด Start/End Time ---
     if (durationText === 'SOME TIME') {
+        // กรณีเลือกกำหนดเวลาเอง
         const startT = customTimeStartInput.value;
         const endT = customTimeEndInput.value;
 
@@ -3170,16 +3178,34 @@ saveReportBtn.addEventListener('click', async () => {
 
         if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
         
-        hoursUsed = parseFloat(diffHrs.toFixed(2)); // เช่น 2.5
-        timeRange = `SOME TIME (${startT} - ${endT})`; // จัด Format สวยๆ
+        // กำหนดค่าตัวแปร
+        hoursUsed = parseFloat(diffHrs.toFixed(2));
+        timeRange = `SOME TIME (${startT} - ${endT})`;
+        saveStartTime = startT;
+        saveEndTime = endT;
 
-    } else if (durationText.includes('HALF')) {
-        hoursUsed = 4.0;
+    } else if (durationText.includes('HALF DAY')) {
+        // กรณีครึ่งวัน (เช็คจากข้อความว่าเป็นเช้าหรือบ่าย)
+        if (durationText.includes('08:30')) {
+            // ครึ่งเช้า
+            hoursUsed = 3.5; // 08:30 - 12:00
+            saveStartTime = "08:30";
+            saveEndTime = "12:00";
+        } else {
+            // ครึ่งบ่าย
+            hoursUsed = 4.5; // 13:00 - 17:30
+            saveStartTime = "13:00";
+            saveEndTime = "17:30";
+        }
     } else {
-        hoursUsed = 8.0; // ALL
+        // กรณีเต็มวัน (ALL)
+        hoursUsed = 8.0;
+        saveStartTime = "08:30";
+        saveEndTime = "17:30";
     }
     // -------------------------------------------
     
+    // ล็อคปุ่มกันกดรัว
     saveReportBtn.disabled = true;
     saveReportBtn.textContent = 'กำลังบันทึก...';
     
@@ -3187,40 +3213,50 @@ saveReportBtn.addEventListener('click', async () => {
         const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
         const workRecordRef = db.collection('work_records').doc(workRecordDocId);
         
+        // สร้าง Object ข้อมูลที่จะบันทึก
         const newReportEntry = {
             id: Date.now(),
             submittedAt: new Date(),
             workType: workType,
             project: project,
-            duration: timeRange,
-            hours: hoursUsed // ★ บันทึกค่าชั่วโมงลงไปด้วย!
+            duration: timeRange,    // เก็บไว้แสดงผลหน้าเว็บ
+            hours: hoursUsed,       // เก็บไว้คำนวณ Payroll
+            startTime: saveStartTime, // ★ เก็บเวลาเริ่ม (แยกช่อง)
+            endTime: saveEndTime      // ★ เก็บเวลาจบ (แยกช่อง)
         };
 
         const doc = await workRecordRef.get();
         
         if (doc.exists) {
+            // ถ้ามีเอกสารแล้ว ให้เพิ่มเข้า Array
             await workRecordRef.update({
                 reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry)
             });
         } else {
+            // ถ้ายังไม่มี ให้สร้างใหม่
             await workRecordRef.set({
                 userId: currentUser.uid,
                 date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
-                status: "no_checkin_report_only",
+                status: "no_checkin_report_only", // สถานะพิเศษสำหรับคนที่ไม่ได้ Check-in แต่ส่ง Report
                 reports: [newReportEntry]
             });
         }
 
-        showNotification('เพิ่มรายงานเรียบร้อยแล้ว');
+        showNotification('เพิ่มรายงานเรียบร้อยแล้ว', 'success');
+        
+        // รีเซ็ตฟอร์มและโหลดข้อมูลใหม่
         resetReportForm(); 
-        loadSentReports(); // รีโหลดรายการ
+        if (typeof loadSentReports === 'function') {
+            loadSentReports(); 
+        }
         
     } catch (error) {
         console.error("Error:", error);
         showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
     } finally {
+        // คืนค่าปุ่ม
         saveReportBtn.disabled = false;
-        saveReportBtn.textContent = 'บันทึกข้อมูล';
+        saveReportBtn.textContent = 'Save Report';
     }
 });
 
@@ -3546,58 +3582,91 @@ setupTabs(otTabNav);
 
         // 2. ฟังก์ชันย่อยสำหรับ Export Excel
         const exportProjectSummaryToExcel = async () => {
-    const selectedProject = projectSelect.value;
-    const selectedMonth = monthInput.value;
+            const selectedProject = projectSelect.value;
+            const selectedMonth = monthInput.value;
 
-    if (!selectedProject || !selectedMonth) {
-        alert('กรุณาเลือกเดือนและโครงการก่อน Export');
-        return;
-    }
-    
-    try {
-        const [year, month] = selectedMonth.split('-').map(Number);
-        const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+            if (!selectedProject || !selectedMonth) {
+                alert('กรุณาเลือกเดือนและโครงการก่อน Export');
+                return;
+            }
+            
+            // เปลี่ยนข้อความปุ่มเพื่อบอกว่ากำลังทำงาน
+            const originalBtnText = exportBtn.innerHTML;
+            exportBtn.innerHTML = 'Preparing...';
+            exportBtn.disabled = true;
 
-        const [usersSnap, recordsSnap] = await Promise.all([
-            db.collection('users').get(),
-            db.collection('work_records').where('date', '>=', startDate).where('date', '<=', endDate).get()
-        ]);
+            try {
+                // 1. กำหนดช่วงเวลา (ต้นเดือน - ปลายเดือน)
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-        const usersMap = {};
-        usersSnap.forEach(doc => usersMap[doc.id] = doc.data().fullName);
-
-        const dataForExcel = [
-            ["Date", "Employee Name", "Detail", "Project", "Period of working"]
-        ];
-        
-        recordsSnap.forEach(doc => {
-            const record = doc.data();
-            const reports = record.reports || (record.report ? [record.report] : []);
-            const matchingReports = reports.filter(r => r.project === selectedProject);
-
-            matchingReports.forEach(report => {
-                dataForExcel.push([
-                    record.date.toDate().toLocaleDateString('th-TH'),
-                    usersMap[record.userId] || record.userId,
-                    report.workType,
-                    report.project,
-                    report.duration
+                // 2. ดึงข้อมูล Users และ Work Records พร้อมกัน
+                const [usersSnap, recordsSnap] = await Promise.all([
+                    db.collection('users').get(),
+                    db.collection('work_records')
+                        .where('date', '>=', startDate)
+                        .where('date', '<=', endDate)
+                        .get()
                 ]);
-            });
-        });
 
-        if (dataForExcel.length === 1) return alert('ไม่พบข้อมูลสำหรับ Export');
+                // สร้าง Map ชื่อพนักงาน (User ID -> Name)
+                const usersMap = {};
+                usersSnap.forEach(doc => usersMap[doc.id] = doc.data().fullName || "Unknown");
 
-        const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'ProjectReport');
-        XLSX.writeFile(wb, `ProjectSummary_${selectedProject}_${selectedMonth}.xlsx`);
+                // 3. เตรียมข้อมูลสำหรับ Excel
+                const dataForExcel = [];
+                
+                recordsSnap.forEach(doc => {
+                    const data = doc.data();
+                    // รองรับทั้งแบบ reports (array ใหม่) และ report (object เก่า)
+                    const reports = data.reports || (data.report ? [data.report] : []);
+                    
+                    reports.forEach(r => {
+                        // กรองเฉพาะ Project ที่เลือก
+                        if (r.project === selectedProject) {
+                            const dateStr = data.date.toDate().toLocaleDateString('th-TH', {
+                                day: '2-digit', month: '2-digit', year: 'numeric'
+                            });
+                            
+                            dataForExcel.push({
+                                "Date": dateStr,
+                                "Employee": usersMap[data.userId] || "Unknown",
+                                "Department": data.department || "-",
+                                "Work Detail": r.workType,
+                                "Project": r.project,
+                                "Start Time": r.startTime || "-",  // ★ เพิ่มคอลัมน์นี้
+                                "End Time": r.endTime || "-",   // ★ เพิ่มคอลัมน์นี้
+                                "Time Period": r.duration,      // อันเดิมเก็บไว้ดูง่ายๆ
+                                "Total Hours": r.hours || 0
+                            });
+                        }
+                    });
+                });
 
-    } catch (error) {
-        alert("Export Error: " + error.message);
-    }
-};
+                if (dataForExcel.length === 0) {
+                    alert("ไม่พบข้อมูลรายงานสำหรับโครงการนี้ในช่วงเวลาที่เลือก");
+                    return;
+                }
+
+                // 4. สร้างและดาวน์โหลดไฟล์ Excel
+                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Project Report");
+                
+                // ตั้งชื่อไฟล์ตาม Project และเดือน
+                const fileName = `Report_${selectedProject}_${selectedMonth}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
+            } finally {
+                // คืนค่าปุ่มกลับสู่สภาพเดิม
+                exportBtn.innerHTML = originalBtnText;
+                exportBtn.disabled = false;
+            }
+        };
         
         // 3. ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น
         const now = new Date();
@@ -9373,9 +9442,11 @@ if (auditTypeFilter) auditTypeFilter.addEventListener('change', loadDailyAuditDa
 if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditData);
 
 
-// --- [อัปเดต: เวอร์ชันคำนวณจากข้อความเวลา (WYSIWYG)] ---
+// --- ส่วน Export Daily Audit (แก้ไข: จัดเรียงคอลัมน์ใหม่ตามสั่ง) ---
+    // --- ส่วน Export Daily Audit (แก้ไข: เพิ่มช่อง Regular Hrs กลับมาเพื่อเเยก 8.00 กับ 2.00) ---
     const exportAuditBtn = document.getElementById('export-audit-btn');
-    // ใช้การ replace node เพื่อลบ event listener เก่าที่อาจค้างอยู่ออกให้หมด
+    
+    // เคลียร์ Event เก่า
     const newExportBtn = exportAuditBtn.cloneNode(true);
     exportAuditBtn.parentNode.replaceChild(newExportBtn, exportAuditBtn);
 
@@ -9384,134 +9455,115 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
             const dateStr = document.getElementById('audit-date-picker').value;
             const typeFilter = document.getElementById('audit-type-filter').value;
 
-            if (!dateStr) {
-                return showNotification('กรุณาเลือกวันที่ก่อน Export', 'warning');
-            }
-
-            showNotification('กำลังเตรียมไฟล์ Excel...', 'warning');
+            if (!dateStr) return showNotification('กรุณาเลือกวันที่ก่อน Export', 'warning');
+            
+            showNotification('กำลังคำนวณและเตรียมไฟล์ Excel...', 'info');
 
             if (typeof XLSX === 'undefined') {
                 try {
                     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
-                } catch (e) {
-                    return showNotification("ไม่สามารถโหลด Library Excel ได้", "error");
-                }
+                } catch (e) { return showNotification("ไม่สามารถโหลด Library Excel ได้", "error"); }
             }
 
             try {
-                const startDate = new Date(dateStr);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(dateStr);
-                endDate.setHours(23, 59, 59, 999);
+                const startDate = new Date(dateStr); startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(dateStr); endDate.setHours(23, 59, 59, 999);
 
                 const [usersSnapshot, recordsSnapshot] = await Promise.all([
                     db.collection('users').orderBy('fullName').get(),
                     db.collection('work_records')
-                    .where('date', '>=', startDate)
-                    .where('date', '<=', endDate)
-                    .get()
+                        .where('date', '>=', startDate)
+                        .where('date', '<=', endDate)
+                        .get()
                 ]);
 
                 const usersMap = {};
                 usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data());
 
+                // ★ 1. เพิ่ม Regular Hrs กลับมาในหัวตาราง ★
                 const dataForExcel = [
-                    ["Date", "Employee", "Department", "Check-In", "Check-Out", "Total Hrs (Net)", "OT (Hrs)", "Status", "Report Status", "Work Type", "Onsite Details"]
+                    ["Date", "Employee", "Department", "Check-In", "Check-Out", "Regular Hrs", "OT (Hrs)", "Total (Net)", "Status", "Report Status", "Work Type", "Onsite Details"]
                 ];
-
-                // ฟังก์ชันแปลงเวลาจาก Date -> String (HH:mm) แบบบังคับโซนเวลาไทย
-                const getTimeString = (dateObj) => {
-                    if (!dateObj) return '-';
-                    return dateObj.toLocaleTimeString('th-TH', { 
-                        timeZone: 'Asia/Bangkok', 
-                        hour12: false, 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                };
-
-                // ฟังก์ชันแปลง String (HH:mm) -> นาที (เพื่อคำนวณ)
-                const parseTimeToMinutes = (timeStr) => {
-                    if (!timeStr || timeStr === '-') return 0;
-                    const parts = timeStr.split(':');
-                    if (parts.length < 2) return 0;
-                    const h = parseInt(parts[0], 10);
-                    const m = parseInt(parts[1], 10);
-                    return (h * 60) + m;
-                };
 
                 recordsSnapshot.forEach(doc => {
                     const record = doc.data();
                     const checkIn = record.checkIn;
 
-                    // Filter
                     if (typeFilter !== 'all') {
                         if (typeFilter === 'in_factory' && checkIn.workType !== 'in_factory') return;
-                        if (typeFilter === 'onsite' && !checkIn.workType.includes('onsite') && !checkIn.workType.includes('on_site')) return;
+                        if (typeFilter === 'onsite' && !checkIn.workType.includes('onsite')) return;
                     }
 
                     const user = usersMap[record.userId] || {};
-                    const userName = user.fullName || 'Unknown';
-                    const userDept = user.department || '-';
+                    
                     const dateDisplay = record.date.toDate().toLocaleDateString('th-TH');
-
-                    // 1. ดึงเวลาเป็น String ก่อน (นี่คือสิ่งที่โชว์ใน Excel)
-                    const timeInStr = checkIn && checkIn.timestamp ? getTimeString(checkIn.timestamp.toDate()) : '-';
-                    const timeOutStr = record.checkOut && record.checkOut.timestamp ? getTimeString(record.checkOut.timestamp.toDate()) : '-';
-
-                    let totalNetText = '0.00';
+                    let timeInStr = '-';
+                    let timeOutStr = '-';
+                    let regularText = '0.00'; // เตรียมตัวแปรสำหรับ Regular
                     let otText = '0.00';
+                    let totalNetText = '0.00';
+                    
+                    let attendanceStatus = 'Absent'; 
+                    let reportStatus = 'Not Submitted';
 
-                    // 2. คำนวณจาก String ที่ได้มา (ตัดปัญหาเรื่อง Date Object เพี้ยน)
-                    if (timeInStr !== '-' && timeOutStr !== '-') {
-                        const startMin = parseTimeToMinutes(timeInStr); // เช่น 8:30 -> 510
-                        const endMin = parseTimeToMinutes(timeOutStr);   // เช่น 17:30 -> 1050
+                    // ตรวจสอบเวลาเข้า
+                    if (checkIn && checkIn.timestamp) {
+                        const checkInDate = checkIn.timestamp.toDate();
+                        timeInStr = checkInDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                         
-                        // คำนวณระยะเวลา (นาที)
-                        let durationMin = endMin - startMin; 
-
-                        // 3. หักพักเที่ยง 1 ชม. (ถ้าทำเกิน 4 ชม.)
-                        if (durationMin > 240) {
-                            durationMin -= 60;
-                        }
-                        if (durationMin < 0) durationMin = 0;
-
-                        // 4. คำนวณ OT (เกณฑ์ 17:30 น. = 1050 นาที)
-                        const standardEndMin = (17 * 60) + 30; // 1050
-                        let otMin = 0;
-
-                        // ใช้ OT จาก DB ถ้ามี
-                        if (record.overtime && typeof record.overtime.hours === 'number') {
-                            otText = record.overtime.hours.toFixed(2);
-                        } else {
-                            // คำนวณเอง: ถ้าเวลาออก (endMin) มากกว่า 17:30 (1050)
-                            if (endMin > standardEndMin) {
-                                otMin = endMin - standardEndMin;
-                            }
-                            otText = (otMin / 60).toFixed(2);
-                        }
-
-                        totalNetText = (durationMin / 60).toFixed(2);
+                        // เช็คสาย (08:30)
+                        const lateThreshold = new Date(checkInDate);
+                        lateThreshold.setHours(8, 30, 0, 0);
+                        attendanceStatus = (checkInDate > lateThreshold) ? "Late" : "Normal";
                     }
 
-                    const reportsArray = record.reports || (record.report ? [record.report] : []);
-                    const reportStatusExcel = reportsArray.length > 0 ? "Submitted" : "Not Submitted";
-                    const statusText = record.status === 'completed' ? "Completed" : "Working";
-                    const workTypeDisplay = checkIn.workType === 'in_factory' ? 'Factory' : 'On-site';
-                    const onsiteDetail = checkIn.onSiteDetails || '-';
+                    // ตรวจสอบการส่ง Report
+                    if (record.reports && record.reports.length > 0) {
+                        reportStatus = "Submitted";
+                    } else if (record.report) {
+                        reportStatus = "Submitted";
+                    }
 
+                    // คำนวณเวลาทำงาน
+                    if (record.status === 'completed' && record.checkOut && record.checkOut.timestamp) {
+                        const checkInDate = checkIn.timestamp.toDate();
+                        const checkOutDate = record.checkOut.timestamp.toDate();
+                        timeOutStr = checkOutDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+                        const calcs = calculateWorkHours(checkInDate, checkOutDate);
+                        
+                        let finalRegular = calcs.regularWorkHours;
+                        let finalOT = calcs.overtimeHours;
+
+                        if (record.overtime && typeof record.overtime.hours === 'number') {
+                            finalOT = record.overtime.hours;
+                        }
+
+                        // แสดงค่าแยกกัน
+                        regularText = finalRegular.toFixed(2); // 8.00
+                        otText = finalOT.toFixed(2);           // 2.00
+                        totalNetText = (finalRegular + finalOT).toFixed(2); // 10.00
+                    } else if (record.status === 'checked_in') {
+                        attendanceStatus = "Working";
+                    }
+
+                    let workTypeDisplay = checkIn.workType === 'in_factory' ? 'In Factory' : 'On-site';
+                    let onsiteDetailsDisplay = checkIn.onSiteDetails || '-';
+
+                    // ★ 2. ใส่ข้อมูลให้ตรงช่อง (เพิ่ม regularText) ★
                     dataForExcel.push([
                         dateDisplay,
-                        userName,
-                        userDept,
-                        timeInStr,    // โชว์ค่านี้
-                        timeOutStr,   // โชว์ค่านี้
-                        totalNetText, // คำนวณจากค่าข้างบน
-                        otText,       // คำนวณจากค่าข้างบน
-                        statusText,
-                        reportStatusExcel,
+                        user.fullName || 'Unknown',
+                        user.department || '-',
+                        timeInStr,
+                        timeOutStr,
+                        regularText,   // Regular Hrs (8.00)
+                        otText,        // OT (Hrs) (2.00)
+                        totalNetText,  // Total (Net) (10.00)
+                        attendanceStatus,
+                        reportStatus,
                         workTypeDisplay,
-                        onsiteDetail
+                        onsiteDetailsDisplay
                     ]);
                 });
 
@@ -9520,20 +9572,26 @@ if (auditLateFilter) auditLateFilter.addEventListener('change', loadDailyAuditDa
                 }
 
                 const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+                
+                // ปรับความกว้างคอลัมน์ (เพิ่มช่อง Regular)
                 ws['!cols'] = [
-                    { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 10 }, { wch: 10 },
-                    { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 15 }, { wch: 10 }, { wch: 20 }
+                    { wch: 12 }, { wch: 20 }, { wch: 15 }, 
+                    { wch: 10 }, { wch: 10 }, 
+                    { wch: 12 }, // Regular
+                    { wch: 10 }, // OT
+                    { wch: 12 }, // Total
+                    { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 25 }
                 ];
 
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Daily_Audit");
                 XLSX.writeFile(wb, `DailyAudit_${dateStr}.xlsx`);
-
+                
                 showNotification('ดาวน์โหลดไฟล์สำเร็จ!', 'success');
 
             } catch (error) {
                 console.error("Export Error:", error);
-                showNotification('เกิดข้อผิดพลาดในการ Export', 'error');
+                showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
             }
         });
     }
