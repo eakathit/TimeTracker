@@ -2784,7 +2784,7 @@
 
                 <div class="flex justify-end gap-3 pt-4">
                     <button id="cancel-checkin-modal-btn"
-                        class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold">ยกเลิก</button>
+                        class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-semibold">Cancel</button>
                     <button id="confirm-checkin-btn"
                         class="flex-[2] py-3 bg-sky-500 text-white rounded-xl font-semibold shadow-lg">Save
                         Report</button>
@@ -3833,128 +3833,127 @@
 
             // ค้นหา save-report-btn.addEventListener('click', ...) และแทนที่ด้วยโค้ดนี้:
             saveReportBtn.addEventListener('click', async () => {
-                // 1. ตรวจสอบการ Login
-                if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
+    // 1. ตรวจสอบการ Login
+    if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
 
-                // 2. ตรวจสอบวันที่
-                const selectedDateStr = reportDateInput.value;
-                if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
+    // 2. ตรวจสอบวันที่
+    const selectedDateStr = reportDateInput.value;
+    if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
 
-                // 3. ดึงค่าจากหน้าจอ
-                const workType = workTypeSelectedText.textContent;
-                const project = projectSelectedText.textContent;
-                const durationText = durationSelectedText.textContent;
+    // 3. ดึงค่าจากหน้าจอ (เพิ่ม .trim() เพื่อตัดช่องว่างหัว-ท้าย กันพลาด)
+    const workType = workTypeSelectedText.textContent.trim();
+    const project = projectSelectedText.textContent.trim();
+    const durationText = durationSelectedText.textContent.trim();
 
-                // ตัวแปรสำหรับเก็บข้อมูลที่จะบันทึก
-                let timeRange = durationText; // ข้อความที่จะโชว์ (เช่น "ALL (08:30 - 17:30)")
-                let hoursUsed = 0;            // จำนวนชั่วโมง (เช่น 8.0)
-                let saveStartTime = null;     // เวลาเริ่ม (เช่น "08:30")
-                let saveEndTime = null;       // เวลาจบ (เช่น "17:30")
+    // 4. ตรวจสอบว่าเลือกครบไหม
+    if (workType.includes('เลือก') || workType.includes('Select')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
+    if (project.includes('เลือก') || project.includes('Select')) return showNotification("กรุณาเลือกโครงการ", "warning");
+    if (durationText.includes('เลือก') || durationText.includes('Select')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
 
-                // 4. ตรวจสอบว่าเลือกครบไหม
-                if (workType.includes('เลือก') || workType.includes('Select')) return showNotification("กรุณาเลือกประเภทงาน", "warning");
-                if (project.includes('เลือก') || project.includes('Select')) return showNotification("กรุณาเลือกโครงการ", "warning");
-                if (durationText.includes('เลือก') || durationText.includes('Select')) return showNotification("กรุณาเลือกระยะเวลา", "warning");
+    // ตัวแปรสำหรับเก็บข้อมูลที่จะบันทึก
+    let timeRange = durationText; 
+    let hoursUsed = 0;            
+    let saveStartTime = "";      // เปลี่ยนค่าเริ่มต้นเป็น String ว่าง
+    let saveEndTime = "";     
 
-                // 5. --- ส่วนคำนวณเวลาและกำหนด Start/End Time ---
-                if (durationText === 'SOME TIME') {
-                    // กรณีเลือกกำหนดเวลาเอง
-                    const startT = customTimeStartInput.value;
-                    const endT = customTimeEndInput.value;
+    // 5. --- ส่วนคำนวณเวลาและกำหนด Start/End Time ---
+    if (durationText === 'SOME TIME') {
+        // กรณีเลือกกำหนดเวลาเอง
+        const startT = customTimeStartInput.value;
+        const endT = customTimeEndInput.value;
 
-                    if (!startT || !endT) {
-                        return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
-                    }
+        if (!startT || !endT) {
+            return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
+        }
 
-                    // คำนวณชั่วโมง
-                    const start = new Date(`2000-01-01T${startT}`);
-                    const end = new Date(`2000-01-01T${endT}`);
-                    const diffMs = end - start;
-                    const diffHrs = diffMs / (1000 * 60 * 60);
+        // คำนวณชั่วโมง
+        const start = new Date(`2000-01-01T${startT}`);
+        const end = new Date(`2000-01-01T${endT}`);
+        const diffMs = end - start;
+        const diffHrs = diffMs / (1000 * 60 * 60);
 
-                    if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+        if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+        
+        hoursUsed = parseFloat(diffHrs.toFixed(2));
+        timeRange = `SOME TIME (${startT} - ${endT})`; 
+        saveStartTime = startT;
+        saveEndTime = endT;
 
-                    // กำหนดค่าตัวแปร
-                    hoursUsed = parseFloat(diffHrs.toFixed(2));
-                    timeRange = `SOME TIME (${startT} - ${endT})`;
-                    saveStartTime = startT;
-                    saveEndTime = endT;
+    } else if (durationText.includes('HALF DAY')) {
+        // กรณีครึ่งวัน (เช็คจากข้อความว่าเป็นเช้าหรือบ่าย)
+        if (durationText.includes('08:30')) {
+            hoursUsed = 3.5; 
+            saveStartTime = "08:30";
+            saveEndTime = "12:00";
+            timeRange = "HALF DAY (08:30 - 12:00)"; 
+        } else {
+            hoursUsed = 4.5; 
+            saveStartTime = "13:00";
+            saveEndTime = "17:30";
+            timeRange = "HALF DAY (13:00 - 17:30)"; 
+        }
 
-                } else if (durationText.includes('HALF DAY')) {
-                    // กรณีครึ่งวัน (เช็คจากข้อความว่าเป็นเช้าหรือบ่าย)
-                    if (durationText.includes('08:30')) {
-                        // ครึ่งเช้า
-                        hoursUsed = 3.5; // 08:30 - 12:00
-                        saveStartTime = "08:30";
-                        saveEndTime = "12:00";
-                    } else {
-                        // ครึ่งบ่าย
-                        hoursUsed = 4.5; // 13:00 - 17:30
-                        saveStartTime = "13:00";
-                        saveEndTime = "17:30";
-                    }
-                } else {
-                    // กรณีเต็มวัน (ALL)
-                    hoursUsed = 8.0;
-                    saveStartTime = "08:30";
-                    saveEndTime = "17:30";
-                }
-                // -------------------------------------------
+    } else {
+        // กรณีเต็มวัน (ALL) หรือเคสอื่นๆ ที่หลุดมา
+        hoursUsed = 8.0;
+        saveStartTime = "08:30";
+        saveEndTime = "17:30";
+        timeRange = "ALL (08:30 - 17:30)"; // กำหนดข้อความให้เป๊ะ
+    }
 
-                // ล็อคปุ่มกันกดรัว
-                saveReportBtn.disabled = true;
-                saveReportBtn.textContent = 'กำลังบันทึก...';
+    // -------------------------------------------
+    // ล็อคปุ่มกันกดรัว
+    saveReportBtn.disabled = true;
+    saveReportBtn.textContent = 'กำลังบันทึก...';
 
-                try {
-                    const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
-                    const workRecordRef = db.collection('work_records').doc(workRecordDocId);
+    try {
+        const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
+        const workRecordRef = db.collection('work_records').doc(workRecordDocId);
 
-                    // สร้าง Object ข้อมูลที่จะบันทึก
-                    const newReportEntry = {
-                        id: Date.now(),
-                        submittedAt: new Date(),
-                        workType: workType,
-                        project: project,
-                        duration: timeRange,    // เก็บไว้แสดงผลหน้าเว็บ
-                        hours: hoursUsed,       // เก็บไว้คำนวณ Payroll
-                        startTime: saveStartTime, // ★ เก็บเวลาเริ่ม (แยกช่อง)
-                        endTime: saveEndTime      // ★ เก็บเวลาจบ (แยกช่อง)
-                    };
+        // สร้าง Object ข้อมูลที่จะบันทึก
+        const newReportEntry = {
+            id: Date.now(),
+            submittedAt: new Date(),
+            workType: workType,
+            project: project,
+            duration: timeRange,    
+            hours: hoursUsed,       
+            startTime: saveStartTime, // ข้อมูลเวลาเริ่ม (สำคัญสำหรับ Export)
+            endTime: saveEndTime      // ข้อมูลเวลาจบ (สำคัญสำหรับ Export)
+        };
 
-                    const doc = await workRecordRef.get();
+        const doc = await workRecordRef.get();
 
-                    if (doc.exists) {
-                        // ถ้ามีเอกสารแล้ว ให้เพิ่มเข้า Array
-                        await workRecordRef.update({
-                            reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry)
-                        });
-                    } else {
-                        // ถ้ายังไม่มี ให้สร้างใหม่
-                        await workRecordRef.set({
-                            userId: currentUser.uid,
-                            date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
-                            status: "no_checkin_report_only", // สถานะพิเศษสำหรับคนที่ไม่ได้ Check-in แต่ส่ง Report
-                            reports: [newReportEntry]
-                        });
-                    }
-
-                    showNotification('เพิ่มรายงานเรียบร้อยแล้ว', 'success');
-
-                    // รีเซ็ตฟอร์มและโหลดข้อมูลใหม่
-                    resetReportForm();
-                    if (typeof loadSentReports === 'function') {
-                        loadSentReports();
-                    }
-
-                } catch (error) {
-                    console.error("Error:", error);
-                    showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
-                } finally {
-                    // คืนค่าปุ่ม
-                    saveReportBtn.disabled = false;
-                    saveReportBtn.textContent = 'Save Report';
-                }
+        if (doc.exists) {
+            await workRecordRef.update({
+                reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry)
             });
+        } else {
+            await workRecordRef.set({
+                userId: currentUser.uid,
+                date: firebase.firestore.Timestamp.fromDate(new Date(selectedDateStr)),
+                status: "no_checkin_report_only",
+                reports: [newReportEntry]
+            });
+        }
+
+        showNotification('เพิ่มรายงานเรียบร้อยแล้ว', 'success');
+
+        // รีเซ็ตฟอร์มและโหลดข้อมูลใหม่
+        resetReportForm();
+        if (typeof loadSentReports === 'function') {
+            loadSentReports();
+        }
+
+    } catch (error) {
+        console.error("Error:", error);
+        showNotification('เกิดข้อผิดพลาด: ' + error.message, 'error');
+    } finally {
+        // คืนค่าปุ่ม
+        saveReportBtn.disabled = false;
+        saveReportBtn.textContent = 'Save Report';
+    }
+});
 
             workTypeButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -4167,7 +4166,6 @@
                     
                     // ซ่อน Panel
                     document.getElementById('duration-panel').classList.add('hidden');
-                    
                     // ตรวจสอบเงื่อนไขเปิด/ปิดช่องกรอกเวลา
                     if (selectedValue === 'SOME TIME') {
                         customTimeInputs.classList.remove('hidden'); // แสดงช่องกรอกเวลา
@@ -4275,106 +4273,105 @@
 
                 // [ฉบับแก้ไขสมบูรณ์] ฟังก์ชัน initializeProjectSummary
                 const initializeProjectSummary = () => {
-                    const db = firebase.firestore();
+        const db = firebase.firestore();
+        
+        // 1. ดึง Element มาเก็บไว้ในตัวแปร
+        const projectSelect = document.getElementById('project-summary-select');
+        const monthInput = document.getElementById('project-summary-month');
+        const resultsContainer = document.getElementById('project-summary-results');
+        const exportBtn = document.getElementById('export-project-summary-btn');
 
-                    // 1. ดึง Element มาเก็บไว้ในตัวแปร
-                    const projectSelect = document.getElementById('project-summary-select');
-                    const monthInput = document.getElementById('project-summary-month');
-                    const resultsContainer = document.getElementById('project-summary-results');
-                    const exportBtn = document.getElementById('export-project-summary-btn');
+        // ★ Safety Check
+        if (!projectSelect || !monthInput || !resultsContainer || !exportBtn) return;
 
-                    // ★ Safety Check: ถ้าหา Element ไม่เจอ (เช่น อยู่คนละหน้า) ให้หยุดทำงานทันที ไม่ต้อง Error
-                    if (!projectSelect || !monthInput || !resultsContainer || !exportBtn) {
-                        return;
-                    }
+        // 2. ฟังก์ชันย่อยสำหรับ Export Excel
+        const exportProjectSummaryToExcel = async () => {
+            const selectedProject = projectSelect.value;
+            const selectedMonth = monthInput.value;
 
-                    // 2. ฟังก์ชันย่อยสำหรับ Export Excel
-                    const exportProjectSummaryToExcel = async () => {
-                        const selectedProject = projectSelect.value;
-                        const selectedMonth = monthInput.value;
+            if (!selectedProject || !selectedMonth) {
+                alert('กรุณาเลือกเดือนและโครงการก่อน Export');
+                return;
+            }
 
-                        if (!selectedProject || !selectedMonth) {
-                            alert('กรุณาเลือกเดือนและโครงการก่อน Export');
-                            return;
-                        }
+            const originalBtnText = exportBtn.innerHTML;
+            exportBtn.innerHTML = 'Preparing...';
+            exportBtn.disabled = true;
 
-                        // เปลี่ยนข้อความปุ่มเพื่อบอกว่ากำลังทำงาน
-                        const originalBtnText = exportBtn.innerHTML;
-                        exportBtn.innerHTML = 'Preparing...';
-                        exportBtn.disabled = true;
+            try {
+                // 1. กำหนดช่วงเวลา
+                const [year, month] = selectedMonth.split('-').map(Number);
+                const startDate = new Date(year, month - 1, 1);
+                const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-                        try {
-                            // 1. กำหนดช่วงเวลา (ต้นเดือน - ปลายเดือน)
-                            const [year, month] = selectedMonth.split('-').map(Number);
-                            const startDate = new Date(year, month - 1, 1);
-                            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+                // 2. ดึงข้อมูล Users และ Work Records
+                const [usersSnap, recordsSnap] = await Promise.all([
+                    db.collection('users').get(),
+                    db.collection('work_records')
+                      .where('date', '>=', startDate)
+                      .where('date', '<=', endDate)
+                      .get()
+                ]);
 
-                            // 2. ดึงข้อมูล Users และ Work Records พร้อมกัน
-                            const [usersSnap, recordsSnap] = await Promise.all([
-                                db.collection('users').get(),
-                                db.collection('work_records')
-                                    .where('date', '>=', startDate)
-                                    .where('date', '<=', endDate)
-                                    .get()
-                            ]);
-
-                            // สร้าง Map ชื่อพนักงาน (User ID -> Name)
-                            const usersMap = {};
-                            usersSnap.forEach(doc => usersMap[doc.id] = doc.data().fullName || "Unknown");
-
-                            // 3. เตรียมข้อมูลสำหรับ Excel
-                            const dataForExcel = [];
-
-                            recordsSnap.forEach(doc => {
-                                const data = doc.data();
-                                // รองรับทั้งแบบ reports (array ใหม่) และ report (object เก่า)
-                                const reports = data.reports || (data.report ? [data.report] : []);
-
-                                reports.forEach(r => {
-                                    // กรองเฉพาะ Project ที่เลือก
-                                    if (r.project === selectedProject) {
-                                        const dateStr = data.date.toDate().toLocaleDateString('th-TH', {
-                                            day: '2-digit', month: '2-digit', year: 'numeric'
-                                        });
-
-                                        dataForExcel.push({
-                                            "Date": dateStr,
-                                            "Employee": usersMap[data.userId] || "Unknown",
-                                            "Department": data.department || "-",
-                                            "Work Detail": r.workType,
-                                            "Project": r.project,
-                                            "Start Time": r.startTime || "-",  // ★ เพิ่มคอลัมน์นี้
-                                            "End Time": r.endTime || "-",   // ★ เพิ่มคอลัมน์นี้
-                                            "Time Period": r.duration,      // อันเดิมเก็บไว้ดูง่ายๆ
-                                            "Total Hours": r.hours || 0
-                                        });
-                                    }
-                                });
-                            });
-
-                            if (dataForExcel.length === 0) {
-                                alert("ไม่พบข้อมูลรายงานสำหรับโครงการนี้ในช่วงเวลาที่เลือก");
-                                return;
-                            }
-
-                            // 4. สร้างและดาวน์โหลดไฟล์ Excel
-                            const ws = XLSX.utils.json_to_sheet(dataForExcel);
-                            const wb = XLSX.utils.book_new();
-                            XLSX.utils.book_append_sheet(wb, ws, "Project Report");
-
-                            // ตั้งชื่อไฟล์ตาม Project และเดือน
-                            const fileName = `Report_${selectedProject}_${selectedMonth}.xlsx`;
-                            XLSX.writeFile(wb, fileName);
-
-                        } catch (error) {
-                            console.error("Export Error:", error);
-                            alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
-                        } finally {
-                            // คืนค่าปุ่มกลับสู่สภาพเดิม
-                            exportBtn.innerHTML = originalBtnText;
-                            exportBtn.disabled = false;
-                        }
+                // --- [แก้จุดที่ 1] เก็บทั้งชื่อและแผนก ---
+                const usersMap = {};
+                usersSnap.forEach(doc => {
+                    const d = doc.data();
+                    usersMap[doc.id] = {
+                        name: d.fullName || "Unknown",
+                        dept: d.department || "-" // เก็บแผนกไว้ใช้
                     };
+                });
+
+                // 3. เตรียมข้อมูลสำหรับ Excel
+                const dataForExcel = [];
+                recordsSnap.forEach(doc => {
+                    const data = doc.data();
+                    const userInfo = usersMap[data.userId] || { name: "Unknown", dept: "-" }; // ดึงข้อมูลพนักงาน
+
+                    const reports = data.reports || (data.report ? [data.report] : []);
+                    
+                    reports.forEach(r => {
+                        if (r.project === selectedProject) {
+                            const dateStr = data.date.toDate().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                            
+                            // --- [แก้จุดที่ 2] ดึงแผนกจาก userInfo และสลับคอลัมน์ ---
+                            dataForExcel.push({
+                                "Date": dateStr,
+                                "Employee": userInfo.name,
+                                "Department": userInfo.dept, // ดึงจาก Users โดยตรง
+                                "Work Detail": r.workType,
+                                "Project": r.project,
+                                "Start Time": r.startTime || "-",
+                                "End Time": r.endTime || "-",
+                                "Total Hours": r.hours || 0, // ย้ายมาอยู่ตรงนี้ (ก่อน Time Period)
+                                "Time Period": r.duration    // ย้ายไปไว้ท้ายสุด
+                            });
+                        }
+                    });
+                });
+
+                if (dataForExcel.length === 0) {
+                    alert("ไม่พบข้อมูลรายงานสำหรับโครงการนี้ในช่วงเวลาที่เลือก");
+                    return;
+                }
+
+                // 4. สร้างไฟล์ Excel
+                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Project Report");
+
+                const fileName = `Report_${selectedProject}_${selectedMonth}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
+            } finally {
+                exportBtn.innerHTML = originalBtnText;
+                exportBtn.disabled = false;
+            }
+        };
 
                     // 3. ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น
                     const now = new Date();
@@ -4619,64 +4616,78 @@
 
                 // วางต่อท้ายฟังก์ชัน proceedWithCheckin
                 // แก้ไขส่วนปุ่มยืนยัน (อันที่ถูกต้อง อันล่างสุด)
-                document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
-                    // 1. ดึงค่า (เหมือนเดิม)
-                    const workType = document.getElementById('checkin-work-type-text').textContent.trim();
-                    const project = document.getElementById('checkin-project-text').textContent.trim();
-                    let duration = document.getElementById('checkin-duration-text').textContent.trim();
+                // --- [ฉบับแก้ไข] ปุ่มยืนยันใน Popup (เพิ่มการส่งเวลา Start/End ไปบันทึก) ---
+document.getElementById('confirm-checkin-btn').addEventListener('click', async () => {
+    // 1. ดึงค่าจากหน้าจอ
+    const workType = document.getElementById('checkin-work-type-text').textContent.trim();
+    const project = document.getElementById('checkin-project-text').textContent.trim();
+    let duration = document.getElementById('checkin-duration-text').textContent.trim();
 
-                    // ตัวแปรสำหรับเก็บจำนวนชั่วโมง (เพื่อเอาใจ HR)
-                    let hoursUsed = 0;
+    // 2. ตรวจสอบค่าว่าง
+    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
+        return showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+    }
 
-                    // 2. ตรวจสอบค่าว่าง (เหมือนเดิม)
-                    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
-                        showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-                        return;
-                    }
+    // 3. --- ส่วนคำนวณเวลา (Logic ใหม่: เก็บ Start/End Time) ---
+    let hoursUsed = 0;
+    let saveStartTime = ""; // ตัวแปรสำหรับเก็บเวลาเริ่ม
+    let saveEndTime = "";   // ตัวแปรสำหรับเก็บเวลาจบ
 
-                    // 3. จัดการเวลา + คำนวณชั่วโมง (ปรับปรุงใหม่)
-                    if (duration === 'SOME TIME') {
-                        const startT = document.getElementById('checkin-start-time').value; // "08:30"
-                        const endT = document.getElementById('checkin-end-time').value;     // "10:30"
+    if (duration === 'SOME TIME') {
+        // กรณีระบุเวลาเอง
+        const startT = document.getElementById('checkin-start-time').value;
+        const endT = document.getElementById('checkin-end-time').value;
 
-                        if (!startT || !endT) {
-                            showNotification('กรุณาระบุเวลาเริ่มต้นและสิ้นสุด', 'warning');
-                            return;
-                        }
+        if (!startT || !endT) return showNotification('กรุณาระบุเวลาเริ่มต้นและสิ้นสุด', 'warning');
 
-                        // --- สูตรคำนวณชั่วโมง (Start) ---
-                        const start = new Date(`2000-01-01T${startT}`);
-                        const end = new Date(`2000-01-01T${endT}`);
-                        const diffMs = end - start; // ผลต่างเป็น Milliseconds
-                        const diffHrs = diffMs / (1000 * 60 * 60); // แปลงเป็นชั่วโมง
+        // คำนวณชั่วโมง
+        const start = new Date(`2000-01-01T${startT}`);
+        const end = new Date(`2000-01-01T${endT}`);
+        const diffHrs = (end - start) / (1000 * 60 * 60);
 
-                        if (diffHrs <= 0) {
-                            showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
-                            return;
-                        }
+        if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
 
-                        hoursUsed = parseFloat(diffHrs.toFixed(2)); // เก็บทศนิยม 2 ตำแหน่ง (เช่น 2.00 หรือ 1.50)
-                        // --- สูตรคำนวณชั่วโมง (End) ---
+        hoursUsed = parseFloat(diffHrs.toFixed(2));
+        duration = `SOME TIME (${startT} - ${endT})`; // จัด Format ข้อความ
+        saveStartTime = startT;
+        saveEndTime = endT;
 
-                        duration = `SOME TIME (${startT} - ${endT})`; // Format ข้อความ
+    } else if (duration.includes('HALF DAY')) {
+        // กรณีครึ่งวัน
+        if (duration.includes('08:30')) {
+            hoursUsed = 3.5; 
+            saveStartTime = "08:30";
+            saveEndTime = "12:00";
+            duration = "HALF DAY (08:30 - 12:00)";
+        } else {
+            hoursUsed = 4.5; 
+            saveStartTime = "13:00";
+            saveEndTime = "17:30";
+            duration = "HALF DAY (13:00 - 17:30)";
+        }
 
-                    } else if (duration.includes('HALF')) {
-                        hoursUsed = 4.0; // ครึ่งวันตีไปเลย 4 ชม.
-                    } else {
-                        hoursUsed = 8.0; // เต็มวันตีไปเลย 8 ชม.
-                    }
+    } else {
+        // กรณีเต็มวัน (ALL TIME)
+        hoursUsed = 8.0;
+        saveStartTime = "08:30"; // บังคับค่า
+        saveEndTime = "17:30";   // บังคับค่า
+        duration = "ALL (08:30 - 17:30)";
+    }
 
-                    // 4. ปิด Modal
-                    document.getElementById('checkin-report-modal').classList.add('hidden');
+    // 4. ปิด Modal
+    document.getElementById('checkin-report-modal').classList.add('hidden');
 
-                    // 5. บันทึกข้อมูล (ส่ง hoursUsed ไปด้วย)
-                    await proceedWithCheckin('in_factory', {
-                        workType: workType,
-                        project: project,
-                        duration: duration,    // ข้อความ (ให้คนอ่าน)
-                        hours: hoursUsed       // ตัวเลข (ให้ HR คำนวณ) ★
-                    });
-                });
+    // 5. ส่งข้อมูลไปบันทึก (เรียกใช้ฟังก์ชัน proceedWithCheckin ที่คุณมีอยู่)
+    // ★ สำคัญ: ส่ง startTime และ endTime ไปด้วย เพื่อให้ Excel มีข้อมูล
+    await proceedWithCheckin('in_factory', {
+        workType: workType,
+        project: project,
+        duration: duration,
+        hours: hoursUsed,
+        startTime: saveStartTime, // เพิ่มบรรทัดนี้
+        endTime: saveEndTime      // เพิ่มบรรทัดนี้
+    });
+});
 
                 // [แก้ไข] แก้ไข logic การตรวจสอบ
                 try {
