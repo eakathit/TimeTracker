@@ -11095,7 +11095,6 @@ document.getElementById('confirm-checkin-btn').addEventListener('click', async (
             function initTheme() {
                 const savedTheme = localStorage.getItem('theme');
 
-                // เงื่อนไข: ถ้าเคยบันทึกว่าเป็น 'dark' ถึงจะเปิด Dark Mode
                 // นอกนั้น (ไม่เคยบันทึก หรือบันทึกเป็น light) ให้เปิด Light Mode เสมอ
                 if (savedTheme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
@@ -11108,6 +11107,8 @@ document.getElementById('confirm-checkin-btn').addEventListener('click', async (
                     updateDarkModeStatus(false);
                 }
             }
+
+
 
         });
 
