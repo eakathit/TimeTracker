@@ -6181,21 +6181,25 @@
 
                             // บังคับค่า OT ขั้นต่ำ
                             let finalOtHours = withOT ? leaderHours.overtimeHours : 0;
-                            // ถ้าผู้ใช้ยืนยันเอา OT (withOT=true) แต่คำนวณได้ 0 (อาจจะเพราะบั๊กเวลา)
-                            // ให้บังคับเป็น 0.5 ทันที เพราะผ่านเงื่อนไขเวลา 18:00 มาแล้ว
-                            if (withOT && finalOtHours === 0) {
+                            const h = checkoutTime.getHours();
+                            
+                            // ถ้าผู้ใช้เลือกเอา OT (withOT=true) และเวลาเกิน 18:00 แต่ระบบคำนวณได้ 0 (อาจจะบั๊ก)
+                            // ให้บังคับเป็น 0.5 ทันที (เพราะ 18:00 - 17:30 = 30 นาที)
+                            if (withOT && finalOtHours === 0 && h >= 18) {
                                 finalOtHours = 0.5;
                             }
 
                             batch.update(workRecordRef, {
-                                checkOut: {
-                                    timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
-                                    location: new firebase.firestore.GeoPoint(lat, lng),
-                                    locationNote: locationNote
-                                },
-                                status: "completed",
-                                overtime: finalOtHours
-                            });
+                            checkOut: {
+                                timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
+                                location: new firebase.firestore.GeoPoint(lat, lng),
+                                locationNote: locationNote
+                            },
+                            status: "completed",
+                            overtime: {
+                                hours: finalOtHours // ใช้ค่า finalOtHours ที่ผ่านการเช็คแล้ว
+                            }
+                        });
 
                             // 2. ถ้าเป็น Leader ให้หาลูกน้องทุกคนในห้องมาปิดงาน
                             if (groupUpdateData && roomId) {
@@ -6615,47 +6619,55 @@
                 }
             }
 
-            function calculateWorkHours(checkinTime, checkoutTime) {
-                let workDurationMillis = checkoutTime - checkinTime;
-                if (workDurationMillis < 0) workDurationMillis = 0;
+            function calculateWorkHours(checkinDate, checkoutDate) {
+            let workDurationMillis = checkoutDate - checkinDate;
+            if (workDurationMillis < 0) workDurationMillis = 0;
 
-                // หักเวลาพักเที่ยง 1 ชั่วโมง
-                const lunchStart = new Date(checkinTime);
-                lunchStart.setHours(12, 0, 0, 0);
-                const lunchEnd = new Date(checkinTime);
-                lunchEnd.setHours(13, 0, 0, 0);
+            // --- 1. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00) ---
+            const lunchStart = new Date(checkinDate);
+            lunchStart.setHours(12, 0, 0, 0);
+            const lunchEnd = new Date(checkinDate);
+            lunchEnd.setHours(13, 0, 0, 0);
 
-                if (checkinTime < lunchEnd && checkoutTime > lunchStart) {
-                    workDurationMillis -= 3600000;
-                }
-
-                let overtimeHours = 0;
-                // เกณฑ์เริ่มนับ OT คือ 18:00
-                const otStartThreshold = new Date(checkoutTime);
-                otStartThreshold.setHours(18, 0, 0, 0);
-
-                // เกณฑ์จบเวลางานปกติคือ 17:30
-                const normalEndThreshold = new Date(checkoutTime);
-                normalEndThreshold.setHours(17, 30, 0, 0);
-
-                if (checkoutTime >= otStartThreshold) {
-                    // คำนวณ OT จาก 17:30 (เช่นเลิก 18:04 -> คิดจาก 17:30 = 34 นาที)
-                    const otMillis = checkoutTime - normalEndThreshold;
-                    if (otMillis > 0) {
-                        // หาร 30 นาที แล้วปัดเศษทิ้ง (34/30 = 1.13 -> 1 block)
-                        const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
-                        overtimeHours = otBlocks * 0.5; // 1 * 0.5 = 0.5 ชม.
-                    }
-                }
-
-                const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
-                const regularWorkHours = totalWorkHours - overtimeHours;
-
-                return {
-                    regularWorkHours: Math.max(0, regularWorkHours),
-                    overtimeHours: overtimeHours
-                };
+            // ถ้าเวลาทำงาน "คลุม" ช่วงพักเที่ยง (เข้าก่อน 13:00 และออกหลัง 12:00)
+            if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
+                workDurationMillis -= 3600000; // ลบออก 1 ชั่วโมง (ms)
             }
+
+            let overtimeHours = 0;
+
+            // --- 2. คำนวณ OT (ตัดรอบที่ 30 นาที) ---
+            // เกณฑ์เริ่มนับ OT คือ 18:00
+            const otStartThreshold = new Date(checkoutDate);
+            otStartThreshold.setHours(18, 0, 0, 0);
+
+            // เกณฑ์เวลาเลิกงานปกติคือ 17:30
+            const normalEndThreshold = new Date(checkoutDate);
+            normalEndThreshold.setHours(17, 30, 0, 0);
+
+            // ถ้าเวลาออก เกิน 18:00
+            if (checkoutDate >= otStartThreshold) {
+                // นับเวลาส่วนเกินจาก 17:30
+                const otMillis = checkoutDate - normalEndThreshold;
+                if (otMillis > 0) {
+                    // หาร 30 นาที แล้วปัดเศษทิ้ง (เช่น 36 นาที -> ได้ 1 block)
+                    const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
+                    overtimeHours = otBlocks * 0.5;
+                }
+            }
+
+            // --- 3. คำนวณชั่วโมงงานปกติ (Regular) ---
+            const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
+            
+            // Regular คือ เวลาทั้งหมด - OT
+            let regularWorkHours = totalWorkHours - overtimeHours;
+
+            // ป้องกันค่าติดลบ
+            return {
+                regularWorkHours: Math.max(0, regularWorkHours),
+                overtimeHours: Math.max(0, overtimeHours)
+            };
+        }
 
             async function loadSentReports() {
                 // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
