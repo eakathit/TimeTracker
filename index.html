@@ -6619,55 +6619,60 @@
                 }
             }
 
-            function calculateWorkHours(checkinDate, checkoutDate) {
-            let workDurationMillis = checkoutDate - checkinDate;
-            if (workDurationMillis < 0) workDurationMillis = 0;
+            // --- ฟังก์ชันคำนวณชั่วโมงงานและ OT (Update ล่าสุด) ---
+function calculateWorkHours(checkinDate, checkoutDate) {
+    // 1. หาเวลารวม (ms)
+    let workDurationMillis = checkoutDate - checkinDate;
+    if (workDurationMillis < 0) workDurationMillis = 0;
 
-            // --- 1. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00) ---
-            const lunchStart = new Date(checkinDate);
-            lunchStart.setHours(12, 0, 0, 0);
-            const lunchEnd = new Date(checkinDate);
-            lunchEnd.setHours(13, 0, 0, 0);
+    // --- 2. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00) ---
+    const lunchStart = new Date(checkinDate);
+    lunchStart.setHours(12, 0, 0, 0);
+    const lunchEnd = new Date(checkinDate);
+    lunchEnd.setHours(13, 0, 0, 0);
 
-            // ถ้าเวลาทำงาน "คลุม" ช่วงพักเที่ยง (เข้าก่อน 13:00 และออกหลัง 12:00)
-            if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
-                workDurationMillis -= 3600000; // ลบออก 1 ชั่วโมง (ms)
-            }
+    // ถ้าเวลาทำงาน "คลุม" ช่วงพักเที่ยง (เข้าก่อน 13:00 และออกหลัง 12:00)
+    // ให้ลบเวลาออก 1 ชั่วโมง (3,600,000 ms)
+    if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
+        workDurationMillis -= 3600000; 
+    }
 
-            let overtimeHours = 0;
+    let overtimeHours = 0;
 
-            // --- 2. คำนวณ OT (ตัดรอบที่ 30 นาที) ---
-            // เกณฑ์เริ่มนับ OT คือ 18:00
-            const otStartThreshold = new Date(checkoutDate);
-            otStartThreshold.setHours(18, 0, 0, 0);
+    // --- 3. คำนวณ OT (ตัดรอบทีละ 30 นาที) ---
+    // กฎ: ต้องทำถึง 18:00 ถึงจะได้ OT (แต่นับย้อนหลังให้เริ่มที่ 17:30)
+    
+    const otStartThreshold = new Date(checkoutDate);
+    otStartThreshold.setHours(18, 0, 0, 0); // ต้องเกินเวลานี้ถึงเริ่มคิด
 
-            // เกณฑ์เวลาเลิกงานปกติคือ 17:30
-            const normalEndThreshold = new Date(checkoutDate);
-            normalEndThreshold.setHours(17, 30, 0, 0);
+    const normalEndThreshold = new Date(checkoutDate);
+    normalEndThreshold.setHours(17, 30, 0, 0); // จุดเริ่มนับชั่วโมง OT
 
-            // ถ้าเวลาออก เกิน 18:00
-            if (checkoutDate >= otStartThreshold) {
-                // นับเวลาส่วนเกินจาก 17:30
-                const otMillis = checkoutDate - normalEndThreshold;
-                if (otMillis > 0) {
-                    // หาร 30 นาที แล้วปัดเศษทิ้ง (เช่น 36 นาที -> ได้ 1 block)
-                    const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
-                    overtimeHours = otBlocks * 0.5;
-                }
-            }
-
-            // --- 3. คำนวณชั่วโมงงานปกติ (Regular) ---
-            const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
-            
-            // Regular คือ เวลาทั้งหมด - OT
-            let regularWorkHours = totalWorkHours - overtimeHours;
-
-            // ป้องกันค่าติดลบ
-            return {
-                regularWorkHours: Math.max(0, regularWorkHours),
-                overtimeHours: Math.max(0, overtimeHours)
-            };
+    // ถ้าเวลาออก เกินหรือเท่ากับ 18:00
+    if (checkoutDate >= otStartThreshold) {
+        // นับเวลาส่วนเกินจาก 17:30
+        const otMillis = checkoutDate - normalEndThreshold;
+        
+        if (otMillis > 0) {
+            // หาร 30 นาที (1800000 ms) แล้วปัดเศษทิ้ง 
+            // ตัวอย่าง: 36 นาที / 30 = 1.2 -> ปัดเหลือ 1 block
+            const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
+            overtimeHours = otBlocks * 0.5;
         }
+    }
+
+    // --- 4. คำนวณชั่วโมงงานปกติ (Regular) ---
+    const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
+    
+    // Regular คือ เวลาทั้งหมด - OT
+    let regularWorkHours = totalWorkHours - overtimeHours;
+
+    // ป้องกันค่าติดลบด้วย Math.max
+    return {
+        regularWorkHours: Math.max(0, regularWorkHours),
+        overtimeHours: Math.max(0, overtimeHours)
+    };
+}
 
             async function loadSentReports() {
                 // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
