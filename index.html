@@ -128,12 +128,14 @@
                 margin-bottom: 8px;
                 border-radius: 12px;
             }
+
             /* hover PC */
             aside .nav-item:hover {
                 background-color: #F8FAFC;
                 color: #334155;
                 transform: translateX(4px);
             }
+
             /* Navbar (Active PC) */
             aside .nav-item.active {
                 background-color: #E0F2FE;
@@ -244,7 +246,7 @@
             letter-spacing: 0.05em;
             color: #94A3B8;
         }
-        
+
         aside .nav-item {
             margin-bottom: 2px !important;
         }
@@ -2901,11 +2903,11 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-storage-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-functions-compat.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="firebase-config.js?v=FORCE_UPDATE_005"></script>
+    <script src="firebase-config.js?v=FORCE_UPDATE_009"></script>
     <script>
         // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
         function toLocalISOString(date) {
@@ -2952,22 +2954,22 @@
             };
 
             if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                // 1. ลงทะเบียน sw.js (โค้ดเดิมของคุณ)
-                navigator.serviceWorker.register('/sw.js').then(function (registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function (err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+                window.addEventListener('load', function () {
+                    // 1. ลงทะเบียน sw.js (โค้ดเดิมของคุณ)
+                    navigator.serviceWorker.register('/sw.js').then(function (registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    }, function (err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
 
-                // 2. ★ เพิ่มส่วนนี้เข้าไปครับ ★
-                // หน้าที่: เมื่อ sw.js ตัวใหม่ (ที่มีการแก้บั๊ก) เริ่มทำงาน มันจะสั่งให้หน้าเว็บ Refresh ตัวเองทันที 1 ครั้ง
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    console.log("New Service Worker activated. Reloading page...");
-                    window.location.reload();
+                    // 2. ★ เพิ่มส่วนนี้เข้าไปครับ ★
+                    // หน้าที่: เมื่อ sw.js ตัวใหม่ (ที่มีการแก้บั๊ก) เริ่มทำงาน มันจะสั่งให้หน้าเว็บ Refresh ตัวเองทันที 1 ครั้ง
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log("New Service Worker activated. Reloading page...");
+                        window.location.reload();
+                    });
                 });
-            });
-        }
+            }
 
             // --- Initialize Firebase & Config ---
             firebase.initializeApp(firebaseConfig);
@@ -5927,7 +5929,6 @@
                     const now = new Date();
                     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
-                    // กำหนดช่วงเวลาตามที่เลือก
                     if (selectedRange === "7") {
                         startDate = new Date(todayStart);
                         startDate.setDate(todayStart.getDate() - 6);
@@ -5940,7 +5941,6 @@
                         endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
                     }
 
-                    // ดึงข้อมูล Work Records
                     const recordsSnapshot = await db.collection('work_records')
                         .where('userId', '==', currentUser.uid)
                         .where('date', '>=', startDate)
@@ -5960,71 +5960,67 @@
                     }
 
                     let historyHtml = '';
-                    let totalRegularHours = 0;
-                    let totalOtHours = 0;
-                    let totalDays = recordsSnapshot.size;
                     let accumulatorRegularWorkHours = 0;
+                    let totalOtHoursSum = 0;
+                    let totalDays = recordsSnapshot.size;
 
                     recordsSnapshot.forEach(doc => {
                         const record = doc.data();
-
-                        // --- [จุดที่แก้ไข]: ใช้ record.date เป็นหลัก และตรวจสอบ checkIn ก่อนใช้งาน ---
                         const displayDate = record.date.toDate();
 
-                        // ตรวจสอบว่ามีการ Check-in จริงหรือไม่
                         const hasCheckIn = record.checkIn && record.checkIn.timestamp;
                         const checkinTime = hasCheckIn ? record.checkIn.timestamp.toDate() : null;
-
-                        // --- ตรวจสอบรายงาน ---
                         const reportsArray = record.reports || (record.report ? [record.report] : []);
                         const hasReport = reportsArray.length > 0;
-                        // ---------------------
 
                         let checkoutTimeStr = '-';
                         let regularWorkHours = 0;
                         let overtimeHours = 0;
+
                         let checkinTimeStr = hasCheckIn
                             ? checkinTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
                             : '<span class="text-orange-400">Report Only</span>';
 
-                        // คำนวณเวลาเฉพาะเมื่อมี Check-in และ Check-out ครบถ้วน
+                        // --- [ส่วนที่แก้ไขเพื่อให้ปลอดภัยจาก Error toFixed] ---
                         if (hasCheckIn && record.status === 'completed' && record.checkOut) {
                             const checkoutTime = record.checkOut.timestamp.toDate();
                             checkoutTimeStr = checkoutTime.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 
-                            const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
-                            regularWorkHours = timeCalc.regularWorkHours;
+                            // 1. ดึงค่าจาก Database ก่อน (ถ้ามีและเป็นตัวเลข) ถ้าไม่มีค่อยคำนวณใหม่
+                            if (typeof record.regularHours === 'number') {
+                                regularWorkHours = record.regularHours;
+                            } else {
+                                const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
+                                regularWorkHours = timeCalc.regularWorkHours;
+                            }
 
+                            // 2. ดึงค่า OT (เช็คโครงสร้าง Object overtime.hours)
                             if (record.overtime && typeof record.overtime.hours === 'number') {
                                 overtimeHours = record.overtime.hours;
                             } else {
-                                overtimeHours = timeCalc.overtimeHours;
+                                // ป้องกันกรณีข้อมูลเก่าที่อาจจะคำนวณไว้ใน calculateWorkHours
+                                const timeCalc = calculateWorkHours(checkinTime, checkoutTime);
+                                overtimeHours = timeCalc.overtimeHours || 0;
                             }
                         }
 
-                        totalRegularHours += regularWorkHours;
-                        totalOtHours += overtimeHours;
-                        accumulatorRegularWorkHours += regularWorkHours;
+                        // ตรวจสอบขั้นสุดท้ายเพื่อให้แน่ใจว่าเป็นตัวเลขแน่นอนก่อนเอาไปบวกและ toFixed
+                        regularWorkHours = Number(regularWorkHours || 0);
+                        overtimeHours = Number(overtimeHours || 0);
 
-                        // Location / Work Type Text
+                        accumulatorRegularWorkHours += regularWorkHours;
+                        totalOtHoursSum += overtimeHours;
+
+                        // Location / Work Type HTML
                         let workTypeHTML = '';
                         if (!hasCheckIn) {
                             workTypeHTML = `<span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">Daily Report</span>`;
                         } else if (record.checkIn.workType === 'in_factory') {
-                            workTypeHTML = `
-                        <span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0015.5 2h-11zM10 4a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 4zM8.5 7.5A.75.75 0 007.75 8v.5a.75.75 0 001.5 0V8A.75.75 0 008.5 7.5zM11.5 7.5a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0V8a.75.75 0 01.75-.75zM8.5 10.5a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75zm3 0a.75.75 0 00-.75.75v.5a.75.75 0 001.5 0v-.5a.75.75 0 00-.75-.75z" clip-rule="evenodd" /></svg>
-                            ในโรงงาน
-                        </span>`;
+                            workTypeHTML = `<span class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">ในโรงงาน</span>`;
                         } else {
-                            workTypeHTML = `
-                        <span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
-                            <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 10a7 7 0 10-14 0c0 2.493 1.698 4.988 3.355 6.59C7.22 17.384 8.046 17.966 8.666 18.35c.31.193.57.337.757.433.09.046.185.09.28.14l.018.008.006.003zM10 11.25a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5z" clip-rule="evenodd" /></svg>
-                            On-site: ${record.checkIn.onSiteDetails || 'N/A'}
-                        </span>`;
+                            workTypeHTML = `<span class="inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">On-site: ${record.checkIn.onSiteDetails || 'N/A'}</span>`;
                         }
 
-                        // สร้าง HTML สำหรับรายการประวัติ
                         historyHtml += `
                 <div class="flex space-x-4">
                     <div class="flex flex-col items-center">
@@ -6034,7 +6030,6 @@
                         </div>
                         <div class="flex-1 w-px bg-gray-200 my-2"></div> 
                     </div>
-                    
                     <div class="flex-1 card !p-4 !shadow-sm mb-4">
                         <div class="flex justify-between items-start">
                             <div>
@@ -6046,57 +6041,29 @@
                                 </p>
                             </div>
                         </div>
-
                         <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
-                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="flex items-center gap-1.5">
                                 <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
                             </div>
-
-                            <div class="flex items-center gap-1.5" title="Overtime">
-                                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            <div class="flex items-center gap-1.5">
                                 <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                             </div>
                         </div>
-
-                        <div class="mt-3 pt-3 border-t border-gray-100 text-sm space-y-2">
-                            <div>
-                                ${workTypeHTML}
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-2">
-                                ${hasReport ? `
-                                    <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                        </svg>
-                                        ส่งรายงานแล้ว (${reportsArray.length} รายการ)
-                                    </span>
-                                ` : `
-                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                                        <svg class="w-4 h-4 mr-1.5 -ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.25 9.75h-.5a.75.75 0 000 1.5h.5v.25a.75.75 0 001.5 0v-.25h.5a.75.75 0 000-1.5h-.5v-.25a.75.75 0 00-1.5 0v.25zM10 6a.75.75 0 01.75.75v.5a.75.75 0 01-1.5 0v-.5A.75.75 0 0110 6z" clip-rule="evenodd" />
-                                        </svg>
-                                        ยังไม่ส่งรายงาน
-                                    </span>
-                                `}
-                            </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 text-sm">
+                            ${workTypeHTML}
                         </div>
-
                     </div>
                 </div>`;
                     });
 
                     container.innerHTML = historyHtml;
-
-                    // อัปเดต Summary ด้านบน
                     summaryHoursEl.textContent = `${accumulatorRegularWorkHours.toFixed(2)}`;
-                    summaryOtEl.textContent = `${totalOtHours.toFixed(1)}`;
-                    summaryDaysEl.textContent = `${totalDays}`;
+                    summaryOtEl.textContent = `${totalOtHoursSum.toFixed(1)}`;
+                    summaryDaysEl.textContent = `${totalDays} วัน`;
 
                 } catch (error) {
                     console.error("Error loading work history:", error);
-                    container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</p>`;
+                    container.innerHTML = `<p class="text-center text-red-500 text-sm py-4">เกิดข้อผิดพลาด: ${error.message}</p>`;
                 }
             }
 
@@ -6167,7 +6134,7 @@
                     const recordData = workRecordDoc.data();
                     const workType = recordData.checkIn.workType;
                     const roomId = recordData.checkIn.roomId;
-                    
+
                     // กำหนด Location Note
                     const locationNote = workType === 'in_factory' ? 'factory_normal' : (recordData.checkIn.locationNote || 'On-site');
 
@@ -6175,31 +6142,31 @@
                     const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
                         try {
                             if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
-                            
+
                             const checkoutTime = new Date(now);
-                            checkoutTime.setSeconds(0, 0); // ตัดเศษวินาที
+                            checkoutTime.setSeconds(0, 0);
 
                             const lat = latestPosition.coords.latitude;
                             const lng = latestPosition.coords.longitude;
                             const batch = db.batch();
 
-                            // 1. คำนวณเวลาของ Leader / User เอง
+                            // 1. คำนวณเวลาของตัวเอง
                             let calcTime = new Date(checkoutTime);
-                            // ถ้าไม่เอา OT และเวลาเกิน 18:00 -> ปัดกลับมาเป็น 17:30 (ตามกฎบริษัท)
                             if (!withOT && checkoutTime.getHours() >= 18) {
                                 calcTime.setHours(17, 30, 0, 0);
                             }
 
-                            // เรียกใช้ calculateWorkHours (ต้องมีฟังก์ชันนี้ประกาศไว้นอก listener)
                             const myHours = calculateWorkHours(recordData.checkIn.timestamp.toDate(), calcTime);
 
-                            // Safety Net: ถ้าเลือก OT แต่คำนวณได้ 0 (เพราะเวลาปริ่มๆ) ให้บังคับเป็น 0.5
-                            let finalOtHours = withOT ? myHours.overtimeHours : 0;
-                            if (withOT && checkoutTime.getHours() >= 18) {
-                            if (finalOtHours < 0.5) {
+                            // --- เพิ่มความปลอดภัย (Safety Check) ตรงนี้ ---
+                            let finalOtHours = withOT ? (myHours.overtimeHours || 0) : 0;
+
+                            // บังคับ 0.5 ถ้าเลิกงานหลัง 18:00 และกดยืนยัน OT
+                            if (withOT && finalOtHours < 0.5 && checkoutTime.getHours() >= 18) {
                                 finalOtHours = 0.5;
                             }
-                        }
+
+                            const finalRegularHours = myHours.regularWorkHours || 0;
 
                             // Update ข้อมูลตัวเอง
                             batch.update(workRecordRef, {
@@ -6209,16 +6176,15 @@
                                     locationNote: note
                                 },
                                 status: "completed",
+                                // ใช้ (value || 0) ก่อนเรียก toFixed เสมอ
                                 overtime: {
-                                    hours: finalOtHours
-                                }
+                                    hours: Number((finalOtHours || 0).toFixed(2))
+                                },
+                                regularHours: Number((finalRegularHours || 0).toFixed(2))
                             });
 
-                            // 2. ถ้าเป็น Leader และมีลูกน้อง -> ปิดงานให้ลูกน้องด้วย
+                            // 2. ถ้าเป็น Leader และมีลูกน้อง
                             if (groupUpdateData && roomId) {
-                                const roomRef = db.collection('onsite_rooms').doc(roomId);
-                                batch.update(roomRef, groupUpdateData);
-
                                 const membersSnapshot = await db.collection('work_records')
                                     .where('checkIn.roomId', '==', roomId)
                                     .where('checkIn.leaderId', '==', currentUser.uid)
@@ -6227,16 +6193,18 @@
 
                                 membersSnapshot.forEach(doc => {
                                     const memberData = doc.data();
-                                    if (memberData.userId === currentUser.uid) return; // ข้ามตัวเอง
+                                    if (memberData.userId === currentUser.uid) return;
 
-                                    // คำนวณเวลาลูกน้อง (ใช้ Logic เดียวกับ Leader)
                                     let memCalcTime = new Date(checkoutTime);
                                     if (!withOT && checkoutTime.getHours() >= 18) memCalcTime.setHours(17, 30, 0, 0);
 
                                     const memberHours = calculateWorkHours(memberData.checkIn.timestamp.toDate(), memCalcTime);
-                                    
-                                    let memberOt = withOT ? memberHours.overtimeHours : 0;
-                                    if (withOT && memberOt === 0 && checkoutTime.getHours() >= 18) memberOt = 0.5;
+
+                                    // --- เพิ่มความปลอดภัยให้ข้อมูลลูกน้อง ---
+                                    let memberOt = withOT ? (memberHours.overtimeHours || 0) : 0;
+                                    if (withOT && memberOt < 0.5 && checkoutTime.getHours() >= 18) memberOt = 0.5;
+
+                                    const memberReg = memberHours.regularWorkHours || 0;
 
                                     batch.update(doc.ref, {
                                         checkOut: {
@@ -6246,30 +6214,37 @@
                                         },
                                         status: "completed",
                                         overtime: {
-                                            hours: memberOt
-                                        }
+                                            hours: Number((memberOt || 0).toFixed(2))
+                                        },
+                                        regularHours: Number((memberReg || 0).toFixed(2))
                                     });
                                 });
+
+                                const roomRef = db.collection('onsite_rooms').doc(roomId);
+                                batch.update(roomRef, groupUpdateData);
                             }
 
                             await batch.commit();
-                            
-                            // แจ้งเตือนสำเร็จ
+
+                            // ตรวจสอบว่ามี SweetAlert2 (Swal) หรือไม่
                             if (typeof Swal !== 'undefined') {
-                                Swal.fire('สำเร็จ', 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว', 'success');
+                                Swal.fire({
+                                    title: 'สำเร็จ',
+                                    text: 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว',
+                                    icon: 'success',
+                                    confirmButtonText: 'ตกลง'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
                             } else {
-                                showNotification('บันทึกเวลาเลิกงานเรียบร้อยแล้ว', 'success');
+                                // ถ้าไม่มี Swal ให้ใช้ alert ปกติ หรือฟังก์ชันแจ้งเตือนที่มีอยู่
+                                alert('บันทึกเวลาเลิกงานเรียบร้อยแล้ว');
+                                window.location.reload();
                             }
-                            
-                            // Reset UI หรือ Reload
-                            setTimeout(() => {
-                                window.location.reload(); 
-                            }, 1500);
 
                         } catch (error) {
                             console.error("Checkout process error:", error);
                             showNotification(error.message, "error");
-                            checkoutBtn.disabled = false;
                             if (checkoutSpan) checkoutSpan.textContent = "Check Out";
                         }
                     };
@@ -6628,60 +6603,34 @@
             }
 
             // --- ฟังก์ชันคำนวณชั่วโมงงานและ OT (Update ล่าสุด) ---
-function calculateWorkHours(checkinDate, checkoutDate) {
-    console.log("Checking Version: NEW_CODE_LOADED_V9");
-    // 1. หาเวลารวม (ms)
-    let workDurationMillis = checkoutDate - checkinDate;
-    if (workDurationMillis < 0) workDurationMillis = 0;
+            function calculateWorkHours(checkinDate, checkoutDate) {
+                let diffMillis = checkoutDate - checkinDate;
 
-    // --- 2. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00) ---
-    const lunchStart = new Date(checkinDate);
-    lunchStart.setHours(12, 0, 0, 0);
-    const lunchEnd = new Date(checkinDate);
-    lunchEnd.setHours(13, 0, 0, 0);
+                // 1. หักเวลาพักเที่ยง 1 ชม. (ถ้าทำงานครอบคลุมช่วง 12:00 - 13:00)
+                const lunchStart = new Date(checkinDate).setHours(12, 0, 0, 0);
+                const lunchEnd = new Date(checkinDate).setHours(13, 0, 0, 0);
+                if (checkinDate.getTime() < lunchEnd && checkoutDate.getTime() > lunchStart) {
+                    diffMillis -= 3600000;
+                }
 
-    // ถ้าเวลาทำงาน "คลุม" ช่วงพักเที่ยง (เข้าก่อน 13:00 และออกหลัง 12:00)
-    // ให้ลบเวลาออก 1 ชั่วโมง (3,600,000 ms)
-    if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
-        workDurationMillis -= 3600000; 
-    }
+                const totalActualHours = diffMillis / 3600000;
+                let otHours = 0;
 
-    let overtimeHours = 0;
+                // 2. คำนวณ OT (เริ่มนับ 18:00 โดยใช้ฐาน 17:30)
+                const otStartThreshold = new Date(checkoutDate).setHours(18, 0, 0, 0);
+                const otBaseTime = new Date(checkoutDate).setHours(17, 30, 0, 0);
 
-    // --- 3. คำนวณ OT (ตัดรอบทีละ 30 นาที) ---
-    // กฎ: ต้องทำถึง 18:00 ถึงจะได้ OT (แต่นับย้อนหลังให้เริ่มที่ 17:30)
-    
-    const otStartThreshold = new Date(checkoutDate);
-    otStartThreshold.setHours(18, 0, 0, 0); // ต้องเกินเวลานี้ถึงเริ่มคิด
+                if (checkoutDate.getTime() >= otStartThreshold) {
+                    const otDiffMillis = checkoutDate.getTime() - otBaseTime;
+                    const otBlocks = Math.floor(otDiffMillis / (1000 * 60 * 30));
+                    otHours = otBlocks * 0.5;
+                }
 
-    const normalEndThreshold = new Date(checkoutDate);
-    normalEndThreshold.setHours(17, 30, 0, 0); // จุดเริ่มนับชั่วโมง OT
-
-    // ถ้าเวลาออก เกินหรือเท่ากับ 18:00
-    if (checkoutDate >= otStartThreshold) {
-        // นับเวลาส่วนเกินจาก 17:30
-        const otMillis = checkoutDate - normalEndThreshold;
-        
-        if (otMillis > 0) {
-            // หาร 30 นาที (1800000 ms) แล้วปัดเศษทิ้ง 
-            // ตัวอย่าง: 36 นาที / 30 = 1.2 -> ปัดเหลือ 1 block
-            const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
-            overtimeHours = otBlocks * 0.5;
-        }
-    }
-
-    // --- 4. คำนวณชั่วโมงงานปกติ (Regular) ---
-    const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
-    
-    // Regular คือ เวลาทั้งหมด - OT
-    let regularWorkHours = totalWorkHours - overtimeHours;
-
-    // ป้องกันค่าติดลบด้วย Math.max
-    return {
-        regularWorkHours: Math.max(0, regularWorkHours),
-        overtimeHours: Math.max(0, overtimeHours)
-    };
-}
+                return {
+                    totalActualHours: totalActualHours,
+                    potentialOtHours: otHours
+                };
+            }
 
             async function loadSentReports() {
                 // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
@@ -10609,23 +10558,23 @@ function calculateWorkHours(checkinDate, checkoutDate) {
                     let stats = { late: 0, ot: 0, sick: 0, annual: 0, absent: 0 };
 
                     recordsSnap.forEach(doc => {
-                    const data = doc.data();
+                        const data = doc.data();
 
-                    // ★★★ แก้ไข: เพิ่มการตรวจสอบว่ามี checkIn จริงๆ ก่อนดึงเวลา ★★★
-                    if (data.checkIn && data.checkIn.timestamp) {
-                        const cin = data.checkIn.timestamp.toDate();
-                        
-                        // เช็คสายหลัง 08:30
-                        if (cin.getHours() > 8 || (cin.getHours() === 8 && cin.getMinutes() > 30)) {
-                            stats.late++;
+                        // ★★★ แก้ไข: เพิ่มการตรวจสอบว่ามี checkIn จริงๆ ก่อนดึงเวลา ★★★
+                        if (data.checkIn && data.checkIn.timestamp) {
+                            const cin = data.checkIn.timestamp.toDate();
+
+                            // เช็คสายหลัง 08:30
+                            if (cin.getHours() > 8 || (cin.getHours() === 8 && cin.getMinutes() > 30)) {
+                                stats.late++;
+                            }
                         }
-                    }
 
-                    // เก็บ OT (แยกออกมาเช็คต่างหาก เผื่อเคสที่มี OT แต่ไม่มี Check-in หรือโครงสร้างแปลกๆ)
-                    if (data.overtime && typeof data.overtime.hours === 'number') {
-                        stats.ot += data.overtime.hours;
-                    }
-                });
+                        // เก็บ OT (แยกออกมาเช็คต่างหาก เผื่อเคสที่มี OT แต่ไม่มี Check-in หรือโครงสร้างแปลกๆ)
+                        if (data.overtime && typeof data.overtime.hours === 'number') {
+                            stats.ot += data.overtime.hours;
+                        }
+                    });
 
                     leavesSnap.forEach(doc => {
                         const data = doc.data();

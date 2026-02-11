@@ -54,7 +54,7 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-const CACHE_NAME = "timetracker-v11.7-fix-ot"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
+const CACHE_NAME = "timetracker-v15.0-fix-ot"; // เปลี่ยนเวอร์ชั่นเมื่อมีการแก้โค้ด
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
