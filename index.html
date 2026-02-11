@@ -6041,14 +6041,19 @@
                                 </p>
                             </div>
                         </div>
+
                         <div class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-gray-100 text-sm">
-                            <div class="flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5" title="ชั่วโมงทำงานปกติ">
+                                <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 <span class="font-medium text-gray-700">${regularWorkHours.toFixed(2)} ชม.</span>
                             </div>
-                            <div class="flex items-center gap-1.5">
+
+                            <div class="flex items-center gap-1.5" title="Overtime">
+                                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 <span class="font-medium text-gray-700">OT: ${overtimeHours.toFixed(1)} ชม.</span>
                             </div>
                         </div>
+
                         <div class="mt-3 pt-3 border-t border-gray-100 text-sm">
                             ${workTypeHTML}
                         </div>
@@ -6623,6 +6628,11 @@
                 // 4. คำนวณชั่วโมงงานปกติ (เวลารวมทั้งหมด - OT)
                 const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
                 let regularWorkHours = totalWorkHours - overtimeHours;
+
+                // ถ้าเกิน 8 ชั่วโมง ให้ตัดเหลือแค่ 8.00 (เพื่อความง่ายของ HR)
+                if (regularWorkHours > 8) {
+                    regularWorkHours = 8.00;
+                }
 
                 return {
                     regularWorkHours: Math.max(0, regularWorkHours),
