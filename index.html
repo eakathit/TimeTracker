@@ -2905,7 +2905,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="firebase-config.js?v=FORCE_UPDATE_003"></script>
+    <script src="firebase-config.js?v=FORCE_UPDATE_005"></script>
     <script>
         // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
         function toLocalISOString(date) {
@@ -6195,9 +6195,11 @@
 
                             // Safety Net: ถ้าเลือก OT แต่คำนวณได้ 0 (เพราะเวลาปริ่มๆ) ให้บังคับเป็น 0.5
                             let finalOtHours = withOT ? myHours.overtimeHours : 0;
-                            if (withOT && finalOtHours === 0 && checkoutTime.getHours() >= 18) {
+                            if (withOT && checkoutTime.getHours() >= 18) {
+                            if (finalOtHours < 0.5) {
                                 finalOtHours = 0.5;
                             }
+                        }
 
                             // Update ข้อมูลตัวเอง
                             batch.update(workRecordRef, {
