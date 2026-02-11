@@ -6143,32 +6143,26 @@
                         try {
                             if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
-                            const checkoutTime = new Date(now);
+                            const checkoutTime = new Date(); // เวลาปัจจุบัน
                             checkoutTime.setSeconds(0, 0);
 
                             const lat = latestPosition.coords.latitude;
                             const lng = latestPosition.coords.longitude;
                             const batch = db.batch();
 
-                            // 1. คำนวณเวลาของตัวเอง
                             let calcTime = new Date(checkoutTime);
+                            // ถ้าไม่เอา OT ให้ปัดเวลากลับไปที่ 17:30 เพื่อไม่ให้มีค่า OT ในการคำนวณ
                             if (!withOT && checkoutTime.getHours() >= 18) {
                                 calcTime.setHours(17, 30, 0, 0);
                             }
 
+                            // คำนวณเวลาโดยใช้ข้อมูลจาก recordData ที่ดึงไว้ก่อนหน้านี้
                             const myHours = calculateWorkHours(recordData.checkIn.timestamp.toDate(), calcTime);
 
-                            // --- เพิ่มความปลอดภัย (Safety Check) ตรงนี้ ---
-                            let finalOtHours = withOT ? (myHours.overtimeHours || 0) : 0;
-
-                            // บังคับ 0.5 ถ้าเลิกงานหลัง 18:00 และกดยืนยัน OT
-                            if (withOT && finalOtHours < 0.5 && checkoutTime.getHours() >= 18) {
-                                finalOtHours = 0.5;
-                            }
-
+                            const finalOtHours = withOT ? (myHours.overtimeHours || 0) : 0;
                             const finalRegularHours = myHours.regularWorkHours || 0;
 
-                            // Update ข้อมูลตัวเอง
+                            // บันทึกลง Firebase
                             batch.update(workRecordRef, {
                                 checkOut: {
                                     timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
@@ -6176,11 +6170,10 @@
                                     locationNote: note
                                 },
                                 status: "completed",
-                                // ใช้ (value || 0) ก่อนเรียก toFixed เสมอ
                                 overtime: {
-                                    hours: Number((finalOtHours || 0).toFixed(2))
+                                    hours: Number(finalOtHours.toFixed(2))
                                 },
-                                regularHours: Number((finalRegularHours || 0).toFixed(2))
+                                regularHours: Number(finalRegularHours.toFixed(2)) // อัปเดตเวลาปกติให้ถูกต้อง
                             });
 
                             // 2. ถ้าเป็น Leader และมีลูกน้อง
@@ -6226,18 +6219,11 @@
 
                             await batch.commit();
 
-                            // ตรวจสอบว่ามี SweetAlert2 (Swal) หรือไม่
+                            // แจ้งเตือน (รองรับกรณีไม่มี Swal)
                             if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    title: 'สำเร็จ',
-                                    text: 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว',
-                                    icon: 'success',
-                                    confirmButtonText: 'ตกลง'
-                                }).then(() => {
-                                    window.location.reload();
-                                });
+                                Swal.fire('สำเร็จ', 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว', 'success')
+                                    .then(() => window.location.reload());
                             } else {
-                                // ถ้าไม่มี Swal ให้ใช้ alert ปกติ หรือฟังก์ชันแจ้งเตือนที่มีอยู่
                                 alert('บันทึกเวลาเลิกงานเรียบร้อยแล้ว');
                                 window.location.reload();
                             }
@@ -6604,31 +6590,43 @@
 
             // --- ฟังก์ชันคำนวณชั่วโมงงานและ OT (Update ล่าสุด) ---
             function calculateWorkHours(checkinDate, checkoutDate) {
-                let diffMillis = checkoutDate - checkinDate;
+                // 1. หาเวลารวม (ms)
+                let workDurationMillis = checkoutDate - checkinDate;
+                if (workDurationMillis < 0) workDurationMillis = 0;
 
-                // 1. หักเวลาพักเที่ยง 1 ชม. (ถ้าทำงานครอบคลุมช่วง 12:00 - 13:00)
-                const lunchStart = new Date(checkinDate).setHours(12, 0, 0, 0);
-                const lunchEnd = new Date(checkinDate).setHours(13, 0, 0, 0);
-                if (checkinDate.getTime() < lunchEnd && checkoutDate.getTime() > lunchStart) {
-                    diffMillis -= 3600000;
+                // 2. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00)
+                const lunchStart = new Date(checkinDate);
+                lunchStart.setHours(12, 0, 0, 0);
+                const lunchEnd = new Date(checkinDate);
+                lunchEnd.setHours(13, 0, 0, 0);
+
+                if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
+                    workDurationMillis -= 3600000;
                 }
 
-                const totalActualHours = diffMillis / 3600000;
-                let otHours = 0;
+                let overtimeHours = 0;
 
-                // 2. คำนวณ OT (เริ่มนับ 18:00 โดยใช้ฐาน 17:30)
-                const otStartThreshold = new Date(checkoutDate).setHours(18, 0, 0, 0);
-                const otBaseTime = new Date(checkoutDate).setHours(17, 30, 0, 0);
+                // 3. คำนวณ OT (ฐานเริ่มที่ 17:30 นับทุก 30 นาทีเต็ม)
+                const otStartThreshold = new Date(checkoutDate);
+                otStartThreshold.setHours(18, 0, 0, 0); // ต้องเลิก 18:00 ถึงจะเริ่มคิด OT
 
-                if (checkoutDate.getTime() >= otStartThreshold) {
-                    const otDiffMillis = checkoutDate.getTime() - otBaseTime;
-                    const otBlocks = Math.floor(otDiffMillis / (1000 * 60 * 30));
-                    otHours = otBlocks * 0.5;
+                const normalEndThreshold = new Date(checkoutDate);
+                normalEndThreshold.setHours(17, 30, 0, 0); // จุดเริ่มนับฐาน OT
+
+                if (checkoutDate >= otStartThreshold) {
+                    const otMillis = checkoutDate - normalEndThreshold;
+                    // ใช้ Math.floor เพื่อให้นับตามจำนวน 30 นาทีที่ทำครบจริง
+                    const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
+                    overtimeHours = otBlocks * 0.5;
                 }
+
+                // 4. คำนวณชั่วโมงงานปกติ (เวลารวมทั้งหมด - OT)
+                const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
+                let regularWorkHours = totalWorkHours - overtimeHours;
 
                 return {
-                    totalActualHours: totalActualHours,
-                    potentialOtHours: otHours
+                    regularWorkHours: Math.max(0, regularWorkHours),
+                    overtimeHours: Math.max(0, overtimeHours)
                 };
             }
 
