@@ -2905,7 +2905,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="firebase-config.js?v=1.3"></script>
+    <script src="firebase-config.js?v=20260211-2"></script>
     <script>
         // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
         function toLocalISOString(date) {
@@ -2952,17 +2952,22 @@
             };
 
             if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function () {
-                    // ลงทะเบียน sw.js สำหรับ PWA
-                    navigator.serviceWorker.register('/sw.js').then(function (registration) {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    }, function (err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-                    // สำหรับ FCM ปกติ Firebase SDK จะพยายามหาไฟล์ firebase-messaging-sw.js ให้อัตโนมัติ
-                    // เมื่อมีการเรียกใช้ getToken() ครับ
+            window.addEventListener('load', function () {
+                // 1. ลงทะเบียน sw.js (โค้ดเดิมของคุณ)
+                navigator.serviceWorker.register('/sw.js').then(function (registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function (err) {
+                    console.log('ServiceWorker registration failed: ', err);
                 });
-            }
+
+                // 2. ★ เพิ่มส่วนนี้เข้าไปครับ ★
+                // หน้าที่: เมื่อ sw.js ตัวใหม่ (ที่มีการแก้บั๊ก) เริ่มทำงาน มันจะสั่งให้หน้าเว็บ Refresh ตัวเองทันที 1 ครั้ง
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log("New Service Worker activated. Reloading page...");
+                    window.location.reload();
+                });
+            });
+        }
 
             // --- Initialize Firebase & Config ---
             firebase.initializeApp(firebaseConfig);
@@ -6432,20 +6437,6 @@
                 const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                 return R * c;
-            }
-
-            function calculateWorkHours(checkinDate, checkoutDate) {
-                const diffMs = checkoutDate - checkinDate;
-                const diffHrs = diffMs / (1000 * 60 * 60);
-
-                // ตัวอย่างการคำนวณคร่าวๆ (ปรับสูตรตามกฎบริษัทคุณได้)
-                let regularWorkHours = Math.min(diffHrs, 8); // ทำงานปกติไม่เกิน 8 ชม.
-                let overtimeHours = Math.max(0, diffHrs - 9); // ถ้าเกิน 9 ชม. (รวมพัก 1) ให้เป็น OT
-
-                return {
-                    regularWorkHours: parseFloat(regularWorkHours.toFixed(2)),
-                    overtimeHours: parseFloat(overtimeHours.toFixed(2))
-                };
             }
 
             function showPage(pageId) {
