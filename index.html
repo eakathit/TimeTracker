@@ -2905,7 +2905,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="firebase-config.js?v=20260211-2"></script>
+    <script src="firebase-config.js?v=FORCE_UPDATE_001"></script>
     <script>
         // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
         function toLocalISOString(date) {
@@ -6612,6 +6612,7 @@
 
             // --- ฟังก์ชันคำนวณชั่วโมงงานและ OT (Update ล่าสุด) ---
 function calculateWorkHours(checkinDate, checkoutDate) {
+    console.log("Checking Version: NEW_CODE_LOADED_V9");
     // 1. หาเวลารวม (ms)
     let workDurationMillis = checkoutDate - checkinDate;
     if (workDurationMillis < 0) workDurationMillis = 0;
