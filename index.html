@@ -6182,7 +6182,7 @@ const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
         // ⚠️ การตั้งค่าโหมด:
         // - true  = โหมดเทส (ระบบจะยอมใช้เวลาที่คุณล็อคไว้ด้านล่าง เพื่อให้คำนวณ OT ได้)
         // - false = โหมดใช้งานจริง (ระบบจะบังคับใช้เวลา Server เท่านั้น ป้องกันการโกง 100%)
-        const isDebugMode = true; 
+        const isDebugMode = false; 
         
         let clientCheckoutTime = new Date(); // เวลาปัจจุบันของเครื่อง
 
