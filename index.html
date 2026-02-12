@@ -6132,61 +6132,102 @@
                 document.getElementById('request-ot-btn').classList.remove('hidden'); // [เพิ่มบรรทัดนี้]
             }
 
-            // =========================================================
-// ส่วนที่ 1: ฟังก์ชันบันทึกข้อมูล (ยิง Cloud Function)
-// =========================================================
+            // --- Logic ปุ่ม Check Out (รองรับ Group Checkout) ---
+            checkoutBtn.addEventListener('click', async () => {
+                // 1. Validation พื้นฐาน
+                if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
+                if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS...", "warning");
+
+                const checkoutSpan = checkoutBtn.querySelector('span');
+                checkoutBtn.disabled = true;
+                if (checkoutSpan) checkoutSpan.textContent = "ตรวจสอบสถานะกลุ่ม...";
+
+                try {
+                    // 2. เตรียมข้อมูลเวลา
+                    const now = new Date();
+
+                    const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
+                    const workRecordRef = db.collection('work_records').doc(docId);
+                    const workRecordDoc = await workRecordRef.get();
+
+                    if (!workRecordDoc.exists) throw new Error("ไม่พบข้อมูลการเข้างาน");
+
+                    const recordData = workRecordDoc.data();
+                    const workType = recordData.checkIn.workType;
+                    const roomId = recordData.checkIn.roomId;
+
+                    // กำหนด Location Note
+                    const locationNote = workType === 'in_factory' ? 'factory_normal' : (recordData.checkIn.locationNote || 'On-site');
+
+                    // --- ฟังก์ชันบันทึก Check-out (ฉบับแก้ไข: Fix lat error + Cloud Function + Debug Mode) ---
 const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
-    // เช็ค GPS อีกครั้ง
+    // 1. ตรวจสอบข้อมูลพิกัด (Fix ReferenceError)
     if (!latestPosition || !latestPosition.coords) {
-        if (typeof Swal !== 'undefined') Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลตำแหน่ง GPS', 'error');
-        else alert('ไม่พบข้อมูลตำแหน่ง GPS');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลตำแหน่ง GPS กรุณาลองใหม่อีกครั้ง', 'error');
+        } else {
+            alert('ไม่พบข้อมูลตำแหน่ง GPS');
+        }
         return;
     }
 
+    // ประกาศตัวแปร lat, lng จาก latestPosition ให้ถูกต้อง
     const lat = latestPosition.coords.latitude;
     const lng = latestPosition.coords.longitude;
 
     try {
-        const checkoutSpan = document.querySelector('#checkoutBtn span');
         if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
-        // --- 🚧 CONFIG: ตั้งค่าโหมด Debug ตรงนี้ 🚧 ---
-        const isDebugMode = true; // ⚠️ แก้เป็น false เมื่อใช้งานจริง
-        let clientCheckoutTime = new Date();
+        // ================= 🚧 TEST CODE START 🚧 =================
+        // ⚠️ การตั้งค่าโหมด:
+        // - true  = โหมดเทส (ระบบจะยอมใช้เวลาที่คุณล็อคไว้ด้านล่าง เพื่อให้คำนวณ OT ได้)
+        // - false = โหมดใช้งานจริง (ระบบจะบังคับใช้เวลา Server เท่านั้น ป้องกันการโกง 100%)
+        const isDebugMode = true; 
+        
+        let clientCheckoutTime = new Date(); // เวลาปัจจุบันของเครื่อง
 
         if (isDebugMode) {
-            clientCheckoutTime.setHours(18, 45, 0, 0); // ล็อคเวลาเทส
-            console.warn("⚠️ DEBUG MODE: Force Checkout Time to 18:45");
+            // ล็อคเวลาเป็น 18:45 ของวันนี้ เพื่อเทสว่า OT ขึ้นไหม (0.75 ชม.)
+            clientCheckoutTime.setHours(18, 45, 0, 0); 
+            console.warn("⚠️ DEBUG MODE ACTIVATED: Force Checkout Time to 18:45");
         }
-        // ---------------------------------------------
+        // ================= 🚧 TEST CODE END 🚧 ===================
 
-        // เรียก Cloud Function
+        // เรียกใช้ Cloud Function 'recordTimestamp'
         const recordTimestampFn = firebase.app().functions('asia-southeast1').httpsCallable('recordTimestamp');
         
         console.log("Sending request to Cloud Function...");
+
         const result = await recordTimestampFn({
             type: 'checkout',
-            calculateOT: withOT,
-            checkoutTime: clientCheckoutTime.toISOString(),
-            isDebug: isDebugMode,
-            location: { latitude: lat, longitude: lng },
-            note: note
+            calculateOT: withOT,                    // บอก Server ว่าเราขอคิด OT ไหม
+            checkoutTime: clientCheckoutTime.toISOString(), // ส่งเวลาเครื่องไป
+            isDebug: isDebugMode,                   // ส่งกุญแจลับไปบอก Server
+            location: {                             // ส่งพิกัดที่ถูกต้อง
+                latitude: lat,
+                longitude: lng
+            },
+            note: note                              // ส่งหมายเหตุ
         });
 
         console.log("✅ Server Response:", result.data);
 
-        // อัปเดตกลุ่ม (ถ้ามี)
+        // --- ส่วนจัดการ Group Checkout (สำหรับหัวหน้า) ---
         if (groupUpdateData && roomId) {
-            const roomRef = db.collection('onsite_rooms').doc(roomId);
-            await roomRef.update(groupUpdateData);
+             console.log("Group checkout data processed for leader.");
+             const roomRef = db.collection('onsite_rooms').doc(roomId);
+             await roomRef.update(groupUpdateData);
         }
 
-        // แจ้งเตือนสำเร็จ
+        // --- แจ้งเตือนความสำเร็จ ---
         if (typeof Swal !== 'undefined') {
             let msg = 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว';
+            
+            // ถ้า Server ส่งยอด OT กลับมา ให้โชว์ด้วย
             if (result.data && result.data.overtimeHours > 0) {
                 msg += `\n(บันทึก OT: ${result.data.overtimeHours} ชม.)`;
             }
+
             Swal.fire({
                 title: 'สำเร็จ',
                 text: msg,
@@ -6201,164 +6242,149 @@ const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
 
     } catch (error) {
         console.error("❌ Checkout Error:", error);
+        
+        // แสดง Error ที่ชัดเจน
         let errorMsg = error.message;
         if (error.code === 'permission-denied') errorMsg = "ไม่มีสิทธิ์เข้าถึงข้อมูล";
+        if (error.code === 'internal') errorMsg = "เกิดข้อผิดพลาดที่ Server (Cloud Function)";
 
-        if (typeof Swal !== 'undefined') Swal.fire('เกิดข้อผิดพลาด', errorMsg, 'error');
-        else alert("Error: " + errorMsg);
-
-        // คืนค่าปุ่ม
-        const checkoutSpan = document.querySelector('#checkoutBtn span');
-        const checkoutBtn = document.getElementById('checkoutBtn');
-        if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-        if (checkoutBtn) checkoutBtn.disabled = false;
-    }
-};
-
-// =========================================================
-// ส่วนที่ 2: ฟังก์ชัน Popup ถาม Note และถาม OT
-// =========================================================
-const checkTimeAndProceed = async (groupUpdateData = null) => {
-    // 1. ถามหมายเหตุ
-    const { value: userNote } = await Swal.fire({
-        title: 'บันทึกเวลาเลิกงาน',
-        input: 'text',
-        inputLabel: 'หมายเหตุ (ถ้ามี)',
-        inputPlaceholder: 'เช่น กลับบ้าน, ไปหาลูกค้า...',
-        showCancelButton: true,
-        confirmButtonText: 'ต่อไป',
-        cancelButtonText: 'ยกเลิก',
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33'
-    });
-
-    if (userNote === undefined) {
-        // กดยกเลิก -> คืนค่าปุ่ม
-        const checkoutSpan = document.querySelector('#checkoutBtn span');
-        const checkoutBtn = document.getElementById('checkoutBtn');
-        if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-        if (checkoutBtn) checkoutBtn.disabled = false;
-        return;
-    }
-
-    // 2. เช็คเวลา 17:30 น.
-    const now = new Date();
-    const isOvertimeTime = (now.getHours() * 60 + now.getMinutes()) >= (17 * 60 + 30);
-
-    if (isOvertimeTime) {
-        const result = await Swal.fire({
-            title: 'บันทึก OT หรือไม่?',
-            text: "ตอนนี้เลยเวลาเลิกงานแล้ว คุณต้องการบันทึกเป็น OT หรือไม่?",
-            icon: 'question',
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: '✅ บันทึก OT',
-            denyButtonText: '❌ ไม่บันทึก (เลิกปกติ)',
-            cancelButtonText: 'ยกเลิก',
-            confirmButtonColor: '#28a745',
-            denyButtonColor: '#6c757d'
-        });
-
-        if (result.isConfirmed) executeSaveCheckout(true, userNote, groupUpdateData);
-        else if (result.isDenied) executeSaveCheckout(false, userNote, groupUpdateData);
-        else {
-            // กดยกเลิก Popup OT -> คืนค่าปุ่ม
-            const checkoutSpan = document.querySelector('#checkoutBtn span');
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-            if (checkoutBtn) checkoutBtn.disabled = false;
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('เกิดข้อผิดพลาด', errorMsg, 'error');
+        } else {
+            alert("Error: " + errorMsg);
         }
-    } else {
-        executeSaveCheckout(false, userNote, groupUpdateData);
-    }
-};
-
-// =========================================================
-// ส่วนที่ 3: ปุ่มกดหลัก (Event Listener) - ตัวใหม่
-// =========================================================
-const checkoutBtn = document.getElementById('checkoutBtn');
-
-// ⚠️ อันนี้คือตัวใหม่! ให้ลบ checkoutBtn.addEventListener ของเก่าทิ้ง แล้วใช้อันนี้แทน
-checkoutBtn.addEventListener('click', async () => {
-    const checkoutSpan = checkoutBtn.querySelector('span');
-
-    if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
-    if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS...", "warning");
-
-    checkoutBtn.disabled = true;
-    if (checkoutSpan) checkoutSpan.textContent = "ตรวจสอบข้อมูล...";
-
-    try {
-        const now = new Date();
-        const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
-        const workRecordRef = db.collection('work_records').doc(docId);
-        const workRecordDoc = await workRecordRef.get();
-
-        if (!workRecordDoc.exists) throw new Error("ไม่พบข้อมูลการเข้างานวันนี้");
-
-        const recordData = workRecordDoc.data();
-        const workType = recordData.checkIn.workType;
-        const currentRoomId = recordData.checkIn.roomId;
         
-        const lat = latestPosition.coords.latitude;
-        const lng = latestPosition.coords.longitude;
-
-        // กรณี A: Onsite Group
-        if (workType === 'onsite_group' && currentRoomId) {
-            const roomRef = db.collection('onsite_rooms').doc(currentRoomId);
-            const roomDoc = await roomRef.get();
-            if (!roomDoc.exists) throw new Error("ไม่พบข้อมูลกลุ่มงาน");
-            const roomData = roomDoc.data();
-            const isLeader = (currentUser.uid === roomData.leaderId);
-
-            if (isLeader) {
-                const { value: checkoutChoice } = await Swal.fire({
-                    title: 'หัวหน้ากลุ่ม: จบงานที่ไหน?',
-                    text: 'สมาชิกในกลุ่มจะยึดตามสถานที่ที่คุณเลือก',
-                    icon: 'info',
-                    showDenyButton: true,
-                    showCancelButton: true,
-                    confirmButtonText: '🏭 กลับโรงงาน',
-                    denyButtonText: '🏨 พักโรงแรม/ตจว.',
-                    cancelButtonText: 'ยกเลิก'
-                });
-
-                if (!checkoutChoice && checkoutChoice !== false) throw new Error("ยกเลิกการทำรายการ");
-
-                if (checkoutChoice) {
-                    const dist = calculateDistance(lat, lng, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-                    if (dist > ALLOWED_RADIUS_METERS) throw new Error(`คุณยังไม่ถึงโรงงาน (ห่าง ${dist.toFixed(0)} ม.)`);
-                    checkTimeAndProceed({ status: 'closed', checkoutMode: 'factory_return', checkoutTime: firebase.firestore.FieldValue.serverTimestamp() });
-                } else {
-                    checkTimeAndProceed({ status: 'closed', checkoutMode: 'offsite_hotel', checkoutTime: firebase.firestore.FieldValue.serverTimestamp() });
-                }
-            } else {
-                if (roomData.status !== 'closed' || !roomData.checkoutMode) throw new Error("กรุณารอหัวหน้ากลุ่ม (Leader) กด Check-out ก่อน");
-                if (roomData.checkoutMode === 'factory_return') {
-                    const dist = calculateDistance(lat, lng, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-                    if (dist > ALLOWED_RADIUS_METERS) throw new Error(`หัวหน้าจบงานที่โรงงาน แต่คุณอยู่นอกพื้นที่ (${dist.toFixed(0)} ม.)`);
-                }
-                checkTimeAndProceed();
-            }
-        } 
-        // กรณี B: ปกติ
-        else {
-            const dist = calculateDistance(lat, lng, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-            if (dist <= ALLOWED_RADIUS_METERS) checkTimeAndProceed();
-            else throw new Error(`อยู่นอกพื้นที่โรงงาน (${dist.toFixed(0)} ม.)`);
-        }
-
-    } catch (error) {
-        console.error("Logic Error:", error);
-        if (error.message !== "ยกเลิกการทำรายการ") {
-            if (typeof Swal !== 'undefined') Swal.fire('แจ้งเตือน', error.message, 'warning');
-            else alert(error.message);
-        }
-        checkoutBtn.disabled = false;
+        // คืนค่าปุ่มให้กดใหม่ได้
         if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+        checkoutBtn.disabled = false;
     }
-});
+};
 
+                    // Helper: ถาม OT (ใช้ร่วมกันทุกกรณี)
+                    function checkTimeAndProceed(note, groupUpdate = null) {
+                        const h = now.getHours();
+                        const m = now.getMinutes();
+
+                        // ★ แก้กลับเป็น 18 (หรือเวลาที่คุณต้องการให้ระบบเริ่มถามเรื่อง OT)
+                        // เดิมตอนเทสคือ h >= 8
+                        if (h >= 18) {
+                            setTimeout(() => {
+                                showConfirmDialog(
+                                    "เลยเวลาเลิกงาน ต้องการบันทึก OT หรือไม่?",
+                                    () => executeSaveCheckout(true, note, groupUpdate),
+                                    () => executeSaveCheckout(false, note, groupUpdate),
+                                    "บันทึก OT",
+                                    "ไม่เอา OT"
+                                );
+                            }, 300);
+                        } else {
+                            executeSaveCheckout(true, note, groupUpdate);
+                        }
+                    }
+
+                    // =========================================================
+                    // 3. Logic แยกตามประเภทงาน (Main Logic)
+                    // =========================================================
+
+                    // >>> กรณี: Onsite Group (ทำงานเป็นกลุ่ม) <<<
+                    if (workType === 'onsite_group' && roomId) {
+
+                        // ดึงข้อมูลห้อง (Room) มาตรวจสอบสถานะ
+                        const roomRef = db.collection('onsite_rooms').doc(roomId);
+                        const roomDoc = await roomRef.get();
+                        if (!roomDoc.exists) throw new Error("ไม่พบข้อมูลกลุ่มงาน (Room Not Found)");
+                        const roomData = roomDoc.data();
+
+                        const isLeader = (currentUser.uid === roomData.leaderId);
+
+                        if (isLeader) {
+                            // [Leader Logic]: เป็นคนเลือกสถานที่ปิดงาน
+
+                            showConfirmDialog(
+                                "Leader: จบงานที่ไหน? (สมาชิกจะยึดตามคุณ)",
+
+                                // Choice A: กลับโรงงาน (ขวา)
+                                async () => {
+                                    const dist = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+                                    if (dist > ALLOWED_RADIUS_METERS) {
+                                        showNotification(`คุณยังไม่ถึงโรงงาน (ห่าง ${dist.toFixed(0)} ม.)`, 'error');
+                                        checkoutBtn.disabled = false;
+                                        if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+                                        return;
+                                    }
+
+                                    // ถ้าผ่าน: เตรียมข้อมูลปิดห้องว่า "กลับโรงงาน"
+                                    const groupUpdate = {
+                                        status: 'closed',
+                                        checkoutMode: 'factory_return',
+                                        checkoutTime: firebase.firestore.FieldValue.serverTimestamp()
+                                    };
+                                    checkTimeAndProceed('factory_return', groupUpdate);
+                                },
+
+                                // Choice B: พักโรงแรม (ซ้าย)
+                                async () => {
+                                    // เตรียมข้อมูลปิดห้องว่า "พักโรงแรม"
+                                    const groupUpdate = {
+                                        status: 'closed',
+                                        checkoutMode: 'offsite_hotel',
+                                        checkoutTime: firebase.firestore.FieldValue.serverTimestamp()
+                                    };
+                                    checkTimeAndProceed('offsite_hotel', groupUpdate);
+                                },
+                                "กลับโรงงาน", "พักโรงแรม"
+                            );
+
+                        } else {
+                            // [Member Logic]: รอหัวหน้า / ทำตามหัวหน้า
+
+                            if (roomData.status !== 'closed' || !roomData.checkoutMode) {
+                                // หัวหน้ายังไม่กดปิดงาน
+                                showNotification("กรุณารอหัวหน้ากลุ่ม (Leader) กด Check-out ก่อน", "warning");
+                                checkoutBtn.disabled = false;
+                                if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+                                return;
+                            }
+
+                            // หัวหน้ากดแล้ว -> ตรวจสอบโหมดที่หัวหน้าเลือก
+                            if (roomData.checkoutMode === 'factory_return') {
+                                // หัวหน้าเลือกกลับโรงงาน -> สมาชิกต้องเช็คระยะด้วย
+                                const dist = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+                                if (dist > ALLOWED_RADIUS_METERS) {
+                                    showNotification(`หัวหน้าจบงานที่โรงงาน แต่คุณอยู่นอกพื้นที่ (${dist.toFixed(0)} ม.)`, 'error');
+                                    checkoutBtn.disabled = false;
+                                    if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+                                    return;
+                                }
+                                checkTimeAndProceed('factory_return_member');
+                            } else {
+                                // หัวหน้าเลือกพักโรงแรม -> สมาชิกผ่านได้เลย
+                                checkTimeAndProceed('offsite_hotel_member');
+                            }
+                        }
+
+                    } else {
+                        // >>> กรณี: ทำงานคนเดียว / In Factory (Logic เดิม) <<<
+
+                        const dist = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+                        if (dist <= ALLOWED_RADIUS_METERS) {
+                            // อยู่ในโรงงาน -> ผ่าน
+                            checkTimeAndProceed('factory_normal');
+                        } else {
+                            // อยู่นอกโรงงาน -> แจ้งเตือน
+                            showNotification(`อยู่นอกพื้นที่โรงงาน (${dist.toFixed(0)} ม.)`, 'error');
+                            checkoutBtn.disabled = false;
+                            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+                        }
+                    }
+
+                } catch (error) {
+                    console.error("Checkout Global Error:", error);
+                    showNotification("Error: " + error.message, 'error');
+                    checkoutBtn.disabled = false;
+                    if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+                }
+            });
 
             const provider = new firebase.auth.GoogleAuthProvider();
             // บังคับให้ Google แสดงหน้าต่างเลือกบัญชีทุกครั้ง
