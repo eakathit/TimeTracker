@@ -2907,7 +2907,7 @@
     <script defer src="https://www.gstatic.com/firebasejs/12.3.0/firebase-messaging-compat.js"></script>
 
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="firebase-config.js?v=FORCE_UPDATE_020"></script>
+    <script src="firebase-config.js?v=FORCE_UPDATE_028"></script>
     <script>
         // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
         function toLocalISOString(date) {
@@ -6146,10 +6146,6 @@
                     // 2. เตรียมข้อมูลเวลา
                     const now = new Date();
 
-                    // 🔴🔴🔴 [โหมดเทส] เปิดบรรทัดล่างนี้เพื่อจำลองเวลา 18:30 (อย่าลืมปิดก่อนใช้จริง) 🔴🔴🔴
-                    // now.setHours(18, 30, 0, 0); 
-                    // ---------------------------------------------------------------------------
-
                     const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
                     const workRecordRef = db.collection('work_records').doc(docId);
                     const workRecordDoc = await workRecordRef.get();
@@ -6163,102 +6159,106 @@
                     // กำหนด Location Note
                     const locationNote = workType === 'in_factory' ? 'factory_normal' : (recordData.checkIn.locationNote || 'On-site');
 
-                    // --- ฟังก์ชันบันทึก (ประกาศไว้ข้างในนี้เพื่อให้เรียกใช้ตัวแปรได้ง่าย) ---
-                    const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
-                        try {
-                            if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
+                    // --- ฟังก์ชันบันทึก Check-out (ฉบับแก้ไข: Fix lat error + Cloud Function + Debug Mode) ---
+const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
+    // 1. ตรวจสอบข้อมูลพิกัด (Fix ReferenceError)
+    if (!latestPosition || !latestPosition.coords) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('ผิดพลาด', 'ไม่พบข้อมูลตำแหน่ง GPS กรุณาลองใหม่อีกครั้ง', 'error');
+        } else {
+            alert('ไม่พบข้อมูลตำแหน่ง GPS');
+        }
+        return;
+    }
 
-                            const checkoutTime = new Date(); // เวลาปัจจุบัน
-                            checkoutTime.setSeconds(0, 0);
+    // ประกาศตัวแปร lat, lng จาก latestPosition ให้ถูกต้อง
+    const lat = latestPosition.coords.latitude;
+    const lng = latestPosition.coords.longitude;
 
-                            const lat = latestPosition.coords.latitude;
-                            const lng = latestPosition.coords.longitude;
-                            const batch = db.batch();
+    try {
+        if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
 
-                            let calcTime = new Date(checkoutTime);
-                            // ถ้าไม่เอา OT ให้ปัดเวลากลับไปที่ 17:30 เพื่อไม่ให้มีค่า OT ในการคำนวณ
-                            if (!withOT && checkoutTime.getHours() >= 18) {
-                                calcTime.setHours(17, 30, 0, 0);
-                            }
+        // ================= 🚧 TEST CODE START 🚧 =================
+        // ⚠️ การตั้งค่าโหมด:
+        // - true  = โหมดเทส (ระบบจะยอมใช้เวลาที่คุณล็อคไว้ด้านล่าง เพื่อให้คำนวณ OT ได้)
+        // - false = โหมดใช้งานจริง (ระบบจะบังคับใช้เวลา Server เท่านั้น ป้องกันการโกง 100%)
+        const isDebugMode = true; 
+        
+        let clientCheckoutTime = new Date(); // เวลาปัจจุบันของเครื่อง
 
-                            // คำนวณเวลาโดยใช้ข้อมูลจาก recordData ที่ดึงไว้ก่อนหน้านี้
-                            const myHours = calculateWorkHours(recordData.checkIn.timestamp.toDate(), calcTime);
+        if (isDebugMode) {
+            // ล็อคเวลาเป็น 18:45 ของวันนี้ เพื่อเทสว่า OT ขึ้นไหม (0.75 ชม.)
+            clientCheckoutTime.setHours(18, 45, 0, 0); 
+            console.warn("⚠️ DEBUG MODE ACTIVATED: Force Checkout Time to 18:45");
+        }
+        // ================= 🚧 TEST CODE END 🚧 ===================
 
-                            const finalOtHours = withOT ? (myHours.overtimeHours || 0) : 0;
-                            const finalRegularHours = myHours.regularWorkHours || 0;
+        // เรียกใช้ Cloud Function 'recordTimestamp'
+        const recordTimestampFn = firebase.app().functions('asia-southeast1').httpsCallable('recordTimestamp');
+        
+        console.log("Sending request to Cloud Function...");
 
-                            // บันทึกลง Firebase
-                            batch.update(workRecordRef, {
-                                checkOut: {
-                                    timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
-                                    location: new firebase.firestore.GeoPoint(lat, lng),
-                                    locationNote: note
-                                },
-                                status: "completed",
-                                overtime: {
-                                    hours: Number(finalOtHours.toFixed(2))
-                                },
-                                regularHours: Number(finalRegularHours.toFixed(2)) // อัปเดตเวลาปกติให้ถูกต้อง
-                            });
+        const result = await recordTimestampFn({
+            type: 'checkout',
+            calculateOT: withOT,                    // บอก Server ว่าเราขอคิด OT ไหม
+            checkoutTime: clientCheckoutTime.toISOString(), // ส่งเวลาเครื่องไป
+            isDebug: isDebugMode,                   // ส่งกุญแจลับไปบอก Server
+            location: {                             // ส่งพิกัดที่ถูกต้อง
+                latitude: lat,
+                longitude: lng
+            },
+            note: note                              // ส่งหมายเหตุ
+        });
 
-                            // 2. ถ้าเป็น Leader และมีลูกน้อง
-                            if (groupUpdateData && roomId) {
-                                const membersSnapshot = await db.collection('work_records')
-                                    .where('checkIn.roomId', '==', roomId)
-                                    .where('checkIn.leaderId', '==', currentUser.uid)
-                                    .where('status', '==', 'checked_in')
-                                    .get();
+        console.log("✅ Server Response:", result.data);
 
-                                membersSnapshot.forEach(doc => {
-                                    const memberData = doc.data();
-                                    if (memberData.userId === currentUser.uid) return;
+        // --- ส่วนจัดการ Group Checkout (สำหรับหัวหน้า) ---
+        if (groupUpdateData && roomId) {
+             console.log("Group checkout data processed for leader.");
+             const roomRef = db.collection('onsite_rooms').doc(roomId);
+             await roomRef.update(groupUpdateData);
+        }
 
-                                    let memCalcTime = new Date(checkoutTime);
-                                    if (!withOT && checkoutTime.getHours() >= 18) memCalcTime.setHours(17, 30, 0, 0);
+        // --- แจ้งเตือนความสำเร็จ ---
+        if (typeof Swal !== 'undefined') {
+            let msg = 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว';
+            
+            // ถ้า Server ส่งยอด OT กลับมา ให้โชว์ด้วย
+            if (result.data && result.data.overtimeHours > 0) {
+                msg += `\n(บันทึก OT: ${result.data.overtimeHours} ชม.)`;
+            }
 
-                                    const memberHours = calculateWorkHours(memberData.checkIn.timestamp.toDate(), memCalcTime);
+            Swal.fire({
+                title: 'สำเร็จ',
+                text: msg,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => window.location.reload());
+        } else {
+            alert('บันทึกเวลาเลิกงานเรียบร้อยแล้ว');
+            window.location.reload();
+        }
 
-                                    // --- เพิ่มความปลอดภัยให้ข้อมูลลูกน้อง ---
-                                    let memberOt = withOT ? (memberHours.overtimeHours || 0) : 0;
-                                    if (withOT && memberOt < 0.5 && checkoutTime.getHours() >= 18) memberOt = 0.5;
+    } catch (error) {
+        console.error("❌ Checkout Error:", error);
+        
+        // แสดง Error ที่ชัดเจน
+        let errorMsg = error.message;
+        if (error.code === 'permission-denied') errorMsg = "ไม่มีสิทธิ์เข้าถึงข้อมูล";
+        if (error.code === 'internal') errorMsg = "เกิดข้อผิดพลาดที่ Server (Cloud Function)";
 
-                                    const memberReg = memberHours.regularWorkHours || 0;
-
-                                    batch.update(doc.ref, {
-                                        checkOut: {
-                                            timestamp: firebase.firestore.Timestamp.fromDate(checkoutTime),
-                                            location: new firebase.firestore.GeoPoint(lat, lng),
-                                            locationNote: `Auto (${note})`
-                                        },
-                                        status: "completed",
-                                        overtime: {
-                                            hours: Number((memberOt || 0).toFixed(2))
-                                        },
-                                        regularHours: Number((memberReg || 0).toFixed(2))
-                                    });
-                                });
-
-                                const roomRef = db.collection('onsite_rooms').doc(roomId);
-                                batch.update(roomRef, groupUpdateData);
-                            }
-
-                            await batch.commit();
-
-                            // แจ้งเตือน (รองรับกรณีไม่มี Swal)
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire('สำเร็จ', 'บันทึกเวลาเลิกงานเรียบร้อยแล้ว', 'success')
-                                    .then(() => window.location.reload());
-                            } else {
-                                alert('บันทึกเวลาเลิกงานเรียบร้อยแล้ว');
-                                window.location.reload();
-                            }
-
-                        } catch (error) {
-                            console.error("Checkout process error:", error);
-                            showNotification(error.message, "error");
-                            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-                        }
-                    };
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('เกิดข้อผิดพลาด', errorMsg, 'error');
+        } else {
+            alert("Error: " + errorMsg);
+        }
+        
+        // คืนค่าปุ่มให้กดใหม่ได้
+        if (checkoutSpan) checkoutSpan.textContent = "Check Out";
+        checkoutBtn.disabled = false;
+    }
+};
 
                     // Helper: ถาม OT (ใช้ร่วมกันทุกกรณี)
                     function checkTimeAndProceed(note, groupUpdate = null) {
