@@ -32,30 +32,6 @@ if (window.location.hostname === "localhost" || window.location.hostname === "12
 
                 // Storage: Port 9199
                 storage.useEmulator("127.0.0.1", 9199);
-
-                // ★★★ โค้ดใหม่: ซ่อนแถบแจ้งเตือน Emulator (แก้ไขแล้ว) ★★★
-                // const hideEmulatorBanner = () => {
-                //     // ค้นหา div ทุกตัวในหน้าเว็บ
-                //     const divs = document.querySelectorAll('div');
-                //     divs.forEach(div => {
-                //         // เช็คเฉพาะข้อความข้างใน (วิธีนี้แม่นยำที่สุด)
-                //         if (div.textContent &&
-                //             div.textContent.includes("Running in emulator mode") &&
-                //             div.textContent.includes("production credentials")) {
-
-                //             // สั่งซ่อนแบบถาวร (Important)
-                //             div.style.setProperty("display", "none", "important");
-                //             div.style.setProperty("visibility", "hidden", "important");
-                //             div.remove(); // สั่งลบ Element ทิ้งไปเลยเพื่อความชัวร์
-                //         }
-                //     });
-                // };
-
-                // // รันคำสั่งทุกๆ 1 วินาที (เผื่อมันเด้งกลับมาใหม่)
-                // setInterval(hideEmulatorBanner, 1000);
-
-                // // รันทันที 1 ครั้ง
-                // hideEmulatorBanner();
             }
 
 export let messaging = null;

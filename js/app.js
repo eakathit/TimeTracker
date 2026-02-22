@@ -1,4 +1,4 @@
-import { toLocalISOString, toLocalDateKey } from "./utils/dateHelper.js";
+import { toLocalISOString, toLocalDateKey, calculateWorkHours } from './utils/dateHelper.js';
 import {
   db,
   auth,
@@ -7,6 +7,12 @@ import {
   messaging,
 } from "./config/firebase-config.js";
 import { showNotification, showConfirmDialog } from "./utils/uiHelper.js";
+import { 
+    FACTORY_LOCATION, ALLOWED_RADIUS_METERS, MAX_ACCEPTABLE_ACCURACY, 
+    latestPosition, setMockPosition, calculateDistance, 
+    startWatchingPosition, stopWatchingPosition 
+} from './services/locationService.js';
+import { loadPayrollSummary, exportPayrollSummaryToExcel } from './services/payrollService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -213,30 +219,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Storage: Port 9199
     storage.useEmulator("127.0.0.1", 9199);
-
-    // ★★★ โค้ดใหม่: ซ่อนแถบแจ้งเตือน Emulator (แก้ไขแล้ว) ★★★
-    // const hideEmulatorBanner = () => {
-    //     // ค้นหา div ทุกตัวในหน้าเว็บ
-    //     const divs = document.querySelectorAll('div');
-    //     divs.forEach(div => {
-    //         // เช็คเฉพาะข้อความข้างใน (วิธีนี้แม่นยำที่สุด)
-    //         if (div.textContent &&
-    //             div.textContent.includes("Running in emulator mode") &&
-    //             div.textContent.includes("production credentials")) {
-
-    //             // สั่งซ่อนแบบถาวร (Important)
-    //             div.style.setProperty("display", "none", "important");
-    //             div.style.setProperty("visibility", "hidden", "important");
-    //             div.remove(); // สั่งลบ Element ทิ้งไปเลยเพื่อความชัวร์
-    //         }
-    //     });
-    // };
-
-    // // รันคำสั่งทุกๆ 1 วินาที (เผื่อมันเด้งกลับมาใหม่)
-    // setInterval(hideEmulatorBanner, 1000);
-
-    // // รันทันที 1 ครั้ง
-    // hideEmulatorBanner();
   }
 
   const LEAVE_TYPE_MAP = {
@@ -246,8 +228,6 @@ document.addEventListener("DOMContentLoaded", function () {
     maternity: "ลาคลอด", // เพิ่มบรรทัดนี้
   };
 
-  const FACTORY_LOCATION = { latitude: 13.625, longitude: 101.025 };
-  const ALLOWED_RADIUS_METERS = 150;
 
   // --- UI Elements ---
   const loadingSpinner = document.getElementById("loading-spinner");
@@ -402,12 +382,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const activeClass = ["border-sky-500", "text-sky-600", "bg-sky-50"];
   const inactiveClass = ["border-gray-300", "text-gray-500", "bg-white"];
 
-  // (เพิ่มตัวแปรนี้ด้านบน) กำหนดค่าความแม่นยำสูงสุดที่ยอมรับได้ (เช่น 100 เมตร)
-  const MAX_ACCEPTABLE_ACCURACY = 180;
   // --- App State ---
   let currentUser = null;
-  let watchId = null;
-  let latestPosition = null;
   let selectedWorkType = "in_factory";
   let photoFile = null;
   let controlsInitialized = false;
@@ -1714,10 +1690,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  
-// =======================================================
-            // 🌟 ระบบ Check-in (Refactored & Localhost GPS Bypass) 🌟
-            // =======================================================
 
             // 1. ฟังก์ชันบันทึก Check-in (แยกออกมาให้เรียกใช้ง่ายๆ ไม่ซ้อนกัน)
             const proceedWithCheckin = async (finalWorkType, reportData = null) => {
@@ -1779,11 +1751,8 @@ document.addEventListener("DOMContentLoaded", function () {
             // 2. จัดการปุ่ม "ยืนยัน (Confirm)" ใน Modal 
             const confirmCheckinBtn = document.getElementById('confirm-checkin-btn');
             if (confirmCheckinBtn) {
-                // ล้าง Event เดิมทิ้งก่อนป้องกันการเบิ้ล
-                const newConfirmBtn = confirmCheckinBtn.cloneNode(true);
-                confirmCheckinBtn.parentNode.replaceChild(newConfirmBtn, confirmCheckinBtn);
 
-                newConfirmBtn.addEventListener('click', async () => {
+                confirmCheckinBtn.addEventListener('click', async () => {
                     const workType = document.getElementById('checkin-work-type-text').textContent.trim();
                     const project = document.getElementById('checkin-project-text').textContent.trim();
                     let duration = document.getElementById('checkin-duration-text').textContent.trim();
@@ -1841,19 +1810,15 @@ document.addEventListener("DOMContentLoaded", function () {
             // 3. จัดการปุ่ม Check In วงกลมใหญ่หน้าแรก
             const mainCheckinBtn = document.getElementById('checkin-btn');
             if (mainCheckinBtn) {
-                // ล้าง Event เดิมทิ้งป้องกันการเบิ้ล
-                const newMainBtn = mainCheckinBtn.cloneNode(true);
-                mainCheckinBtn.parentNode.replaceChild(newMainBtn, mainCheckinBtn);
 
-                newMainBtn.addEventListener('click', async () => {
+                mainCheckinBtn.addEventListener('click', async () => {
                     const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
                     // 🌟 [โหมดเทส] จำลองว่ายืนอยู่กลางโรงงานเลย
                     if (isLocalhost) {
-                        console.log("🛠️ Localhost Mode: Bypassing GPS check...");
-                        latestPosition = { coords: { latitude: FACTORY_LOCATION.latitude, longitude: FACTORY_LOCATION.longitude, accuracy: 10 } };
-                    }
-
+                    console.log("🛠️ Localhost Mode: Bypassing GPS check...");
+                    setMockPosition({ coords: { latitude: FACTORY_LOCATION.latitude, longitude: FACTORY_LOCATION.longitude, accuracy: 10 } });
+                }
                     if (!latestPosition) {
                         showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
                         return;
@@ -1982,225 +1947,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function startWatchingPosition() {
-    // ใช้ตัวแปร locationStatusDiv ตัวเดิม
-
-    if (!navigator.geolocation) {
-      showNotification("อุปกรณ์ของคุณไม่รองรับ GPS", "error");
-      return;
-    }
-
-    // 1. ฟังก์ชันสั่งรัน GPS จริงๆ
-    const runGeoWatcher = () => {
-      // ล้าง onclick ทิ้ง
-      if (locationStatusDiv) locationStatusDiv.onclick = null;
-
-      // เคลียร์ Watcher เดิม
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-
-      // เริ่มจับพิกัด
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          // ★ สำคัญ: ถ้าจับสัญญาณได้สำเร็จ ให้บันทึกว่า "เคยอนุญาตแล้ว"
-          localStorage.setItem("user_granted_gps", "true");
-
-          // เรียกฟังก์ชัน update เดิม
-          updateRealtimeLocationStatus(position);
-        },
-        (error) => {
-          // ถ้า Error เพราะ User ปิดกั้น (Code 1) -> ให้ลบความจำออก เพื่อกลับไปโชว์ปุ่มสีฟ้าใหม่
-          if (error.code === 1) {
-            localStorage.removeItem("user_granted_gps");
-          }
-          // เรียกฟังก์ชัน error เดิม
-          handleLocationError(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 0,
-        },
-      );
-      console.log("Started watching position...");
-    };
-
-    // 2. ฟังก์ชันแสดงปุ่มสีฟ้า
-    const showEnableGpsButton = () => {
-      if (locationStatusDiv) {
-        // ปรับ UI เป็นปุ่ม
-        locationStatusDiv.className =
-          "flex items-center p-3 rounded-xl bg-blue-100 text-blue-700 cursor-pointer hover:bg-blue-200 transition-all shadow-sm border border-blue-200";
-        locationStatusDiv.innerHTML = `
-                    <div class="flex items-center justify-center w-full gap-2">
-                        <span class="relative flex h-3 w-3">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                        </span>
-                        <span class="font-bold">แตะเพื่อเปิดใช้งาน GPS</span>
-                    </div>
-                `;
-
-        locationStatusDiv.onclick = function () {
-          // เปลี่ยน UI เป็น Loading
-          this.className =
-            "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
-          this.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-700"></div>
-                            <span class="font-medium text-sm">กำลังขอสัญญาณ GPS...</span>
-                        </div>
-                    `;
-          // เรียก GPS
-          runGeoWatcher();
-        };
-      }
-    };
-
-    // --- 3. Logic การตัดสินใจ (ฉลาดขึ้นด้วย LocalStorage) ---
-
-    // เช็คความจำของเราก่อนเลย (iOS จะได้ไม่ต้องพึ่ง API)
-    const hasGrantedBefore =
-      localStorage.getItem("user_granted_gps") === "true";
-
-    if (hasGrantedBefore) {
-      // ถ้าเคยอนุญาตแล้ว -> โชว์ Loading สีเหลือง แล้วรันเลย!
-      if (locationStatusDiv) {
-        locationStatusDiv.className =
-          "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700";
-        locationStatusDiv.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-700"></div>
-                        <span class="font-medium text-sm">กำลังค้นหาตำแหน่ง...</span>
-                    </div>
-                `;
-      }
-      runGeoWatcher();
-    } else {
-      // ถ้าไม่เคย -> ไปเช็ค Permissions API (เผื่อ Android/Chrome) หรือโชว์ปุ่ม
-      if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions
-          .query({ name: "geolocation" })
-          .then(function (result) {
-            if (result.state === "granted") {
-              runGeoWatcher();
-            } else {
-              showEnableGpsButton();
-            }
-          })
-          .catch(() => showEnableGpsButton());
-      } else {
-        // iOS (ครั้งแรก)
-        showEnableGpsButton();
-      }
-    }
-  }
-
-  function stopWatchingPosition() {
-    if (navigator.geolocation && watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
-  }
-
-  function updateRealtimeLocationStatus(position) {
-    const locationStatusDiv = document.getElementById("location-status");
-    const checkInBtn = document.getElementById("checkin-btn");
-
-    if (!locationStatusDiv) return;
-
-    // 1. กรณีความแม่นยำต่ำเกินไป
-    if (position.coords.accuracy > MAX_ACCEPTABLE_ACCURACY) {
-      locationStatusDiv.className =
-        "flex items-center p-3 rounded-xl bg-yellow-100 text-yellow-700 transition-all duration-300";
-      locationStatusDiv.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <span class="text-sm">Adjusting GPS... (${position.coords.accuracy.toFixed(0)} m)</span>
-                </div>`;
-
-      latestPosition = null;
-      if (checkInBtn) checkInBtn.disabled = true;
-      return;
-    }
-
-    // 2. คำนวณระยะทาง
-    latestPosition = position;
-    const distance = calculateDistance(
-      position.coords.latitude,
-      position.coords.longitude,
-      FACTORY_LOCATION.latitude,
-      FACTORY_LOCATION.longitude,
-    );
-
-    if (distance <= ALLOWED_RADIUS_METERS) {
-      // --- อยู่ในพื้นที่ (In Factory Area) ---
-      locationStatusDiv.className =
-        "flex items-center p-3 rounded-xl bg-green-100 text-green-700 border border-green-200 transition-all duration-300";
-      locationStatusDiv.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <div>
-                        <p class="font-bold text-sm">In Factory Area (Accuracy: ${position.coords.accuracy.toFixed(0)} m)</p>
-                    </div>
-                </div>`;
-      if (checkInBtn) checkInBtn.disabled = false;
-    } else {
-      // --- อยู่นอกพื้นที่ (Outside Factory Area) ---
-      locationStatusDiv.className =
-        "flex items-center p-3 rounded-xl bg-red-50 text-red-600 border border-red-100 transition-all duration-300";
-      locationStatusDiv.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <div>
-                        <p class="font-bold text-sm">Out of Area (${distance.toFixed(0)} m away)</p>
-                    </div>
-                </div>`;
-
-      // เปิดปุ่มไว้เพื่อให้กดแล้วแจ้งเตือน หรือปิดปุ่มก็ได้ตามต้องการ
-      if (checkInBtn) checkInBtn.disabled = false;
-    }
-  }
-
-  function handleLocationError(error) {
-    // เปลี่ยนสีกล่องเป็นสีแดง เพื่อบอกว่า Error
-    if (locationStatusDiv) {
-      locationStatusDiv.className =
-        "flex items-center p-3 rounded-xl bg-red-50 text-red-700 border border-red-200";
-
-      // ใส่ปุ่มให้กดลองใหม่ (เผื่อแค่เน็ตหลุด)
-      locationStatusDiv.innerHTML = `
-                <div class="flex flex-col w-full text-center">
-                    <span class="font-bold mb-1">ไม่พบตำแหน่ง</span>
-                    <span class="text-xs underline cursor-pointer" onclick="startWatchingPosition()">แตะเพื่อลองใหม่</span>
-                </div>
-            `;
-    }
-
-    console.warn(`GPS Error (${error.code}): ${error.message}`);
-
-    // ★ ดักจับ Error Code 1 (User Denied) โดยเฉพาะ
-    if (error.code === 1) {
-      // เช็คว่าเป็น iOS หรือไม่
-      const isIOS =
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-      if (isIOS) {
-        alert(
-          "⚠️ ไม่สามารถเข้าถึง GPS ได้\n\nระบบ iOS บล็อกตำแหน่งไว้:\n1. ไปที่ Settings > Privacy > Location Services\n2. หาเว็บนี้ (หรือ Safari) แล้วเปิดเป็น 'While Using'\n3. กลับมาที่นี่แล้วกดรีเฟรช",
-        );
-      } else {
-        alert(
-          "⚠️ ไม่สามารถเข้าถึง GPS ได้\n\nกรุณากดที่รูป 🔒 บนช่อง URL แล้วกด 'Reset permission' เพื่ออนุญาตใหม่",
-        );
-      }
-    } else if (error.code === 2) {
-      if (locationText)
-        locationText.textContent = "สัญญาณ GPS ไม่ดี (ลองออกไปที่โล่ง)";
-    } else if (error.code === 3) {
-      if (locationText) locationText.textContent = "หมดเวลาเชื่อมต่อ (Timeout)";
-    }
-  }
+ 
+  
 
   async function checkUserWorkStatus() {
     if (!auth.currentUser || !currentUser) return;
@@ -2533,332 +2281,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // 1. ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll ---
-  // ฟังก์ชันหลักสำหรับดึงและประมวลผลข้อมูล Payroll (แก้ไขแล้ว)
-  async function fetchPayrollData(startDate, endDate) {
-    // 1. ดึงข้อมูลทั้งหมดที่จำเป็นพร้อมกัน
-    const [usersSnapshot, recordsSnapshot, approvedLeaveSnapshot, calendarDoc] =
-      await Promise.all([
-        db.collection("users").orderBy("fullName").get(),
-        db
-          .collection("work_records")
-          .where("date", ">=", startDate)
-          .where("date", "<=", endDate)
-          .get(),
-        db
-          .collection("leave_requests")
-          .where("status", "==", "approved")
-          .where("startDate", "<=", endDate)
-          .get(),
-        db.collection("system_settings").doc("calendar_rules").get(),
-      ]);
-
-    // 2. ประมวลผลกฎปฏิทิน (วันหยุด, วันทำงาน)
-    const holidayMap = new Map();
-    const workingSaturdayMap = new Map();
-    if (calendarDoc.exists) {
-      (calendarDoc.data().holidays || []).forEach((d) =>
-        holidayMap.set(d, true),
-      );
-      (calendarDoc.data().workingSaturdays || []).forEach((d) =>
-        workingSaturdayMap.set(d, true),
-      );
-    }
-
-    // 3. ประมวลผลใบลาที่อนุมัติแล้ว
-    const approvedLeaveMap = new Map();
-    for (const doc of approvedLeaveSnapshot.docs) {
-      const leave = doc.data();
-      const start = leave.startDate.toDate();
-      const end = leave.endDate.toDate();
-
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        if (d < startDate || d > endDate) continue;
-        const dateKey = toLocalDateKey(new Date(d));
-        const key = `${leave.userId}_${dateKey}`;
-        approvedLeaveMap.set(key, leave);
-      }
-    }
-
-    // 4. ประมวลผลเวลาทำงาน (Map ข้อมูลเข้ากับ User)
-    const recordsMap = new Map();
-    recordsSnapshot.forEach((doc) => {
-      const record = doc.data();
-      const dateKey = toLocalDateKey(record.date.toDate());
-      if (!recordsMap.has(record.userId)) {
-        recordsMap.set(record.userId, new Map());
-      }
-      recordsMap.get(record.userId).set(dateKey, record);
-    });
-
-    // 5. เริ่มการรวบรวมข้อมูลสรุป
-    const payrollSummary = [];
-
-    for (const userDoc of usersSnapshot.docs) {
-      const userId = userDoc.id;
-      const user = userDoc.data();
-
-      let summary = {
-        userId: userId,
-        fullName: user.fullName || "N/A",
-        department: user.department || "N/A",
-        employeeType: user.employeeType || "N/A",
-        totalRegularHours: 0,
-        total_OT_1_5x: 0,
-        total_Holiday_1x: 0,
-        total_Holiday_2x: 0,
-        total_OT_3x: 0,
-        totalLateDays: 0,
-        totalLeaveDays: 0,
-        totalWorkDays: 0,
-        totalReportDays: 0,
-        totalAbsentDays: 0,
-      };
-
-      const userRecords = recordsMap.get(userId) || new Map();
-
-      // วนลูปทุกวันในช่วงวันที่เลือก
-      for (
-        let day = new Date(startDate);
-        day <= endDate;
-        day.setDate(day.getDate() + 1)
-      ) {
-        const dateKey = toLocalDateKey(new Date(day));
-        const dayOfWeek = day.getDay();
-
-        const isHoliday = holidayMap.has(dateKey);
-        const isWorkingSat = workingSaturdayMap.has(dateKey);
-        const isWeekend = dayOfWeek === 0 || (dayOfWeek === 6 && !isWorkingSat);
-        const isWorkingDay = !isHoliday && !isWeekend;
-
-        const leave = approvedLeaveMap.get(`${userId}_${dateKey}`);
-        const record = userRecords.get(dateKey);
-
-        if (leave) {
-          // ถ้ามีใบลา
-          if (leave.durationType !== "hourly") {
-            summary.totalLeaveDays++;
-          }
-        } else if (record) {
-          // ถ้ามีการลงเวลา (หรือส่ง Report)
-          summary.totalWorkDays++;
-
-          const reportsArray =
-            record.reports || (record.report ? [record.report] : []);
-          if (reportsArray.length > 0) {
-            summary.totalReportDays++;
-          }
-
-          // คำนวณชั่วโมงงานและ OT (เฉพาะรายการที่ Check-in/out สมบูรณ์)
-          if (
-            record.status === "completed" &&
-            record.checkOut &&
-            record.checkIn &&
-            record.checkIn.timestamp
-          ) {
-            const checkinTime = record.checkIn.timestamp.toDate();
-            const checkoutTime = record.checkOut.timestamp.toDate();
-
-            const { regularWorkHours, overtimeHours: calculatedOt } =
-              calculateWorkHours(checkinTime, checkoutTime);
-
-            let otHoursToday = 0;
-            // เชื่อค่า OT จาก Database ก่อน (ถ้ามีและมากกว่า 0)
-            if (record.overtime && typeof record.overtime.hours === "number") {
-              otHoursToday = record.overtime.hours;
-            } else {
-              otHoursToday = calculatedOt; // ถ้าไม่มีใช้ค่าที่คำนวณเอง
-            }
-
-            if (isWorkingDay) {
-              summary.totalRegularHours += regularWorkHours;
-              summary.total_OT_1_5x += otHoursToday;
-            } else {
-              // วันหยุด
-              if (user.employeeType === "monthly") {
-                summary.total_Holiday_1x += regularWorkHours;
-              } else {
-                summary.total_Holiday_2x += regularWorkHours;
-              }
-              summary.total_OT_3x += otHoursToday;
-            }
-          }
-
-          // ★★★ แก้ไขจุดนี้: เช็คว่ามีการ Check-in จริงๆ ถึงจะคำนวณสาย (ป้องกัน Error) ★★★
-          if (record.checkIn && record.checkIn.timestamp) {
-            const checkinTime = record.checkIn.timestamp.toDate();
-            const checkInMinutes =
-              checkinTime.getHours() * 60 + checkinTime.getMinutes();
-            const LATE_THRESHOLD_MINUTES = 8 * 60 + 30; // 08:30
-
-            if (isWorkingDay && checkInMinutes > LATE_THRESHOLD_MINUTES) {
-              summary.totalLateDays++;
-            }
-          }
-          // ถ้าเป็น Report Only (ไม่มี checkIn) จะข้ามส่วนนี้ไป ไม่ Error
-        } else if (isWorkingDay) {
-          // ถ้าเป็นวันทำงานแต่ไม่มี record และไม่มีใบลา = ขาดงาน
-          summary.totalAbsentDays++;
-        }
-      }
-
-      payrollSummary.push(summary);
-    }
-
-    return payrollSummary;
-  }
-
-  //  ฟังก์ชันสำหรับแสดงผลบนหน้าเว็บ
-  async function loadPayrollSummary() {
-    const container = document.getElementById(
-      "payroll-summary-results-container",
-    );
-    const startInput = document.getElementById("payroll-start-date");
-    const endInput = document.getElementById("payroll-end-date");
-    const spinner = document.getElementById("loading-spinner");
-
-    // --- 1. ดึงค่าจากตัวกรอง (Dropdown รายชื่อ และ แผนก) ---
-    const searchNameSelect = document.getElementById("payroll-search-name");
-    const filterDeptSelect = document.getElementById("payroll-filter-dept");
-
-    // ดึงค่าจาก Dropdown (ถ้าเป็นค่าว่างคือเลือก "ทั้งหมด")
-    const selectedName = searchNameSelect
-      ? searchNameSelect.value.toLowerCase()
-      : "";
-    const selectedDept = filterDeptSelect ? filterDeptSelect.value : "";
-
-    // ตรวจสอบการเลือกวันที่
-    if (!startInput.value || !endInput.value) {
-      return showNotification("กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด", "warning");
-    }
-
-    // --- 2. แสดงสถานะการโหลด (Spinner + ข้อความในพื้นที่ตาราง) ---
-    if (spinner) spinner.style.display = "flex";
-    container.innerHTML =
-      '<p class="text-sm text-center text-gray-500 py-6 italic">กำลังรวบรวมข้อมูลและคำนวณรายรับ...</p>';
-
-    try {
-      const startDate = new Date(startInput.value);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(endInput.value);
-      endDate.setHours(23, 59, 59, 999);
-
-      if (endDate < startDate) {
-        throw new Error("วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น");
-      }
-
-      // ดึงข้อมูลพนักงานทั้งหมดจากฐานข้อมูลตามช่วงวันที่
-      const summaryData = await fetchPayrollData(startDate, endDate);
-
-      // --- 3. ตรรกะการกรองข้อมูล (Filtering Logic) ---
-      const filteredData = summaryData.filter((user) => {
-        // เช็คชื่อ: ถ้าเลือก "พนักงานทุกคน" (ค่าว่าง) ให้ผ่านหมด ถ้าเลือกชื่อคน ให้เช็คว่าตรงกันไหม
-        const matchesName =
-          selectedName === "" || user.fullName.toLowerCase() === selectedName;
-        // เช็คแผนก: ถ้าเลือก "ทุกแผนก" ให้ผ่านหมด
-        const matchesDept =
-          selectedDept === "" || user.department === selectedDept;
-
-        return matchesName && matchesDept;
-      });
-
-      // กรณีไม่พบข้อมูลหลังกรอง
-      if (filteredData.length === 0) {
-        container.innerHTML = `
-                <div class="py-12 text-center">
-                    <p class="text-gray-400 text-sm">❌ ไม่พบข้อมูลพนักงานที่ตรงกับเงื่อนไขในช่วงเวลานี้</p>
-                </div>`;
-        return;
-      }
-
-      // --- 4. สร้างตารางแสดงผล ---
-      let tableHTML = `
-            <div class="mb-2 flex justify-between items-end">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Payroll Report</p>
-                <p class="text-[10px] font-bold text-orange-500 uppercase">พบพนักงาน ${filteredData.length} ท่าน</p>
-            </div>
-            <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
-                <table class="w-full text-left text-sm">
-                    <thead class="text-[11px] text-gray-500 uppercase bg-gray-50/80 sticky top-0">
-                        <tr>
-                            <th scope="col" class="px-4 py-4">พนักงาน / แผนก</th>
-                            <th scope="col" class="px-2 py-4 text-center text-blue-600">วันทำงาน</th>
-                            <th scope="col" class="px-2 py-4 text-center">ชม.ปกติ</th>
-                            <th scope="col" class="px-2 py-4 text-center text-orange-600">OT (1.5x)</th>
-                            <th scope="col" class="px-2 py-4 text-center">วันหยุด (2x)</th>
-                            <th scope="col" class="px-2 py-4 text-center text-orange-600">OT หยุด (3x)</th>
-                            <th scope="col" class="px-2 py-4 text-center">สาย/ลา/ขาด</th>
-                            <th scope="col" class="px-4 py-4 text-center">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-50">
-        `;
-
-      filteredData.forEach((user) => {
-        const reportColor =
-          user.totalReportDays === user.totalWorkDays
-            ? "text-green-600"
-            : "text-red-500";
-
-        tableHTML += `
-            <tr class="bg-white hover:bg-orange-50/30 transition-colors">
-                <td class="px-4 py-4">
-                    <div class="font-bold text-gray-800 text-sm leading-tight">${user.fullName}</div>
-                    
-                    <div class="flex items-center mt-1.5 h-3">
-                        <span class="mt-2 bg-gray-50/50 text-[10px] pl-1 pr-1.5 py-0.5 rounded border border-gray-100 ${reportColor} font-bold whitespace-nowrap inline-block origin-left scale-[0.87] ml-[-1px] leading-none tracking-tighter antialiased">
-                            Daily Report: ${user.totalReportDays}/${user.totalWorkDays} วัน
-                        </span>
-                    </div>
-                        
-                        <div class="text-[10px] text-gray-400 mt-1">${user.department || "ไม่ระบุแผนก"}</div>
-                    </td>
-                    <td class="px-2 py-4 text-center font-semibold text-sky-600">${user.totalWorkDays}</td>
-                    <td class="px-2 py-4 text-center text-gray-600">${user.totalRegularHours.toFixed(2)}</td>
-                    <td class="px-2 py-4 text-center text-orange-600 font-bold">${user.total_OT_1_5x.toFixed(1)}</td>
-                    <td class="px-2 py-4 text-center text-gray-600">${user.total_Holiday_2x.toFixed(1)}</td>
-                    <td class="px-2 py-4 text-center text-orange-600 font-bold">${user.total_OT_3x.toFixed(1)}</td>
-                    <td class="px-2 py-4 text-center font-mono">
-                        <span class="${user.totalLateDays > 0 ? "text-orange-500 font-bold" : "text-gray-300"}">${user.totalLateDays}</span>
-                        <span class="text-gray-200"> / </span>
-                        <span class="${user.totalLeaveDays > 0 ? "text-blue-500 font-bold" : "text-gray-300"}">${user.totalLeaveDays}</span>
-                        <span class="text-gray-200"> / </span>
-                        <span class="${user.totalAbsentDays > 0 ? "text-red-500 font-bold" : "text-gray-300"}">${user.totalAbsentDays}</span>
-                    </td>
-                    <td class="px-4 py-4 text-center">
-                        <button onclick="viewEmployeeDetail('${user.userId}', '${startInput.value}', '${endInput.value}')" 
-                                class="inline-flex p-2 text-sky-500 hover:bg-sky-50 rounded-full transition-all" 
-                                title="ดูรายละเอียดรายวัน">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
-                    </td>
-                </tr>
-            `;
-      });
-
-      tableHTML += `</tbody></table></div>`;
-      container.innerHTML = tableHTML;
-    } catch (error) {
-      console.error("Payroll Error:", error);
-      showNotification(error.message, "error");
-      container.innerHTML = `<div class="p-6 text-center text-red-500 bg-red-50 rounded-xl text-sm">⚠️ เกิดข้อผิดพลาด: ${error.message}</div>`;
-    } finally {
-      // --- 5. ซ่อน Spinner ทุกกรณีเมื่อจบการทำงาน ---
-      if (spinner) spinner.style.display = "none";
-    }
-  }
-
-  // event loadpayroll
-  document
-    .getElementById("payroll-search-name")
-    ?.addEventListener("input", loadPayrollSummary);
-  document
-    .getElementById("payroll-filter-dept")
-    ?.addEventListener("change", loadPayrollSummary);
-
   // เพิ่มฟังก์ชันนี้ลงใน index.html
   function viewEmployeeDetail(userId, startDate, endDate) {
     // 1. แจ้งเตือนเพื่อให้ Admin ทราบ
@@ -2887,123 +2309,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     console.log("Viewing Detail for:", userId, "Date:", startDate);
-  }
-
-  // --- [ฟังก์ชันใหม่] 3. ฟังก์ชันสำหรับ Export Excel ---
-  async function exportPayrollSummaryToExcel() {
-    const startInput = document.getElementById("payroll-start-date");
-    const endInput = document.getElementById("payroll-end-date");
-
-    if (!startInput.value || !endInput.value) {
-      return showNotification("กรุณาเลือกช่วงวันที่ก่อน Export", "warning");
-    }
-
-    showNotification("กำลังเตรียมข้อมูล Excel...", "success");
-
-    try {
-      const startDate = new Date(startInput.value);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(endInput.value);
-      endDate.setHours(23, 59, 59, 999);
-
-      if (endDate < startDate) {
-        return showNotification(
-          "วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น",
-          "warning",
-        );
-      }
-
-      const summaryData = await fetchPayrollData(startDate, endDate);
-
-      // [แก้ไข] 1/3: แก้ไข "หัวตาราง" (Headers)
-      const dataForExcel = [
-        [
-          "Full Name",
-          "Department",
-          "Total Working Days",
-          "Regular Working Hours",
-          "Overtime (OT)",
-          "Holiday Pay (2x)",
-          "Holiday Overtime (3x)",
-          "Late Arrivals",
-          "Leave Days",
-          "Absences",
-        ],
-      ];
-
-      // [แก้ไข] 2/3: แก้ไข "ข้อมูล" (Data loop)
-      summaryData.forEach((user) => {
-        // [เพิ่มบรรทัดนี้] แปลง 'monthly'/'daily' เป็นข้อความที่ HR เข้าใจง่าย
-
-        dataForExcel.push([
-          // user.userId, // (ลบออกแล้ว)
-          user.fullName,
-          user.department,
-          user.totalWorkDays,
-          user.totalRegularHours.toFixed(2),
-          user.total_OT_1_5x.toFixed(1),
-          user.total_Holiday_2x.toFixed(2),
-          user.total_OT_3x.toFixed(1),
-          user.totalLateDays,
-          user.totalLeaveDays,
-          user.totalAbsentDays,
-        ]);
-      });
-
-      // [แก้ไข] 3/3: แก้ไข "ความกว้างคอลัมน์"
-      const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-      ws["!cols"] = [
-        // { wch: 30 }, // (ลบออก - ID พนักงาน)
-        { wch: 25 }, // ชื่อ-สกุล
-        { wch: 15 }, // แผนก
-        { wch: 15 }, // วันทำงาน
-        { wch: 15 }, // ชั่วโมงปกติ
-        { wch: 10 }, // OT (1.5x)
-        { wch: 12 }, // ชม.หยุด (2x)
-        { wch: 10 }, // OT (3x)
-        { wch: 10 }, // มาสาย
-        { wch: 10 }, // ลา
-        { wch: 10 }, // ขาด
-      ];
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-      const fileName = `PayrollSummary_${startInput.value}_to_${endInput.value}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-    } catch (error) {
-      console.error("Error exporting payroll summary:", error);
-      showNotification("Export Excel ล้มเหลว: " + error.message, "error");
-    }
-  }
-
-  // (นำ 2 บรรทัดนี้ไปวางไว้ในฟังก์ชัน initializeControls() หรือ DOMContentLoaded)
-  document
-    .getElementById("generate-payroll-summary-btn")
-    ?.addEventListener("click", loadPayrollSummary);
-  // [แก้ไข] ปุ่ม Export Payroll Summary
-  const exportPayrollBtn = document.getElementById(
-    "export-payroll-summary-btn",
-  );
-  if (exportPayrollBtn) {
-    exportPayrollBtn.addEventListener("click", async () => {
-      // 1. แจ้งเตือน
-      showNotification("กำลังโหลดโมดูล Excel...", "warning");
-
-      // 2. โหลด Library (เช็คว่ามี XLSX หรือยัง)
-      if (typeof XLSX === "undefined") {
-        try {
-          await loadScript(
-            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
-          );
-        } catch (e) {
-          alert("โหลดไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ต");
-          return;
-        }
-      }
-
-      // 3. เรียกฟังก์ชันเดิม
-      exportPayrollSummaryToExcel();
-    });
   }
 
   async function exportEmployeeSummaryToExcel() {
@@ -3050,11 +2355,13 @@ document.addEventListener("DOMContentLoaded", function () {
           .collection("leave_requests")
           .where("status", "==", "approved")
           .where("startDate", "<=", endDate)
-          .where("endDate", ">=", startDate)
           .get();
 
         approvedLeaveSnapshot.forEach((doc) => {
           const leave = doc.data();
+
+          if (leave.endDate.toDate() < startDate) return;
+
           const leaveTypeDisplay =
             LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType;
 
@@ -3949,22 +3256,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // [ลบ] 4. ลบ Event Listener ของ Email/Password เดิมออกแล้ว
-  // (เราได้ลบโค้ดส่วนนั้นออกไปแล้วในขั้นตอนการ "ลบโค้ดเดิม")
-
-  function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3;
-    const φ1 = (lat1 * Math.PI) / 180,
-      φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
   function showPage(pageId) {
     pages.forEach((p) => p.classList.remove("active"));
     const activePage = document.getElementById(pageId);
@@ -4162,53 +3453,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (profileDepartment) {
       profileDepartment.textContent = userData.department || "ไม่มีข้อมูลแผนก";
     }
-  }
-
-  // --- ฟังก์ชันคำนวณชั่วโมงงานและ OT (Update ล่าสุด) ---
-  function calculateWorkHours(checkinDate, checkoutDate) {
-    // 1. หาเวลารวม (ms)
-    let workDurationMillis = checkoutDate - checkinDate;
-    if (workDurationMillis < 0) workDurationMillis = 0;
-
-    // 2. หักเวลาพักเที่ยง 1 ชั่วโมง (12:00 - 13:00)
-    const lunchStart = new Date(checkinDate);
-    lunchStart.setHours(12, 0, 0, 0);
-    const lunchEnd = new Date(checkinDate);
-    lunchEnd.setHours(13, 0, 0, 0);
-
-    if (checkinDate < lunchEnd && checkoutDate > lunchStart) {
-      workDurationMillis -= 3600000;
-    }
-
-    let overtimeHours = 0;
-
-    // 3. คำนวณ OT (ฐานเริ่มที่ 17:30 นับทุก 30 นาทีเต็ม)
-    const otStartThreshold = new Date(checkoutDate);
-    otStartThreshold.setHours(18, 0, 0, 0); // ต้องเลิก 18:00 ถึงจะเริ่มคิด OT
-
-    const normalEndThreshold = new Date(checkoutDate);
-    normalEndThreshold.setHours(17, 30, 0, 0); // จุดเริ่มนับฐาน OT
-
-    if (checkoutDate >= otStartThreshold) {
-      const otMillis = checkoutDate - normalEndThreshold;
-      // ใช้ Math.floor เพื่อให้นับตามจำนวน 30 นาทีที่ทำครบจริง
-      const otBlocks = Math.floor(otMillis / (1000 * 60 * 30));
-      overtimeHours = otBlocks * 0.5;
-    }
-
-    // 4. คำนวณชั่วโมงงานปกติ (เวลารวมทั้งหมด - OT)
-    const totalWorkHours = workDurationMillis / (1000 * 60 * 60);
-    let regularWorkHours = totalWorkHours - overtimeHours;
-
-    // ถ้าเกิน 8 ชั่วโมง ให้ตัดเหลือแค่ 8.00 (เพื่อความง่ายของ HR)
-    if (regularWorkHours > 8) {
-      regularWorkHours = 8.0;
-    }
-
-    return {
-      regularWorkHours: Math.max(0, regularWorkHours),
-      overtimeHours: Math.max(0, overtimeHours),
-    };
   }
 
   async function loadSentReports() {
@@ -6396,7 +5640,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .collection("leave_requests")
         .where("status", "==", "approved")
         .where("startDate", "<=", todayEnd) // วันลาต้องเริ่มก่อนหรือตรงกับสิ้นวัน
-        .where("endDate", ">=", todayStart) // วันลาต้องสิ้นสุดหลังหรือตรงกับต้นวัน
         .get();
 
       let notifications = [];
@@ -7710,7 +6953,6 @@ document.addEventListener("DOMContentLoaded", function () {
             .collection("leave_requests")
             .where("status", "==", "approved")
             .where("startDate", "<=", endDate)
-            .where("endDate", ">=", startDate)
             .get(),
         ]);
 
@@ -7720,6 +6962,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const leaveMap = {};
       leavesSnapshot.forEach((doc) => {
         const l = doc.data();
+
+        if (l.endDate.toDate() < startDate) return;
         if (l.durationType === "hourly") {
           leaveMap[l.userId] = l;
         }
@@ -8147,7 +7391,6 @@ document.addEventListener("DOMContentLoaded", function () {
           .collection("leave_requests")
           .where("status", "==", "approved")
           .where("startDate", "<=", endOfDay)
-          .where("endDate", ">=", startOfDay)
           .get(),
       ]);
 
@@ -8161,6 +7404,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const userHourlyLeaveMap = {};
       leavesSnap.forEach((doc) => {
         const data = doc.data();
+        // ✅ เพิ่มบรรทัดนี้: กรอง endDate ด้วย JavaScript แทน
+        if (data.endDate.toDate() < startOfDay) return;
+
         if (data.status === "approved" && data.durationType === "hourly") {
           // เก็บเวลาเริ่มและจบการลาไว้ (เช่น start: "08:30", end: "11:30")
           userHourlyLeaveMap[data.userId] = {
@@ -8243,6 +7489,8 @@ document.addEventListener("DOMContentLoaded", function () {
       leavesSnap.forEach((doc) => {
         const data = doc.data();
         const uid = data.userId;
+
+        if (data.endDate.toDate() < startOfDay) return;
 
         // ถ้านับว่าเป็นคนมาทำงานแล้ว (เช็คอินแล้ว) จะไม่นับเป็นคนลาในยอดรวม
         // (แต่ยังอาจจะโชว์ในลิสต์ได้ถ้าต้องการ แต่ Dashboard โดยทั่วไปจะนับ Headcount หลักคือ "มาทำงาน")
