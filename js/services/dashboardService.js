@@ -1313,7 +1313,7 @@ const otReason = document.getElementById("ot-reason");
 
   // Event Listener สำหรับปุ่ม "ส่งคำขอ OT" (เวอร์ชันแก้ไข: ตรวจสอบทุกช่อง)
   submitOtBtn.addEventListener("click", async () => {
-    if (!currentUser || !currentUserData) return;
+    if (!user || !currentUserData) return;
 
     const startTimeStr = otStartTime.value;
     const endTimeStr = otEndTime.value;
@@ -1366,3 +1366,19 @@ const otReason = document.getElementById("ot-reason");
       submitOtBtn.textContent = "ส่งคำขอ";
     }
   });
+
+  const leaveListContainer = document.getElementById("leave-approval-list");
+if (leaveListContainer) {
+    leaveListContainer.addEventListener("click", (event) => {
+        const approveBtn = event.target.closest(".approve-leave-btn");
+        const rejectBtn = event.target.closest(".reject-leave-btn");
+
+        if (approveBtn) {
+            const docId = approveBtn.dataset.id;
+            if (docId) handleLeaveApproval(docId, "approved", approveBtn);
+        } else if (rejectBtn) {
+            const docId = rejectBtn.dataset.id;
+            if (docId) handleLeaveApproval(docId, "rejected", rejectBtn);
+        }
+    });
+}
