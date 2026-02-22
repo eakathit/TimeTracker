@@ -1,26 +1,5 @@
-        // ฟังก์ชันช่วยสำหรับแปลง Date object เป็น string ที่ input datetime-local ใช้งานได้
-        function toLocalISOString(date) {
-            if (!date) return ''; // สำหรับ handle ค่า null เช่น checkout ที่ยังไม่เกิด
-
-            const d = new Date(date);
-
-            // ดึงค่าตามโซนเวลาท้องถิ่น (Local Timezone)
-            const year = d.getFullYear();
-            const month = (d.getMonth() + 1).toString().padStart(2, '0'); // getMonth() เริ่มที่ 0
-            const day = d.getDate().toString().padStart(2, '0');
-            const hours = d.getHours().toString().padStart(2, '0');
-            const minutes = d.getMinutes().toString().padStart(2, '0');
-
-            // ส่งค่ากลับในฟอร์แมต YYYY-MM-DDTHH:MM
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        function toLocalDateKey(date) {
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
+import { toLocalISOString, toLocalDateKey } from './utils/dateHelper.js';        
+import { db, auth, cloudFunctions, storage, messaging } from './config/firebase-config.js';
 
         document.addEventListener('DOMContentLoaded', function () {
 
@@ -55,22 +34,6 @@
                         window.location.reload();
                     });
                 });
-            }
-
-            // --- Initialize Firebase & Config ---
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            const functions = firebase.app().functions('asia-southeast1');
-
-            const storage = firebase.storage();
-
-            // --- ส่วนตั้งค่า Notification (วางต่อจาก storage) ---
-            let messaging;
-            try {
-                messaging = firebase.messaging();
-            } catch (e) {
-                console.log("Messaging failed (อาจไม่ใช่ HTTPS หรือ Browser ไม่รองรับ)");
             }
 
             // เพิ่มโค้ดนี้เพื่อให้แจ้งเตือนเด้งตอนเปิดเว็บอยู่
@@ -224,34 +187,34 @@
                 db.useEmulator("127.0.0.1", 8081);
 
                 // Functions: Port 5001
-                functions.useEmulator("127.0.0.1", 5001);
+                cloudFunctions.useEmulator("127.0.0.1", 5001);
 
                 // Storage: Port 9199
                 storage.useEmulator("127.0.0.1", 9199);
 
                 // ★★★ โค้ดใหม่: ซ่อนแถบแจ้งเตือน Emulator (แก้ไขแล้ว) ★★★
-                const hideEmulatorBanner = () => {
-                    // ค้นหา div ทุกตัวในหน้าเว็บ
-                    const divs = document.querySelectorAll('div');
-                    divs.forEach(div => {
-                        // เช็คเฉพาะข้อความข้างใน (วิธีนี้แม่นยำที่สุด)
-                        if (div.textContent &&
-                            div.textContent.includes("Running in emulator mode") &&
-                            div.textContent.includes("production credentials")) {
+                // const hideEmulatorBanner = () => {
+                //     // ค้นหา div ทุกตัวในหน้าเว็บ
+                //     const divs = document.querySelectorAll('div');
+                //     divs.forEach(div => {
+                //         // เช็คเฉพาะข้อความข้างใน (วิธีนี้แม่นยำที่สุด)
+                //         if (div.textContent &&
+                //             div.textContent.includes("Running in emulator mode") &&
+                //             div.textContent.includes("production credentials")) {
 
-                            // สั่งซ่อนแบบถาวร (Important)
-                            div.style.setProperty("display", "none", "important");
-                            div.style.setProperty("visibility", "hidden", "important");
-                            div.remove(); // สั่งลบ Element ทิ้งไปเลยเพื่อความชัวร์
-                        }
-                    });
-                };
+                //             // สั่งซ่อนแบบถาวร (Important)
+                //             div.style.setProperty("display", "none", "important");
+                //             div.style.setProperty("visibility", "hidden", "important");
+                //             div.remove(); // สั่งลบ Element ทิ้งไปเลยเพื่อความชัวร์
+                //         }
+                //     });
+                // };
 
-                // รันคำสั่งทุกๆ 1 วินาที (เผื่อมันเด้งกลับมาใหม่)
-                setInterval(hideEmulatorBanner, 1000);
+                // // รันคำสั่งทุกๆ 1 วินาที (เผื่อมันเด้งกลับมาใหม่)
+                // setInterval(hideEmulatorBanner, 1000);
 
-                // รันทันที 1 ครั้ง
-                hideEmulatorBanner();
+                // // รันทันที 1 ครั้ง
+                // hideEmulatorBanner();
             }
 
             const LEAVE_TYPE_MAP = {
@@ -3277,11 +3240,19 @@ const executeSaveCheckout = async (withOT, note, groupUpdateData = null) => {
             clientCheckoutTime.setHours(18, 45, 0, 0); 
             console.warn("⚠️ DEBUG MODE ACTIVATED: Force Checkout Time to 18:45");
         }
-        // ================= 🚧 TEST CODE END 🚧 ===================
 
         // เรียกใช้ Cloud Function 'recordTimestamp'
-        const recordTimestampFn = firebase.app().functions('asia-southeast1').httpsCallable('recordTimestamp');
+        const recordTimestampFn = cloudFunctions.httpsCallable('recordTimestamp');
         
+       console.log("🚀 Payload to send:", {
+            type: 'checkout',
+            calculateOT: withOT,
+            checkoutTime: clientCheckoutTime.toISOString(),
+            isDebug: isDebugMode,
+            location: { latitude: lat, longitude: lng },
+            note: note
+        });
+
         console.log("Sending request to Cloud Function...");
 
         const result = await recordTimestampFn({
