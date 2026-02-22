@@ -19,14 +19,44 @@ export const storage = firebase.storage();
 
 // เช็คว่าถ้าเปิดเว็บผ่าน localhost (กำลังเทสใน Emulator) ให้สลับไปชี้ที่พอร์ตจำลอง
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    console.log("🛠️ เชื่อมต่อเข้ากับ Firebase Emulator...");
-    
-    // ตั้งค่าพอร์ตมาตรฐานของ Emulator (ถ้าคุณไม่ได้เปลี่ยนพอร์ตใน firebase.json)
-    auth.useEmulator("http://localhost:9099");
-    db.useEmulator("localhost", 8080);
-    cloudFunctions.useEmulator("localhost", 5001);
-    // storage.useEmulator("localhost", 9199); // เอาคอมเมนต์ออกถ้ามีการใช้ Storage Emulator
-}
+                console.log("🔧 Running in Development Mode (Using Emulators)");
+
+                // Auth: Port 9099
+                auth.useEmulator("http://127.0.0.1:9099");
+
+                // Firestore: Port 8081
+                db.useEmulator("127.0.0.1", 8081);
+
+                // Functions: Port 5001
+                cloudFunctions.useEmulator("127.0.0.1", 5001);
+
+                // Storage: Port 9199
+                storage.useEmulator("127.0.0.1", 9199);
+
+                // ★★★ โค้ดใหม่: ซ่อนแถบแจ้งเตือน Emulator (แก้ไขแล้ว) ★★★
+                // const hideEmulatorBanner = () => {
+                //     // ค้นหา div ทุกตัวในหน้าเว็บ
+                //     const divs = document.querySelectorAll('div');
+                //     divs.forEach(div => {
+                //         // เช็คเฉพาะข้อความข้างใน (วิธีนี้แม่นยำที่สุด)
+                //         if (div.textContent &&
+                //             div.textContent.includes("Running in emulator mode") &&
+                //             div.textContent.includes("production credentials")) {
+
+                //             // สั่งซ่อนแบบถาวร (Important)
+                //             div.style.setProperty("display", "none", "important");
+                //             div.style.setProperty("visibility", "hidden", "important");
+                //             div.remove(); // สั่งลบ Element ทิ้งไปเลยเพื่อความชัวร์
+                //         }
+                //     });
+                // };
+
+                // // รันคำสั่งทุกๆ 1 วินาที (เผื่อมันเด้งกลับมาใหม่)
+                // setInterval(hideEmulatorBanner, 1000);
+
+                // // รันทันที 1 ครั้ง
+                // hideEmulatorBanner();
+            }
 
 export let messaging = null;
 try {
