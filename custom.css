@@ -772,3 +772,8 @@
             background-image: none !important;
             border-bottom: 1px solid var(--border-color) !important;
         }
+
+        /* ซ่อนแถบแจ้งเตือน Firebase Emulator ทุกกรณี */
+.firebase-emulator-warning {
+    display: none !important;
+}
