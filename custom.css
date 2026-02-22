@@ -1,0 +1,774 @@
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --primary-color: #38BDF8;
+            --primary-hover: #0EA5E9;
+            --secondary-color: #34D399;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Prompt', 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Navbar mobile */
+        #mobile-floating-menu {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: 4rem !important;
+            border-radius: 0 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            background-color: white !important;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            z-index: 50 !important;
+            border-top: 1px solid #e5e7eb !important;
+        }
+
+        /* Navbar 768px (iPad/PC) --- */
+        @media (min-width: 768px) {
+            #mobile-floating-menu {
+                display: none !important;
+            }
+        }
+
+        #main-content {
+            padding-bottom: 80px !important;
+        }
+
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+            color: #64748B;
+            font-weight: 500;
+        }
+
+        /* Siderbar PC (More 768px) */
+        @media (min-width: 768px) {
+            aside .nav-item {
+                padding: 12px 16px;
+                margin-bottom: 8px;
+                border-radius: 12px;
+            }
+
+            /* hover PC */
+            aside .nav-item:hover {
+                background-color: #F8FAFC;
+                color: #334155;
+                transform: translateX(4px);
+            }
+
+            /* Navbar (Active PC) */
+            aside .nav-item.active {
+                background-color: #E0F2FE;
+                color: #0284C7;
+                font-weight: 600;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                transform: none;
+            }
+
+            aside .nav-item.active svg {
+                filter: none;
+            }
+        }
+
+        @media (max-width: 767px) {
+
+            .nav-item.active {
+                color: var(--primary-color);
+                transform: translateY(-2px);
+            }
+
+            .nav-item.active svg {
+                filter: drop-shadow(0 4px 6px rgba(56, 189, 248, 0.4));
+            }
+        }
+
+        #main-content {
+            padding-bottom: 120px !important;
+        }
+
+        .checkin-btn-anim {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+            }
+        }
+
+        .checkout-btn-anim {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .completed-btn-anim {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+        }
+
+        /* CSS Modal edit */
+        #edit-modal.hidden {
+            display: none;
+        }
+
+        /* CSS Modal Confirm */
+        #confirm-modal.hidden {
+            display: none;
+        }
+
+        /* CSS Plan */
+        #plan-new-form.hidden {
+            display: none;
+        }
+
+        /* MY PORTAL, MANAGEMENT */
+        .nav-group-title {
+            padding: 0 1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94A3B8;
+        }
+
+        aside .nav-item {
+            margin-bottom: 2px !important;
+        }
+
+        .full-width-header {
+            width: calc(100% + 2rem);
+            margin-left: -1rem;
+            margin-right: -1rem;
+            margin-top: -1rem;
+            position: sticky;
+            top: -1rem;
+            background-color: white;
+            z-index: 40;
+        }
+
+        .full-width-header nav {
+            display: flex;
+            gap: 2.5rem;
+        }
+
+        /* PC (PC/iPad) */
+        @media (min-width: 768px) {
+            .full-width-header {
+                width: calc(100% + 3rem);
+                margin-left: -1.5rem;
+                margin-right: -1.5rem;
+                margin-top: -1.5rem;
+                top: -1.5rem;
+            }
+        }
+
+        /* CSS Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #68D391;
+        }
+
+        .toggle-label {
+            width: 44px;
+            height: 24px;
+            background-color: #E5E7EB;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in;
+        }
+
+        .toggle-label:after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: all 0.2s ease-in;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-checkbox:checked+.toggle-label:after {
+            transform: translateX(20px);
+        }
+
+        /* Disabled */
+        .toggle-checkbox:disabled+.toggle-label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Dark Mode Styles */
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --card-bg: #1F2937;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --border-color: #374151;
+            --input-bg: #374151;
+        }
+
+        [data-theme="dark"] .bg-yellow-50,
+        [data-theme="dark"] .bg-violet-50,
+        [data-theme="dark"] .bg-blue-50,
+        [data-theme="dark"] .bg-green-50,
+        [data-theme="dark"] .bg-red-50,
+        [data-theme="dark"] .bg-gray-50,
+        [data-theme="dark"] .bg-sky-50,
+        [data-theme="dark"] .bg-purple-50,
+        [data-theme="dark"] .text-gray-500,
+        [data-theme="dark"] .bg-orange-50,
+        [data-theme="dark"] .bg-green-50,
+        [data-theme="dark"] .bg-teal-50,
+        [data-theme="dark"] .bg-orange-50 {
+            background-color: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .bg-gray-50\/50 {
+            background-color: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* Input Report */
+        [data-theme="dark"] #report-page input,
+        [data-theme="dark"] #report-page select,
+        [data-theme="dark"] #report-page textarea {
+            background-color: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: white !important;
+        }
+
+        /* Report */
+        [data-theme="dark"] #report-page table thead tr {
+            background-color: var(--card-bg) !important;
+        }
+
+        /* Elements Dark Mode */
+        [data-theme="dark"] body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .bg-white {
+            background-color: var(--card-bg) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .bg-gray-50,
+        [data-theme="dark"] .bg-gray-100 {
+            background-color: var(--bg-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .text-gray-900,
+        [data-theme="dark"] .text-gray-800,
+        [data-theme="dark"] .text-gray-700,
+        [data-theme="dark"] .text-gray-600 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-gray-500,
+        [data-theme="dark"] .text-gray-400 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .border-gray-200,
+        [data-theme="dark"] .border-gray-300,
+        [data-theme="dark"] .border-gray-100 {
+            border-color: var(--border-color) !important;
+        }
+
+        /* Input / Select */
+        [data-theme="dark"] input,
+        [data-theme="dark"] select,
+        [data-theme="dark"] textarea {
+            background-color: var(--input-bg) !important;
+            color: white !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Sidebar Menu */
+        [data-theme="dark"] aside {
+            background-color: #111827 !important;
+            border-right: 1px solid var(--border-color) !important;
+        }
+
+        [data-theme="dark"] aside nav a,
+        [data-theme="dark"] aside nav button {
+            color: #9ca3af !important;
+        }
+
+        [data-theme="dark"] aside nav a svg,
+        [data-theme="dark"] aside nav button svg {
+            color: #6b7280 !important;
+        }
+
+        /* 3. ตอนเอาเมาส์ชี้ (Hover) - ให้สว่างขึ้นเล็กน้อย */
+        [data-theme="dark"] aside nav a:hover,
+        [data-theme="dark"] aside nav button:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            /* สีขาวจางๆ 5% */
+            color: #f3f4f6 !important;
+            /* ตัวหนังสือขาว */
+        }
+
+        /* 4. เมนูที่ "กำลังเลือกอยู่" (Active State) */
+        /* แก้ไขคลาส bg-blue-50 หรือ bg-gray-100 ที่ใช้อยู่เดิม */
+        [data-theme="dark"] aside nav a.bg-blue-50,
+        [data-theme="dark"] aside nav a.bg-gray-100,
+        [data-theme="dark"] aside nav a.text-blue-600 {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            /* สีฟ้าโปร่งแสงบนพื้นดำ */
+            color: #60a5fa !important;
+            /* สีฟ้าสว่าง (Blue-400) อ่านง่ายกว่า Blue-600 */
+            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            /* เพิ่มขอบสีฟ้าจางๆ */
+        }
+
+        /* ปรับสีไอคอนของเมนูที่เลือกอยู่ */
+        [data-theme="dark"] aside nav a.bg-blue-50 svg,
+        [data-theme="dark"] aside nav a.text-blue-600 svg {
+            color: #60a5fa !important;
+            /* ไอคอนสีฟ้าสว่าง */
+        }
+
+        /* 5. ส่วนหัว Logo ด้านบนซ้าย */
+        [data-theme="dark"] aside .text-gray-800 {
+            color: white !important;
+        }
+
+        [data-theme="dark"] #mobile-floating-menu {
+            background-color: var(--card-bg) !important;
+            border-top-color: var(--border-color) !important;
+        }
+
+        /* =========================================
+   แก้ไขหน้า Approvals Center (Admin) - แก้ไข ID ให้ถูกต้อง
+   ========================================= */
+
+        /* 1. พื้นหลังการ์ดหลัก และลบ Gradient สีขาวออก */
+        [data-theme="dark"] #admin-approvals-page .card,
+        [data-theme="dark"] #admin-approvals-page .bg-white {
+            background-color: var(--card-bg) !important;
+            background-image: none !important;
+            /* ลบสีไล่เฉด (Gradient) ออก */
+            border-color: var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+        /* 2. แก้ไขส่วนหัวการ์ด (ที่มีสีไล่เฉด Sky/Orange) */
+        /* หัวข้อ Leave Management (สีฟ้า) */
+        [data-theme="dark"] #admin-approvals-page .from-sky-50 {
+            background-color: rgba(56, 189, 248, 0.1) !important;
+            /* Sky-500 แบบโปร่งแสง */
+            background-image: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        /* หัวข้อ OT Management (สีส้ม) */
+        [data-theme="dark"] #admin-approvals-page .from-orange-50 {
+            background-color: rgba(249, 115, 22, 0.1) !important;
+            /* Orange-500 แบบโปร่งแสง */
+            background-image: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        /* 3. ปรับสี Tab (รออนุมัติ / ประวัติ) */
+        [data-theme="dark"] #admin-approvals-page .leave-tab-btn,
+        [data-theme="dark"] #admin-approvals-page .ot-tab-btn {
+            border-bottom-color: transparent;
+            /* ปกติไม่มีเส้น */
+        }
+
+        /* Tab ที่ถูกเลือก (Active) */
+        [data-theme="dark"] #admin-approvals-page .border-sky-500 {
+            border-bottom-color: #38bdf8 !important;
+            /* สีฟ้าสว่าง */
+            color: #38bdf8 !important;
+        }
+
+        [data-theme="dark"] #admin-approvals-page .border-orange-500 {
+            border-bottom-color: #fb923c !important;
+            /* สีส้มสว่าง */
+            color: #fb923c !important;
+        }
+
+        /* Tab ที่ไม่ได้เลือก (Inactive) */
+        [data-theme="dark"] #admin-approvals-page .text-gray-400 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] #admin-approvals-page .text-gray-400:hover {
+            color: var(--text-primary) !important;
+        }
+
+        /* 4. พื้นหลังส่วนเนื้อหา (Content Area) */
+        [data-theme="dark"] #admin-approvals-page .bg-gray-50 {
+            background-color: var(--bg-color) !important;
+            /* ให้กลืนกับพื้นหลังหลัก */
+        }
+
+        /* 5. Dropdown เลือกสถานะ/พนักงาน (Select inputs) */
+        [data-theme="dark"] #admin-approvals-page select {
+            background-color: var(--input-bg) !important;
+            color: white !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* 6. การ์ดรายการคำขอ (Item Cards) ที่ Javascript สร้างขึ้นมา */
+        /* บังคับให้การ์ดลูก (ที่อาจจะสร้างทีหลัง) เป็นสีมืด */
+        [data-theme="dark"] #admin-approvals-page .space-y-3>div {
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+
+
+        /* เปลี่ยนสีป้ายสถานะ (Badge) ให้ไม่แสบตา */
+        [data-theme="dark"] .bg-yellow-100 {
+            background-color: rgba(234, 179, 8, 0.2) !important;
+            color: #fef08a !important;
+        }
+
+        [data-theme="dark"] .bg-green-100 {
+            background-color: rgba(34, 197, 94, 0.2) !important;
+            color: #86efac !important;
+        }
+
+        [data-theme="dark"] .bg-red-100 {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            color: #fca5a5 !important;
+        }
+
+        /* เพิ่มสีขอบระดับ 400 ที่ขาดหายไป */
+        .border-blue-400 {
+            --tw-border-opacity: 1;
+            border-color: rgb(96 165 250 / var(--tw-border-opacity, 1));
+        }
+
+        .border-red-400 {
+            --tw-border-opacity: 1;
+            border-color: rgb(248 113 113 / var(--tw-border-opacity, 1));
+        }
+
+        .border-orange-400 {
+            --tw-border-opacity: 1;
+            border-color: rgb(251 146 60 / var(--tw-border-opacity, 1));
+        }
+
+        .border-green-400 {
+            --tw-border-opacity: 1;
+            border-color: rgb(74 222 128 / var(--tw-border-opacity, 1));
+        }
+
+        /* =========================================
+   [FIX] Approvals Center Modern Design (Dark Mode Override)
+   วางส่วนนี้ไว้ล่างสุดของไฟล์ style.css เพื่อให้ทับกฎเดิม
+   ========================================= */
+
+        /* 1. อนุญาตให้แสดงสีไล่เฉด (Gradient) ในส่วนหัว */
+        [data-theme="dark"] #admin-approvals-page .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops)) !important;
+            color: white !important;
+            /* บังคับตัวหนังสือในหัวข้อให้ขาวเสมอ */
+            border-bottom: none !important;
+        }
+
+        /* 2. แก้ไขพื้นหลังของ Content Area ที่จางเกินไป (bg-gray-50/30) */
+        [data-theme="dark"] #admin-approvals-page .bg-gray-50\/30 {
+            background-color: rgba(17, 24, 39, 0.5) !important;
+            /* ปรับเป็นสีมืดโปร่งแสง */
+        }
+
+        /* 3. ปรับสีปุ่ม Tab แบบใหม่ (Pill Style) */
+        /* ปุ่มที่ถูกเลือก (Active) */
+        [data-theme="dark"] #admin-approvals-page .leave-tab-btn.bg-white,
+        [data-theme="dark"] #admin-approvals-page .ot-tab-btn.bg-white {
+            background-color: #374151 !important;
+            /* สีเทาเข้ม (Gray-700) */
+            color: #60A5FA !important;
+            /* สีฟ้าสว่าง (Blue-400) */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid #4B5563 !important;
+        }
+
+        /* ปุ่มที่ไม่ได้เลือก (Inactive) */
+        [data-theme="dark"] #admin-approvals-page .leave-tab-btn.text-gray-500,
+        [data-theme="dark"] #admin-approvals-page .ot-tab-btn.text-gray-500 {
+            color: #9CA3AF !important;
+            /* สีเทาอ่อน (Gray-400) */
+            background-color: transparent !important;
+        }
+
+        [data-theme="dark"] #admin-approvals-page .leave-tab-btn.text-gray-500:hover,
+        [data-theme="dark"] #admin-approvals-page .ot-tab-btn.text-gray-500:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: white !important;
+        }
+
+        /* 4. ปรับพื้นหลังแถบเมนู Tab (Tab Container) */
+        [data-theme="dark"] #admin-approvals-page nav[aria-label="Tabs"] {
+            background-color: #111827 !important;
+            /* พื้นหลังรางปุ่มให้เข้ม */
+            border: 1px solid #374151;
+        }
+
+        /* 5. แก้ไขช่องค้นหาและ Dropdown ให้ชัดเจน */
+        [data-theme="dark"] #admin-approvals-page .bg-white.rounded-xl.border {
+            background-color: #1F2937 !important;
+            /* พื้นหลังกล่องค้นหา */
+            border-color: #374151 !important;
+        }
+
+        /* 6. แก้ไขสีตัวอักษรในรายการ (List Item) ไม่ให้กลืนกับพื้นหลัง */
+        [data-theme="dark"] #admin-approvals-page h4.text-gray-800,
+        [data-theme="dark"] #admin-approvals-page p.text-gray-800 {
+            color: #F3F4F6 !important;
+            /* สีขาวเกือบสุด */
+        }
+
+        [data-theme="dark"] #admin-approvals-page p.text-gray-600,
+        [data-theme="dark"] #admin-approvals-page span.text-gray-500 {
+            color: #9CA3AF !important;
+            /* สีเทากลาง */
+        }
+
+        /* 1. บังคับให้การ์ดมีมุมมนและตัดส่วนเกิน */
+        #admin-approvals-page .card {
+            border-radius: 20px !important;
+            /* ปรับความมนตามต้องการ */
+            overflow: hidden !important;
+            /* สำคัญ! คำสั่งนี้จะตัดมุมส่วนหัวสีๆ ให้มนตามกรอบการ์ด */
+            transform: translateZ(0);
+        }
+
+        /* 2. (เสริม) เพื่อความชัวร์ ให้ส่วนหัวมนด้านบนด้วย */
+        #admin-approvals-page .card>div:first-child {
+            border-top-left-radius: 20px !important;
+            border-top-right-radius: 20px !important;
+        }
+
+        /* 1. สั่งให้ส่วนเนื้อหา (อันสุดท้ายในการ์ด) มีมุมล่างมน */
+        #admin-approvals-page .card>div:last-child {
+            border-bottom-left-radius: 20px !important;
+            border-bottom-right-radius: 20px !important;
+
+            /* ป้องกันเนื้อหาล้นจนบังมุมมน */
+            overflow: hidden !important;
+        }
+
+        /* 3. ปรับปุ่ม Tab และช่องค้นหาให้มนรับกัน */
+        #admin-approvals-page .leave-tab-btn,
+        #admin-approvals-page .ot-tab-btn,
+        #admin-approvals-page input,
+        #admin-approvals-page select,
+        #admin-approvals-page .rounded-xl {
+            border-radius: 12px !important;
+            /* ปรับความมนขององค์ประกอบภายใน */
+        }
+
+        /* 1. กำหนดความสูงสูงสุดของกล่องรายการ */
+        #leave-approval-list,
+        #leave-history-list,
+        #ot-approval-list,
+        #ot-history-list {
+            max-height: 300px;
+            /* ถ้าเนื้อหายาวเกิน 450px จะเริ่มมี Scrollbar (ปรับตัวเลขได้) */
+            overflow-y: auto;
+            /* สั่งให้ Scroll แนวตั้ง */
+            overflow-x: hidden;
+            /* ปิด Scroll แนวนอน */
+            padding-right: 6px;
+            /* เว้นระยะขวานิดนึงไม่ให้ตัวหนังสือติด Scrollbar */
+            scroll-behavior: smooth;
+            /* เลื่อนนุ่มนวล */
+        }
+
+        /* 2. ปรับแต่งหน้าตา Scrollbar ให้สวย (ไม่ให้เป็นแท่งสีเทาแบบโบราณ) */
+        /* สำหรับ Chrome, Safari, Edge */
+        #leave-approval-list::-webkit-scrollbar,
+        #leave-history-list::-webkit-scrollbar,
+        #ot-approval-list::-webkit-scrollbar,
+        #ot-history-list::-webkit-scrollbar {
+            width: 6px;
+            /* ขนาดเส้น Scrollbar เล็กๆ มินิมอล */
+        }
+
+        /* ราง Scrollbar */
+        #leave-approval-list::-webkit-scrollbar-track,
+        #leave-history-list::-webkit-scrollbar-track,
+        #ot-approval-list::-webkit-scrollbar-track,
+        #ot-history-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            /* สีพื้นรางจางๆ */
+            border-radius: 10px;
+        }
+
+        /* ตัวเลื่อน Scrollbar */
+        #leave-approval-list::-webkit-scrollbar-thumb,
+        #leave-history-list::-webkit-scrollbar-thumb,
+        #ot-approval-list::-webkit-scrollbar-thumb,
+        #ot-history-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            /* สีเทาอ่อน (เข้ากับธีม) */
+            border-radius: 10px;
+        }
+
+        /* ตอนเอาเมาส์ชี้ที่ตัวเลื่อน */
+        #leave-approval-list::-webkit-scrollbar-thumb:hover,
+        #leave-history-list::-webkit-scrollbar-thumb:hover,
+        #ot-approval-list::-webkit-scrollbar-thumb:hover,
+        #ot-history-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+            /* สีเข้มขึ้นเล็กน้อย */
+        }
+
+        /* เจาะจงไปที่กล่อง Content ด้านล่าง (ที่มีคลาส flex-1) */
+        #admin-approvals-page .card>.flex-1 {
+            border-bottom-left-radius: 1rem !important;
+            /* 16px เท่ากับ rounded-2xl */
+            border-bottom-right-radius: 1rem !important;
+            /* 16px เท่ากับ rounded-2xl */
+            overflow: hidden;
+            /* ป้องกันเนื้อหาภายในล้นออกมา */
+        }
+
+        /* (เผื่อไว้) ถ้าใน Dark Mode มีการเปลี่ยนสีพื้นหลัง */
+        #admin-approvals-page .card>.flex-1.bg-gray-50\/30 {
+            border-bottom-left-radius: 1rem !important;
+            border-bottom-right-radius: 1rem !important;
+        }
+
+        /* เพิ่มสี Gradient ที่ขาดหายไป */
+        .from-blue-500 {
+            --tw-gradient-from: #3b82f6 var(--tw-gradient-from-position);
+            --tw-gradient-to: rgb(59 130 246 / 0) var(--tw-gradient-to-position);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        }
+
+        .to-sky-500 {
+            --tw-gradient-to: #0ea5e9 var(--tw-gradient-to-position);
+        }
+
+        .from-orange-500 {
+            --tw-gradient-from: #f97316 var(--tw-gradient-from-position);
+            --tw-gradient-to: rgb(249 115 22 / 0) var(--tw-gradient-to-position);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+        }
+
+        .to-amber-500 {
+            --tw-gradient-to: #f59e0b var(--tw-gradient-to-position);
+        }
+
+        /* แก้ไขการแสดงผล Dark Mode ให้ตรงกับ Class ใหม่ */
+        [data-theme="dark"] #admin-approvals-page .from-blue-500 {
+            background-color: rgba(56, 189, 248, 0.1) !important;
+            background-image: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        [data-theme="dark"] #admin-approvals-page .from-orange-500 {
+            background-color: rgba(249, 115, 22, 0.1) !important;
+            background-image: none !important;
+            border-bottom: 1px solid var(--border-color) !important;
+        }
