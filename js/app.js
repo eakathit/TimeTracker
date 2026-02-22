@@ -14,7 +14,7 @@ import { toLocalISOString, toLocalDateKey, calculateWorkHours } from './utils/da
 import { showNotification, showConfirmDialog } from "./utils/uiHelper.js";
 import { loadPayrollSummary, exportPayrollSummaryToExcel } from './services/payrollService.js';
 import { loadWorkHistory, loadLeaveHistory, loadOtHistory, loadTimesheetSummary } from './services/historyService.js';
-import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotifications } from './services/dashboardService.js';
+import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotifications, handleLeaveApproval } from './services/dashboardService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -3060,13 +3060,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 2. ตรวจสอบสิทธิ์ Admin (ถ้าเข้าหน้า Dashboard หรือ Timesheet)
       if (
-        (pageId === "admin-dashboard-page" ||
-          pageId === "timesheet-management-page") &&
+        (pageId === "admin-dashboard-page" || 
+        pageId === "timesheet-management-page" || 
+        pageId === "settings-page") && // ✨ เพิ่มหน้านี้เข้าไปด้วย
         (!currentUserData || currentUserData.role !== "admin")
-      ) {
+        ) {
         alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
         return;
-      }
+        }
 
       // 3. จัดการ Active Class (ไฮไลท์เมนู)
       navItems.forEach((n) => n.classList.remove("active"));
@@ -3080,7 +3081,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // --- Logic เฉพาะของแต่ละหน้า ---
       // A. หน้าลงเวลา
       if (pageId === "check-in-out-page") {
-        latestPosition = null;
+        setMockPosition(null);
         if (checkinBtn) checkinBtn.disabled = true;
         if (locationStatusDiv)
           locationStatusDiv.className =
@@ -4557,215 +4558,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error loading users:", error);
     }
   }
-
-  // (แทนที่ฟังก์ชันเดิม)
-  async function handleLeaveApproval(docId, newStatus, buttonElement) {
-    if (!docId) return;
-
-    // [แก้ไข] ค้นหาการ์ดหลักด้วย class ใหม่
-    const cardElement = buttonElement.closest(".leave-request-card");
-
-    // 1. ปิดการใช้งานปุ่มและทำให้การ์ดจางลงทันที
-    if (cardElement) {
-      cardElement
-        .querySelectorAll("button")
-        .forEach((btn) => (btn.disabled = true));
-      cardElement.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-      cardElement.style.opacity = "0.5";
-    } else {
-      // Fallback (กรณี selector ผิด)
-      buttonElement.disabled = true;
-    }
-
-    try {
-      // 2. อัปเดต Firestore (เหมือนเดิม)
-      await db.collection("leave_requests").doc(docId).update({
-        status: newStatus,
-        approvedBy: auth.currentUser ? auth.currentUser.displayName : "Admin"
-      });
-
-      const statusText = newStatus === "approved" ? "อนุมัติ" : "ไม่อนุมัติ";
-      showNotification(`${statusText}ใบลาสำเร็จ`, "success");
-
-      // 3. ถ้าหาการ์ดเจอ ให้ซ่อนและลบออก
-      if (cardElement) {
-        cardElement.style.opacity = "0";
-        cardElement.style.transform = "scale(0.95)";
-
-        setTimeout(() => {
-          cardElement.remove(); // ลบการ์ดออกจาก DOM
-
-          // 4. [FIX] ตรวจสอบว่ามีรายการเหลือหรือไม่
-          const listContainer = document.getElementById("leave-approval-list");
-          if (listContainer && listContainer.children.length === 0) {
-            // ค้นหา p id="leave-loading-msg"
-            let loadingMsg = document.getElementById("leave-loading-msg");
-
-            if (!loadingMsg) {
-              // ถ้าไม่มี (เพราะถูกลบไปตอนโหลด) ให้สร้างขึ้นมาใหม่
-              loadingMsg = document.createElement("p");
-              loadingMsg.id = "leave-loading-msg";
-              loadingMsg.className = "text-center text-gray-400 text-sm py-4";
-              listContainer.appendChild(loadingMsg);
-            }
-            // อัปเดตข้อความ
-            loadingMsg.textContent = "ไม่มีรายการรออนุมัติ";
-          }
-        }, 300); // รอ animation 0.3s
-      } else {
-        // 3b. Fallback (ถ้าหาการ์ดไม่เจอ) ให้โหลดซ้ำทั้งรายการ
-        await loadPendingLeaveRequests();
-      }
-    } catch (error) {
-      // 5. ถ้าเกิดข้อผิดพลาด
-      console.error("Error updating leave status:", error);
-      showNotification("เกิดข้อผิดพลาดในการอัปเดต", "error");
-
-      // คืนค่าปุ่มให้กดได้อีกครั้ง
-      if (cardElement) {
-        cardElement
-          .querySelectorAll("button")
-          .forEach((btn) => (btn.disabled = false));
-        cardElement.style.opacity = "1";
-        cardElement.style.transform = "scale(1)";
-      } else {
-        buttonElement.disabled = false;
-      }
-    }
-  }
-
-  // [ ★★★ เพิ่มส่วนนี้ ★★★ ]
-  // ผูก Event Listener สำหรับการอนุมัติ OT
-  const otListContainer = document.getElementById("ot-approval-list");
-  if (otListContainer) {
-    otListContainer.addEventListener("click", (event) => {
-      const approveBtn = event.target.closest(".approve-ot-btn");
-      const rejectBtn = event.target.closest(".reject-ot-btn");
-
-      if (approveBtn) {
-        // กดปุ่มอนุมัติ
-        const docId = approveBtn.dataset.id;
-        if (!docId) return;
-
-        approveBtn.disabled = true;
-        approveBtn.textContent = "กำลังบันทึก...";
-        handleOtApproval(docId, "approved", approveBtn);
-      } else if (rejectBtn) {
-        // กดปุ่มไม่อนุมัติ
-        const docId = rejectBtn.dataset.id;
-        if (!docId) return;
-
-        rejectBtn.disabled = true;
-        rejectBtn.textContent = "กำลังบันทึก...";
-        handleOtApproval(docId, "rejected", rejectBtn);
-      }
-    });
-  }
-
-  // ฟังก์ชันเปิด Modal ขอ OT (ฝั่ง User) (เวอร์ชันแก้ไข: ใช้วิธี format วันที่/เวลา ที่ปลอดภัยกว่า)
-  const openOtModal = async () => {
-    if (!currentUser) return;
-    const today = toLocalDateKey(new Date());
-    const docId = `${currentUser.uid}_${today}`;
-
-    try {
-      const workRecordDoc = await db
-        .collection("work_records")
-        .doc(docId)
-        .get();
-      if (!workRecordDoc.exists || !workRecordDoc.data().checkOut) {
-        showNotification("ไม่พบข้อมูลการ Check-out ของวันนี้", "error");
-        return;
-      }
-
-      const checkoutTime = workRecordDoc.data().checkOut.timestamp.toDate();
-
-      // [ ★ แก้ไข ★ ] ใช้วิธีดึงค่าและ .padStart(2, '0') เพื่อให้ได้ YYYY-MM-DD
-      const year = checkoutTime.getFullYear();
-      const month = (checkoutTime.getMonth() + 1).toString().padStart(2, "0");
-      const day = checkoutTime.getDate().toString().padStart(2, "0");
-
-      // [ ★ แก้ไข ★ ] ใช้วิธีดึงค่าและ .padStart(2, '0') เพื่อให้ได้ HH:mm
-      const hours = checkoutTime.getHours().toString().padStart(2, "0");
-      const minutes = checkoutTime.getMinutes().toString().padStart(2, "0");
-
-      // เติมข้อมูลลง Modal
-      otRequestDate.value = `${year}-${month}-${day}`;
-      otStartTime.value = `${hours}:${minutes}`;
-      otEndTime.value = "";
-      otReason.value = "";
-
-      otRequestModal.classList.remove("hidden");
-    } catch (error) {
-      showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-    }
-  };
-
-  // ฟังก์ชันปิด Modal ขอ OT
-  const closeOtModal = () => {
-    otRequestModal.classList.add("hidden");
-  };
-
-  // --- Event Listeners สำหรับ Modal ขอ OT (ฝั่ง User) ---
-  requestOtBtn.addEventListener("click", openOtModal);
-  cancelOtBtn.addEventListener("click", closeOtModal);
-  otOverlay.addEventListener("click", closeOtModal);
-
-  // Event Listener สำหรับปุ่ม "ส่งคำขอ OT" (เวอร์ชันแก้ไข: ตรวจสอบทุกช่อง)
-  submitOtBtn.addEventListener("click", async () => {
-    if (!currentUser || !currentUserData) return;
-
-    const startTimeStr = otStartTime.value;
-    const endTimeStr = otEndTime.value;
-    const reason = otReason.value.trim();
-    const dateStr = otRequestDate.value;
-
-    // [ ★ แก้ไข ★ ] ตรวจสอบทุกช่อง (date, start, end, reason)
-    if (!dateStr || !startTimeStr || !endTimeStr || !reason) {
-      showNotification(
-        "กรุณากรอกข้อมูล วันที่, เวลาเริ่มต้น, เวลาสิ้นสุด และเหตุผล",
-        "warning",
-      );
-      return;
-    }
-
-    if (endTimeStr <= startTimeStr) {
-      showNotification("เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น", "warning");
-      return;
-    }
-
-    submitOtBtn.disabled = true;
-    submitOtBtn.textContent = "กำลังส่ง...";
-
-    try {
-      // สร้าง Collection ใหม่สำหรับเก็บคำขอ OT
-      const otRequestData = {
-        userId: currentUser.uid,
-        userName: currentUserData.fullName,
-        userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-        department: currentUserData.department,
-        date: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        reason: reason,
-        status: "pending",
-        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        workRecordDocId: `${currentUser.uid}_${dateStr}`, // อ้างอิงถึงเอกสาร Check-in
-      };
-
-      await db.collection("ot_requests").add(otRequestData);
-
-      showNotification("ส่งคำขอ OT สำเร็จ!", "success");
-      closeOtModal();
-      requestOtBtn.classList.add("hidden"); // ซ่อนปุ่มหลังจากส่งสำเร็จ
-    } catch (error) {
-      console.error("Error submitting OT request:", error);
-      showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-    } finally {
-      submitOtBtn.disabled = false;
-      submitOtBtn.textContent = "ส่งคำขอ";
-    }
-  });
+  
 
   // [อัปเดต] โหลดรายการ OT (กรองตามแผนก)
   async function loadPendingOtRequests() {
@@ -6020,9 +5813,9 @@ document.addEventListener("DOMContentLoaded", function () {
     auditDatePicker.value = new Date().toISOString().split("T")[0];
 
     //  เมื่อมีการเปลี่ยนวันที่
-    auditDatePicker.addEventListener("change", loadDailyAuditData);
+    auditDatePicker.addEventListener("change", () => loadDailyAuditData(currentUser, currentUserData));
 
-    loadDailyAuditData();
+    loadDailyAuditData(currentUser, currentUserData);
   }
 
   // ผูกปุ่ม Filter
@@ -6709,6 +6502,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    
     // ผูก Event ให้ช่องค้นหา/กรองแผนก (พิมพ์ปุ๊บ ค้นหาปั๊บ)
     const payrollSearchInput = document.getElementById("payroll-search-name");
     const payrollFilterDept = document.getElementById("payroll-filter-dept");
@@ -6728,4 +6522,5 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("summary-stat-user-select")?.addEventListener("change", loadTimesheetSummary);
     document.getElementById("summary-stat-year-select")?.addEventListener("change", loadTimesheetSummary);
 
+    
 });
