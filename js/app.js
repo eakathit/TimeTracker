@@ -415,7 +415,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (displayNameEl) {
       displayNameEl.textContent = userData.fullName || "ผู้ใช้งาน";
     }
-    updateProfilePage(userData);
 
     // --------------------------------------------------------
     // 2. อัปเดตข้อมูล Sidebar (Mini Profile ด้านล่างซ้าย)
@@ -2124,22 +2123,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  if (roleMemberBtn)
-    roleMemberBtn.addEventListener("click", () => switchRole("member"));
-  if (roleLeaderBtn)
-    roleLeaderBtn.addEventListener("click", () => switchRole("leader"));
-
   // --- 2. Logic ฝั่ง Leader (สร้างห้อง) ---
   const roomQrContainer = document.getElementById("room-qr-container");
   const roomMembersList = document.getElementById("room-members-list");
-
-  // 4. ผูก Event Listener
-  if (refreshTimelineBtn) {
-    refreshTimelineBtn.addEventListener("click", loadTimelineData);
-  }
-  if (timelineDatePicker) {
-    timelineDatePicker.addEventListener("change", loadTimelineData);
-  }
 
   // 5. เชื่อมต่อเมนู Sidebar ให้เปิดหน้านี้ และโหลดข้อมูล
   document.querySelectorAll(".nav-item").forEach((item) => {
@@ -2177,20 +2163,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
     tsFilterStart.value = firstDay.toISOString().split("T")[0];
     tsFilterEnd.value = date.toISOString().split("T")[0];
-  }
-
-  // 3. ผูก Event Listener
-  if (tsApplyBtn) tsApplyBtn.addEventListener("click", loadTimesheetTable);
-
-
-  if (timesheetTabBtn) {
-    timesheetTabBtn.addEventListener("click", () => {
-      // โหลดเฉพาะถ้าตารางยังว่างอยู่ (หรือจะโหลดใหม่ทุกครั้งก็ได้)
-      const tbody = document.getElementById("ts-table-body");
-      // if(tbody && tbody.children.length <= 1) {
-      loadTimesheetTable();
-      // }
-    });
   }
   // --- [NEW] Daily Audit Logic ---
 
@@ -2527,30 +2499,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // เรียกใช้งานทันทีเมื่อโหลดหน้าเว็บ
   initTheme();
-
-  function initTheme() {
-    const savedTheme = localStorage.getItem("theme");
-
-    if (savedTheme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dakr");
-    }
-  }
-
-  function initTheme() {
-    const savedTheme = localStorage.getItem("theme");
-
-    // นอกนั้น (ไม่เคยบันทึก หรือบันทึกเป็น light) ให้เปิด Light Mode เสมอ
-    if (savedTheme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      if (darkModeToggle) darkModeToggle.checked = true;
-      updateDarkModeStatus(true);
-    } else {
-      // กรณีเข้าครั้งแรก (savedTheme เป็น null) -> เข้าเงื่อนไขนี้ (Light)
-      document.documentElement.setAttribute("data-theme", "light");
-      if (darkModeToggle) darkModeToggle.checked = false;
-      updateDarkModeStatus(false);
-    }
-  }
 
   // 3. [เพิ่ม] ฟังก์ชันสำหรับค้นหาข้อมูลเมื่อคลิกปุ่ม
   searchRecordBtn.addEventListener("click", async () => {
