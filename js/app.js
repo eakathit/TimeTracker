@@ -26,6 +26,7 @@ import { loadWorkHistory, loadLeaveHistory, loadOtHistory, loadTimesheetSummary 
 import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotifications, handleLeaveApproval } from './services/dashboardService.js';
 import { submitLeaveRequest, submitDailyReport, deleteDailyReportItem } from './services/requestService.js';
 import { loadPendingLeaveRequests, loadPendingOtRequests, handleOtApproval } from './services/approvalService.js';
+import { checkUserWorkStatus, proceedWithCheckin, handleCheckoutAction, setupOnsiteLeader, joinOnsiteRoom, loadScript, switchRole } from './services/attendanceService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -363,9 +364,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentRoomId = null;
   let roomUnsubscribe = null; // สำหรับยกเลิกการฟัง Realtime update
 
-  // --- 1. การสลับ Role (Member / Leader) ---
-  const roleMemberBtn = document.getElementById("role-member-btn");
-  const roleLeaderBtn = document.getElementById("role-leader-btn");
   const memberSection = document.getElementById("member-section");
   const leaderSection = document.getElementById("leader-section");
 
@@ -1469,156 +1467,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
-
-
-            // 1. ฟังก์ชันบันทึก Check-in (แยกออกมาให้เรียกใช้ง่ายๆ ไม่ซ้อนกัน)
-            const proceedWithCheckin = async (finalWorkType, reportData = null) => {
-                const checkinSpan = document.querySelector('#checkin-btn span');
-                const checkinBtnElement = document.getElementById('checkin-btn');
-                
-                try {
-                    checkinBtnElement.disabled = true;
-                    if (checkinSpan) checkinSpan.textContent = "กำลังบันทึก...";
-                    
-                    const now = new Date();
-                    const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
-
-                    const workRecord = {
-                        userId: currentUser.uid,
-                        date: firebase.firestore.Timestamp.fromDate(now),
-                        checkIn: {
-                            timestamp: firebase.firestore.Timestamp.fromDate(now),
-                            location: new firebase.firestore.GeoPoint(latestPosition.coords.latitude, latestPosition.coords.longitude),
-                            googleMapLink: `https://www.google.com/maps/search/?api=1&query=$${latestPosition.coords.latitude},${latestPosition.coords.longitude}`,
-                            accuracy: latestPosition.coords.accuracy,
-                            workType: finalWorkType,
-                            onSiteDetails: null,
-                            photoUrl: null
-                        },
-                        status: "checked_in",
-                        reports: reportData ? [{
-                            ...reportData,
-                            id: Date.now(),
-                            submittedAt: firebase.firestore.Timestamp.fromDate(now)
-                        }] : [],
-                        checkOut: null,
-                        overtime: null
-                    };
-
-                    await db.collection('work_records').doc(docId).set(workRecord);
-                    showNotification("Check-in สำเร็จแล้ว!", "success");
-                    updateUIToCheckedIn(); // เปลี่ยนปุ่มเป็นสีแดง Check-out
-
-                    // อัปเดตเวลาบนหน้าจอ
-                    const savedRecord = await db.collection('work_records').doc(docId).get();
-                    if (savedRecord.exists) {
-                        const serverCheckinTime = savedRecord.data().checkIn.timestamp.toDate();
-                        summaryCheckinTime.textContent = serverCheckinTime.toLocaleTimeString('th-TH');
-                        summaryCheckinTime.classList.replace('text-gray-400', 'text-green-600');
-                        summaryCheckoutTime.textContent = '-';
-                        summaryCheckoutTime.classList.replace('text-red-500', 'text-gray-400');
-                        summaryWorkHours.textContent = '-';
-                    }
-
-                } catch (error) {
-                    console.error("Check-in Error:", error);
-                    showNotification("Error: " + error.message, 'error');
-                    checkinBtnElement.disabled = false;
-                    if (checkinSpan) checkinSpan.textContent = "Check In";
-                }
-            };
-
-            // 2. จัดการปุ่ม "ยืนยัน (Confirm)" ใน Modal 
-            const confirmCheckinBtn = document.getElementById('confirm-checkin-btn');
-            if (confirmCheckinBtn) {
-
-                confirmCheckinBtn.addEventListener('click', async () => {
-                    const workType = document.getElementById('checkin-work-type-text').textContent.trim();
-                    const project = document.getElementById('checkin-project-text').textContent.trim();
-                    let duration = document.getElementById('checkin-duration-text').textContent.trim();
-
-                    if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
-                        return showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-                    }
-
-                    let hoursUsed = 0;
-                    let saveStartTime = "";
-                    let saveEndTime = "";
-
-                    if (duration === 'SOME TIME') {
-                        const startT = document.getElementById('checkin-start-time').value;
-                        const endT = document.getElementById('checkin-end-time').value;
-
-                        if (!startT || !endT) return showNotification('กรุณาระบุเวลาเริ่มและสิ้นสุด', 'warning');
-
-                        const start = new Date(`2000-01-01T${startT}`);
-                        const end = new Date(`2000-01-01T${endT}`);
-                        const diffHrs = (end - start) / (1000 * 60 * 60);
-
-                        if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
-
-                        hoursUsed = parseFloat(diffHrs.toFixed(2));
-                        duration = `SOME TIME (${startT} - ${endT})`;
-                        saveStartTime = startT;
-                        saveEndTime = endT;
-
-                    } else if (duration.includes('HALF DAY')) {
-                        if (duration.includes('08:30')) {
-                            hoursUsed = 3.5; saveStartTime = "08:30"; saveEndTime = "12:00"; duration = "HALF DAY (08:30 - 12:00)";
-                        } else {
-                            hoursUsed = 4.5; saveStartTime = "13:00"; saveEndTime = "17:30"; duration = "HALF DAY (13:00 - 17:30)";
-                        }
-                    } else {
-                        hoursUsed = 8.0; saveStartTime = "08:30"; saveEndTime = "17:30"; duration = "ALL (08:30 - 17:30)";
-                    }
-
-                    // ปิด Modal
-                    document.getElementById('checkin-report-modal').classList.add('hidden');
-
-                    // ส่งข้อมูลไปบันทึก
-                    await proceedWithCheckin('in_factory', {
-                        workType: workType,
-                        project: project,
-                        duration: duration,
-                        hours: hoursUsed,
-                        startTime: saveStartTime,
-                        endTime: saveEndTime
-                    });
-                });
-            }
-
-            // 3. จัดการปุ่ม Check In วงกลมใหญ่หน้าแรก
-            const mainCheckinBtn = document.getElementById('checkin-btn');
-            if (mainCheckinBtn) {
-
-                mainCheckinBtn.addEventListener('click', async () => {
-                    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-
-                    // 🌟 [โหมดเทส] จำลองว่ายืนอยู่กลางโรงงานเลย
-                    if (isLocalhost) {
-                    console.log("🛠️ Localhost Mode: Bypassing GPS check...");
-                    setMockPosition({ coords: { latitude: FACTORY_LOCATION.latitude, longitude: FACTORY_LOCATION.longitude, accuracy: 10 } });
-                }
-                    if (!latestPosition) {
-                        showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
-                        return;
-                    }
-
-                    // เช็คระยะทาง (ถ้ารันเทส ให้บังคับระยะทางเป็น 0)
-                    let distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-                    if (isLocalhost) distance = 0; 
-
-                    if (distance > ALLOWED_RADIUS_METERS) {
-                        showNotification(`อยู่นอกพื้นที่ (${distance.toFixed(0)} ม.)`, 'error');
-                        return;
-                    }
-
-                    // ผ่านเงื่อนไข -> เปิด Modal ให้กรอก Report 
-                    document.getElementById('checkin-report-modal').classList.remove('hidden');
-                });
-            }
-  // --- Logic สำหรับ Modal Check-in (เพิ่มใหม่) ---
-
+ 
   // 1. ตั้งค่าให้ Dropdown ใน Modal ทำงาน (เลือกแล้วเปลี่ยนข้อความ)
   const checkinDropdowns = [
     {
@@ -1724,94 +1573,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     if (profileDepartment) {
       profileDepartment.textContent = userData.department || "ไม่มีข้อมูลแผนก";
-    }
-  }
-
- 
-  
-
-  async function checkUserWorkStatus() {
-    if (!auth.currentUser || !currentUser) return;
-
-    const today = toLocalDateKey(new Date());
-    const docId = `${currentUser.uid}_${today}`;
-
-    // ดึงข้อมูลแบบปกติ เพื่อให้ Firebase จัดการ Offline/Cache เองตามธรรมชาติ
-    // ลดปัญหา FirebaseError: Failed to get document from cache
-    let workRecordDoc;
-    try {
-      workRecordDoc = await db.collection("work_records").doc(docId).get();
-    } catch (e) {
-      console.warn(
-        "Network error, trying to fetch status from local cache...",
-        e,
-      );
-      // ถ้าดึงปกติไม่ได้จริงๆ ค่อยลองดึงจาก cache แบบเงียบๆ
-      try {
-        workRecordDoc = await db
-          .collection("work_records")
-          .doc(docId)
-          .get({ source: "cache" });
-      } catch (cacheError) {
-        return; // ถ้าไม่มีทั้งเน็ตและไม่มี cache ให้หยุดทำงาน
-      }
-    }
-
-    if (workRecordDoc && workRecordDoc.exists) {
-      const data = workRecordDoc.data();
-
-      // --- [ตรวจสอบ Check-In] ---
-      // ถ้าเป็นกรณี Report Only (มี Record แต่ไม่มี Check-in) ให้แสดงสถานะเตรียม Check-in ปกติ
-      if (!data.checkIn || !data.checkIn.timestamp) {
-        console.log(
-          "Found record but no check-in data (Potential Report Only)",
-        );
-        updateUIToCheckIn();
-        return;
-      }
-
-      const checkinTime = data.checkIn.timestamp.toDate();
-      summaryCheckinTime.textContent = checkinTime.toLocaleTimeString("th-TH");
-      summaryCheckinTime.classList.remove("text-gray-400");
-      summaryCheckinTime.classList.add("text-green-600");
-
-      if (data.status === "checked_in") {
-        updateUIToCheckedIn();
-      } else if (data.status === "completed" && data.checkOut) {
-        updateUIToCompleted();
-
-        const checkoutTime = data.checkOut.timestamp.toDate();
-
-        // 1. คำนวณชั่วโมงเบื้องต้น
-        let { regularWorkHours, overtimeHours: calculatedOt } =
-          calculateWorkHours(checkinTime, checkoutTime);
-
-        // 2. จัดการค่า OT (หัวใจสำคัญ: เชื่อข้อมูลในฐานข้อมูลเป็นอันดับแรก)
-        let finalOt = 0;
-        // ตรวจสอบว่ามีข้อมูล OT บันทึกไว้ไหม (ถ้ามีให้ใช้ค่าในนั้น แม้จะเป็น 0 ก็ตาม)
-        if (data.overtime && typeof data.overtime.hours === "number") {
-          finalOt = data.overtime.hours;
-        } else {
-          // ถ้าใน DB ยังไม่มีข้อมูล OT (กรณีเก่า) ให้ใช้ค่าจากการคำนวณ
-          finalOt = calculatedOt;
-        }
-
-        summaryCheckoutTime.textContent =
-          checkoutTime.toLocaleTimeString("th-TH");
-        summaryCheckoutTime.classList.remove("text-gray-400");
-        summaryCheckoutTime.classList.add("text-red-500");
-
-        // แสดงชั่วโมงงานปกติ
-        summaryWorkHours.textContent = `${regularWorkHours.toFixed(2)} hours`;
-
-        // แสดง OT เฉพาะรายการที่มากกว่า 0
-        if (finalOt > 0) {
-          summaryWorkHours.textContent += ` (OT ${finalOt} hrs)`;
-        }
-      }
-    } else {
-      // กรณีไม่มีข้อมูล Record ใดๆ ของวันนี้เลย
-      updateUIToCheckIn();
     }
   }
 
@@ -2406,362 +2167,6 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("เกิดข้อผิดพลาด: " + error.message);
     }
   }
-
-  function updateUIToCheckIn() {
-    checkinBtn.classList.remove("hidden");
-    checkoutBtn.classList.add("hidden");
-    document.getElementById("request-ot-btn").classList.add("hidden");
-    // Reset checkout button if previously completed
-    checkoutBtn.disabled = false;
-    checkoutBtn.classList.add(
-      "checkout-btn-anim",
-      "bg-red-500",
-      "hover:bg-red-600",
-    );
-    checkoutBtn.classList.remove("bg-green-500", "completed-btn-anim");
-    checkoutBtn.innerHTML = `
-            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            <span class="text-2xl font-semibold mt-2">Check Out</span>
-        `;
-  }
-
-  function updateUIToCheckedIn() {
-    checkinBtn.classList.add("hidden");
-    checkoutBtn.classList.remove("hidden");
-    // Ensure checkout button is in the default state
-    checkoutBtn.disabled = false;
-    checkoutBtn.classList.add(
-      "checkout-btn-anim",
-      "bg-red-500",
-      "hover:bg-red-600",
-    );
-    checkoutBtn.classList.remove("bg-green-500", "completed-btn-anim");
-    checkoutBtn.innerHTML = `
-            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            <span class="text-2xl font-semibold mt-2">Check Out</span>
-        `;
-  }
-
-  function updateUIToCompleted() {
-    checkinBtn.classList.add("hidden");
-    checkoutBtn.classList.remove("hidden");
-    checkoutBtn.disabled = true;
-    checkoutBtn.classList.remove(
-      "checkout-btn-anim",
-      "bg-red-500",
-      "hover:bg-red-600",
-    );
-    checkoutBtn.classList.add("bg-green-500", "completed-btn-anim");
-    checkoutBtn.innerHTML = `
-            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            <span class="text-2xl font-semibold mt-2">Completed</span>
-        `;
-    document.getElementById("request-ot-btn").classList.remove("hidden"); // [เพิ่มบรรทัดนี้]
-  }
-
-  // --- Logic ปุ่ม Check Out (รองรับ Group Checkout) ---
-  checkoutBtn.addEventListener("click", async () => {
-    // 1. Validation พื้นฐาน
-    if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
-    if (!latestPosition)
-      return showNotification("กำลังรอสัญญาณ GPS...", "warning");
-
-    const checkoutSpan = checkoutBtn.querySelector("span");
-    checkoutBtn.disabled = true;
-    if (checkoutSpan) checkoutSpan.textContent = "ตรวจสอบสถานะกลุ่ม...";
-
-    try {
-      // 2. เตรียมข้อมูลเวลา
-      const now = new Date();
-
-      const docId = `${currentUser.uid}_${toLocalDateKey(now)}`;
-      const workRecordRef = db.collection("work_records").doc(docId);
-      const workRecordDoc = await workRecordRef.get();
-
-      if (!workRecordDoc.exists) throw new Error("ไม่พบข้อมูลการเข้างาน");
-
-      const recordData = workRecordDoc.data();
-      const workType = recordData.checkIn.workType;
-      const roomId = recordData.checkIn.roomId;
-
-      // กำหนด Location Note
-      const locationNote =
-        workType === "in_factory"
-          ? "factory_normal"
-          : recordData.checkIn.locationNote || "On-site";
-
-      // --- ฟังก์ชันบันทึก Check-out (ฉบับแก้ไข: Fix lat error + Cloud Function + Debug Mode) ---
-      const executeSaveCheckout = async (
-        withOT,
-        note,
-        groupUpdateData = null,
-      ) => {
-        // 1. ตรวจสอบข้อมูลพิกัด (Fix ReferenceError)
-        if (!latestPosition || !latestPosition.coords) {
-          if (typeof Swal !== "undefined") {
-            Swal.fire(
-              "ผิดพลาด",
-              "ไม่พบข้อมูลตำแหน่ง GPS กรุณาลองใหม่อีกครั้ง",
-              "error",
-            );
-          } else {
-            alert("ไม่พบข้อมูลตำแหน่ง GPS");
-          }
-          return;
-        }
-
-        // ประกาศตัวแปร lat, lng จาก latestPosition ให้ถูกต้อง
-        const lat = latestPosition.coords.latitude;
-        const lng = latestPosition.coords.longitude;
-
-        try {
-          if (checkoutSpan) checkoutSpan.textContent = "กำลังบันทึก...";
-
-          // ================= 🚧 TEST CODE START 🚧 =================
-          // ⚠️ การตั้งค่าโหมด:
-          // - true  = โหมดเทส (ระบบจะยอมใช้เวลาที่คุณล็อคไว้ด้านล่าง เพื่อให้คำนวณ OT ได้)
-          // - false = โหมดใช้งานจริง (ระบบจะบังคับใช้เวลา Server เท่านั้น ป้องกันการโกง 100%)
-          const isDebugMode = false;
-
-          let clientCheckoutTime = new Date(); // เวลาปัจจุบันของเครื่อง
-
-          if (isDebugMode) {
-            // ล็อคเวลาเป็น 18:45 ของวันนี้ เพื่อเทสว่า OT ขึ้นไหม (0.75 ชม.)
-            clientCheckoutTime.setHours(18, 45, 0, 0);
-            console.warn(
-              "⚠️ DEBUG MODE ACTIVATED: Force Checkout Time to 18:45",
-            );
-          }
-
-          // เรียกใช้ Cloud Function 'recordTimestamp'
-          const recordTimestampFn =
-            cloudFunctions.httpsCallable("recordTimestamp");
-
-          console.log("🚀 Payload to send:", {
-            type: "checkout",
-            calculateOT: withOT,
-            checkoutTime: clientCheckoutTime.toISOString(),
-            isDebug: isDebugMode,
-            location: { latitude: lat, longitude: lng },
-            note: note,
-          });
-
-          console.log("Sending request to Cloud Function...");
-
-          const result = await recordTimestampFn({
-            type: "checkout",
-            calculateOT: withOT, // บอก Server ว่าเราขอคิด OT ไหม
-            checkoutTime: clientCheckoutTime.toISOString(), // ส่งเวลาเครื่องไป
-            isDebug: isDebugMode, // ส่งกุญแจลับไปบอก Server
-            location: {
-              // ส่งพิกัดที่ถูกต้อง
-              latitude: lat,
-              longitude: lng,
-            },
-            note: note, // ส่งหมายเหตุ
-          });
-
-          console.log("✅ Server Response:", result.data);
-
-          // --- ส่วนจัดการ Group Checkout (สำหรับหัวหน้า) ---
-          if (groupUpdateData && roomId) {
-            console.log("Group checkout data processed for leader.");
-            const roomRef = db.collection("onsite_rooms").doc(roomId);
-            await roomRef.update(groupUpdateData);
-          }
-
-          // --- แจ้งเตือนความสำเร็จ ---
-          if (typeof Swal !== "undefined") {
-            let msg = "บันทึกเวลาเลิกงานเรียบร้อยแล้ว";
-
-            // ถ้า Server ส่งยอด OT กลับมา ให้โชว์ด้วย
-            if (result.data && result.data.overtimeHours > 0) {
-              msg += `\n(บันทึก OT: ${result.data.overtimeHours} ชม.)`;
-            }
-
-            Swal.fire({
-              title: "สำเร็จ",
-              text: msg,
-              icon: "success",
-              timer: 2000,
-              showConfirmButton: false,
-            }).then(() => window.location.reload());
-          } else {
-            alert("บันทึกเวลาเลิกงานเรียบร้อยแล้ว");
-            window.location.reload();
-          }
-        } catch (error) {
-          console.error("❌ Checkout Error:", error);
-
-          // แสดง Error ที่ชัดเจน
-          let errorMsg = error.message;
-          if (error.code === "permission-denied")
-            errorMsg = "ไม่มีสิทธิ์เข้าถึงข้อมูล";
-          if (error.code === "internal")
-            errorMsg = "เกิดข้อผิดพลาดที่ Server (Cloud Function)";
-
-          if (typeof Swal !== "undefined") {
-            Swal.fire("เกิดข้อผิดพลาด", errorMsg, "error");
-          } else {
-            alert("Error: " + errorMsg);
-          }
-
-          // คืนค่าปุ่มให้กดใหม่ได้
-          if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-          checkoutBtn.disabled = false;
-        }
-      };
-
-      // Helper: ถาม OT (ใช้ร่วมกันทุกกรณี)
-      function checkTimeAndProceed(note, groupUpdate = null) {
-        const h = now.getHours();
-        const m = now.getMinutes();
-
-        // ★ แก้กลับเป็น 18 (หรือเวลาที่คุณต้องการให้ระบบเริ่มถามเรื่อง OT)
-        // เดิมตอนเทสคือ h >= 8
-        if (h >= 18) {
-          setTimeout(() => {
-            showConfirmDialog(
-              "เลยเวลาเลิกงาน ต้องการบันทึก OT หรือไม่?",
-              () => executeSaveCheckout(true, note, groupUpdate),
-              () => executeSaveCheckout(false, note, groupUpdate),
-              "บันทึก OT",
-              "ไม่เอา OT",
-            );
-          }, 300);
-        } else {
-          executeSaveCheckout(true, note, groupUpdate);
-        }
-      }
-
-      // =========================================================
-      // 3. Logic แยกตามประเภทงาน (Main Logic)
-      // =========================================================
-
-      // >>> กรณี: Onsite Group (ทำงานเป็นกลุ่ม) <<<
-      if (workType === "onsite_group" && roomId) {
-        // ดึงข้อมูลห้อง (Room) มาตรวจสอบสถานะ
-        const roomRef = db.collection("onsite_rooms").doc(roomId);
-        const roomDoc = await roomRef.get();
-        if (!roomDoc.exists)
-          throw new Error("ไม่พบข้อมูลกลุ่มงาน (Room Not Found)");
-        const roomData = roomDoc.data();
-
-        const isLeader = currentUser.uid === roomData.leaderId;
-
-        if (isLeader) {
-          // [Leader Logic]: เป็นคนเลือกสถานที่ปิดงาน
-
-          showConfirmDialog(
-            "Leader: จบงานที่ไหน? (สมาชิกจะยึดตามคุณ)",
-
-            // Choice A: กลับโรงงาน (ขวา)
-            async () => {
-              const dist = calculateDistance(
-                latestPosition.coords.latitude,
-                latestPosition.coords.longitude,
-                FACTORY_LOCATION.latitude,
-                FACTORY_LOCATION.longitude,
-              );
-              if (dist > ALLOWED_RADIUS_METERS) {
-                showNotification(
-                  `คุณยังไม่ถึงโรงงาน (ห่าง ${dist.toFixed(0)} ม.)`,
-                  "error",
-                );
-                checkoutBtn.disabled = false;
-                if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-                return;
-              }
-
-              // ถ้าผ่าน: เตรียมข้อมูลปิดห้องว่า "กลับโรงงาน"
-              const groupUpdate = {
-                status: "closed",
-                checkoutMode: "factory_return",
-                checkoutTime: firebase.firestore.FieldValue.serverTimestamp(),
-              };
-              checkTimeAndProceed("factory_return", groupUpdate);
-            },
-
-            // Choice B: พักโรงแรม (ซ้าย)
-            async () => {
-              // เตรียมข้อมูลปิดห้องว่า "พักโรงแรม"
-              const groupUpdate = {
-                status: "closed",
-                checkoutMode: "offsite_hotel",
-                checkoutTime: firebase.firestore.FieldValue.serverTimestamp(),
-              };
-              checkTimeAndProceed("offsite_hotel", groupUpdate);
-            },
-            "กลับโรงงาน",
-            "พักโรงแรม",
-          );
-        } else {
-          // [Member Logic]: รอหัวหน้า / ทำตามหัวหน้า
-
-          if (roomData.status !== "closed" || !roomData.checkoutMode) {
-            // หัวหน้ายังไม่กดปิดงาน
-            showNotification(
-              "กรุณารอหัวหน้ากลุ่ม (Leader) กด Check-out ก่อน",
-              "warning",
-            );
-            checkoutBtn.disabled = false;
-            if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-            return;
-          }
-
-          // หัวหน้ากดแล้ว -> ตรวจสอบโหมดที่หัวหน้าเลือก
-          if (roomData.checkoutMode === "factory_return") {
-            // หัวหน้าเลือกกลับโรงงาน -> สมาชิกต้องเช็คระยะด้วย
-            const dist = calculateDistance(
-              latestPosition.coords.latitude,
-              latestPosition.coords.longitude,
-              FACTORY_LOCATION.latitude,
-              FACTORY_LOCATION.longitude,
-            );
-            if (dist > ALLOWED_RADIUS_METERS) {
-              showNotification(
-                `หัวหน้าจบงานที่โรงงาน แต่คุณอยู่นอกพื้นที่ (${dist.toFixed(0)} ม.)`,
-                "error",
-              );
-              checkoutBtn.disabled = false;
-              if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-              return;
-            }
-            checkTimeAndProceed("factory_return_member");
-          } else {
-            // หัวหน้าเลือกพักโรงแรม -> สมาชิกผ่านได้เลย
-            checkTimeAndProceed("offsite_hotel_member");
-          }
-        }
-      } else {
-        // >>> กรณี: ทำงานคนเดียว / In Factory (Logic เดิม) <<<
-
-        const dist = calculateDistance(
-          latestPosition.coords.latitude,
-          latestPosition.coords.longitude,
-          FACTORY_LOCATION.latitude,
-          FACTORY_LOCATION.longitude,
-        );
-        if (dist <= ALLOWED_RADIUS_METERS) {
-          // อยู่ในโรงงาน -> ผ่าน
-          checkTimeAndProceed("factory_normal");
-        } else {
-          // อยู่นอกโรงงาน -> แจ้งเตือน
-          showNotification(
-            `อยู่นอกพื้นที่โรงงาน (${dist.toFixed(0)} ม.)`,
-            "error",
-          );
-          checkoutBtn.disabled = false;
-          if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-        }
-      }
-    } catch (error) {
-      console.error("Checkout Global Error:", error);
-      showNotification("Error: " + error.message, "error");
-      checkoutBtn.disabled = false;
-      if (checkoutSpan) checkoutSpan.textContent = "Check Out";
-    }
-  });
 
   const provider = new firebase.auth.GoogleAuthProvider();
   // บังคับให้ Google แสดงหน้าต่างเลือกบัญชีทุกครั้ง
@@ -3564,449 +2969,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function switchRole(role) {
-    // role เ
-    if (role === "member") {
-      memberSection.classList.remove("hidden");
-      leaderSection.classList.add("hidden");
-
-      roleMemberBtn.classList.add(...activeClass);
-      roleMemberBtn.classList.remove(...inactiveClass);
-      roleLeaderBtn.classList.remove(...activeClass);
-      roleLeaderBtn.classList.add(...inactiveClass);
-
-      // ปิดปุ่ม Check In หลัก เพราะสมาชิกจะ Check in ผ่าน QR
-      document.getElementById("checkin-btn").classList.add("hidden");
-    } else {
-      memberSection.classList.add("hidden");
-      leaderSection.classList.remove("hidden");
-
-      roleLeaderBtn.classList.add(...activeClass);
-      roleLeaderBtn.classList.remove(...inactiveClass);
-      roleMemberBtn.classList.remove(...activeClass);
-      roleMemberBtn.classList.add(...inactiveClass);
-
-      // Leader สร้างห้องแล้วถือว่า Check-in เลย หรือกดปุ่มสร้างห้อง
-      document.getElementById("checkin-btn").classList.add("hidden");
-    }
-  }
-
   if (roleMemberBtn)
     roleMemberBtn.addEventListener("click", () => switchRole("member"));
   if (roleLeaderBtn)
     roleLeaderBtn.addEventListener("click", () => switchRole("leader"));
 
   // --- 2. Logic ฝั่ง Leader (สร้างห้อง) ---
-  const createRoomBtn = document.getElementById("create-room-btn");
   const roomQrContainer = document.getElementById("room-qr-container");
   const roomMembersList = document.getElementById("room-members-list");
-
-  if (createRoomBtn) {
-    createRoomBtn.addEventListener("click", async () => {
-      // <--- 1. ต้องมี async ตรงนี้
-      const project = document.getElementById("room-project-input").value;
-      const locationName = document.getElementById("room-location-input").value;
-
-      if (!project || !locationName) {
-        alert("กรุณากรอกชื่อโครงการและสถานที่");
-        return;
-      }
-
-      if (!currentUser) {
-        alert("คุณยังไม่ได้เข้าสู่ระบบ หรือ Session หมดอายุ");
-        return;
-      }
-
-      if (!latestPosition) {
-        alert("กรุณารอสัญญาณ GPS สักครู่...");
-        return;
-      }
-
-      createRoomBtn.disabled = true;
-      createRoomBtn.textContent = "กำลังสร้างห้อง...";
-
-      // ------------------------------------------------------------------
-      // [จุดที่แก้] โหลด Library QR Code ก่อนเริ่มทำงาน (ต้องมี await)
-      // ------------------------------------------------------------------
-      if (typeof QRCode === "undefined") {
-        // เช็คว่ามี QRCode หรือยัง ถ้าไม่มีค่อยโหลด
-        try {
-          // รอให้โหลดเสร็จก่อนค่อยไปต่อ
-          await loadScript(
-            "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
-          );
-        } catch (e) {
-          console.error(e);
-          alert("ไม่สามารถโหลดระบบ QR Code ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
-          createRoomBtn.disabled = false;
-          createRoomBtn.textContent = "สร้างห้อง Check-in";
-          return; // จบการทำงานทันทีถ้าโหลดไม่ได้
-        }
-      }
-      // ------------------------------------------------------------------
-
-      try {
-        const leaderNow = new Date();
-        // 1. สร้าง Room ID
-        const roomId = Math.random().toString(36).substring(2, 9).toUpperCase();
-
-        // ... (โค้ดส่วนสร้าง roomData และ Firestore เหมือนเดิม) ...
-        const roomData = {
-          roomId: roomId,
-          leaderId: currentUser.uid,
-          leaderName: currentUserData.fullName,
-          project: project,
-          locationName: locationName,
-          // เก็บพิกัด GPS ของ Leader
-          gpsLocation: new firebase.firestore.GeoPoint(
-            latestPosition.coords.latitude,
-            latestPosition.coords.longitude,
-          ),
-          // เก็บเวลาที่ Leader สร้างห้องไว้ให้สมาชิกใช้
-          leaderTimestamp: firebase.firestore.Timestamp.fromDate(leaderNow),
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          isActive: true,
-          members: [],
-        };
-
-        await db.collection("onsite_rooms").doc(roomId).set(roomData);
-        // เรียก performCheckIn ของ Leader
-        await performCheckIn(
-          roomId,
-          project,
-          locationName,
-          "leader",
-          currentUser.uid,
-          leaderNow,
-        );
-
-        // 4. สร้าง QR Code (ตอนนี้ QRCode จะไม่ error แล้วเพราะเรา await โหลดมาแล้ว)
-        document.getElementById("qrcode").innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-          text: roomId,
-          width: 180,
-          height: 180,
-        });
-
-        // 5. แสดง UI
-        createRoomBtn.classList.add("hidden");
-        roomQrContainer.classList.remove("hidden");
-        listenToRoomMembers(roomId);
-      } catch (error) {
-        console.error("Error creating room:", error);
-        alert("เกิดข้อผิดพลาด: " + error.message);
-        createRoomBtn.disabled = false;
-        createRoomBtn.textContent = "สร้างห้อง Check-in";
-      }
-    });
-  }
-
-  function listenToRoomMembers(roomId) {
-    roomUnsubscribe = db
-      .collection("onsite_rooms")
-      .doc(roomId)
-      .onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          const members = data.members || [];
-
-          // อัปเดตรายชื่อสมาชิกที่หน้าจอ Leader
-          if (members.length === 0) {
-            roomMembersList.innerHTML =
-              '<li class="text-gray-400 italic">รอสมาชิกสแกน...</li>';
-          } else {
-            // ดึงชื่อจาก users collection (แบบง่ายอาจจะเก็บชื่อใน array members เลยก็ได้ แต่ที่นี่สมมติเก็บแค่ uid)
-            // เพื่อความง่าย แนะนำให้เก็บ {uid, name} ใน members array ตอนจอย
-            roomMembersList.innerHTML = members
-              .map(
-                (m) =>
-                  `<li class="text-green-600 font-medium">✓ ${m.name}</li>`,
-              )
-              .join("");
-          }
-        }
-      });
-  }
-
-  // --- 3. Logic Member (Scan QR) ---
-  const startScanBtn = document.getElementById("start-scan-btn");
-
-  if (startScanBtn) {
-    startScanBtn.addEventListener("click", async () => {
-      // เติม async
-
-      // 1. สั่งโหลด Library กล้อง
-      try {
-        // ใส่ URL ของ html5-qrcode
-        await loadScript("https://unpkg.com/html5-qrcode");
-      } catch (e) {
-        alert("โหลดกล้องไม่สำเร็จ");
-        return;
-      }
-
-      const html5QrCode = new Html5Qrcode("reader");
-      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        // หยุดสแกนเมื่อเจอ QR
-        html5QrCode
-          .stop()
-          .then(() => {
-            document.getElementById("reader").classList.add("hidden");
-            document.getElementById("scan-status").textContent =
-              "สแกนสำเร็จ! กำลังตรวจสอบ...";
-            joinRoom(decodedText); // decodedText คือ roomId
-          })
-          .catch((err) => {
-            console.log("Stop failed ", err);
-          });
-      };
-
-      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-      // เปิดกล้อง
-      document.getElementById("reader").classList.remove("hidden");
-      html5QrCode
-        .start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-        .catch((err) => {
-          alert("ไม่สามารถเปิดกล้องได้: " + err);
-        });
-    });
-  }
-
-  async function joinRoom(roomId) {
-    if (!currentUser) return;
-
-    try {
-      // 1. ตรวจสอบว่าห้องมีอยู่จริงและยัง Active อยู่
-      const roomRef = db.collection("onsite_rooms").doc(roomId);
-      const roomDoc = await roomRef.get();
-
-      if (!roomDoc.exists || !roomDoc.data().isActive) {
-        alert("ห้องนี้ปิดไปแล้ว หรือรหัสไม่ถูกต้อง");
-        document.getElementById("scan-status").textContent =
-          "กดปุ่มเพื่อเริ่มสแกนใหม่";
-        return;
-      }
-
-      const roomData = roomDoc.data();
-
-      // 2. ตรวจสอบระยะห่างกับ Leader (Optional: ป้องกันการส่งรูป QR ให้กัน)
-      // หากต้องการเข้มงวด ให้เช็ค distance ระหว่าง latestPosition กับ roomData.gpsLocation
-
-      // 3. ทำการ Check-in
-      await performCheckIn(
-        roomId,
-        roomData.project,
-        roomData.locationName,
-        "member",
-        roomData.leaderId,
-      );
-
-      // 4. อัปเดตชื่อลงในรายชื่อสมาชิกของห้อง
-      await roomRef.update({
-        members: firebase.firestore.FieldValue.arrayUnion({
-          uid: currentUser.uid,
-          name: currentUserData.fullName,
-        }),
-      });
-
-      alert(`เข้าร่วมกลุ่ม "${roomData.project}" สำเร็จ!`);
-      // รีเฟรชหน้าหรือเปลี่ยนสถานะ UI
-      location.reload(); // หรือ updateUIToCheckedIn()
-    } catch (error) {
-      console.error("Join room error:", error);
-      alert("เกิดข้อผิดพลาดในการเข้าร่วม: " + error.message);
-    }
-  }
-
-  // --- 4. ฟังก์ชัน Check-in รวม (ใช้ทั้ง Leader และ Member) ---
-  // เพิ่ม parameter 'customTime' ต่อท้าย
-
-  async function performCheckIn(
-    roomId,
-    project,
-    locationName,
-    role,
-    leaderId,
-    customTime = null,
-  ) {
-    // 1. กำหนดเวลา: ถ้ามี customTime (จาก Leader) ให้ใช้ค่านั้น ถ้าไม่มี (Member) ให้ดึงจาก Room
-    let checkInTime = customTime || new Date();
-    let checkInLocation = new firebase.firestore.GeoPoint(
-      latestPosition.coords.latitude,
-      latestPosition.coords.longitude,
-    );
-
-    // 2. ถ้าเป็นสมาชิก (Member) ให้ไปดึงเวลาและพิกัดจากข้อมูลห้อง (Room)
-    if (role === "member") {
-      const roomDoc = await db.collection("onsite_rooms").doc(roomId).get();
-      if (roomDoc.exists) {
-        const rData = roomDoc.data();
-        // ใช้เวลาเดียวกับ Leader
-        if (rData.leaderTimestamp) {
-          checkInTime = rData.leaderTimestamp.toDate();
-        }
-        // ใช้พิกัดเดียวกับ Leader
-        if (rData.gpsLocation) {
-          checkInLocation = rData.gpsLocation;
-        }
-      }
-    }
-
-    const docId = `${currentUser.uid}_${toLocalDateKey(checkInTime)}`;
-
-    const workRecord = {
-      userId: currentUser.uid,
-      date: firebase.firestore.Timestamp.fromDate(checkInTime),
-      checkIn: {
-        timestamp: firebase.firestore.Timestamp.fromDate(checkInTime),
-        location: checkInLocation, // ใช้พิกัดที่ดึงมา (ของ Leader)
-        // สร้างลิงก์แผนที่จากพิกัดของ Leader
-        googleMapLink: `https://www.google.com/maps/search/?api=1&query=${checkInLocation.latitude},${checkInLocation.longitude}`,
-        accuracy: role === "leader" ? latestPosition.coords.accuracy : null,
-        workType: "onsite_group",
-        roomId: roomId,
-        leaderId: leaderId,
-        onSiteDetails: `${locationName} (Group: ${project})`,
-        photoUrl: null,
-      },
-      status: "checked_in",
-      report: null,
-      checkOut: null,
-      overtime: null,
-    };
-
-    await db.collection("work_records").doc(docId).set(workRecord);
-    updateUIToCheckedIn();
-    showNotification("บันทึกเวลาเข้างานเรียบร้อย (เวลาเดียวกับหัวหน้า)");
-  }
-
-  // เพิ่ม Logic การกดปุ่ม On-site ใน Event Listener เดิม
-  workTypeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      // 1. เปลี่ยนสีปุ่ม (เหมือนเดิม)
-      workTypeButtons.forEach((btn) => {
-        btn.classList.remove("bg-sky-500", "text-white", "shadow");
-        btn.classList.add("text-gray-600");
-      });
-      button.classList.add("bg-sky-500", "text-white", "shadow");
-
-      // 2. อัปเดตตัวแปร selectedWorkType
-      selectedWorkType = button.dataset.workType;
-
-      // 3. Logic การแสดงผล (แก้ไขใหม่)
-      if (selectedWorkType === "on_site") {
-        // แสดงฟอร์ม QR
-        document
-          .getElementById("onsite-details-form")
-          .classList.remove("hidden");
-
-        // *** [แก้ไข] สั่งซ่อนทั้งปุ่ม Check In และ Check Out เสมอเมื่อเข้าโหมด On-site ***
-        document.getElementById("checkin-btn").classList.add("hidden");
-        document.getElementById("checkout-btn").classList.add("hidden");
-        document.getElementById("request-ot-btn").classList.add("hidden"); // ซ่อนปุ่ม OT ด้วยถ้ามี
-
-        // เริ่มต้นที่โหมด Member
-        switchRole("member");
-      } else {
-        // ซ่อนฟอร์ม QR
-        document.getElementById("onsite-details-form").classList.add("hidden");
-
-        // *** [แก้ไข] ให้เช็คสถานะล่าสุดเพื่อโชว์ปุ่มที่ถูกต้อง (เข้า หรือ ออก) ***
-        checkUserWorkStatus();
-      }
-    });
-  });
-
-  // ตัวอย่างฟังก์ชันเมื่อ Leader กดปุ่ม "ส่งรายงานกลุ่ม"
-  async function submitGroupReport(roomId, reportData) {
-    // 1. ดึงข้อมูลห้องเพื่อเอารายชื่อสมาชิก
-    const roomDoc = await db.collection("onsite_rooms").doc(roomId).get();
-    const members = roomDoc.data().members || [];
-
-    // 2. เตรียมข้อมูล Report
-    const reportPayload = {
-      workType: reportData.workType, // เช่น "ติดตั้งระบบไฟ"
-      project: reportData.project, // เช่น "Project A"
-      duration: "ทั้งวัน (08:30 - 17:30)",
-      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      submittedBy: "Leader", // ระบุว่าหัวหน้าทำให้
-    };
-
-    // 3. วนลูปอัปเดตให้ทุกคนในลิสต์ (รวมถึงตัว Leader เองด้วย)
-    const batch = db.batch(); // ใช้ Batch เพื่อความเร็วและชัวร์
-    const dateKey = toLocalDateKey(new Date()); // ฟังก์ชันแปลงวันที่เป็น YYYY-MM-DD
-
-    members.forEach((member) => {
-      const docId = `${member.uid}_${dateKey}`;
-      const ref = db.collection("work_records").doc(docId);
-
-      // สั่งอัปเดตเฉพาะส่วน report
-      batch.update(ref, { report: reportPayload });
-    });
-
-    // 4. ยิงขึ้น Database ทีเดียว
-    await batch.commit();
-    alert("บันทึกรายงานให้สมาชิก " + members.length + " คน เรียบร้อยแล้ว!");
-  }
-
-  // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
-  if (timelineDatePicker) {
-    const todayISO = new Date().toISOString().split("T")[0];
-    timelineDatePicker.value = todayISO;
-  }
-
-  if (tsTabBtns) {
-    tsTabBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const target = btn.dataset.target; // เก็บค่า ID ของแท็บที่กด เช่น 'tab-payroll'
-
-        // 1. รีเซ็ตทุกปุ่มให้เป็นสถานะ "ไม่ได้เลือก"
-        tsTabBtns.forEach((b) => {
-          // ลบ Class สีฟ้า
-          b.classList.remove("border-sky-500", "text-sky-600", "bg-sky-50");
-          // ใส่ Class สีเทาปกติ
-          b.classList.add(
-            "border-transparent",
-            "text-gray-500",
-            "hover:text-gray-700",
-            "hover:border-gray-300",
-          );
-        });
-
-        // 2. ตั้งค่าปุ่มที่ถูกกดให้เป็น "เลือกแล้ว" (Active)
-        btn.classList.remove(
-          "border-transparent",
-          "text-gray-500",
-          "hover:text-gray-700",
-          "hover:border-gray-300",
-        );
-        btn.classList.add("border-sky-500", "text-sky-600");
-
-        // 3. แสดงเนื้อหา (Content) ของแท็บที่เลือก
-        tsTabContents.forEach((c) => {
-          if (c.id === target) {
-            c.classList.remove("hidden");
-            c.classList.add("animate-fade-in");
-          } else {
-            c.classList.add("hidden");
-            c.classList.remove("animate-fade-in");
-          }
-        });
-
-        // ตรวจสอบว่าถ้ากดแท็บ Payroll ให้โหลดรายชื่อพนักงาน ---
-        if (target === "tab-payroll") {
-          console.log("เข้าสู่แท็บ Payroll: กำลังโหลดรายชื่อพนักงาน...");
-          if (typeof populatePayrollUserDropdown === "function") {
-            populatePayrollUserDropdown();
-          }
-
-          if (typeof populatePayrollDeptDropdown === "function") {
-            populatePayrollDeptDropdown();
-          }
-        }
-      });
-    });
-  }
 
   // 3. ฟังก์ชันโหลดข้อมูล Timeline (หัวใจหลัก)
   async function loadTimelineData() {
@@ -4656,76 +3626,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  async function handleCheckOut() {
-    // 1. ตรวจสอบเบื้องต้น
-    if (!currentWorkRecordId) return;
-
-    const now = new Date();
-    // now.setHours(19, 8, 0); // หลอกระบบว่าตอนนี้คือ 19:08 น.
-
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // 2. กำหนดเวลาเลิกงานปกติ (เช่น 17:30)
-    const normalEndTime = { h: 17, m: 30 }; // แก้ให้เป็น 8 โมงเช้า เพื่อให้เวลาตอนนี้ (10:00) ถือว่าเป็น OT
-
-    // คำนวณว่าตอนนี้เกินเวลาเลิกงานมาแล้วกี่นาที
-    const totalMinutesNow = currentHour * 60 + currentMinute;
-    const totalMinutesEnd = normalEndTime.h * 60 + normalEndTime.m;
-    const otMinutes = totalMinutesNow - totalMinutesEnd;
-
-    // 3. ถ้าเวลาปัจจุบันเกิน 17:30 น. (otMinutes > 0)
-    if (otMinutes > 0) {
-      const otHours = (otMinutes / 60).toFixed(1); // เช่น 0.5, 1.0
-
-      const result = await Swal.fire({
-        title: "ยืนยันการบันทึก OT",
-        html: `ขณะนี้เวลา <b>${currentHour}:${currentMinute.toString().padStart(2, "0")} น.</b><br>
-                   คุณทำงานเกินเวลาปกติมาแล้ว <b>${otHours} ชม.</b><br><br>
-                   <span class="text-sm text-gray-500">คุณต้องการบันทึกเวลานี้เป็น OT หรือไม่?</span>`,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "ใช่, บันทึกเป็น OT",
-        cancelButtonText: "ไม่, บันทึกเป็นเวลาปกติ (ไม่มี OT)",
-        confirmButtonColor: "#f97316", // สีส้ม (Orange-500)
-        cancelButtonColor: "#94a3b8", // สีเทา
-      });
-
-      if (result.isConfirmed) {
-        // กรณีพนักงานยืนยัน OT: พาไปหน้าเขียนคำขอ OT หรือบันทึก Flag ไว้
-        // 1. สั่งบันทึกข้อมูล Check-out ลง DB ทันที โดยส่งค่า true เพื่อบอกว่าเป็น OT
-        await executeSaveCheckout(true, "factory_normal");
-
-        showNotification("กรุณากรอกรายละเอียดการทำ OT ในขั้นตอนถัดไป", "info");
-        // คุณอาจจะสั่งให้เปิด Tab ขอ OT ทันที
-        showTab("tab-ot-request");
-        // หมายเหตุ: ตรงนี้เรายังต้องทำการ Check-out ให้เสร็จก่อน
-      } else {
-        // กรณีพนักงานเลือก "ไม่": ระบบจะบันทึก Checkout ปกติ
-        // แต่อาจจะใส่ Note ไว้ในระบบว่า "พนักงานไม่ขอรับ OT (เดินทางกลับจาก On-site)"
-        console.log("User declined OT calculation.");
-      }
-    }
-
-    // 4. ทำกระบวนการ Check-out ปกติ (โค้ดเดิมของคุณ)
-    try {
-      // ตัวอย่างเพิ่ม Note เข้าไปใน Record
-      await db
-        .collection("work_records")
-        .doc(currentWorkRecordId)
-        .update({
-          checkOutTime: `${currentHour}:${currentMinute.toString().padStart(2, "0")}`,
-          status: "completed",
-          // otStatus: result.isConfirmed ? 'requested' : 'declined'
-        });
-
-      Swal.fire("สำเร็จ", "ลงเวลาออกงานเรียบร้อยแล้ว", "success");
-      checkStatus(); // อัปเดต UI หน้าแรก
-    } catch (error) {
-      console.error("Check-out Error:", error);
-    }
-  }
-
   // --- Dark Mode Logic ---
   const darkModeToggle = document.getElementById("dark-mode-toggle");
   const darkModeStatus = document.getElementById("dark-mode-status");
@@ -5189,7 +4089,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     };
 
-
     // ==========================================
     // 🌟 ผูก Event สำหรับหน้า Approvals Center (OT & Leave)
     // ==========================================
@@ -5222,5 +4121,109 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
+    
+    // ==========================================
+    // 🌟 ผูก Event สำหรับ Check-in & On-site Group (Attendance Service)
+    // ==========================================
+    const confirmCheckinBtn = document.getElementById('confirm-checkin-btn');
+    if (confirmCheckinBtn) {
+        confirmCheckinBtn.addEventListener('click', async () => {
+            const workType = document.getElementById('checkin-work-type-text').textContent.trim();
+            const project = document.getElementById('checkin-project-text').textContent.trim();
+            let duration = document.getElementById('checkin-duration-text').textContent.trim();
+
+            if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
+                return showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+            }
+
+            let hoursUsed = 0, saveStartTime = "", saveEndTime = "";
+            if (duration === 'SOME TIME') {
+                const startT = document.getElementById('checkin-start-time').value;
+                const endT = document.getElementById('checkin-end-time').value;
+                if (!startT || !endT) return showNotification('กรุณาระบุเวลาเริ่มและสิ้นสุด', 'warning');
+                const diffHrs = (new Date(`2000-01-01T${endT}`) - new Date(`2000-01-01T${startT}`)) / 3600000;
+                if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
+                hoursUsed = parseFloat(diffHrs.toFixed(2));
+                duration = `SOME TIME (${startT} - ${endT})`;
+                saveStartTime = startT; saveEndTime = endT;
+            } else if (duration.includes('HALF DAY')) {
+                if (duration.includes('08:30')) { hoursUsed = 3.5; saveStartTime = "08:30"; saveEndTime = "12:00"; duration = "HALF DAY (08:30 - 12:00)"; } 
+                else { hoursUsed = 4.5; saveStartTime = "13:00"; saveEndTime = "17:30"; duration = "HALF DAY (13:00 - 17:30)"; }
+            } else {
+                hoursUsed = 8.0; saveStartTime = "08:30"; saveEndTime = "17:30"; duration = "ALL (08:30 - 17:30)";
+            }
+
+            document.getElementById('checkin-report-modal').classList.add('hidden');
+            await proceedWithCheckin('in_factory', { workType, project, duration, hours: hoursUsed, startTime: saveStartTime, endTime: saveEndTime });
+        });
+    }
+
+    const mainCheckinBtn = document.getElementById('checkin-btn');
+    if (mainCheckinBtn) {
+        mainCheckinBtn.addEventListener('click', async () => {
+            const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+            if (isLocalhost) setMockPosition({ coords: { latitude: FACTORY_LOCATION.latitude, longitude: FACTORY_LOCATION.longitude, accuracy: 10 } });
+
+            if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
+
+            let distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
+            if (isLocalhost) distance = 0; 
+
+            if (distance > ALLOWED_RADIUS_METERS) {
+                showNotification(`อยู่นอกพื้นที่ (${distance.toFixed(0)} ม.)`, 'error');
+                return;
+            }
+            document.getElementById('checkin-report-modal').classList.remove('hidden');
+        });
+    }
+
+    if (checkoutBtn) checkoutBtn.addEventListener('click', handleCheckoutAction);
+
+    const createRoomBtn = document.getElementById("create-room-btn");
+    if (createRoomBtn) {
+        createRoomBtn.addEventListener("click", async () => {
+            const project = document.getElementById("room-project-input").value;
+            const locationName = document.getElementById("room-location-input").value;
+            if (!project || !locationName) return alert("กรุณากรอกชื่อโครงการและสถานที่");
+            
+            createRoomBtn.disabled = true; createRoomBtn.textContent = "กำลังสร้างห้อง...";
+            try {
+                if (typeof QRCode === "undefined") await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js");
+                const roomId = await setupOnsiteLeader(project, locationName, currentUserData);
+                if (roomId) {
+                    document.getElementById("qrcode").innerHTML = "";
+                    new QRCode(document.getElementById("qrcode"), { text: roomId, width: 180, height: 180 });
+                    createRoomBtn.classList.add("hidden");
+                    document.getElementById("room-qr-container").classList.remove("hidden");
+                }
+            } finally {
+                createRoomBtn.disabled = false; createRoomBtn.textContent = "สร้างห้อง Check-in";
+            }
+        });
+    }
+
+    const startScanBtn = document.getElementById("start-scan-btn");
+    if (startScanBtn) {
+        startScanBtn.addEventListener("click", async () => {
+            try { await loadScript("https://unpkg.com/html5-qrcode"); } 
+            catch (e) { return alert("โหลดกล้องไม่สำเร็จ"); }
+            
+            const html5QrCode = new Html5Qrcode("reader");
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                html5QrCode.stop().then(() => {
+                    document.getElementById("reader").classList.add("hidden");
+                    document.getElementById("scan-status").textContent = "สแกนสำเร็จ! กำลังตรวจสอบ...";
+                    joinOnsiteRoom(decodedText, currentUserData);
+                }).catch(err => console.log("Stop failed ", err));
+            };
+            document.getElementById("reader").classList.remove("hidden");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, qrCodeSuccessCallback).catch(err => alert("เปิดกล้องไม่ได้: " + err));
+        });
+    }
+
+    const roleMemberBtn = document.getElementById("role-member-btn");
+    const roleLeaderBtn = document.getElementById("role-leader-btn");
+    if (roleMemberBtn) roleMemberBtn.addEventListener("click", () => switchRole("member"));
+    if (roleLeaderBtn) roleLeaderBtn.addEventListener("click", () => switchRole("leader"));
 
 });
