@@ -27,6 +27,7 @@ import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotificat
 import { submitLeaveRequest, submitDailyReport, deleteDailyReportItem } from './services/requestService.js';
 import { loadPendingLeaveRequests, loadPendingOtRequests, handleOtApproval } from './services/approvalService.js';
 import { checkUserWorkStatus, proceedWithCheckin, handleCheckoutAction, setupOnsiteLeader, joinOnsiteRoom, loadScript, switchRole } from './services/attendanceService.js';
+import { loadTimelineData, loadTimesheetTable, loadEmployeeSummary, exportEmployeeSummaryToExcel, populateProjectOptions, fetchProjectData, exportProjectSummaryToExcelData } from './services/timesheetService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -267,12 +268,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const summaryStatusFilterSelect = document.getElementById(
     "summary-status-filter",
   );
-  const applySummaryFiltersBtn = document.getElementById(
-    "apply-summary-filters-btn",
-  );
-  const exportEmployeeSummaryBtn = document.getElementById(
-    "export-employee-summary-btn",
-  );
+
   // 1. ดึง Elements
   const editUserSelect = document.getElementById("edit-user-select");
   const editDateSelect = document.getElementById("edit-date-select");
@@ -354,9 +350,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const otReason = document.getElementById("ot-reason");
 
   // --- Timeline & Timesheet Management Logic ---
-  const timelineDatePicker = document.getElementById("timeline-date-picker");
   const timelineContainer = document.getElementById("timeline-list-container");
-  const refreshTimelineBtn = document.getElementById("refresh-timeline-btn");
   const tsTabBtns = document.querySelectorAll(".ts-tab-btn");
   const tsTabContents = document.querySelectorAll(".ts-tab-content");
 
@@ -1165,283 +1159,6 @@ document.addEventListener("DOMContentLoaded", function () {
     setupTabs(leaveTabNav);
     setupTabs(otTabNav);
 
-    // [ฉบับแก้ไขสมบูรณ์] ฟังก์ชัน initializeProjectSummary
-    const initializeProjectSummary = () => {
-      const db = firebase.firestore();
-
-      // 1. ดึง Element มาเก็บไว้ในตัวแปร
-      const projectSelect = document.getElementById("project-summary-select");
-      const monthInput = document.getElementById("project-summary-month");
-      const resultsContainer = document.getElementById(
-        "project-summary-results",
-      );
-      const exportBtn = document.getElementById("export-project-summary-btn");
-
-      // ★ Safety Check
-      if (!projectSelect || !monthInput || !resultsContainer || !exportBtn)
-        return;
-
-      // 2. ฟังก์ชันย่อยสำหรับ Export Excel
-      const exportProjectSummaryToExcel = async () => {
-        const selectedProject = projectSelect.value;
-        const selectedMonth = monthInput.value;
-
-        if (!selectedProject || !selectedMonth) {
-          alert("กรุณาเลือกเดือนและโครงการก่อน Export");
-          return;
-        }
-
-        const originalBtnText = exportBtn.innerHTML;
-        exportBtn.innerHTML = "Preparing...";
-        exportBtn.disabled = true;
-
-        try {
-          // 1. กำหนดช่วงเวลา
-          const [year, month] = selectedMonth.split("-").map(Number);
-          const startDate = new Date(year, month - 1, 1);
-          const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-
-          // 2. ดึงข้อมูล Users และ Work Records
-          const [usersSnap, recordsSnap] = await Promise.all([
-            db.collection("users").get(),
-            db
-              .collection("work_records")
-              .where("date", ">=", startDate)
-              .where("date", "<=", endDate)
-              .get(),
-          ]);
-
-          // --- [แก้จุดที่ 1] เก็บทั้งชื่อและแผนก ---
-          const usersMap = {};
-          usersSnap.forEach((doc) => {
-            const d = doc.data();
-            usersMap[doc.id] = {
-              name: d.fullName || "Unknown",
-              dept: d.department || "-", // เก็บแผนกไว้ใช้
-            };
-          });
-
-          // 3. เตรียมข้อมูลสำหรับ Excel
-          const dataForExcel = [];
-          recordsSnap.forEach((doc) => {
-            const data = doc.data();
-            const userInfo = usersMap[data.userId] || {
-              name: "Unknown",
-              dept: "-",
-            }; // ดึงข้อมูลพนักงาน
-
-            const reports = data.reports || (data.report ? [data.report] : []);
-
-            reports.forEach((r) => {
-              if (r.project === selectedProject) {
-                const dateStr = data.date
-                  .toDate()
-                  .toLocaleDateString("th-TH", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  });
-
-                // --- [แก้จุดที่ 2] ดึงแผนกจาก userInfo และสลับคอลัมน์ ---
-                dataForExcel.push({
-                  Date: dateStr,
-                  Employee: userInfo.name,
-                  Department: userInfo.dept, // ดึงจาก Users โดยตรง
-                  "Work Detail": r.workType,
-                  Project: r.project,
-                  "Start Time": r.startTime || "-",
-                  "End Time": r.endTime || "-",
-                  "Total Hours": r.hours || 0, // ย้ายมาอยู่ตรงนี้ (ก่อน Time Period)
-                  "Time Period": r.duration, // ย้ายไปไว้ท้ายสุด
-                });
-              }
-            });
-          });
-
-          if (dataForExcel.length === 0) {
-            alert("ไม่พบข้อมูลรายงานสำหรับโครงการนี้ในช่วงเวลาที่เลือก");
-            return;
-          }
-
-          // 4. สร้างไฟล์ Excel
-          const ws = XLSX.utils.json_to_sheet(dataForExcel);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Project Report");
-
-          const fileName = `Report_${selectedProject}_${selectedMonth}.xlsx`;
-          XLSX.writeFile(wb, fileName);
-        } catch (error) {
-          console.error("Export Error:", error);
-          alert("เกิดข้อผิดพลาดในการ Export: " + error.message);
-        } finally {
-          exportBtn.innerHTML = originalBtnText;
-          exportBtn.disabled = false;
-        }
-      };
-
-      // 3. ตั้งค่าเดือนปัจจุบันเป็นค่าเริ่มต้น
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, "0");
-      monthInput.value = `${year}-${month}`;
-
-      // 4. ฟังก์ชันดึงรายชื่อโครงการใส่ Dropdown
-      const populateProjectOptions = async () => {
-        try {
-          const doc = await db
-            .collection("system_settings")
-            .doc("projects")
-            .get();
-          // เคลียร์ค่าเก่าก่อน
-          projectSelect.innerHTML =
-            '<option value="">Select Project...</option>';
-
-          if (doc.exists) {
-            const projects = doc.data().names || [];
-            projects.forEach((name) => {
-              const option = document.createElement("option");
-              option.value = name;
-              option.textContent = name;
-              projectSelect.appendChild(option);
-            });
-          }
-        } catch (error) {
-          console.error("Error populating project summary dropdown:", error);
-        }
-      };
-
-      // 5. ฟังก์ชันดึงข้อมูลมาแสดงผล (Fetch Data)
-      const fetchProjectData = async () => {
-        const selectedProject = projectSelect.value;
-        const selectedMonth = monthInput.value;
-
-        if (!selectedProject || !selectedMonth) {
-          resultsContainer.innerHTML =
-            '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>';
-          return;
-        }
-
-        resultsContainer.innerHTML =
-          '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
-
-        const [yearNum, monthNum] = selectedMonth.split("-").map(Number);
-        const startDate = new Date(yearNum, monthNum - 1, 1);
-        const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
-
-        try {
-          // ดึง Records ทั้งหมดของเดือนนั้น (ไม่ filter project ใน query เพราะเป็น Array)
-          const querySnapshot = await db
-            .collection("work_records")
-            .where("date", ">=", startDate)
-            .where("date", "<=", endDate)
-            .get();
-
-          if (querySnapshot.empty) {
-            resultsContainer.innerHTML =
-              '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลในเดือนนี้</p>';
-            return;
-          }
-
-          const usersSnapshot = await db.collection("users").get();
-          const usersMap = {};
-          usersSnapshot.forEach(
-            (doc) => (usersMap[doc.id] = doc.data().fullName),
-          );
-
-          let resultsHTML = `
-            <div class="flex justify-between items-center mb-3">
-                <h4 class="font-semibold text-gray-800">Showing results for : ${selectedProject}</h4>
-            </div>
-            <div class="space-y-3">
-        `;
-
-          let matchCount = 0;
-
-          querySnapshot.forEach((doc) => {
-            const record = doc.data();
-            // ดึง reports array (หรือ report เดิมถ้ามี)
-            const reports =
-              record.reports || (record.report ? [record.report] : []);
-
-            // กรองเอาเฉพาะรายการใน Array ที่ตรงกับโปรเจกต์ที่เลือก
-            const matchingReports = reports.filter(
-              (r) => r.project === selectedProject,
-            );
-
-            if (matchingReports.length > 0) {
-              const reportDate = record.date
-                .toDate()
-                .toLocaleDateString("th-TH", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                });
-              const userName = usersMap[record.userId] || record.userId;
-
-              matchingReports.forEach((report) => {
-                matchCount++;
-                resultsHTML += `
-                        <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                            <div class="flex justify-between items-center">
-                                <p class="font-semibold text-gray-800">${userName}</p>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">${reportDate}</p>
-                            </div>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <span class="bg-sky-50 text-sky-700 text-xs px-2.5 py-1 rounded-lg font-bold border border-sky-100">
-                                    ${report.workType}
-                                </span>
-                                <span class="bg-gray-50 text-gray-600 text-xs px-2.5 py-1 rounded-lg font-medium border border-gray-100">
-                                    เวลา: ${report.duration}
-                                </span>
-                            </div>
-                        </div>
-                    `;
-              });
-            }
-          });
-
-          if (matchCount === 0) {
-            resultsContainer.innerHTML =
-              '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลโปรเจกต์ที่เลือกในเดือนนี้</p>';
-          } else {
-            resultsContainer.innerHTML = resultsHTML + "</div>";
-          }
-        } catch (error) {
-          console.error("Error:", error);
-          resultsContainer.innerHTML =
-            '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-        }
-      };
-
-      // 6. เริ่มทำงาน
-      populateProjectOptions();
-
-      // ผูก Event Listeners
-      if (projectSelect)
-        projectSelect.addEventListener("change", fetchProjectData);
-      if (monthInput) monthInput.addEventListener("change", fetchProjectData);
-
-      if (exportBtn) {
-        exportBtn.addEventListener("click", async () => {
-          showNotification("กำลังโหลดโมดูล Excel...", "warning");
-          // เช็คว่าโหลด XLSX หรือยัง
-          if (typeof XLSX === "undefined") {
-            try {
-              // ฟังก์ชัน loadScript ต้องมีอยู่แล้วใน scope หลัก
-              await loadScript(
-                "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
-              );
-            } catch (e) {
-              alert("โหลดไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ต");
-              return;
-            }
-          }
-          exportProjectSummaryToExcel();
-        });
-      }
-    };
-
-    initializeProjectSummary();
     controlsInitialized = true;
   }
 
@@ -1576,252 +1293,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  async function loadEmployeeSummary(page = 1) {
-    const container = document.getElementById(
-      "employee-summary-container-admin",
-    );
-    const paginationControls = document.getElementById(
-      "summary-pagination-controls",
-    );
-    if (!container || !paginationControls) return;
-
-    container.innerHTML =
-      '<p class="text-sm text-center text-gray-500 py-2">กำลังโหลดข้อมูลพนักงาน...</p>';
-    paginationControls.innerHTML = "";
-
-    const startDateString = summaryStartDateInput.value;
-    const endDateString = summaryEndDateInput.value;
-    const userIdFilter = document.getElementById(
-      "summary-employee-select",
-    ).value;
-    const statusFilter = summaryStatusFilterSelect.value;
-
-    if (!startDateString || !endDateString) {
-      container.innerHTML =
-        '<p class="text-sm text-center text-red-500 py-4">กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด</p>';
-      return;
-    }
-
-    const startDate = new Date(startDateString);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(endDateString);
-    endDate.setHours(23, 59, 59, 999);
-
-    const ITEMS_PER_PAGE = 20;
-    let currentPage = page;
-    let totalItems = 0;
-    let totalPages = 1;
-
-    try {
-      const usersSnapshot = await db
-        .collection("users")
-        .orderBy("fullName")
-        .get();
-      if (usersSnapshot.empty) {
-        container.innerHTML =
-          '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลผู้ใช้ในระบบ</p>';
-        return;
-      }
-
-      let allUsersData = {};
-      usersSnapshot.forEach((doc) => {
-        const userData = doc.data();
-        if (!userIdFilter || doc.id === userIdFilter) {
-          allUsersData[doc.id] = { ...userData, workRecords: [] };
-        }
-      });
-
-      let workRecordsQuery = db
-        .collection("work_records")
-        .where("date", ">=", startDate)
-        .where("date", "<=", endDate);
-
-      if (statusFilter && statusFilter !== "not_checked_in") {
-        workRecordsQuery = workRecordsQuery.where("status", "==", statusFilter);
-      }
-
-      workRecordsQuery = workRecordsQuery.orderBy("date", "desc");
-
-      const recordsSnapshot = await workRecordsQuery.get();
-
-      recordsSnapshot.forEach((doc) => {
-        const record = doc.data();
-        if (allUsersData[record.userId]) {
-          allUsersData[record.userId].workRecords.push(record);
-        }
-      });
-
-      let filteredUserIds = Object.keys(allUsersData);
-
-      if (statusFilter === "not_checked_in") {
-        filteredUserIds = filteredUserIds.filter(
-          (userId) => allUsersData[userId].workRecords.length === 0,
-        );
-      } else if (statusFilter) {
-        filteredUserIds = filteredUserIds.filter(
-          (userId) => allUsersData[userId].workRecords.length > 0,
-        );
-      }
-
-      totalItems = filteredUserIds.length;
-      totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-      if (currentPage > totalPages) currentPage = totalPages;
-      if (currentPage < 1) currentPage = 1;
-
-      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const userIdsToShow = filteredUserIds.slice(startIndex, endIndex);
-
-      let resultsHTML = "";
-      if (userIdsToShow.length === 0) {
-        resultsHTML = `<p class="text-sm text-center text-gray-500 py-4">ไม่พบข้อมูลพนักงานตามเงื่อนไขที่เลือก</p>`;
-      } else {
-        userIdsToShow.forEach((userId) => {
-          const user = allUsersData[userId];
-          const latestRecord =
-            user.workRecords.length > 0 ? user.workRecords[0] : null;
-          const report = latestRecord?.report;
-
-          let statusText = "ยังไม่เข้างาน";
-          let statusColor = "bg-gray-400";
-          let checkInTime = "-";
-          let checkOutTime = "-";
-          let workHours = "-";
-          let overtime = "-";
-          let workTypeInfo = "-";
-          let reportInfo = '<span class="text-gray-400">ยังไม่ส่งรายงาน</span>';
-          let recordDate = "-";
-
-          if (latestRecord) {
-            recordDate = latestRecord.date.toDate().toLocaleDateString("th-TH");
-            checkInTime = latestRecord.checkIn.timestamp
-              .toDate()
-              .toLocaleTimeString("th-TH", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-            workTypeInfo =
-              latestRecord.checkIn.workType === "in_factory"
-                ? "ในโรงงาน"
-                : `On-site: ${latestRecord.checkIn.onSiteDetails || "N/A"}`;
-
-            if (report) {
-              reportInfo = `${report.workType} (${report.project || "N/A"})`;
-            }
-
-            if (latestRecord.status === "checked_in") {
-              statusText = "กำลังทำงาน";
-              statusColor = "bg-green-500";
-            } else if (latestRecord.status === "completed") {
-              statusText = "สิ้นสุดการทำงาน";
-              statusColor = "bg-red-500";
-              if (latestRecord.checkOut) {
-                checkOutTime = latestRecord.checkOut.timestamp
-                  .toDate()
-                  .toLocaleTimeString("th-TH", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
-
-                // 1. คำนวณใหม่เสมอจากเวลาเข้า-ออกจริง
-                const { regularWorkHours, overtimeHours: calculatedOt } =
-                  calculateWorkHours(
-                    latestRecord.checkIn.timestamp.toDate(),
-                    latestRecord.checkOut.timestamp.toDate(),
-                  );
-                workHours = regularWorkHours.toFixed(2) + " ชม.";
-
-                // 2. ตรวจสอบค่าจาก Database
-                let finalOt = 0;
-                // ถ้า DB มีค่า > 0 ให้ใช้ค่าจาก DB (เชื่อ DB)
-                if (
-                  latestRecord.overtime &&
-                  typeof latestRecord.overtime.hours === "number"
-                ) {
-                  finalOt = latestRecord.overtime.hours;
-                } else {
-                  // ถ้า DB เป็น 0 หรือไม่มีค่า ให้ใช้ค่าที่คำนวณได้ (Fallback)
-                  finalOt = calculatedOt;
-                }
-                overtime = finalOt.toFixed(1) + " ชม.";
-                // -----------------------------------------
-              }
-            }
-          } else {
-            recordDate = "ไม่มีข้อมูลในช่วงนี้";
-          }
-
-          // ดึง Link แผนที่ (ถ้ามี)
-          const mapLink = latestRecord?.checkIn?.googleMapLink || "#";
-          const hasMap = !!latestRecord?.checkIn?.googleMapLink;
-
-          resultsHTML += `
-                    <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-3">
-                                <img src="${user.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
-                                <div>
-                                    <p class="font-semibold text-gray-800">${user.fullName || "ไม่มีชื่อ"}</p>
-                                    <div class="flex items-center gap-1.5 mt-1">
-                                        <div class="w-2.5 h-2.5 rounded-full ${statusColor}"></div>
-                                        <p class="text-xs font-medium text-gray-600">${statusText} (${recordDate})</p>
-                                    </div>
-                                    
-                                    ${
-                                      hasMap
-                                        ? `
-                                        <a href="${mapLink}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 hover:underline">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            ดูแผนที่ (Google Maps)
-                                        </a>
-                                    `
-                                        : ""
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            <div><span class="text-gray-500">เข้า:</span> <span class="font-semibold text-green-600">${checkInTime}</span></div>
-                            <div><span class="text-gray-500">ออก:</span> <span class="font-semibold text-red-500">${checkOutTime}</span></div>
-                            <div><span class="text-gray-500">รวม:</span> <span class="font-medium text-gray-700">${workHours}</span></div>
-                            <div><span class="text-gray-500">OT:</span> <span class="font-medium text-gray-700">${overtime}</span></div>
-                            <div class="col-span-2 mt-1"><span class="text-gray-500">ประเภท:</span> <span class="font-medium text-gray-700">${workTypeInfo}</span></div>
-                            <div class="col-span-2 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium text-gray-700">${reportInfo}</span></div>
-                        </div>
-                    </div>
-                `;
-        });
-      }
-
-      container.innerHTML = resultsHTML;
-
-      if (totalPages > 1) {
-        const prevButton = document.createElement("button");
-        prevButton.textContent = "◀";
-        prevButton.className = `px-3 py-1 text-sm rounded ${currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-sky-500 text-white hover:bg-sky-600"}`;
-        prevButton.disabled = currentPage === 1;
-        prevButton.onclick = () => loadEmployeeSummary(currentPage - 1);
-        paginationControls.appendChild(prevButton);
-
-        const pageInfo = document.createElement("span");
-        pageInfo.textContent = `หน้า ${currentPage} / ${totalPages}`;
-        pageInfo.className = "text-sm text-gray-600 mx-2";
-        paginationControls.appendChild(pageInfo);
-
-        const nextButton = document.createElement("button");
-        nextButton.textContent = "▶";
-        nextButton.className = `px-3 py-1 text-sm rounded ${currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-sky-500 text-white hover:bg-sky-600"}`;
-        nextButton.disabled = currentPage === totalPages;
-        nextButton.onclick = () => loadEmployeeSummary(currentPage + 1);
-        paginationControls.appendChild(nextButton);
-      }
-    } catch (error) {
-      console.error("Error loading employee summary:", error);
-      container.innerHTML =
-        '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-    }
-  }
-
   // เพิ่มฟังก์ชันนี้ลงใน index.html
   function viewEmployeeDetail(userId, startDate, endDate) {
     // 1. แจ้งเตือนเพื่อให้ Admin ทราบ
@@ -1850,322 +1321,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     console.log("Viewing Detail for:", userId, "Date:", startDate);
-  }
-
-  async function exportEmployeeSummaryToExcel() {
-    const startDateString = summaryStartDateInput.value;
-    const endDateString = summaryEndDateInput.value;
-    const userIdFilter = document.getElementById(
-      "summary-employee-select",
-    ).value;
-    const statusFilter = summaryStatusFilterSelect.value;
-
-    if (!startDateString || !endDateString) {
-      return alert("กรุณาเลือกช่วงวันที่ก่อน Export");
-    }
-
-    showNotification("กำลังเตรียมข้อมูลสำหรับ Export...");
-
-    try {
-      const startDate = new Date(startDateString);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(endDateString);
-      endDate.setHours(23, 59, 59, 999);
-
-      // --- Step 1: ดึงข้อมูลปฏิทินและใบลา ---
-      const holidayMap = new Map();
-      const workingSaturdayMap = new Map();
-      const approvedLeaveMap = new Map();
-
-      try {
-        const calendarDoc = await db
-          .collection("system_settings")
-          .doc("calendar_rules")
-          .get();
-        if (calendarDoc.exists) {
-          const data = calendarDoc.data();
-          (data.holidays || []).forEach((dateStr) =>
-            holidayMap.set(dateStr, true),
-          );
-          (data.workingSaturdays || []).forEach((dateStr) =>
-            workingSaturdayMap.set(dateStr, true),
-          );
-        }
-
-        const approvedLeaveSnapshot = await db
-          .collection("leave_requests")
-          .where("status", "==", "approved")
-          .where("startDate", "<=", endDate)
-          .get();
-
-        approvedLeaveSnapshot.forEach((doc) => {
-          const leave = doc.data();
-
-          if (leave.endDate.toDate() < startDate) return;
-
-          const leaveTypeDisplay =
-            LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType;
-
-          if (leave.durationType === "hourly") {
-            const dateKey = leave.startDate
-              .toDate()
-              .toISOString()
-              .split("T")[0];
-            const key = `${leave.userId}_${dateKey}`;
-            approvedLeaveMap.set(key, {
-              type: leaveTypeDisplay,
-              durationType: "hourly",
-              startTime: leave.startTime,
-              endTime: leave.endTime,
-            });
-          } else {
-            const start = leave.startDate.toDate();
-            const end = leave.endDate.toDate();
-            const current = new Date(
-              Date.UTC(
-                start.getUTCFullYear(),
-                start.getUTCMonth(),
-                start.getUTCDate(),
-              ),
-            );
-            const final = new Date(
-              Date.UTC(
-                end.getUTCFullYear(),
-                end.getUTCMonth(),
-                end.getUTCDate(),
-              ),
-            );
-
-            while (current.getTime() <= final.getTime()) {
-              const y = current.getUTCFullYear();
-              const m = (current.getUTCMonth() + 1).toString().padStart(2, "0");
-              const d = current.getUTCDate().toString().padStart(2, "0");
-              const dateKey = `${y}-${m}-${d}`;
-              const key = `${leave.userId}_${dateKey}`;
-              approvedLeaveMap.set(key, {
-                type: leaveTypeDisplay,
-                durationType: "full_day",
-              });
-              current.setUTCDate(current.getUTCDate() + 1);
-            }
-          }
-        });
-      } catch (e) {
-        console.warn("Could not load calendar rules or approved leaves:", e);
-      }
-
-      // --- Step 2: ดึง User ---
-      const usersSnapshot = await db
-        .collection("users")
-        .orderBy("fullName")
-        .get();
-      let filteredUsers = [];
-      usersSnapshot.forEach((doc) => {
-        if (!userIdFilter || doc.id === userIdFilter) {
-          filteredUsers.push({
-            id: doc.id,
-            fullName: doc.data().fullName || doc.id,
-            department: doc.data().department || "-",
-          });
-        }
-      });
-
-      if (filteredUsers.length === 0) {
-        alert("ไม่พบข้อมูลพนักงานที่เลือก");
-        return;
-      }
-
-      // --- Step 3 & 4: ดึง work_records ---
-      const recordsSnapshot = await db
-        .collection("work_records")
-        .where("date", ">=", startDate)
-        .where("date", "<=", endDate)
-        .get();
-
-      const recordsMap = new Map();
-      recordsSnapshot.forEach((doc) => {
-        const record = doc.data();
-        const docId = doc.id;
-        const dateString = docId.substring(docId.indexOf("_") + 1);
-        const userId = record.userId;
-
-        if (!recordsMap.has(userId)) {
-          recordsMap.set(userId, new Map());
-        }
-        recordsMap.get(userId).set(dateString, record);
-      });
-
-      // --- Step 5: สร้าง Headers (เพิ่ม Google Map Link) ---
-      const dataForExcel = [
-        [
-          "ชื่อพนักงาน",
-          "แผนก",
-          "วันที่",
-          "ประเภทวัน",
-          "สถานะ",
-          "เวลาเข้า",
-          "เวลาออก",
-          "ชั่วโมงปกติ",
-          "ชั่วโมง OT",
-          "รายละเอียด On-site",
-          "Google Map Link", // <--- เพิ่มคอลัมน์นี้ครับ
-          "รายงาน: ประเภท",
-          "รายงาน: โครงการ",
-          "รายงาน: ระยะเวลา",
-        ],
-      ];
-
-      const localDateFormatter = new Intl.DateTimeFormat("th-TH", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-      const localTimeFormatter = new Intl.DateTimeFormat("th-TH", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      // --- Step 6: Loop ---
-      for (
-        let day = new Date(startDate);
-        day <= endDate;
-        day.setDate(day.getDate() + 1)
-      ) {
-        const y = day.getFullYear();
-        const m = (day.getMonth() + 1).toString().padStart(2, "0");
-        const d = day.getDate().toString().padStart(2, "0");
-        const dateKey = `${y}-${m}-${d}`;
-        const dayOfWeek = day.getDay();
-
-        let dayType = "วันทำงาน";
-        if (holidayMap.has(dateKey)) dayType = "วันหยุดนักขัตฤกษ์";
-        else if (dayOfWeek === 0) dayType = "วันอาทิตย์";
-        else if (dayOfWeek === 6 && !workingSaturdayMap.has(dateKey))
-          dayType = "วันเสาร์ (หยุด)";
-        else if (dayOfWeek === 6 && workingSaturdayMap.has(dateKey))
-          dayType = "วันเสาร์ (ทำงาน)";
-
-        for (const user of filteredUsers) {
-          const record = recordsMap.get(user.id)?.get(dateKey) || null;
-          const approvedLeave = approvedLeaveMap.get(`${user.id}_${dateKey}`);
-
-          let statusText = "",
-            checkInTime = "-",
-            checkOutTime = "-";
-          let regularWorkHours = 0,
-            overtimeHours = 0;
-          let workTypeInfo = "-",
-            onSiteDetails = "-",
-            googleMapLink = "-";
-          let reportType = "-",
-            reportProject = "-",
-            reportDuration = "-";
-
-          if (record) {
-            const report = record.report || {};
-            const checkinDate = record.checkIn.timestamp.toDate();
-            checkInTime = localTimeFormatter.format(checkinDate);
-            workTypeInfo =
-              record.checkIn.workType === "in_factory" ? "ในโรงงาน" : "On-site";
-            onSiteDetails = record.checkIn.onSiteDetails || "-";
-
-            // ดึงลิงก์ Google Map (ถ้ามี)
-            googleMapLink = record.checkIn.googleMapLink || "-";
-
-            reportType = report.workType || "-";
-            reportProject = report.project || "-";
-            reportDuration = report.duration || "-";
-
-            if (record.status === "checked_in") {
-              statusText = "กำลังทำงาน";
-            } else if (record.status === "completed") {
-              statusText = "สิ้นสุดการทำงาน";
-              if (record.checkOut) {
-                const checkoutDate = record.checkOut.timestamp.toDate();
-                checkOutTime = localTimeFormatter.format(checkoutDate);
-
-                // คำนวณ OT (Fallback logic)
-                const hours = calculateWorkHours(checkinDate, checkoutDate);
-                regularWorkHours = hours.regularWorkHours;
-
-                if (
-                  record.overtime &&
-                  typeof record.overtime.hours === "number" &&
-                  record.overtime.hours > 0
-                ) {
-                  overtimeHours = record.overtime.hours;
-                } else {
-                  overtimeHours = hours.overtimeHours;
-                }
-              }
-            }
-
-            const checkInMinutes =
-              checkinDate.getHours() * 60 + checkinDate.getMinutes();
-            const LATE_THRESHOLD_MINUTES = 8 * 60 + 30;
-
-            if (
-              dayType === "วันทำงาน" &&
-              checkInMinutes > LATE_THRESHOLD_MINUTES
-            ) {
-              statusText = "มาสาย";
-              if (approvedLeave && approvedLeave.durationType === "hourly") {
-                const [eh, em] = approvedLeave.endTime.split(":").map(Number);
-                if (checkInMinutes >= eh * 60 + em)
-                  statusText = `ลา: ${approvedLeave.type} (ชม.)`;
-              }
-            }
-          } else {
-            if (approvedLeave) {
-              let leaveText = approvedLeave.type.replace(/\s*\(.*\)\s*/g, "");
-              if (approvedLeave.durationType === "hourly")
-                leaveText += ` (${approvedLeave.startTime} - ${approvedLeave.endTime})`;
-              statusText = `ลา: ${leaveText}`;
-            } else if (
-              dayType === "วันทำงาน" ||
-              dayType === "วันเสาร์ (ทำงาน)"
-            ) {
-              statusText = "ไม่ได้ลงเวลา";
-            } else {
-              statusText = "วันหยุด";
-            }
-          }
-
-          // Push ข้อมูลให้ตรงกับลำดับ Header
-          dataForExcel.push([
-            user.fullName,
-            user.department,
-            localDateFormatter.format(day),
-            dayType,
-            statusText,
-            checkInTime,
-            checkOutTime,
-            regularWorkHours.toFixed(2),
-            overtimeHours.toFixed(1),
-            workTypeInfo,
-            onSiteDetails,
-            googleMapLink, // <--- ใส่ค่า Link ตรงนี้ (ลำดับต้องตรงกับ Header)
-            reportType,
-            reportProject,
-            reportDuration,
-          ]);
-        }
-      }
-
-      if (dataForExcel.length <= 1) {
-        alert("ไม่พบข้อมูลที่จะ Export ตามเงื่อนไขที่เลือก");
-        return;
-      }
-
-      const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "สรุปเวลาทำงาน");
-      const fileName = `สรุปเวลาทำงาน_${startDateString}_ถึง_${endDateString}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-    } catch (error) {
-      console.error("Error exporting excel:", error);
-      alert("เกิดข้อผิดพลาด: " + error.message);
-    }
   }
 
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -2978,140 +2133,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const roomQrContainer = document.getElementById("room-qr-container");
   const roomMembersList = document.getElementById("room-members-list");
 
-  // 3. ฟังก์ชันโหลดข้อมูล Timeline (หัวใจหลัก)
-  async function loadTimelineData() {
-    if (!timelineContainer) return;
-
-    timelineContainer.innerHTML =
-      '<div class="flex justify-center py-8"><svg class="animate-spin h-8 w-8 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
-
-    const selectedDateStr = timelineDatePicker.value;
-    const selectedDate = new Date(selectedDateStr);
-    selectedDate.setHours(0, 0, 0, 0);
-    const nextDay = new Date(selectedDate);
-    nextDay.setDate(selectedDate.getDate() + 1);
-
-    try {
-      // ดึงข้อมูล 2 ส่วนพร้อมกัน: Users ทั้งหมด และ Records ของวันนี้
-      const [usersSnapshot, recordsSnapshot] = await Promise.all([
-        db.collection("users").orderBy("fullName").get(),
-        db
-          .collection("work_records")
-          .where("date", ">=", selectedDate)
-          .where("date", "<", nextDay)
-          .get(),
-      ]);
-
-      // Map Records ให้เข้าถึงง่ายด้วย userId
-      const recordsMap = {};
-      recordsSnapshot.forEach((doc) => {
-        recordsMap[doc.data().userId] = doc.data();
-      });
-
-      let html = "";
-
-      if (usersSnapshot.empty) {
-        timelineContainer.innerHTML =
-          '<p class="text-center text-gray-400">ไม่พบข้อมูลพนักงาน</p>';
-        return;
-      }
-
-      usersSnapshot.forEach((doc) => {
-        const user = doc.data();
-        const userId = doc.id;
-        const record = recordsMap[userId];
-
-        // Default Values (กรณีไม่มาทำงาน)
-        let checkInTime = "--:--";
-        let checkOutTime = "--:--";
-        let statusBadge =
-          '<span class="px-2 py-1 rounded bg-gray-100 text-gray-500 text-xs">Absent</span>';
-        let checkInColor = "text-gray-300";
-        let checkOutColor = "text-gray-300";
-        let locationIcon = ""; // ไม่แสดงไอคอนถ้ายังไม่เข้างาน
-
-        if (record) {
-          // มีข้อมูลการลงเวลา
-          const cin = record.checkIn.timestamp.toDate();
-          checkInTime = cin.toLocaleTimeString("th-TH", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          checkInColor = "text-blue-500";
-
-          // Check Late Condition (สายถ้าเข้าหลัง 08:30)
-          const lateThreshold = new Date(cin);
-          lateThreshold.setHours(8, 30, 0, 0);
-
-          if (cin > lateThreshold) {
-            statusBadge =
-              '<span class="px-2 py-1 rounded bg-orange-100 text-orange-600 text-xs font-bold">Late</span>';
-          } else {
-            statusBadge =
-              '<span class="px-2 py-1 rounded bg-green-100 text-green-600 text-xs font-bold">On Time</span>';
-          }
-
-          if (record.checkOut) {
-            const cout = record.checkOut.timestamp.toDate();
-            checkOutTime = cout.toLocaleTimeString("th-TH", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            checkOutColor = "text-pink-500";
-          }
-
-          // Location Icon Logic
-          if (record.checkIn.workType === "in_factory") {
-            // ไอคอนโรงงาน/GPS
-            locationIcon = `<div class="tooltip" title="Factory (GPS)"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>`;
-          } else {
-            // ไอคอน On-site
-            locationIcon = `<div class="tooltip" title="On-Site"><svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
-          }
-        }
-
-        // HTML Structure (เลียนแบบ Timeline ในรูป)
-        html += `
-            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                
-                <div class="flex flex-col items-center w-16 border-r border-gray-100 pr-4">
-                    <svg class="w-5 h-5 ${checkInColor} mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="text-sm font-bold text-gray-700">${checkInTime}</span>
-                    <span class="text-[10px] text-gray-400">IN</span>
-                </div>
-
-                <div class="flex-1 flex items-center gap-3 pl-4">
-                    <img src="${user.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-10 h-10 rounded-full object-cover border border-gray-200">
-                    <div>
-                        <p class="font-bold text-gray-800 text-sm">${user.fullName || "Unknown"}</p>
-                        <p class="text-xs text-gray-500">${user.department || "Employee"}</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="hidden sm:block">${statusBadge}</div>
-                    
-                    ${locationIcon}
-
-                    <div class="flex flex-col items-center w-16 border-l border-gray-100 pl-4">
-                        <svg class="w-5 h-5 ${checkOutColor} mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        <span class="text-sm font-bold text-gray-700">${checkOutTime}</span>
-                        <span class="text-[10px] text-gray-400">OUT</span>
-                    </div>
-                </div>
-
-            </div>
-            `;
-      });
-
-      timelineContainer.innerHTML = html;
-    } catch (error) {
-      console.error("Error loading timeline:", error);
-      timelineContainer.innerHTML =
-        '<p class="text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-    }
-  }
-
   // 4. ผูก Event Listener
   if (refreshTimelineBtn) {
     refreshTimelineBtn.addEventListener("click", loadTimelineData);
@@ -3149,7 +2170,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // 1. ตั้งค่าเริ่มต้น
   const tsFilterStart = document.getElementById("ts-filter-start");
   const tsFilterEnd = document.getElementById("ts-filter-end");
-  const tsApplyBtn = document.getElementById("ts-apply-filter-btn");
 
   if (tsFilterStart && tsFilterEnd) {
     // Default: วันที่ 1 ถึง ปัจจุบัน ของเดือนนี้
@@ -3159,180 +2179,10 @@ document.addEventListener("DOMContentLoaded", function () {
     tsFilterEnd.value = date.toISOString().split("T")[0];
   }
 
-  // 2. ฟังก์ชันโหลดข้อมูลตาราง
-  async function loadTimesheetTable() {
-    const tbody = document.getElementById("ts-table-body");
-    const recordCount = document.getElementById("ts-record-count");
-    const startDateStr = tsFilterStart.value;
-    const endDateStr = tsFilterEnd.value;
-    const searchTerm = document
-      .getElementById("ts-search-input")
-      .value.toLowerCase();
-
-    if (!tbody) return;
-
-    tbody.innerHTML =
-      '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400"><div class="flex justify-center items-center gap-2"><svg class="animate-spin h-5 w-5 text-sky-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังโหลดข้อมูล...</div></td></tr>';
-
-    try {
-      const startDate = new Date(startDateStr);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(endDateStr);
-      endDate.setHours(23, 59, 59, 999);
-
-      // ดึงข้อมูล Users และ Work Records
-      const [usersSnapshot, recordsSnapshot] = await Promise.all([
-        db.collection("users").get(),
-        db
-          .collection("work_records")
-          .where("date", ">=", startDate)
-          .where("date", "<=", endDate)
-          .orderBy("date", "desc") // เรียงจากล่าสุดไปเก่า
-          .get(),
-      ]);
-
-      // Map User Data
-      const usersMap = {};
-      usersSnapshot.forEach((doc) => (usersMap[doc.id] = doc.data()));
-
-      let html = "";
-      let count = 0;
-
-      if (recordsSnapshot.empty) {
-        tbody.innerHTML =
-          '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-400">ไม่พบข้อมูลในช่วงเวลานี้</td></tr>';
-        if (recordCount) recordCount.textContent = `แสดง 0 รายการ`;
-        return;
-      }
-
-      recordsSnapshot.forEach((doc) => {
-        const record = doc.data();
-        const user = usersMap[record.userId];
-        const userName = user ? user.fullName : "Unknown User";
-
-        if (searchTerm && !userName.toLowerCase().includes(searchTerm)) {
-          return;
-        }
-
-        count++;
-
-        const dateObj = record.date.toDate();
-        const dateStr = dateObj.toLocaleDateString("th-TH", {
-          day: "2-digit",
-          month: "short",
-          year: "2-digit",
-        });
-        const dayName = dateObj.toLocaleDateString("th-TH", {
-          weekday: "short",
-        });
-
-        const checkInTime = record.checkIn.timestamp
-          .toDate()
-          .toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-        let checkOutTime = "-";
-        let workHours = "-";
-        let otHours = "-";
-        let statusBadge = "";
-        let rowClass =
-          "hover:bg-gray-50 transition-colors border-b border-gray-100";
-
-        const lateThreshold = new Date(record.checkIn.timestamp.toDate());
-        lateThreshold.setHours(8, 30, 0, 0);
-        const isLate = record.checkIn.timestamp.toDate() > lateThreshold;
-
-        if (record.status === "completed" && record.checkOut) {
-          checkOutTime = record.checkOut.timestamp
-            .toDate()
-            .toLocaleTimeString("th-TH", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-          const calcs = calculateWorkHours(
-            record.checkIn.timestamp.toDate(),
-            record.checkOut.timestamp.toDate(),
-          );
-          workHours = calcs.regularWorkHours.toFixed(2);
-
-          let otVal = calcs.overtimeHours;
-          if (record.overtime && record.overtime.hours > 0)
-            otVal = record.overtime.hours;
-          otHours =
-            otVal > 0
-              ? `<span class="text-orange-600 font-bold">${otVal.toFixed(1)}</span>`
-              : "-";
-
-          if (isLate) {
-            statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">สาย</span>`;
-          } else {
-            statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">ปกติ</span>`;
-          }
-        } else {
-          statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">กำลังทำงาน</span>`;
-          const now = new Date();
-          if (
-            now.getDate() !== dateObj.getDate() &&
-            record.status === "checked_in"
-          ) {
-            statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Missing Out</span>`;
-            rowClass = "bg-red-50 hover:bg-red-100 border-b border-red-100";
-          }
-        }
-
-        html += `
-                <tr class="${rowClass}">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8">
-                                <img class="h-8 w-8 rounded-full object-cover" src="${user?.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" alt="">
-                            </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">${userName}</div>
-                                <div class="text-xs text-gray-500">${user?.department || "N/A"}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">${dateStr}</div>
-                        <div class="text-xs text-gray-500">${dayName}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                        08:30 - 17:30
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm ${isLate ? "text-red-600 font-semibold" : "text-gray-900"}">
-                        ${checkInTime}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                        ${checkOutTime}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900 font-medium">
-                        ${workHours}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                        ${otHours}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                        ${statusBadge}
-                    </td>
-                </tr>
-                `;
-      });
-
-      tbody.innerHTML = html;
-      if (recordCount) recordCount.textContent = `แสดง ${count} รายการ`;
-    } catch (error) {
-      console.error("Error loading timesheet table:", error);
-      tbody.innerHTML =
-        '<tr><td colspan="8" class="px-6 py-8 text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
-    }
-  }
-
   // 3. ผูก Event Listener
   if (tsApplyBtn) tsApplyBtn.addEventListener("click", loadTimesheetTable);
 
-  // โหลดข้อมูลเมื่อกด Tab "Timesheet"
-  const timesheetTabBtn = document.querySelector(
-    '.ts-tab-btn[data-target="ts-timesheet-content"]',
-  );
+
   if (timesheetTabBtn) {
     timesheetTabBtn.addEventListener("click", () => {
       // โหลดเฉพาะถ้าตารางยังว่างอยู่ (หรือจะโหลดใหม่ทุกครั้งก็ได้)
@@ -3342,7 +2192,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // }
     });
   }
-
   // --- [NEW] Daily Audit Logic ---
 
   const auditDatePicker = document.getElementById("audit-date-picker");
@@ -4221,9 +3070,70 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    const roleMemberBtn = document.getElementById("role-member-btn");
-    const roleLeaderBtn = document.getElementById("role-leader-btn");
-    if (roleMemberBtn) roleMemberBtn.addEventListener("click", () => switchRole("member"));
-    if (roleLeaderBtn) roleLeaderBtn.addEventListener("click", () => switchRole("leader"));
+    // ==========================================
+    // 🌟 ผูก Event สำหรับระบบตารางเวลาและสรุปข้อมูล (Timesheet Service)
+    // ==========================================
+
+    // 1. Timeline (หน้า Audit หลัก)
+    const refreshTimelineBtn = document.getElementById("refresh-timeline-btn");
+    const timelineDatePicker = document.getElementById("timeline-date-picker");
+    if (refreshTimelineBtn) refreshTimelineBtn.addEventListener("click", loadTimelineData);
+    if (timelineDatePicker) timelineDatePicker.addEventListener("change", loadTimelineData);
+
+    // 2. Timesheet Table (ตารางเวลาเข้า-ออก)
+    const tsApplyBtn = document.getElementById("ts-apply-filter-btn");
+    const timesheetTabBtn = document.querySelector('.ts-tab-btn[data-target="ts-timesheet-content"]');
+    if (tsApplyBtn) tsApplyBtn.addEventListener("click", loadTimesheetTable);
+    if (timesheetTabBtn) timesheetTabBtn.addEventListener("click", loadTimesheetTable);
+
+    // 3. Employee Summary (หน้าสรุปเวลาพนักงาน)
+    const applySummaryFiltersBtn = document.getElementById("apply-summary-filters-btn");
+    const exportEmployeeSummaryBtn = document.getElementById("export-employee-summary-btn");
+    if (applySummaryFiltersBtn) applySummaryFiltersBtn.addEventListener("click", () => loadEmployeeSummary(1));
+    if (exportEmployeeSummaryBtn) {
+        exportEmployeeSummaryBtn.addEventListener("click", async () => {
+            showNotification("กำลังเตรียมข้อมูล Excel...", "info");
+            if (typeof XLSX === "undefined") {
+                try { await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"); } 
+                catch (e) { return alert("โหลด Excel Library ไม่สำเร็จ"); }
+            }
+            exportEmployeeSummaryToExcel();
+        });
+    }
+
+    // 4. Project Summary (หน้าสรุปโปรเจกต์)
+    const projectSelect = document.getElementById("project-summary-select");
+    const monthInput = document.getElementById("project-summary-month");
+    const exportProjectBtn = document.getElementById("export-project-summary-btn");
+    
+    // ตั้งค่าเดือนเริ่มต้น
+    if (monthInput && !monthInput.value) {
+        const now = new Date();
+        monthInput.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+    }
+
+    // โหลดรายชื่อ Project ทันทีที่เข้าแอป
+    populateProjectOptions();
+
+    if (projectSelect) projectSelect.addEventListener("change", fetchProjectData);
+    if (monthInput) monthInput.addEventListener("change", fetchProjectData);
+    if (exportProjectBtn) {
+        exportProjectBtn.addEventListener("click", async () => {
+            const originalText = exportProjectBtn.innerHTML;
+            exportProjectBtn.innerHTML = "Preparing...";
+            exportProjectBtn.disabled = true;
+            try {
+                if (typeof XLSX === "undefined") {
+                    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+                }
+                await exportProjectSummaryToExcelData();
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการโหลด Excel Module");
+            } finally {
+                exportProjectBtn.innerHTML = originalText;
+                exportProjectBtn.disabled = false;
+            }
+        });
+    }
 
 });
