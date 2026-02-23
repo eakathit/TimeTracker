@@ -966,78 +966,202 @@
                     </div>
 
                     <div id="settings-tab-calendar" class="settings-tab-content hidden animate-tab max-w-5xl mx-auto space-y-5">
-<div class="rounded-2xl overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);">
-    <div class="px-6 py-5 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <div class="p-3 rounded-2xl" style="background:rgba(255,255,255,.15);">
-                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            </div>
-            <div>
-                <h3 class="text-white font-bold text-lg">Holiday & Schedule Configuration</h3>
-                <p class="text-xs" style="color:rgba(255,255,255,.7)">จัดการวันหยุดและวันเสาร์ทำงาน</p>
-            </div>
-        </div>
-    </div>
-    <div class="h-1" style="background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 6px,transparent 6px 14px)"></div>
-</div>
 
-<div class="flex flex-col lg:flex-row gap-5">
-    
-    <div class="w-full lg:w-2/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50">
-            <p class="font-bold text-gray-700 text-sm">เพิ่มรายการใหม่</p>
-        </div>
-        <div class="p-5 space-y-4">
-            <div>
-                <label class="text-xs font-bold text-gray-500 mb-1 block uppercase">เลือกวันที่</label>
-                <input type="date" id="admin-calendar-date-input" class="w-full px-4 py-2.5 bg-sky-50 border border-sky-200 rounded-xl focus:outline-none text-sm">
-            </div>
-            <div class="grid grid-cols-1 gap-3">
-                <button id="add-holiday-btn" class="flex items-center gap-3 p-3 bg-red-50 text-red-700 border border-red-100 rounded-xl hover:bg-red-100 transition-all">
-                    <span class="text-sm font-bold">เพิ่มวันหยุด</span>
-                </button>
-                <button id="add-working-saturday-btn" class="flex items-center gap-3 p-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl hover:bg-emerald-100 transition-all">
-                    <span class="text-sm font-bold">เพิ่มเสาร์ทำงาน</span>
-                </button>
-            </div>
-        </div>
-    </div>
+                        <div class="rounded-2xl overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);">
+                          <div class="px-6 py-5 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                              <div class="p-3 rounded-2xl" style="background:rgba(255,255,255,.15);">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 class="text-white font-bold text-lg leading-tight">Holiday & Schedule Configuration</h3>
+                                <p class="text-xs mt-0.5" style="color:rgba(255,255,255,.7)">จัดการวันหยุดประจำปีและวันเสาร์ที่ต้องทำงาน</p>
+                              </div>
+                            </div>
+                            <div class="hidden md:flex items-center gap-2 text-xs px-3 py-1.5 rounded-xl font-medium" style="background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                              เลือกวันที่ก่อนกดเพิ่ม
+                            </div>
+                          </div>
+                          <div class="h-1" style="background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 6px,transparent 6px 14px)"></div>
+                        </div>
 
-    <div class="w-full lg:w-3/5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-        <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-            <p class="font-bold text-gray-700 text-sm">รายการที่บันทึกไว้</p>
-            <button id="toggle-holiday-list-btn" class="text-xs bg-white border border-gray-200 px-3 py-1 rounded-lg hover:bg-gray-50">แสดง / ซ่อน</button>
-        </div>
-        <div id="list-empty-state" class="p-10 text-center text-gray-400 text-sm">
-            กดปุ่มเพื่อดูรายการที่บันทึก
-        </div>
-        <div id="holiday-list-wrapper" class="hidden p-5 flex-1">
-            <div class="grid grid-cols-2 gap-4">
-                <div id="holiday-list-display" class="space-y-2"></div>
-                <div id="worksat-list-display" class="space-y-2"></div>
-            </div>
-        </div>
-    </div>
-</div>
+                        <div id="admin-calendar-controls-card" class="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Color Legend</p>
-    <div class="flex flex-wrap gap-6">
-        <div class="flex items-center gap-2 text-xs text-gray-600">
-            <span class="w-3 h-3 rounded bg-red-400"></span> วันหยุดนักขัตฤกษ์
-        </div>
-        <div class="flex items-center gap-2 text-xs text-gray-600">
-            <span class="w-3 h-3 rounded bg-emerald-400"></span> วันเสาร์ทำงาน
-        </div>
-        <div class="flex items-center gap-2 text-xs text-gray-600">
-            <span class="w-3 h-3 rounded bg-gray-200"></span> วันหยุดปกติ
-        </div>
-        <div class="flex items-center gap-2 text-xs text-gray-600">
-            <span class="w-3 h-3 rounded bg-sky-400"></span> วันทำงานปกติ
-        </div>
-    </div>
-</div>
-</div>
+                          <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                              <div class="p-2 bg-sky-50 text-sky-500 rounded-xl">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                              </div>
+                              <div>
+                                <p class="font-bold text-gray-700 text-sm">เพิ่มรายการใหม่</p>
+                                <p class="text-xs text-gray-400">Add Holiday or Working Saturday</p>
+                              </div>
+                            </div>
+
+                            <div class="p-5 flex-1 flex flex-col gap-4">
+                              <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                  <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+                                  <label class="text-sm font-semibold text-gray-700">เลือกวันที่</label>
+                                </div>
+                                <div class="relative">
+                                  <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                  </div>
+                                  <input type="date" id="admin-calendar-date-input"
+                                    class="w-full pl-9 pr-4 py-2.5 bg-sky-50 border-2 border-sky-200 rounded-xl focus:ring-2 focus:ring-sky-400 focus:border-sky-400 focus:outline-none text-gray-700 font-medium text-sm transition-all">
+                                </div>
+                              </div>
+
+                              <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                  <span class="w-5 h-5 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                                  <label class="text-sm font-semibold text-gray-700">เลือกประเภท</label>
+                                </div>
+                                <div class="flex flex-col gap-2.5">
+                                  <button id="add-holiday-btn"
+                                    class="group flex items-center gap-3 w-full px-4 py-3 text-red-700 border border-red-200 rounded-xl transition-all duration-200 active:scale-95 hover:shadow-md"
+                                    style="background:linear-gradient(to right,#fff1f2,#fff5f5)"
+                                    onmouseover="this.style.background='linear-gradient(to right,#ffe4e6,#fecdd3)'"
+                                    onmouseout="this.style.background='linear-gradient(to right,#fff1f2,#fff5f5)'">
+                                    <div class="p-1.5 bg-red-100 rounded-lg flex-shrink-0">
+                                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                      </svg>
+                                    </div>
+                                    <div class="text-left flex-1">
+                                      <p class="font-bold text-sm leading-tight">เพิ่มวันหยุด</p>
+                                      <p class="text-xs text-red-400 mt-0.5">Holiday / วันหยุดนักขัตฤกษ์</p>
+                                    </div>
+                                    <svg class="w-4 h-4 text-red-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                  </button>
+
+                                  <button id="add-working-saturday-btn"
+                                    class="group flex items-center gap-3 w-full px-4 py-3 text-emerald-700 border border-emerald-200 rounded-xl transition-all duration-200 active:scale-95 hover:shadow-md"
+                                    style="background:linear-gradient(to right,#ecfdf5,#f0fdf4)"
+                                    onmouseover="this.style.background='linear-gradient(to right,#d1fae5,#a7f3d0)'"
+                                    onmouseout="this.style.background='linear-gradient(to right,#ecfdf5,#f0fdf4)'">
+                                    <div class="p-1.5 bg-emerald-100 rounded-lg flex-shrink-0">
+                                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                      </svg>
+                                    </div>
+                                    <div class="text-left flex-1">
+                                      <p class="font-bold text-sm leading-tight">เพิ่มเสาร์ทำงาน</p>
+                                      <p class="text-xs text-emerald-500 mt-0.5">Working Saturday</p>
+                                    </div>
+                                    <svg class="w-4 h-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div class="mt-auto flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <p class="text-xs text-amber-700 leading-relaxed">เลือกวันที่ในช่องด้านบนก่อน จากนั้นกดปุ่มเพื่อบันทึก</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                              <div class="flex items-center gap-3">
+                                <div class="p-2 bg-indigo-50 text-indigo-500 rounded-xl">
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p class="font-bold text-gray-700 text-sm">รายการที่บันทึกไว้</p>
+                                  <p class="text-xs text-gray-400">Saved Dates</p>
+                                </div>
+                              </div>
+                              <button id="toggle-holiday-list-btn"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 transition-all shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                แสดง / ซ่อน
+                              </button>
+                            </div>
+
+                            <div id="list-empty-state" class="p-8 flex flex-col items-center justify-center text-center text-gray-300 flex-1">
+                              <svg class="w-12 h-12 mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                              </svg>
+                              <p class="text-sm text-gray-400">กดปุ่ม "แสดง / ซ่อน" เพื่อดูรายการที่บันทึกไว้</p>
+                            </div>
+
+                            <div id="holiday-list-wrapper" class="hidden flex-1 p-5">
+                              <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                  <div class="flex items-center justify-between mb-2.5">
+                                    <div class="flex items-center gap-1.5">
+                                      <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                                      <span class="text-xs font-bold text-gray-600 uppercase tracking-wide">วันหยุด</span>
+                                    </div>
+                                    <span class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 font-medium">Holiday</span>
+                                  </div>
+                                  <div class="rounded-xl border border-red-100 overflow-hidden" style="background:linear-gradient(to bottom,rgba(255,241,242,.8),rgba(255,241,242,.3))">
+                                    <div id="holiday-list-display" class="max-h-64 min-h-[150px] overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
+                                      </div>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div class="flex items-center justify-between mb-2.5">
+                                    <div class="flex items-center gap-1.5">
+                                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                                      <span class="text-xs font-bold text-gray-600 uppercase tracking-wide">เสาร์ทำงาน</span>
+                                    </div>
+                                    <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100 font-medium">Work Sat.</span>
+                                  </div>
+                                  <div class="rounded-xl border border-emerald-100 overflow-hidden" style="background:linear-gradient(to bottom,rgba(236,253,245,.8),rgba(236,253,245,.3))">
+                                    <div id="worksat-list-display" class="max-h-64 min-h-[150px] overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
+                          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Color Legend</p>
+                          <div class="flex flex-wrap gap-x-6 gap-y-2">
+                            <div class="flex items-center gap-2">
+                              <span class="w-3.5 h-3.5 rounded bg-red-400 shadow-sm flex-shrink-0"></span>
+                              <span class="text-xs text-gray-600">วันหยุดนักขัตฤกษ์ / วันหยุดพิเศษ</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="w-3.5 h-3.5 rounded bg-emerald-400 shadow-sm flex-shrink-0"></span>
+                              <span class="text-xs text-gray-600">วันเสาร์ที่ต้องทำงาน</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="w-3.5 h-3.5 rounded bg-gray-200 shadow-sm flex-shrink-0"></span>
+                              <span class="text-xs text-gray-600">วันหยุดเสาร์–อาทิตย์ปกติ</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="w-3.5 h-3.5 rounded bg-sky-400 shadow-sm flex-shrink-0"></span>
+                              <span class="text-xs text-gray-600">วันทำงานปกติ</span>
+                            </div>
+                          </div>
+                        </div>
+
+                    </div>
 
                     <div id="settings-tab-roles" class="settings-tab-content hidden space-y-6">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
