@@ -86,6 +86,11 @@ import {
     setupNotificationToggle, bindManualNotifyButton 
 } from './services/notificationService.js';
 import { loadSentReports, searchRecordForEdit, saveEditedRecord } from './services/recordService.js';
+import { 
+    initTheme, setupThemeToggle, 
+    populateDropdownOptions, initializeControls, setupWorkTypeSelection 
+} from './services/uiService.js';
+window.populateDropdownOptions = populateDropdownOptions;
 window.loadSentReports = loadSentReports;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -106,6 +111,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   initializeNotifications();
   bindManualNotifyButton();
+  initTheme();
+  setupThemeToggle();
+  setupWorkTypeSelection();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
@@ -274,9 +282,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- App State ---
   let currentUser = null;
-  let selectedWorkType = "in_factory";
   let photoFile = null;
-  let controlsInitialized = false;
   let currentUserData = null;
 
   // (วางโค้ดนี้ก่อน auth.onAuthStateChanged)
@@ -706,344 +712,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // ถ้า Error, onAuthStateChanged (ข้างบน) ก็จะยังคงทำงาน
       // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
     });
-
-  workTypeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      workTypeButtons.forEach((btn) => {
-        btn.classList.remove("bg-sky-500", "text-white", "shadow");
-        btn.classList.add("text-gray-600");
-      });
-      button.classList.add("bg-sky-500", "text-white", "shadow");
-      selectedWorkType = button.dataset.workType;
-      onsiteDetailsForm.classList.toggle(
-        "hidden",
-        selectedWorkType !== "on_site",
-      );
-    });
-  });
-
-  const populateDropdownOptions = async () => {
-    const db = firebase.firestore();
-    const configs = [
-      { docId: "workTypes", optionsId: "work-type-options" },
-      { docId: "projects", optionsId: "project-options" },
-      { docId: "workTypes", optionsId: "delete-work-type-options" },
-      { docId: "projects", optionsId: "delete-project-options" },
-      { docId: "workTypes", optionsId: "edit-modal-work-type-options" },
-      { docId: "projects", optionsId: "edit-modal-project-options" },
-      { docId: "workTypes", optionsId: "checkin-work-type-options" },
-      { docId: "projects", optionsId: "checkin-project-options" },
-    ];
-
-    for (const config of configs) {
-      try {
-        const doc = await db
-          .collection("system_settings")
-          .doc(config.docId)
-          .get();
-        if (!doc.exists) continue;
-
-        const items = doc.data().names || [];
-        const optionsContainer = document.getElementById(config.optionsId);
-        const panel = optionsContainer.closest(".absolute");
-        const selectedText = panel.previousElementSibling.querySelector("span");
-
-        optionsContainer.innerHTML = "";
-
-        items.forEach((name) => {
-          const optionDiv = document.createElement("div");
-          optionDiv.className =
-            "p-2 rounded-lg hover:bg-sky-50 cursor-pointer text-sm";
-          optionDiv.textContent = name;
-
-          optionDiv.addEventListener("click", () => {
-            selectedText.textContent = name;
-            selectedText.classList.remove("text-gray-500");
-            panel.classList.add("hidden");
-          });
-          optionsContainer.appendChild(optionDiv);
-        });
-      } catch (error) {
-        console.error(`Error populating ${config.docId}:`, error);
-      }
-    }
-  };
-
-  function initializeControls() {
-    if (controlsInitialized) return;
-
-    const db = firebase.firestore();
-
-    const dropdownConfigs = [
-      {
-        panelId: "work-type-panel",
-        selectBtnId: "work-type-btn",
-        searchId: "work-type-search",
-      },
-      {
-        panelId: "project-panel",
-        selectBtnId: "project-btn",
-        searchId: "project-search",
-      },
-      {
-        panelId: "delete-work-type-panel",
-        selectBtnId: "delete-work-type-select-btn",
-      },
-      {
-        panelId: "delete-project-panel",
-        selectBtnId: "delete-project-select-btn",
-      },
-      { panelId: "duration-panel", selectBtnId: "duration-btn" },
-      {
-        panelId: "edit-modal-work-type-panel",
-        selectBtnId: "edit-modal-work-type-btn",
-        searchId: "edit-modal-work-type-search",
-      },
-      {
-        panelId: "edit-modal-project-panel",
-        selectBtnId: "edit-modal-project-btn",
-        searchId: "edit-modal-project-search",
-      },
-      {
-        panelId: "edit-modal-duration-panel",
-        selectBtnId: "edit-modal-duration-btn",
-      },
-    ];
-
-    dropdownConfigs.forEach((config) => {
-      const selectBtn = document.getElementById(config.selectBtnId);
-      const panel = document.getElementById(config.panelId);
-
-      if (!selectBtn || !panel) return;
-
-      selectBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-
-        const isCurrentlyHidden = panel.classList.contains("hidden");
-        dropdownConfigs.forEach((otherConf) => {
-          if (otherConf.panelId !== config.panelId) {
-            document.getElementById(otherConf.panelId)?.classList.add("hidden");
-          }
-        });
-
-        if (isCurrentlyHidden) {
-          panel.classList.remove("hidden");
-        } else {
-          panel.classList.add("hidden");
-        }
-      });
-
-      panel.addEventListener("click", (e) => e.stopPropagation());
-
-      if (config.searchId) {
-        const searchInput = document.getElementById(config.searchId);
-        const optionsContainer = panel.querySelector(".overflow-y-auto");
-        if (searchInput && optionsContainer) {
-          searchInput.addEventListener("input", () => {
-            const filter = searchInput.value.toLowerCase();
-            for (const option of optionsContainer.children) {
-              option.style.display = option.textContent
-                .toLowerCase()
-                .includes(filter)
-                ? ""
-                : "none";
-            }
-          });
-        }
-      }
-    });
-
-    document.addEventListener("click", () => {
-      dropdownConfigs.forEach((config) => {
-        document.getElementById(config.panelId)?.classList.add("hidden");
-      });
-    });
-
-    const setupAdminAction = (btnId, valueSourceId, docId, action) => {
-      const actionButton = document.getElementById(btnId);
-      if (!actionButton) {
-        console.error(`Button with ID ${btnId} not found.`);
-        return;
-      }
-
-      actionButton.addEventListener("click", async () => {
-        const isDelete = action === "delete";
-        const valueElement = document.getElementById(valueSourceId);
-        if (!valueElement) {
-          console.error(`Value source with ID ${valueSourceId} not found.`);
-          alert("เกิดข้อผิดพลาด: ไม่พบ Element สำหรับอ่านค่า");
-          return;
-        }
-
-        const value = isDelete
-          ? valueElement.textContent.trim()
-          : valueElement.value.trim();
-
-        if ((isDelete && value.includes("...")) || (!isDelete && !value)) {
-          showNotification(
-            isDelete ? "กรุณาเลือกรายการที่จะลบ" : "กรุณากรอกข้อมูล",
-            "warning",
-          );
-          return;
-        }
-
-        if (isDelete) {
-          showConfirmDialog(`คุณแน่ใจหรือไม่ว่าจะลบ "${value}"?`, async () => {
-            try {
-              actionButton.disabled = true;
-              actionButton.classList.add("opacity-50");
-
-              const docRef = db.collection("system_settings").doc(docId);
-              const updateAction =
-                firebase.firestore.FieldValue.arrayRemove(value);
-              await docRef.update({ names: updateAction });
-
-              showNotification(`ลบ "${value}" สำเร็จ!`, "success");
-              await populateDropdownOptions();
-
-              valueElement.textContent = `เลือก${docId === "workTypes" ? "ประเภทงาน" : "โครงการ"}ที่จะลบ...`;
-              valueElement.classList.add("text-gray-500");
-            } catch (error) {
-              console.error(`Error deleting ${docId}:`, error);
-              showNotification("เกิดข้อผิดพลาดในการลบ", "error");
-            } finally {
-              actionButton.disabled = false;
-              actionButton.classList.remove("opacity-50");
-            }
-          });
-        } else {
-          try {
-            actionButton.disabled = true;
-            actionButton.classList.add("opacity-50");
-
-            const docRef = db.collection("system_settings").doc(docId);
-            const updateAction =
-              firebase.firestore.FieldValue.arrayUnion(value);
-
-            // [ของใหม่] ใช้ set + merge: true (สร้างใหม่ถ้าไม่มี, อัปเดตถ้ามี)
-            await docRef.set({ names: updateAction }, { merge: true });
-
-            showNotification(`เพิ่ม "${value}" สำเร็จ!`, "success");
-            await populateDropdownOptions();
-            valueElement.value = "";
-          } catch (error) {
-            console.error(`Error adding ${docId}:`, error);
-            showNotification("เกิดข้อผิดพลาดในการเพิ่ม", "error");
-          } finally {
-            actionButton.disabled = false;
-            actionButton.classList.remove("opacity-50");
-          }
-        }
-      });
-    };
-    setupAdminAction(
-      "add-work-type-btn",
-      "add-work-type-input",
-      "workTypes",
-      "add",
-    );
-    setupAdminAction(
-      "delete-work-type-btn",
-      "delete-work-type-selected-text",
-      "workTypes",
-      "delete",
-    );
-    setupAdminAction("add-project-btn", "add-project-input", "projects", "add");
-    setupAdminAction(
-      "delete-project-btn",
-      "delete-project-selected-text",
-      "projects",
-      "delete",
-    );
-
-    document
-      .getElementById("duration-options")
-      .addEventListener("click", (e) => {
-        // ใช้ closest เพื่อหาตัวปุ่มที่แท้จริง (ป้องกันปัญหากดโดนขอบหรือไอคอนแล้วไม่ติด)
-        const option = e.target.closest(".duration-option");
-
-        if (option) {
-          // ใช้ .trim() ตัดช่องว่างหน้าหลังออก เพื่อความชัวร์ในการเปรียบเทียบ
-          const selectedValue = option.textContent.trim();
-
-          // อัปเดตข้อความบนปุ่ม
-          durationSelectedText.textContent = selectedValue;
-          durationSelectedText.classList.remove("text-gray-500");
-
-          // ซ่อน Panel
-          document.getElementById("duration-panel").classList.add("hidden");
-          // ตรวจสอบเงื่อนไขเปิด/ปิดช่องกรอกเวลา
-          if (selectedValue === "SOME TIME") {
-            customTimeInputs.classList.remove("hidden"); // แสดงช่องกรอกเวลา
-          } else {
-            customTimeInputs.classList.add("hidden"); // ซ่อนช่องกรอกเวลา
-          }
-        }
-      });
-
-    const leaveHistorySearchBtn = document.getElementById(
-      "leave-history-search-btn",
-    );
-    if (leaveHistorySearchBtn) {
-      leaveHistorySearchBtn.addEventListener("click", loadLeaveHistory);
-    }
-
-    // ผูก Event ปุ่มค้นหาประวัติ OT
-    const otHistorySearchBtn = document.getElementById("ot-history-search-btn");
-    if (otHistorySearchBtn) {
-      otHistorySearchBtn.addEventListener("click", loadOtHistory);
-    }
-
-    // ค้นหาโค้ดส่วน Tab เดิม แล้วแทนที่ด้วยโค้ดชุดนี้
-    const leaveTabNav = document.getElementById("leave-tab-nav");
-    const otTabNav = document.getElementById("ot-tab-nav");
-
-    // ฟังก์ชันสำหรับจัดการ Tab ทั้ง Leave และ OT
-    const setupTabs = (navElement) => {
-      if (!navElement) return;
-
-      const tabs = navElement.querySelectorAll("a");
-      const container = navElement.closest(".card");
-      const contents = container.querySelectorAll(
-        ".leave-tab-content, .ot-tab-content",
-      );
-
-      // ตรวจสอบ Theme สี (ฟ้า หรือ ส้ม)
-      const isLeave = navElement.id === "leave-tab-nav";
-      const activeTextColor = isLeave ? "text-blue-600" : "text-orange-600";
-
-      tabs.forEach((tab) => {
-        tab.addEventListener("click", (e) => {
-          e.preventDefault();
-          const targetId = tab.dataset.target;
-
-          // 1. Reset Tabs
-          tabs.forEach((t) => {
-            t.className = `flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200`;
-          });
-
-          // 2. Hide All Contents
-          contents.forEach((c) => {
-            c.classList.add("hidden");
-          });
-
-          // 3. Set Active Tab Style
-          tab.className = `flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white ${activeTextColor} transition-all duration-200`;
-
-          // 4. Show Target Content
-          const targetContent = document.getElementById(targetId);
-          if (targetContent) {
-            targetContent.classList.remove("hidden");
-          }
-        });
-      });
-    };
-
-    setupTabs(leaveTabNav);
-    setupTabs(otTabNav);
-
-    controlsInitialized = true;
-  }
 
   const adminGoToCalendarBtn = document.getElementById(
     "admin-go-to-calendar-btn",
@@ -2091,59 +1759,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // --- Dark Mode Logic ---
-  const darkModeToggle = document.getElementById("dark-mode-toggle");
-  const darkModeStatus = document.getElementById("dark-mode-status");
-
-  // 1. ฟังก์ชันตรวจสอบและเริ่มใช้งานธีม
-  function initTheme() {
-    const savedTheme = localStorage.getItem("theme");
-
-    // ถ้าเคยบันทึกว่าเป็น dark หรือ ไม่เคยบันทึกแต่เครื่องตั้งค่าเป็น dark mode ไว้
-    if (
-      savedTheme === "dark" ||
-      (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
-      document.documentElement.setAttribute("data-theme", "dark");
-      if (darkModeToggle) darkModeToggle.checked = true;
-      updateDarkModeStatus(true);
-    } else {
-      document.documentElement.setAttribute("data-theme", "light");
-      if (darkModeToggle) darkModeToggle.checked = false;
-      updateDarkModeStatus(false);
-    }
-  }
-
-  // 2. ฟังก์ชันอัปเดตข้อความสถานะ
-  function updateDarkModeStatus(isDark) {
-    if (!darkModeStatus) return;
-    if (isDark) {
-      darkModeStatus.textContent = "เปิดใช้งาน";
-      darkModeStatus.classList.add("text-green-500");
-    } else {
-      darkModeStatus.textContent = "ปิดใช้งาน";
-      darkModeStatus.classList.remove("text-green-500");
-    }
-  }
-
-  // 3. Event Listener เมื่อกดปุ่ม Toggle
-  if (darkModeToggle) {
-    darkModeToggle.addEventListener("change", (e) => {
-      if (e.target.checked) {
-        document.documentElement.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");
-        updateDarkModeStatus(true);
-      } else {
-        document.documentElement.setAttribute("data-theme", "light");
-        localStorage.setItem("theme", "light");
-        updateDarkModeStatus(false);
-      }
-    });
-  }
-
-  // เรียกใช้งานทันทีเมื่อโหลดหน้าเว็บ
-  initTheme();
-
   // ==========================================
   // 🌟 ผูก Event ปุ่มในหน้า Payroll (เชื่อมไปที่ Service)
   // ==========================================
@@ -2923,4 +2538,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("search-record-btn")?.addEventListener("click", searchRecordForEdit);
     document.getElementById("save-edit-btn")?.addEventListener("click", saveEditedRecord);
 
+    // ผูก Event ให้ปุ่มสลับหน้า On-site (Member / Leader)
+    document.getElementById("role-member-btn")?.addEventListener("click", () => switchRole("member"));
+    document.getElementById("role-leader-btn")?.addEventListener("click", () => switchRole("leader"));
+    
 });
