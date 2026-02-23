@@ -866,40 +866,202 @@
                 </div>
             </div>
 
-            <div id="settings-page" class="page hidden pb-24 bg-gray-50 min-h-screen">
-    
-    <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div class="px-6 py-4">
-            <h2 class="text-xl font-bold text-gray-800">ตั้งค่าระบบ (Settings)</h2>
-            <p class="text-xs text-gray-500 mt-1">จัดการข้อมูลพื้นฐานและสิทธิ์การใช้งานของระบบ</p>
-        </div>
-        
-        <div class="flex overflow-x-auto hide-scrollbar px-6 gap-6 border-t border-gray-100">
-            <button class="settings-tab-btn py-3 text-sm font-bold text-sky-600 border-b-2 border-sky-600 whitespace-nowrap transition-colors" data-target="settings-tab-system">
-                ข้อมูลระบบ (System)
-            </button>
-            <button class="settings-tab-btn py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap transition-colors" data-target="settings-tab-roles">
-                จัดการสิทธิ์ (Roles)
-            </button>
-            <button class="settings-tab-btn py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap transition-colors" data-target="settings-tab-editor">
-                แก้ไขเวลา (Editor)
-            </button>
-            </div>
-    </div>
+           <div id="settings-page" class="page hidden pb-24 bg-gray-50 min-h-screen space-y-0">
+                
+                <div class="full-width-header bg-white border-b border-gray-200 sticky top-0 z-10 px-4 md:px-6 pt-4 md:pt-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-3 bg-gray-100 rounded-xl">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+                            <p class="text-gray-500 text-sm">จัดการข้อมูลพื้นฐาน ปฏิทิน และโครงการ</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex overflow-x-auto hide-scrollbar gap-6 border-t border-gray-100">
+                        <button class="settings-tab-btn py-3 text-sm font-bold text-sky-600 border-b-2 border-sky-600 whitespace-nowrap transition-colors" data-target="settings-tab-system">
+                            ข้อมูลระบบ (System)
+                        </button>
+                        <button class="settings-tab-btn py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap transition-colors" data-target="settings-tab-roles">
+                            จัดการสิทธิ์ (Roles)
+                        </button>
+                        <button class="settings-tab-btn py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 whitespace-nowrap transition-colors" data-target="settings-tab-editor">
+                            แก้ไขเวลา (Editor)
+                        </button>
+                    </div>
+                </div>
 
-    <div class="p-4 sm:p-6 max-w-4xl mx-auto">
-        
-        <div id="settings-tab-system" class="settings-tab-content space-y-6">
-            </div>
+                <div class="p-4 md:p-6 max-w-6xl mx-auto w-full">
+                    
+                    <div id="settings-tab-system" class="settings-tab-content space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            
+                            <div class="space-y-6">
+                                <div class="card">
+                                    <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">Detail Management</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" id="add-work-type-input" placeholder="New Detail Name..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                            <button id="add-work-type-btn" class="bg-sky-500 hover:bg-sky-600 text-white p-2.5 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <button id="delete-work-type-select-btn" class="w-full p-2.5 border border-gray-300 rounded-lg text-left text-sm flex justify-between items-center bg-white">
+                                                    <span id="delete-work-type-selected-text" class="text-gray-500">Select item to delete...</span>
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                </button>
+                                                <div id="delete-work-type-panel" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                    <div id="delete-work-type-options" class="p-1"></div>
+                                                </div>
+                                            </div>
+                                            <button id="delete-work-type-btn" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 p-2.5 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-        <div id="settings-tab-roles" class="settings-tab-content hidden space-y-6">
-            </div>
+                                <div class="card">
+                                    <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">Project Management</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" id="add-project-input" placeholder="New Project Name..." class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                            <button id="add-project-btn" class="bg-sky-500 hover:bg-sky-600 text-white p-2.5 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <button id="delete-project-select-btn" class="w-full p-2.5 border border-gray-300 rounded-lg text-left text-sm flex justify-between items-center bg-white">
+                                                    <span id="delete-project-selected-text" class="text-gray-500">Select item to delete...</span>
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                                </button>
+                                                <div id="delete-project-panel" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                    <div id="delete-project-options" class="p-1"></div>
+                                                </div>
+                                            </div>
+                                            <button id="delete-project-btn" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 p-2.5 rounded-lg transition-colors">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-        <div id="settings-tab-editor" class="settings-tab-content hidden space-y-6">
-            </div>
+                            <div id="admin-calendar-controls-card" class="card h-fit">
+                                <h4 class="font-semibold text-gray-800 mb-4 border-b pb-2">🗓️ Holiday & Schedule Configuration</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-600 mb-1 block">Select Date</label>
+                                        <input type="date" id="admin-calendar-date-input" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button id="add-holiday-btn" class="flex flex-col items-center justify-center p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
+                                            <svg class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <span class="text-xs font-semibold">เพิ่มวันหยุด</span>
+                                        </button>
+                                        <button id="add-working-saturday-btn" class="flex flex-col items-center justify-center p-3 bg-green-50 text-green-700 border border-green-200 rounded-xl hover:bg-green-100 transition-colors">
+                                            <svg class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <span class="text-xs font-semibold">เพิ่มเสาร์ทำงาน</span>
+                                        </button>
+                                    </div>
 
-    </div>
-</div>
+                                    <div class="pt-2">
+                                        <button id="toggle-holiday-list-btn" class="w-full py-2 text-sm text-sky-600 hover:bg-sky-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                            <span>แสดงรายการที่บันทึกไว้</span>
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                        </button>
+
+                                        <div id="holiday-list-wrapper" class="hidden mt-3 grid grid-cols-2 gap-4">
+                                            <div class="bg-gray-50 rounded-lg p-2 max-h-60 overflow-y-auto border border-gray-200">
+                                                <p class="text-xs font-bold text-gray-500 mb-2 text-center sticky top-0 bg-gray-50">วันหยุด</p>
+                                                <div id="holiday-list-display" class="space-y-1"></div>
+                                            </div>
+                                            <div class="bg-gray-50 rounded-lg p-2 max-h-60 overflow-y-auto border border-gray-200">
+                                                <p class="text-xs font-bold text-gray-500 mb-2 text-center sticky top-0 bg-gray-50">เสาร์ทำงาน</p>
+                                                <div id="worksat-list-display" class="space-y-1"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div id="settings-tab-roles" class="settings-tab-content hidden space-y-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="p-2.5 bg-indigo-50 rounded-xl text-indigo-600 flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800 leading-tight">Role Management</h3>
+                                    <p class="text-xs text-gray-500 mt-0.5">Assign Admin or User permissions to staff</p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto overflow-y-auto border border-gray-50 rounded-2xl" style="height: 400px;">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-sm">
+                                        <tr class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                                            <th class="px-6 py-4">Employee</th>
+                                            <th class="px-4 py-4 text-center">Role</th>
+                                            <th class="px-6 py-4 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="role-management-list" class="divide-y divide-gray-50">
+                                        <tr><td colspan="3" class="text-center py-12 text-gray-400">Loading users...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settings-tab-editor" class="settings-tab-content hidden space-y-6">
+                        <div class="card border border-sky-100">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Attendance Record Editor
+                                </h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">พนักงาน</label>
+                                    <select id="edit-user-select" class="w-full mt-1 p-2.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                        <option value="">กำลังโหลด...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-600">วันที่</label>
+                                    <input type="date" id="edit-date-select" class="w-full mt-1 p-2.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm">
+                                </div>
+                                <div class="flex items-end">
+                                    <button id="search-record-btn" class="w-full btn-primary py-2.5 text-sm shadow-sm hover:shadow-md transition-all">
+                                        <svg class="w-4 h-4 inline-block -mt-1 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                        ค้นหาข้อมูล
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="search-results-container" class="mt-4 pt-4 border-t border-gray-100">
+                                <p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกพนักงานและวันที่เพื่อแก้ไข</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
 
             <div id="timesheet-management-page" class="page space-y-6">
 
