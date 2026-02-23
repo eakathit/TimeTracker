@@ -10,6 +10,15 @@ import {
     latestPosition, setMockPosition, calculateDistance, 
     startWatchingPosition, stopWatchingPosition 
 } from './services/locationService.js';
+import { 
+    currentDisplayDate, loadCalendarData, showCalendarDetails, 
+    handleCalendarDetailClick, loadCalendarRules, 
+    setupAdminCalendarControls, loadAndDisplayHolidays 
+} from './services/calendarService.js';
+import { 
+    handleGoogleLogin, handleLogout, saveUserProfile, 
+    loadRoleManagement, updateUserRole 
+} from './services/authService.js';
 import { toLocalISOString, toLocalDateKey, calculateWorkHours } from './utils/dateHelper.js';
 import { showNotification, showConfirmDialog } from "./utils/uiHelper.js";
 import { loadPayrollSummary, exportPayrollSummaryToExcel } from './services/payrollService.js';
@@ -201,28 +210,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // เรียกตรวจสอบสถานะทันที
-  checkNotificationStatus();
-
-  if (
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-  ) {
-    console.log("🔧 Running in Development Mode (Using Emulators)");
-
-    // Auth: Port 9099
-    auth.useEmulator("http://127.0.0.1:9099");
-
-    // Firestore: Port 8081
-    db.useEmulator("127.0.0.1", 8081);
-
-    // Functions: Port 5001
-    cloudFunctions.useEmulator("127.0.0.1", 5001);
-
-    // Storage: Port 9199
-    storage.useEmulator("127.0.0.1", 9199);
-  }
-
   const LEAVE_TYPE_MAP = {
     annual: "ลาพักร้อน",
     sick: "ลาป่วย",
@@ -390,15 +377,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let photoFile = null;
   let controlsInitialized = false;
   let currentUserData = null;
-  // [เพิ่มใหม่] ตัวแปรสำหรับเก็บเดือนที่ดูอยู่
-  let currentDisplayDate = new Date();
-
-  // [เพิ่มใหม่] สร้าง Cache เพื่อเก็บข้อมูลที่โหลดมา
-  let calendarDataCache = {
-    plans: new Map(),
-    records: new Map(),
-    users: new Map(), // Map(userId -> userData)
-  };
 
   // (วางโค้ดนี้ก่อน auth.onAuthStateChanged)
   function openProfileEditModal() {
@@ -431,55 +409,6 @@ document.addEventListener("DOMContentLoaded", function () {
     profileEditCancelBtn.addEventListener("click", closeProfileEditModal);
   if (profileEditOverlay)
     profileEditOverlay.addEventListener("click", closeProfileEditModal);
-
-  // --- [เพิ่ม] Event Listener (ปุ่มบันทึก) ---
-  if (profileEditSaveBtn)
-    profileEditSaveBtn.addEventListener("click", async () => {
-      if (!currentUser) return showNotification("ไม่พบข้อมูลผู้ใช้", "error");
-
-      const newName = profileEditNameInput.value.trim();
-      const newDept = profileEditDeptInput.value.trim();
-
-      if (!newName || !newDept) {
-        return showNotification("กรุณากรอกชื่อและแผนก", "warning");
-      }
-
-      profileEditSaveBtn.disabled = true;
-      profileEditSaveBtn.textContent = "กำลังบันทึก...";
-
-      try {
-        // [ ★★★ แก้ไข ★★★ ]
-        // ข้อมูลที่จะอัปเดตมีแค่ 2 อย่างนี้เท่านั้น
-        let updatedData = {
-          fullName: newName,
-          department: newDept,
-        };
-
-        // (ลบส่วนที่เช็ก if (newProfilePicFile) ... และการอัปโหลด Storage ออกทั้งหมด)
-
-        // 2. อัปเดตข้อมูล (ชื่อ/แผนก) ลง Firestore
-        const userDocRef = db.collection("users").doc(currentUser.uid);
-        await userDocRef.update(updatedData);
-
-        // 3. อัปเดตข้อมูลในตัวแปร (Local State)
-        currentUserData = { ...currentUserData, ...updatedData };
-
-        // 4. อัปเดตหน้าเว็บ UI ทันที
-        updateProfilePage(currentUserData); // (ฟังก์ชันนี้ยังต้องเรียกใช้)
-
-        showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
-        closeProfileEditModal();
-      } catch (error) {
-        console.error("Error saving profile:", error);
-        showNotification(
-          "เกิดข้อผิดพลาดในการบันทึก: " + error.message,
-          "error",
-        );
-      } finally {
-        profileEditSaveBtn.disabled = false;
-        profileEditSaveBtn.textContent = "บันทึก";
-      }
-    });
 
   async function initializeApp(user, userData) {
     console.log("Initializing App...");
@@ -1280,28 +1209,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
 
-    document
-      .getElementById("calendar-admin-add-holiday")
-      ?.addEventListener("click", () => {
-        handleAddCalendarRule("holidays");
-      });
-    document
-      .getElementById("calendar-admin-add-worksat")
-      ?.addEventListener("click", () => {
-        handleAddCalendarRule("workingSaturdays");
-      });
-    // Event Delegation สำหรับปุ่มลบ
-    document
-      .getElementById("admin-calendar-controls-card")
-      ?.addEventListener("click", (e) => {
-        const deleteBtn = e.target.closest(".calendar-delete-btn");
-        if (deleteBtn) {
-          const date = deleteBtn.dataset.date;
-          const type = deleteBtn.dataset.type;
-          handleDeleteCalendarRule(type, date, deleteBtn);
-        }
-      });
-
     const adminSearchResultsContainer = document.getElementById(
       "search-results-container",
     );
@@ -1665,7 +1572,6 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     initializeProjectSummary();
-    setupAdminCalendarControls();
     controlsInitialized = true;
   }
 
@@ -2998,48 +2904,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  // [แก้ไข] 3. ผูก Event กับปุ่ม Google ใหม่
-  // [แก้ไข] 3. ผูก Event กับปุ่ม Google ใหม่ (แก้ปัญหาหน้าจอหาย)
-  const googleLoginBtn = document.getElementById("google-login-btn");
-
-  if (googleLoginBtn) {
-    googleLoginBtn.addEventListener("click", (e) => {
-      // 🌟 1. สั่งหยุดการ Refresh หน้าเว็บ (ถ้าปุ่มอยู่ใน Form)
-      e.preventDefault();
-
-      // 🌟 2. ถ้ากำลังรัน Emulator (เทสในคอม) ให้บังคับใช้ Popup เสมอ ป้องกันบั๊ก Redirect
-      const isLocalhost =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-
-      if (isLocalhost) {
-        console.log("🛠️ Emulator Mode: Forcing Popup Login");
-        auth.signInWithPopup(provider).catch((err) => {
-          console.error("Emulator Popup Error:", err);
-        });
-        return; // จบการทำงานตรงนี้เลย ไม่ต้องไปเช็คมือถือ
-      }
-
-      // 🌟 3. โหมดใช้งานจริง (Production บน Server)
-      if (isMobileDevice()) {
-        auth.signInWithRedirect(provider).catch((err) => {
-          console.error("Redirect Login Error (Mobile):", err);
-          alert("เกิดข้อผิดพลาดในการเริ่ม Login (Mobile): " + err.message);
-        });
-      } else {
-        auth.signInWithPopup(provider).catch((err) => {
-          if (err.code === "auth/popup-blocked") {
-            alert("Pop-up ถูกบล็อก! กรุณาอนุญาต Pop-up สำหรับเว็บนี้");
-          } else if (err.code === "auth/cancelled-popup-request") {
-            console.log("ผู้ใช้ปิดหน้าต่าง Login");
-          } else {
-            console.error("Popup Login Error (Desktop):", err);
-          }
-        });
-      }
-    });
-  }
-
   function showPage(pageId) {
     pages.forEach((p) => p.classList.remove("active"));
     const activePage = document.getElementById(pageId);
@@ -3148,7 +3012,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (pageId === "settings-page") {
         // ใช้ฟังก์ชันที่มีอยู่จริงในไฟล์ของคุณเพื่อโหลดข้อมูล Project และ Work Type
         if (typeof populateDropdownOptions === "function") {
-          populateDropdownOptions();
+          loadRoleManagement();
         }
 
         // เรียกฟังก์ชันจัดการ Role ที่เราสร้างใหม่
@@ -3174,19 +3038,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      showConfirmDialog("คุณต้องการออกจากระบบใช่หรือไม่?", () => {
-        // onConfirm callback
-        auth.signOut().catch((error) => {
-          console.error("Sign out error:", error);
-          showNotification("เกิดข้อผิดพลาดในการออกจากระบบ", "error");
-        });
-      });
-    });
-  }
-
   const historyRangeSelect = document.getElementById("history-range-select");
   if (historyRangeSelect) {
     historyRangeSelect.addEventListener("change", loadWorkHistory);
@@ -3202,41 +3053,6 @@ document.addEventListener("DOMContentLoaded", function () {
     customTimeInputs.classList.add("hidden");
     customTimeStartInput.value = "";
     customTimeEndInput.value = "";
-  }
-
-  function updateProfilePage(userData) {
-    const profilePic = document.getElementById("profile-page-pic");
-    const profileName = document.getElementById("profile-page-name");
-    const profileDepartment = document.getElementById(
-      "profile-page-department",
-    );
-
-    if (profilePic) {
-      const placeholderLg =
-        "https://placehold.co/150x150/E2E8F0/475569?text=User";
-      profilePic.onerror = () => {
-        profilePic.src = placeholderLg;
-      };
-
-      // [ ★★★ แก้ไข ★★★ ]
-      // เพิ่ม ?t=... เพื่อบังคับให้เบราว์เซอร์โหลดรูปใหม่ (Cache Busting)
-      // ดึง URL จาก userData หรือ currentUser
-      let imageUrl =
-        userData.profileImageUrl || (currentUser && currentUser.photoURL);
-
-      if (imageUrl) {
-        // เพิ่ม timestamp ต่อท้าย URL
-        profilePic.src = imageUrl + "?t=" + new Date().getTime();
-      } else {
-        profilePic.src = placeholderLg;
-      }
-    }
-    if (profileName) {
-      profileName.textContent = userData.fullName || "ชื่อผู้ใช้";
-    }
-    if (profileDepartment) {
-      profileDepartment.textContent = userData.department || "ไม่มีข้อมูลแผนก";
-    }
   }
 
   async function loadSentReports() {
@@ -3340,387 +3156,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   setInterval(updateClock, 1000);
   updateClock();
-
-  // [แทนที่ฟังก์ชันเดิมทั้งหมด]
-  async function loadAndDisplayHolidays() {
-    // 1. [NEW] ดึง ID ของ 2 คอลัมน์ใหม่
-    const holidayContainer = document.getElementById("holiday-list-display");
-    const worksatContainer = document.getElementById("worksat-list-display");
-
-    if (!holidayContainer || !worksatContainer) {
-      console.error("Holiday list containers not found!");
-      return;
-    }
-
-    // 2. [NEW] ตั้งค่า "กำลังโหลด" ให้ทั้งสองฝั่ง
-    holidayContainer.innerHTML =
-      '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
-    worksatContainer.innerHTML =
-      '<p class="text-xs text-center text-gray-400">กำลังโหลด...</p>';
-
-    try {
-      const doc = await db
-        .collection("system_settings")
-        .doc("calendar_rules")
-        .get();
-
-      let holidays = [];
-      let workingSaturdays = [];
-
-      if (doc.exists) {
-        const data = doc.data();
-        holidays = data.holidays || [];
-        workingSaturdays = data.workingSaturdays || [];
-      }
-
-      // 3. [NEW] สร้างฟังก์ชัน Helper เพื่อสร้าง HTML ของแต่ละรายการ
-      const createItemHTML = (dateStr, type) => {
-        const isHoliday = type === "holidays";
-        const bgColor = isHoliday ? "bg-red-50" : "bg-green-50";
-        const textColor = isHoliday ? "text-red-700" : "text-green-700";
-        const hoverColor = isHoliday
-          ? "hover:bg-red-100"
-          : "hover:bg-green-100";
-
-        // เพิ่ม class 'calendar-delete-item-btn' สำหรับการคลิกลบ
-        return `
-                <div class="flex justify-between items-center p-2 rounded-lg ${bgColor} ${textColor} text-sm font-medium">
-                    <span>${dateStr}</span>
-                    <button class="calendar-delete-item-btn ${hoverColor} rounded p-0.5" data-date="${dateStr}" data-type="${type}">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
-                    </button>
-                </div>
-            `;
-      };
-
-      // 4. [NEW] เติมข้อมูล "วันหยุด" (ฝั่งซ้าย)
-      if (holidays.length === 0) {
-        holidayContainer.innerHTML =
-          '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
-      } else {
-        holidays.sort();
-        holidayContainer.innerHTML = holidays
-          .map((date) => createItemHTML(date, "holidays"))
-          .join("");
-      }
-
-      // 5. [NEW] เติมข้อมูล "เสาร์ทำงาน" (ฝั่งขวา)
-      if (workingSaturdays.length === 0) {
-        worksatContainer.innerHTML =
-          '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
-      } else {
-        workingSaturdays.sort();
-        worksatContainer.innerHTML = workingSaturdays
-          .map((date) => createItemHTML(date, "workingSaturdays"))
-          .join("");
-      }
-
-      // 6. [REMOVED] ลบโค้ดจัดการการลบออกจากฟังก์ชันนี้ (เราจะย้ายไปไว้ข้างนอก)
-    } catch (error) {
-      console.error("Error loading holiday list:", error);
-      holidayContainer.innerHTML =
-        '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
-      worksatContainer.innerHTML =
-        '<p class="text-xs text-center text-red-500">โหลดข้อมูลล้มเหลว</p>';
-    }
-  }
-
-  // [โค้ดใหม่] ฟังก์ชันสำหรับผูกปุ่ม "เพิ่ม" วันหยุด/วันเสาร์ทำงาน
-  // [แทนที่ฟังก์ชันเดิมทั้งหมด]
-  function setupAdminCalendarControls() {
-    // 1. ดึง Element สำหรับ "การเพิ่ม" ข้อมูล
-    const dateInput = document.getElementById("admin-calendar-date-input");
-    const addHolidayBtn = document.getElementById("add-holiday-btn");
-    const addWorkingSatBtn = document.getElementById(
-      "add-working-saturday-btn",
-    );
-
-    if (!dateInput || !addHolidayBtn || !addWorkingSatBtn) {
-      console.error("Admin calendar 'add' controls not found.");
-      return; // หยุด ถ้าไม่เจอ Element หลัก
-    }
-
-    // 2. ฟังก์ชันสำหรับ "เพิ่ม" ข้อมูล (ใช้ 'holidays' หรือ 'workingSaturdays')
-    const handleAddDate = async (type) => {
-      const dateStr = dateInput.value; // "YYYY-MM-DD"
-      if (!dateStr) {
-        showNotification("กรุณาเลือกวันที่ก่อน", "warning");
-        return;
-      }
-
-      const button = type === "holidays" ? addHolidayBtn : addWorkingSatBtn;
-      button.disabled = true;
-      button.classList.add("opacity-50");
-
-      try {
-        const docRef = db.collection("system_settings").doc("calendar_rules");
-        // ใช้ FieldValue.arrayUnion() เพื่อเพิ่มข้อมูลเข้า Array (ป้องกันการซ้ำ)
-        const updateAction = firebase.firestore.FieldValue.arrayUnion(dateStr);
-
-        // ใช้ { merge: true } เพื่อสร้างเอกสาร/field ถ้ายังไม่มี
-        await docRef.set({ [type]: updateAction }, { merge: true });
-
-        showNotification(`เพิ่ม "${dateStr}" สำเร็จ!`, "success");
-        dateInput.value = ""; // ล้างช่องวันที่
-
-        // [ปรับปรุง] เช็คว่ารายการกำลังแสดงอยู่หรือไม่ ถ้าแสดงอยู่ ก็ให้โหลดใหม่
-        const listWrapper = document.getElementById("holiday-list-wrapper");
-        if (listWrapper && !listWrapper.classList.contains("hidden")) {
-          await loadAndDisplayHolidays(); // โหลดรายการในกล่องนี้ใหม่
-        }
-
-        loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก (ทำเสมอ)
-      } catch (error) {
-        console.error(`Error adding ${type}:`, error);
-        showNotification("เกิดข้อผิดพลาดในการเพิ่ม", "error");
-      } finally {
-        button.disabled = false;
-        button.classList.remove("opacity-50");
-      }
-    };
-
-    // 3. ผูก Event ให้ปุ่ม "เพิ่ม"
-    addHolidayBtn.addEventListener("click", () => handleAddDate("holidays"));
-    addWorkingSatBtn.addEventListener("click", () =>
-      handleAddDate("workingSaturdays"),
-    );
-
-    // 4. ดึง Element สำหรับ "การแสดง/ซ่อน" และ "การลบ"
-    const toggleBtn = document.getElementById("toggle-holiday-list-btn");
-    const listWrapper = document.getElementById("holiday-list-wrapper");
-
-    if (toggleBtn && listWrapper) {
-      // 5. ผูก Event ให้ปุ่ม "แสดง/ซ่อน"
-      toggleBtn.addEventListener("click", () => {
-        const isHidden = listWrapper.classList.contains("hidden");
-        if (isHidden) {
-          // ถ้าซ่อนอยู่: ให้โหลดข้อมูล, ลบคลาส hidden, และเปลี่ยนข้อความปุ่ม
-          loadAndDisplayHolidays(); // เรียกโหลดข้อมูลเมื่อกด
-          listWrapper.classList.remove("hidden");
-          toggleBtn.textContent = "ซ่อนรายการที่บันทึกไว้";
-        } else {
-          // ถ้าแสดงอยู่: ให้ซ่อน และเปลี่ยนข้อความปุ่ม
-          listWrapper.classList.add("hidden");
-          toggleBtn.textContent = "แสดงรายการที่บันทึกไว้";
-        }
-      });
-
-      // 6. [NEW] ผูก Event "การลบ" ที่ตัว Wrapper (Event Delegation)
-      // เพื่อให้ปุ่มลบที่สร้างขึ้นมาทีหลังยังทำงานได้
-      listWrapper.addEventListener("click", (e) => {
-        // ค้นหาปุ่มลบที่ใกล้ที่สุดที่ถูกคลิก
-        const deleteBtn = e.target.closest(".calendar-delete-item-btn");
-
-        if (deleteBtn) {
-          // ถ้าเจอปุ่มลบ
-          const date = deleteBtn.dataset.date;
-          const type = deleteBtn.dataset.type; // 'holidays' หรือ 'workingSaturdays'
-          const typeText = type === "holidays" ? "วันหยุด" : "เสาร์ทำงาน";
-
-          showConfirmDialog(
-            `คุณแน่ใจหรือไม่ว่าต้องการลบ "${typeText}: ${date}"?`,
-            async () => {
-              // ฟังก์ชัน onConfirm (เมื่อกดยืนยัน)
-              try {
-                const docRef = db
-                  .collection("system_settings")
-                  .doc("calendar_rules");
-                const updateAction =
-                  firebase.firestore.FieldValue.arrayRemove(date);
-
-                await docRef.update({ [type]: updateAction });
-
-                showNotification(`ลบ "${date}" สำเร็จ!`, "success");
-                await loadAndDisplayHolidays(); // โหลดรายการในกล่องนี้ใหม่
-                loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินหลัก
-              } catch (error) {
-                console.error("Error deleting holiday/workday:", error);
-                showNotification("เกิดข้อผิดพลาดในการลบ", "error");
-              }
-            },
-          );
-        }
-      });
-    }
-  }
-
-  // [อัปเกรด] --- ฟังก์ชัน Render ปฏิทิน (เวอร์ชัน "ปฏิทินบริษัท") ---
-  async function loadCalendarData(date) {
-    if (!currentUser) return;
-    const calGrid = document.getElementById("cal-grid");
-    const calHeader = document.getElementById("cal-month-year");
-    const calDetailsContainer = document.getElementById(
-      "cal-details-container",
-    );
-
-    if (!calGrid || !calHeader || !calDetailsContainer) return;
-
-    calHeader.textContent = date.toLocaleString("th-TH", {
-      month: "long",
-      year: "numeric",
-    });
-    calGrid.innerHTML =
-      '<div class="col-span-7 text-center p-4 text-gray-400">กำลังโหลด...</div>';
-    calDetailsContainer.innerHTML =
-      '<p class="text-center text-gray-400 text-sm">คลิกวันที่เพื่อดูรายละเอียด</p>'; // รีเซ็ต
-
-    const year = date.getFullYear();
-    const month = date.getMonth();
-
-    const today = new Date();
-    const todayDate = today.getDate();
-    const todayMonth = today.getMonth();
-    const todayYear = today.getFullYear();
-
-    // รีเซ็ต Cache (ต้องล้างทุกครั้งที่โหลดเดือนใหม่)
-    calendarDataCache.plans.clear();
-    calendarDataCache.records.clear();
-    calendarDataCache.users.clear();
-
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, month + 1, 0);
-    const firstDayOfWeek = startDate.getDay();
-    const daysInMonth = endDate.getDate();
-
-    // 1. ดึงข้อมูล 4 ส่วนพร้อมกัน
-    try {
-      // Query 1: ดึง work_records (เฉพาะของ User ปัจจุบัน)
-      const recordsQuery = db
-        .collection("work_records")
-        .where("userId", "==", currentUser.uid)
-        .where("date", ">=", startDate)
-        .where("date", "<=", endDate)
-        .get();
-
-      // Query 2: ดึงปฏิทินบริษัท (วันหยุด)
-      const calendarQuery = db
-        .collection("system_settings")
-        .doc("calendar_rules")
-        .get();
-
-      // Query 3: [เปลี่ยน] ดึง user_plans (ของ "ทุกคน" ในเดือนนี้)
-      const plansQuery = db
-        .collection("user_plans")
-        .where("date", ">=", startDate)
-        .where("date", "<=", endDate)
-        .get();
-
-      // Query 4: [เพิ่ม] ดึงข้อมูล Users ทั้งหมด (เพื่อเอาชื่อมาแสดง)
-      const usersQuery = db.collection("users").get();
-
-      // รอทั้ง 4 query พร้อมกัน
-      const [recordsSnapshot, calendarDoc, plansSnapshot, usersSnapshot] =
-        await Promise.all([
-          recordsQuery,
-          calendarQuery,
-          plansQuery,
-          usersQuery,
-        ]);
-
-      // ประมวลผล Users (เก็บใน Cache)
-      usersSnapshot.forEach((doc) => {
-        calendarDataCache.users.set(doc.id, doc.data());
-      });
-
-      // ประมวลผล work_records (เก็บใน Cache)
-      recordsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        const day = data.date.toDate().getDate();
-        calendarDataCache.records.set(day, data);
-      });
-
-      // ประมวลผลปฏิทินบริษัท (เก็บใน Map ชั่วคราว)
-      const holidayMap = new Map();
-      const workingSaturdayMap = new Map();
-      if (calendarDoc.exists) {
-        const data = calendarDoc.data();
-        (data.holidays || []).forEach((dateStr) =>
-          holidayMap.set(dateStr, true),
-        );
-        (data.workingSaturdays || []).forEach((dateStr) =>
-          workingSaturdayMap.set(dateStr, true),
-        );
-      }
-
-      // ประมวลผล user_plans (เก็บใน Cache)
-      plansSnapshot.forEach((doc) => {
-        const data = doc.data();
-        const day = data.date.toDate().getDate();
-
-        if (!calendarDataCache.plans.has(day)) {
-          calendarDataCache.plans.set(day, []); // สร้าง Array ถ้ายังไม่มี
-        }
-        // เพิ่ม plan นี้เข้าไปใน Array ของวันนั้นๆ
-        calendarDataCache.plans.get(day).push({
-          id: doc.id, // เก็บ ID ของเอกสาร plan ไว้ (เผื่อลบ)
-          ...data,
-        });
-      });
-
-      // 2. สร้างตารางปฏิทิน
-      calGrid.innerHTML = "";
-      for (let i = 0; i < firstDayOfWeek; i++) {
-        calGrid.innerHTML += `<div class="p-2"></div>`;
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const isToday =
-          day === todayDate && month === todayMonth && year === todayYear;
-        const record = calendarDataCache.records.get(day);
-        const plans = calendarDataCache.plans.get(day) || []; // [เปลี่ยน]
-
-        const monthStr = (month + 1).toString().padStart(2, "0");
-        const dayStr = day.toString().padStart(2, "0");
-        const dateKey = `${year}-${monthStr}-${dayStr}`;
-
-        const isHoliday = holidayMap.has(dateKey);
-        const isWorkingSaturday = workingSaturdayMap.has(dateKey);
-        const currentDayOfWeek = new Date(year, month, day).getDay();
-        const isSunday = currentDayOfWeek === 0;
-        const isRegularSaturday = currentDayOfWeek === 6;
-
-        // [เปลี่ยน] สร้างจุด ถ้ามี Plan (plans.length > 0)
-        let planDotHtml = "";
-        if (plans.length > 0) {
-          planDotHtml = `<div class="w-2 h-2 bg-indigo-500 rounded-full mx-auto mt-0.5"></div>`;
-        }
-
-        // สร้าง HTML ของตัวเลข (เหมือนเดิม)
-        let dayNumberHtml = "";
-        if (isToday) {
-          dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold mx-auto">${day}</div>`;
-        } else if (isHoliday) {
-          dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto text-red-500 font-bold">${day}</div>`;
-        } else if (isWorkingSaturday) {
-          dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto text-green-700 font-bold">${day}</div>`;
-        } else if (isSunday || isRegularSaturday) {
-          dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto text-red-400">${day}</div>`;
-        } else {
-          dayNumberHtml = `<div class="w-7 h-7 flex items-center justify-center rounded-full mx-auto text-gray-400">${day}</div>`;
-        }
-
-        // [เปลี่ยน] เพิ่ม data-day-number และลบ data-plan-text
-        let cellBaseClass =
-          "p-2 text-center rounded-lg cursor-pointer hover:bg-gray-100";
-        const dataAttributes = `data-day-number="${day}" data-date-key="${dateKey}"`;
-
-        let dayCellHtml = "";
-        if (isHoliday) {
-          dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-red-500 truncate" style="line-height: 1.25;">หยุด</div></div>`;
-        } else if (isWorkingSaturday) {
-          // [แก้ไข] เพิ่ม div ข้อความ "ทำงาน" กลับเข้าไป
-          dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}<div class="text-xs mt-1 text-green-700 truncate" style="line-height: 1.25;">ทำงาน</div></div>`;
-        } else {
-          dayCellHtml = `<div class="${cellBaseClass}" ${dataAttributes}>${dayNumberHtml}${planDotHtml}</div>`;
-        }
-
-        calGrid.innerHTML += dayCellHtml;
-      }
-    } catch (error) {
-      console.error("Error fetching calendar data: ", error);
-      calGrid.innerHTML = `<div class="col-span-7 text-center p-4 text-red-500">โหลดข้อมูลล้มเหลว</div>`;
-    }
-  }
 
   // 3. เพิ่ม Event Listener ให้ปุ่ม
   document.getElementById("cal-prev-month").addEventListener("click", () => {
@@ -3948,140 +3383,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // [แก้ไข] 1. ฟังก์ชันสำหรับ "แสดง" รายละเอียด (ซ่อนฟอร์มไว้ก่อน)
-  function showCalendarDetails(e) {
-    const cell = e.target.closest("[data-day-number]");
-    if (!cell) return;
-
-    const day = parseInt(cell.dataset.dayNumber);
-    const dateKey = cell.dataset.dateKey; // YYYY-MM-DD
-    const [y, m, d] = dateKey.split("-");
-    const thaiDate = new Date(y, m - 1, d).toLocaleDateString("th-TH", {
-      day: "numeric",
-      month: "long",
-    });
-
-    const plans = calendarDataCache.plans.get(day) || [];
-    const users = calendarDataCache.users;
-    const container = document.getElementById("cal-details-container");
-
-    let detailHtml = `
-                <h4 class="font-semibold text-lg">แผนงาน วันที่ ${thaiDate}</h4>
-            `;
-
-    // --- 1. สร้าง HTML สำหรับ "Plan ที่มีอยู่" (ของทุกคน) ---
-    if (plans.length > 0) {
-      detailHtml += '<div class="space-y-3 pt-3">';
-      plans.forEach((plan) => {
-        const userName = users.get(plan.userId)?.fullName || "ไม่พบชื่อ";
-        const userPhoto =
-          users.get(plan.userId)?.profileImageUrl ||
-          "https://placehold.co/100x100/E2E8F0/475569?text=User";
-
-        detailHtml += `
-                        <div class="flex items-start space-x-3">
-                            <img src="${userPhoto}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
-                            <div class="flex-1">
-                                <div class="flex justify-between items-center">
-                                    <p class="font-semibold text-sm">${userName}</p>
-                                    ${
-                                      plan.userId === currentUser.uid // [เช็ก] ถ้าเป็น plan ของเรา, ให้แสดงปุ่มลบ
-                                        ? `<button class="plan-delete-btn text-red-400 hover:text-red-600" data-doc-id="${plan.id}">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
-                                        </button>`
-                                        : ""
-                                    }
-                                </div>
-                                <p class="text-sm text-gray-700 whitespace-pre-wrap">${plan.planText}</p>
-                            </div>
-                        </div>
-                    `;
-      });
-      detailHtml += "</div>";
-    } else {
-      detailHtml +=
-        '<p class="text-center text-gray-400 text-sm py-2">ยังไม่มีแผนงานสำหรับวันนี้</p>';
-    }
-
-    // --- 2. สร้าง HTML สำหรับ "ปุ่มเพิ่ม" และ "ฟอร์มที่ซ่อนอยู่" ---
-    detailHtml += `
-                <div class="pt-3 mt-3 border-t border-gray-100">
-                    <button id="plan-show-form-btn" class="w-full text-sm font-medium text-sky-600 p-2 rounded-lg hover:bg-sky-50">
-                        + เพิ่มแผนของฉันในวันนี้
-                    </button>
-                    
-                    <div id="plan-new-form" class="hidden space-y-2 mt-2">
-                        <textarea id="plan-new-textarea" class="w-full p-2 border border-gray-300 rounded-lg" rows="2" placeholder="กรอกแผนงานของคุณ..."></textarea>
-                        <button id="plan-save-new-btn" data-date-key="${dateKey}" class="btn-primary w-full py-2 text-sm">บันทึกแผนของฉัน</button>
-                    </div>
-                </div>
-            `;
-
-    container.innerHTML = detailHtml;
-  }
-
-  // [แก้ไข] 2. ฟังก์ชันสำหรับ "จัดการ" การคลิก (เพิ่มปุ่ม "เปิดฟอร์ม")
-  async function handleCalendarDetailClick(e) {
-    // --- [เพิ่ม] กรณีคลิก "เปิดฟอร์ม" ---
-    if (e.target.id === "plan-show-form-btn") {
-      document.getElementById("plan-new-form").classList.remove("hidden"); // แสดงฟอร์ม
-      e.target.classList.add("hidden"); // ซ่อนปุ่ม "+ เพิ่มแผน"
-      return;
-    }
-
-    // --- (เหมือนเดิม) กรณีคลิก "บันทึกแผนใหม่" ---
-    if (e.target.id === "plan-save-new-btn") {
-      const saveBtn = e.target;
-      const dateKey = saveBtn.dataset.dateKey;
-      const textarea = document.getElementById("plan-new-textarea");
-      const planText = textarea.value.trim();
-
-      if (!planText) {
-        alert("กรุณากรอกแผนงาน");
-        return;
-      }
-      saveBtn.disabled = true;
-      saveBtn.textContent = "กำลังบันทึก...";
-      try {
-        const planData = {
-          userId: currentUser.uid,
-          date: firebase.firestore.Timestamp.fromDate(new Date(dateKey)),
-          planText: planText,
-          lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-        };
-
-        // เปลี่ยนจาก .doc(docId).set(planData) เป็น .add(planData) เพื่อสร้างเอกสารใหม่ทุกครั้ง
-        await db.collection("user_plans").add(planData);
-
-        showNotification("บันทึกแผนสำเร็จ!");
-        loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินเพื่อแสดงรายการใหม่
-      } catch (error) {
-        console.error("Error saving plan:", error);
-        showNotification("เกิดข้อผิดพลาด", "error");
-        saveBtn.disabled = false;
-        saveBtn.textContent = "บันทึกแผนของฉัน";
-      }
-    }
-
-    // --- กรณีคลิก "ลบ" ---
-    if (e.target.closest(".plan-delete-btn")) {
-      const deleteBtn = e.target.closest(".plan-delete-btn");
-      const docId = deleteBtn.dataset.docId; // ID ของ plan ที่จะลบ
-
-      showConfirmDialog("คุณต้องการลบแผนงานนี้ใช่หรือไม่?", async () => {
-        // onConfirm
-        try {
-          await db.collection("user_plans").doc(docId).delete();
-          showNotification("ลบแผนงานแล้ว", "success");
-          loadCalendarData(currentDisplayDate); // รีเฟรชปฏิทินทั้งหมด
-        } catch (error) {
-          console.error("Error deleting plan:", error);
-          showNotification("เกิดข้อผิดพลาดในการลบ", "error");
-        }
-      });
-    }
-  }
-
   // 3. เพิ่ม Event Listener หลัก (ใช้ Event Delegation)
   document
     .getElementById("cal-grid")
@@ -4244,135 +3545,6 @@ document.addEventListener("DOMContentLoaded", function () {
   cancelEditBtn.addEventListener("click", () => {
     editModal.classList.add("hidden");
   });
-
-  // --- Function to show confirmation dialog ---
-  // Added optional onCancel parameter
-  // [แก้ไข] เพิ่ม parameter: okText, cancelText
-
-  async function loadCalendarRules() {
-    const holidayList = document.getElementById("holiday-list");
-    const workSatList = document.getElementById("working-saturday-list");
-    if (!holidayList || !workSatList) return;
-
-    holidayList.innerHTML = '<p class="text-sm text-gray-400">กำลังโหลด...</p>';
-    workSatList.innerHTML = '<p class="text-sm text-gray-400">กำลังโหลด...</p>';
-
-    try {
-      const doc = await db
-        .collection("system_settings")
-        .doc("calendar_rules")
-        .get();
-      if (!doc.exists) {
-        holidayList.innerHTML =
-          '<p class="text-sm text-gray-400">ไม่พบข้อมูล</p>';
-        workSatList.innerHTML =
-          '<p class="text-sm text-gray-400">ไม่พบข้อมูล</p>';
-        return;
-      }
-
-      const data = doc.data();
-      const holidays = data.holidays || [];
-      const workingSaturdays = data.workingSaturdays || [];
-
-      // ฟังก์ชัน Helper สร้าง HTML
-      const createListHTML = (dateArray, type) => {
-        if (dateArray.length === 0)
-          return '<p class="text-sm text-gray-400">ไม่มีรายการ</p>';
-        // เรียงวันที่จากน้อยไปมาก
-        dateArray.sort((a, b) => new Date(a) - new Date(b));
-
-        return dateArray
-          .map(
-            (dateStr) => `
-                <div class="flex justify-between items-center bg-white p-2 rounded-md shadow-sm">
-                    <span class="text-sm font-medium">${dateStr}</span>
-                    <button data-date="${dateStr}" data-type="${type}" class="calendar-delete-btn text-red-400 hover:text-red-600 p-1">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
-                    </button>
-                </div>
-            `,
-          )
-          .join("");
-      };
-
-      holidayList.innerHTML = createListHTML(holidays, "holidays");
-      workSatList.innerHTML = createListHTML(
-        workingSaturdays,
-        "workingSaturdays",
-      );
-    } catch (error) {
-      console.error("Error loading calendar rules:", error);
-      holidayList.innerHTML = '<p class="text-sm text-red-500">โหลดล้มเหลว</p>';
-      workSatList.innerHTML = '<p class="text-sm text-red-500">โหลดล้มเหลว</p>';
-    }
-  }
-
-  // 2. ฟังก์ชันเพิ่มกฎ (Holiday หรือ Working Saturday)
-  async function handleAddCalendarRule(type) {
-    const dateInput = document.getElementById("calendar-admin-date-input");
-    const dateString = dateInput.value; // YYYY-MM-DD
-
-    if (!dateString) {
-      showNotification("กรุณาเลือกวันที่ก่อน", "warning");
-      return;
-    }
-
-    const buttonId =
-      type === "holidays"
-        ? "calendar-admin-add-holiday"
-        : "calendar-admin-add-worksat";
-    const button = document.getElementById(buttonId);
-    button.disabled = true;
-    button.textContent = "กำลังเพิ่ม...";
-
-    try {
-      const docRef = db.collection("system_settings").doc("calendar_rules");
-
-      // ใช้ arrayUnion เพื่อเพิ่มค่าลงใน array (ถ้ายังไม่มี)
-      await docRef.set(
-        {
-          [type]: firebase.firestore.FieldValue.arrayUnion(dateString),
-        },
-        { merge: true },
-      ); // merge: true เพื่อไม่ให้ลบ field อื่น
-
-      showNotification(`เพิ่มวันที่ ${dateString} สำเร็จ`, "success");
-      dateInput.value = ""; // ล้างค่า
-      loadCalendarRules(); // โหลดรายการใหม่
-    } catch (error) {
-      console.error("Error adding calendar rule:", error);
-      showNotification("เกิดข้อผิดพลาด", "error");
-    } finally {
-      button.disabled = false;
-      button.textContent =
-        type === "holidays" ? "+ เพิ่มเป็นวันหยุด" : "+ เพิ่มเป็นวันเสาร์ทำงาน";
-    }
-  }
-
-  // 3. ฟังก์ชันลบกฎ
-  async function handleDeleteCalendarRule(type, dateString, buttonElement) {
-    if (!type || !dateString) return;
-
-    buttonElement.disabled = true;
-    buttonElement.style.opacity = "0.5";
-
-    try {
-      const docRef = db.collection("system_settings").doc("calendar_rules");
-
-      // ใช้ arrayRemove เพื่อลบค่าออกจาก array
-      await docRef.update({
-        [type]: firebase.firestore.FieldValue.arrayRemove(dateString),
-      });
-
-      showNotification(`ลบวันที่ ${dateString} สำเร็จ`, "success");
-      loadCalendarRules(); // โหลดรายการใหม่ (วิธีนี้ง่ายที่สุด)
-    } catch (error) {
-      console.error("Error deleting calendar rule:", error);
-      showNotification("เกิดข้อผิดพลาด", "error");
-      buttonElement.disabled = false;
-      buttonElement.style.opacity = "1";
-    }
-  }
 
   // [อัปเดต] โหลดรายการใบลา (กรองตามแผนก)
   async function loadPendingLeaveRequests() {
@@ -5963,175 +5135,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // ฟังก์ชันโหลดรายชื่อผู้ใช้เพื่อจัดการ Role
-  async function loadRoleManagement() {
-    const listContainer = document.getElementById("role-management-list");
-    if (!listContainer) return;
-
-    listContainer.innerHTML =
-      '<tr><td colspan="3" class="text-center py-4 text-gray-400 text-sm">กำลังโหลดข้อมูล...</td></tr>';
-
-    try {
-      const usersSnapshot = await db
-        .collection("users")
-        .orderBy("fullName")
-        .get();
-      let html = "";
-
-      usersSnapshot.forEach((doc) => {
-        const user = doc.data();
-        const userId = doc.id;
-        const currentRole = user.role || "user"; // ถ้าไม่มี role ให้เป็น user ไว้ก่อน
-
-        html += `
-        <tr class="hover:bg-gray-50/50 transition-colors">
-        <td class="px-6 py-3">
-            <div class="flex items-center gap-3">
-                <img src="${user.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" 
-                     class="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-sm">
-                <div class="min-w-0">
-                    <p class="text-sm font-bold text-gray-800 truncate">${user.fullName}</p>
-                    <p class="text-[10px] text-gray-400 truncate">${user.department || "Unassigned"}</p>
-                </div>
-            </div>
-        </td>
-        <td class="px-4 py-3 text-center">
-            <span class="inline-flex items-center justify-center rounded-full text-[8px] font-bold uppercase tracking-tight ${currentRole === "admin" ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-gray-100 text-gray-500 border border-gray-200"}" 
-                  style="min-width: 48px; height: 18px; padding: 0 6px;">
-                ${currentRole}
-            </span>
-        </td>
-        <td class="px-6 py-3 text-right">
-            <select onchange="updateUserRole('${userId}', this.value)" 
-                class="text-[10px] font-semibold border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
-                <option value="user" ${currentRole === "user" ? "selected" : ""}>Set as User</option>
-                <option value="admin" ${currentRole === "admin" ? "selected" : ""}>Set as Admin</option>
-            </select>
-        </td>
-    </tr>
-    `;
-      });
-      listContainer.innerHTML = html;
-    } catch (error) {
-      console.error("Error loading roles:", error);
-      listContainer.innerHTML =
-        '<tr><td colspan="3" class="text-center py-4 text-red-500 text-sm">โหลดข้อมูลไม่สำเร็จ</td></tr>';
-    }
-  }
-
-  // ฟังก์ชันอัปเดต Role ลงใน Firestore
-  async function updateUserRole(userId, newRole) {
-    if (
-      !confirm(
-        `คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้เป็น ${newRole.toUpperCase()} ใช่หรือไม่?`,
-      )
-    ) {
-      loadRoleManagement(); // รีโหลดเพื่อคืนค่าเดิมใน select
-      return;
-    }
-
-    try {
-      await db.collection("users").doc(userId).update({
-        role: newRole,
-      });
-
-      Toast.fire({
-        icon: "success",
-        title: "อัปเดตสิทธิ์เรียบร้อยแล้ว",
-      });
-
-      loadRoleManagement(); // โหลดรายการใหม่
-    } catch (error) {
-      console.error("Error updating role:", error);
-      alert("ไม่สามารถอัปเดตสิทธิ์ได้");
-    }
-  }
-
-  // --- ส่วนจัดการสิทธิ์ Admin (Role Management) ---
-
-  // 1. ฟังก์ชันโหลดรายชื่อเพื่อแสดงในหน้า Settings
-  window.loadRoleManagement = async function () {
-    const listContainer = document.getElementById("role-management-list");
-    if (!listContainer) return;
-
-    listContainer.innerHTML =
-      '<tr><td colspan="3" class="text-center py-4 text-gray-400 text-sm">Loading users...</td></tr>';
-
-    try {
-      const usersSnapshot = await firebase
-        .firestore()
-        .collection("users")
-        .orderBy("fullName")
-        .get();
-      let html = "";
-
-      usersSnapshot.forEach((doc) => {
-        const user = doc.data();
-        const userId = doc.id;
-        const currentRole = user.role || "user";
-
-        html += `
-            <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-4">
-                    <div class="flex items-center gap-3">
-                        <img src="${user.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-8 h-8 rounded-full object-cover">
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">${user.fullName || "Unknown"}</p>
-                            <p class="text-[10px] text-gray-500">${user.department || "-"}</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-4 py-4 text-center">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${currentRole === "admin" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}">
-                        ${currentRole.toUpperCase()}
-                    </span>
-                </td>
-                <td class="px-4 py-4 text-right">
-                    <select onchange="updateUserRole('${userId}', this.value)" class="text-[11px] border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                        <option value="user" ${currentRole === "user" ? "selected" : ""}>Set as User</option>
-                        <option value="admin" ${currentRole === "admin" ? "selected" : ""}>Set as Admin</option>
-                    </select>
-                </td>
-            </tr>
-            `;
-      });
-
-      listContainer.innerHTML =
-        html ||
-        '<tr><td colspan="3" class="text-center py-4">No users found.</td></tr>';
-    } catch (error) {
-      console.error("Error loading roles:", error);
-      listContainer.innerHTML =
-        '<tr><td colspan="3" class="text-center py-4 text-red-500 text-sm">Failed to load data.</td></tr>';
-    }
-  };
-
-  // 2. ฟังก์ชันอัปเดตค่าไปยัง Firestore (ต้องเป็น window. เพื่อให้ onchange มองเห็น)
-  window.updateUserRole = async function (userId, newRole) {
-    if (!confirm(`Confirm change role to ${newRole.toUpperCase()}?`)) {
-      loadRoleManagement(); // คืนค่าเดิม
-      return;
-    }
-
-    try {
-      await firebase.firestore().collection("users").doc(userId).update({
-        role: newRole,
-      });
-
-      // ใช้ฟังก์ชันแจ้งเตือนที่มีอยู่ในแอปของคุณ
-      if (typeof showNotification === "function") {
-        showNotification("Role updated successfully!");
-      } else {
-        alert("Role updated successfully!");
-      }
-
-      loadRoleManagement(); // รีโหลดตาราง
-    } catch (error) {
-      console.error("Error updating role:", error);
-      alert("Update failed: " + error.message);
-    }
-  };
-
   function updateToken() {
     messaging
       .getToken({
@@ -6522,5 +5525,154 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("summary-stat-user-select")?.addEventListener("change", loadTimesheetSummary);
     document.getElementById("summary-stat-year-select")?.addEventListener("change", loadTimesheetSummary);
 
+    // ==========================================
+    // 🌟 ผูก Event สำหรับปฏิทินและแผนงาน
+    // ==========================================
+    document.getElementById("cal-prev-month")?.addEventListener("click", () => {
+        currentDisplayDate.setMonth(currentDisplayDate.getMonth() - 1);
+        loadCalendarData(currentDisplayDate);
+    });
+
+    document.getElementById("cal-next-month")?.addEventListener("click", () => {
+        currentDisplayDate.setMonth(currentDisplayDate.getMonth() + 1);
+        loadCalendarData(currentDisplayDate);
+    });
+
+    document.getElementById("cal-grid")?.addEventListener("click", showCalendarDetails);
+    document.getElementById("cal-details-container")?.addEventListener("click", handleCalendarDetailClick);
+
+    // ส่วนของ Admin เพิ่มกฎปฏิทิน
+    // ==========================================
+    // 🌟 ส่วนของ Admin เพิ่มกฎปฏิทิน (แก้ปัญหาปุ่มหน่วง)
+    // ==========================================
+    const handleAddCalendarRuleAdapter = async (type, btnElement) => {
+        const dateInput = document.getElementById("admin-calendar-date-input") || document.getElementById("calendar-admin-date-input");
+        const dateStr = dateInput?.value;
+        
+        if (!dateStr) return showNotification("กรุณาเลือกวันที่ก่อน", "warning");
+
+        // 🟢 1. เติมลูกเล่น Loading ทันทีที่กดปุ่ม เพื่อลดความรู้สึกหน่วง
+        const originalText = btnElement ? btnElement.innerHTML : "เพิ่ม";
+        if (btnElement) {
+            btnElement.disabled = true;
+            btnElement.innerHTML = `<span class="animate-spin inline-block h-4 w-4 border-b-2 border-white rounded-full mr-2"></span>กำลังบันทึก...`;
+        }
+
+        try {
+            // 2. บันทึกข้อมูล
+            await db.collection("system_settings").doc("calendar_rules").set({
+                [type]: firebase.firestore.FieldValue.arrayUnion(dateStr)
+            }, { merge: true });
+            
+            showNotification(`เพิ่มวันที่ ${dateStr} สำเร็จ`, "success");
+            if (dateInput) dateInput.value = "";
+            
+            // 3. สั่งโหลด UI ใหม่
+            if (typeof loadAndDisplayHolidays === 'function') await loadAndDisplayHolidays();
+            if (typeof loadCalendarRules === 'function') loadCalendarRules();
+            loadCalendarData(currentDisplayDate);
+            
+            // 4. แอบเปิดกล่องรายการที่บันทึกไว้ให้อัตโนมัติ (ให้ Admin เห็นผลลัพธ์ทันที)
+            const listWrapper = document.getElementById("holiday-list-wrapper");
+            const toggleBtn = document.getElementById("toggle-holiday-list-btn");
+            if (listWrapper && listWrapper.classList.contains("hidden")) {
+                listWrapper.classList.remove("hidden");
+                if (toggleBtn) toggleBtn.textContent = "ซ่อนรายการที่บันทึกไว้";
+            }
+
+        } catch (error) {
+            console.error(error);
+            showNotification("เกิดข้อผิดพลาดในการเพิ่ม", "error");
+        } finally {
+            // 🔴 5. คืนค่าปุ่มกลับเป็นปกติ
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalText;
+            }
+        }
+    };
+
+    // ผูก Event ให้ปุ่ม (ส่ง parameter ตัวปุ่ม this เข้าไปด้วย)
+    document.getElementById("add-holiday-btn")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("holidays", this); });
+    document.getElementById("add-working-saturday-btn")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("workingSaturdays", this); });
     
+    document.getElementById("calendar-admin-add-holiday")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("holidays", this); });
+    document.getElementById("calendar-admin-add-worksat")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("workingSaturdays", this); });
+
+    // Event Delegation สำหรับลบกฎ (เผื่อมี UI เก่า)
+    document.getElementById("admin-calendar-controls-card")?.addEventListener("click", async (e) => {
+        const deleteBtn = e.target.closest(".calendar-delete-btn");
+        if (deleteBtn) {
+            const date = deleteBtn.dataset.date;
+            const type = deleteBtn.dataset.type;
+            deleteBtn.disabled = true;
+            try {
+                await db.collection("system_settings").doc("calendar_rules").update({
+                    [type]: firebase.firestore.FieldValue.arrayRemove(date)
+                });
+                showNotification(`ลบวันที่ ${date} สำเร็จ`, "success");
+                if (typeof loadAndDisplayHolidays === 'function') loadAndDisplayHolidays();
+                if (typeof loadCalendarRules === 'function') loadCalendarRules();
+                loadCalendarData(currentDisplayDate);
+            } catch (error) {
+                showNotification("เกิดข้อผิดพลาดในการลบ", "error");
+            }
+        }
+    });
+
+    // เริ่มทำงานระบบเปิด/ปิด และลบรายการในปฏิทิน Admin
+    setupAdminCalendarControls();
+
+    // ==========================================
+    // 🌟 ผูก Event สำหรับ Auth & Profile
+    // ==========================================
+    const googleLoginBtn = document.getElementById("google-login-btn");
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            handleGoogleLogin();
+        });
+    }
+
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", handleLogout);
+    }
+
+    if (profileEditSaveBtn) {
+        profileEditSaveBtn.addEventListener("click", async () => {
+            profileEditSaveBtn.disabled = true;
+            profileEditSaveBtn.textContent = "กำลังบันทึก...";
+
+            try {
+                const newName = profileEditNameInput.value.trim();
+                const newDept = profileEditDeptInput.value.trim();
+                
+                // 1. โยนงานให้ authService ไปบันทึกใน DB
+                const updatedData = await saveUserProfile(currentUser?.uid, newName, newDept);
+                
+                // 2. อัปเดตตัวแปร Global ใน app.js และรีเฟรชหน้าจอ
+                currentUserData = { ...currentUserData, ...updatedData };
+                if (typeof updateProfilePage === "function") updateProfilePage(currentUserData);
+                
+                showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
+                closeProfileEditModal();
+            } catch (error) {
+                showNotification(error.message, "warning");
+            } finally {
+                profileEditSaveBtn.disabled = false;
+                profileEditSaveBtn.textContent = "บันทึก";
+            }
+        });
+    }
+
+    // เปิดทางให้ HTML (หน้า Admin Settings) สามารถเรียกใช้ฟังก์ชันอัปเดตสิทธิ์จาก dropdown ได้
+    window.updateUserRoleAdapter = (userId, newRole) => {
+        showConfirmDialog(`คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้เป็น ${newRole.toUpperCase()} ใช่หรือไม่?`, () => {
+            updateUserRole(userId, newRole);
+        }, () => {
+            loadRoleManagement(); // ถ้ากดยกเลิก ให้โหลดตารางกลับเป็นค่าเดิม
+        });
+    };
+
 });

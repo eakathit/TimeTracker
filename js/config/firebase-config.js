@@ -19,20 +19,15 @@ export const storage = firebase.storage();
 
 // เช็คว่าถ้าเปิดเว็บผ่าน localhost (กำลังเทสใน Emulator) ให้สลับไปชี้ที่พอร์ตจำลอง
 if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-                console.log("🔧 Running in Development Mode (Using Emulators)");
+    console.log("🔧 Running in Development Mode (Using Emulators)");
+    
+    const host = window.location.hostname;
 
-                // Auth: Port 9099
-                auth.useEmulator("http://127.0.0.1:9099");
-
-                // Firestore: Port 8081
-                db.useEmulator("127.0.0.1", 8081);
-
-                // Functions: Port 5001
-                cloudFunctions.useEmulator("127.0.0.1", 5001);
-
-                // Storage: Port 9199
-                storage.useEmulator("127.0.0.1", 9199);
-            }
+    auth.useEmulator(`http://${host}:9099`);
+    db.useEmulator(host, 8081);
+    cloudFunctions.useEmulator(host, 5001);
+    storage.useEmulator(host, 9199);
+}
 
 export let messaging = null;
 try {
