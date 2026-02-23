@@ -24,6 +24,8 @@ import { showNotification, showConfirmDialog } from "./utils/uiHelper.js";
 import { loadPayrollSummary, exportPayrollSummaryToExcel } from './services/payrollService.js';
 import { loadWorkHistory, loadLeaveHistory, loadOtHistory, loadTimesheetSummary } from './services/historyService.js';
 import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotifications, handleLeaveApproval } from './services/dashboardService.js';
+import { submitLeaveRequest, submitDailyReport, deleteDailyReportItem } from './services/requestService.js';
+import { loadPendingLeaveRequests, loadPendingOtRequests, handleOtApproval } from './services/approvalService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -519,7 +521,8 @@ document.addEventListener("DOMContentLoaded", function () {
               if (typeof loadPendingLeaveRequests === "function")
                 loadPendingLeaveRequests();
               if (typeof loadPendingOtRequests === "function")
-                loadPendingOtRequests();
+                loadPendingLeaveRequests(currentUserData);
+                loadPendingOtRequests(currentUserData);
             };
           }
         }, 500);
@@ -803,137 +806,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // ถ้า Error, onAuthStateChanged (ข้างบน) ก็จะยังคงทำงาน
       // และแสดงหน้า Login ตามปกติ (เพราะ user = null)
     });
-
-  // ค้นหา save-report-btn.addEventListener('click', ...) และแทนที่ด้วยโค้ดนี้:
-  saveReportBtn.addEventListener("click", async () => {
-    // 1. ตรวจสอบการ Login
-    if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
-
-    // 2. ตรวจสอบวันที่
-    const selectedDateStr = reportDateInput.value;
-    if (!selectedDateStr)
-      return showNotification("กรุณาเลือกวันที่", "warning");
-
-    // 3. ดึงค่าจากหน้าจอ (เพิ่ม .trim() เพื่อตัดช่องว่างหัว-ท้าย กันพลาด)
-    const workType = workTypeSelectedText.textContent.trim();
-    const project = projectSelectedText.textContent.trim();
-    const durationText = durationSelectedText.textContent.trim();
-
-    // 4. ตรวจสอบว่าเลือกครบไหม
-    if (workType.includes("เลือก") || workType.includes("Select"))
-      return showNotification("กรุณาเลือกประเภทงาน", "warning");
-    if (project.includes("เลือก") || project.includes("Select"))
-      return showNotification("กรุณาเลือกโครงการ", "warning");
-    if (durationText.includes("เลือก") || durationText.includes("Select"))
-      return showNotification("กรุณาเลือกระยะเวลา", "warning");
-
-    // ตัวแปรสำหรับเก็บข้อมูลที่จะบันทึก
-    let timeRange = durationText;
-    let hoursUsed = 0;
-    let saveStartTime = ""; // เปลี่ยนค่าเริ่มต้นเป็น String ว่าง
-    let saveEndTime = "";
-
-    // 5. --- ส่วนคำนวณเวลาและกำหนด Start/End Time ---
-    if (durationText === "SOME TIME") {
-      // กรณีเลือกกำหนดเวลาเอง
-      const startT = customTimeStartInput.value;
-      const endT = customTimeEndInput.value;
-
-      if (!startT || !endT) {
-        return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
-      }
-
-      // คำนวณชั่วโมง
-      const start = new Date(`2000-01-01T${startT}`);
-      const end = new Date(`2000-01-01T${endT}`);
-      const diffMs = end - start;
-      const diffHrs = diffMs / (1000 * 60 * 60);
-
-      if (diffHrs <= 0)
-        return showNotification(
-          "เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น",
-          "warning",
-        );
-
-      hoursUsed = parseFloat(diffHrs.toFixed(2));
-      timeRange = `SOME TIME (${startT} - ${endT})`;
-      saveStartTime = startT;
-      saveEndTime = endT;
-    } else if (durationText.includes("HALF DAY")) {
-      // กรณีครึ่งวัน (เช็คจากข้อความว่าเป็นเช้าหรือบ่าย)
-      if (durationText.includes("08:30")) {
-        hoursUsed = 3.5;
-        saveStartTime = "08:30";
-        saveEndTime = "12:00";
-        timeRange = "HALF DAY (08:30 - 12:00)";
-      } else {
-        hoursUsed = 4.5;
-        saveStartTime = "13:00";
-        saveEndTime = "17:30";
-        timeRange = "HALF DAY (13:00 - 17:30)";
-      }
-    } else {
-      // กรณีเต็มวัน (ALL) หรือเคสอื่นๆ ที่หลุดมา
-      hoursUsed = 8.0;
-      saveStartTime = "08:30";
-      saveEndTime = "17:30";
-      timeRange = "ALL (08:30 - 17:30)"; // กำหนดข้อความให้เป๊ะ
-    }
-
-    // -------------------------------------------
-    // ล็อคปุ่มกันกดรัว
-    saveReportBtn.disabled = true;
-    saveReportBtn.textContent = "กำลังบันทึก...";
-
-    try {
-      const workRecordDocId = `${currentUser.uid}_${selectedDateStr}`;
-      const workRecordRef = db.collection("work_records").doc(workRecordDocId);
-
-      // สร้าง Object ข้อมูลที่จะบันทึก
-      const newReportEntry = {
-        id: Date.now(),
-        submittedAt: new Date(),
-        workType: workType,
-        project: project,
-        duration: timeRange,
-        hours: hoursUsed,
-        startTime: saveStartTime, // ข้อมูลเวลาเริ่ม (สำคัญสำหรับ Export)
-        endTime: saveEndTime, // ข้อมูลเวลาจบ (สำคัญสำหรับ Export)
-      };
-
-      const doc = await workRecordRef.get();
-
-      if (doc.exists) {
-        await workRecordRef.update({
-          reports: firebase.firestore.FieldValue.arrayUnion(newReportEntry),
-        });
-      } else {
-        await workRecordRef.set({
-          userId: currentUser.uid,
-          date: firebase.firestore.Timestamp.fromDate(
-            new Date(selectedDateStr),
-          ),
-          status: "no_checkin_report_only",
-          reports: [newReportEntry],
-        });
-      }
-
-      showNotification("เพิ่มรายงานเรียบร้อยแล้ว", "success");
-
-      // รีเซ็ตฟอร์มและโหลดข้อมูลใหม่
-      resetReportForm();
-      if (typeof loadSentReports === "function") {
-        loadSentReports();
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-    } finally {
-      // คืนค่าปุ่ม
-      saveReportBtn.disabled = false;
-      saveReportBtn.textContent = "Save Report";
-    }
-  });
 
   workTypeButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -3278,111 +3150,6 @@ document.addEventListener("DOMContentLoaded", function () {
     leaveOverlay.addEventListener("click", closeLeaveModal);
   }
 
-  // --- 5. [ฟังก์ชันหลัก] Event Listener สำหรับปุ่ม "ส่งใบลา" ---
-  // --- 5. [ฟังก์ชันหลัก] Event Listener สำหรับปุ่ม "ส่งใบลา" (แก้ไข) ---
-  if (submitLeaveBtn) {
-    submitLeaveBtn.addEventListener("click", async () => {
-      // (ส่วนตรวจสอบ currentUser ... เหมือนเดิม)
-      if (!currentUser || !currentUserData) {
-        showNotification("กรุณาเข้าสู่ระบบก่อนยื่นใบลา", "error");
-        return;
-      }
-
-      // --- 5.1 ดึงข้อมูลและ Validate ---
-      const leaveType = leaveTypeSelect.value;
-      const startDateStr = leaveStartDate.value;
-      const reason = leaveReason.value.trim();
-
-      // [ใหม่] ดึงข้อมูลใหม่
-      const durationType = leaveDurationType.value;
-      const endDateStr = leaveEndDate.value;
-      const startTimeStr = leaveStartTime.value;
-      const endTimeStr = leaveEndTime.value;
-
-      if (!leaveType || !startDateStr || !reason) {
-        showNotification(
-          "กรุณากรอกประเภทการลา, วันที่ลา, และเหตุผล",
-          "warning",
-        );
-        return;
-      }
-
-      let startDate = new Date(startDateStr);
-      let endDate;
-
-      // [ใหม่] Validation ตาม durationType
-      if (durationType === "hourly") {
-        if (!startTimeStr || !endTimeStr) {
-          showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
-          return;
-        }
-        // สำหรับรายชั่วโมง วันที่สิ้นสุดคือวันเดียวกับวันที่เริ่ม
-        endDate = new Date(startDateStr);
-
-        // (Optional) ทำให้วันที่เริ่มต้นและสิ้นสุดมีเวลาเป็น 00:00:00
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-      } else {
-        // 'full_day'
-        if (!endDateStr) {
-          showNotification("กรุณากรอกวันที่สิ้นสุด", "warning");
-          return;
-        }
-        endDate = new Date(endDateStr);
-        if (endDate < startDate) {
-          showNotification(
-            "วันที่สิ้นสุด ต้องไม่น้อยกว่าวันที่เริ่มต้น",
-            "warning",
-          );
-          return;
-        }
-      }
-
-      // (ส่วนปิดปุ่ม ... เหมือนเดิม)
-      submitLeaveBtn.disabled = true;
-      submitLeaveBtn.textContent = "กำลังส่งเรื่อง...";
-
-      // --- 5.2 เตรียมข้อมูลสำหรับ Firestore ---
-      const leaveData = {
-        userId: currentUser.uid,
-        userName: currentUserData.fullName,
-        userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-        department: currentUserData.department,
-        leaveType: leaveType,
-        reason: reason,
-        status: "pending",
-        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-
-        // [ใหม่] เพิ่มข้อมูลใหม่
-        durationType: durationType, // 'full_day' or 'hourly'
-        startDate: firebase.firestore.Timestamp.fromDate(startDate),
-        endDate: firebase.firestore.Timestamp.fromDate(endDate),
-      };
-
-      // [ใหม่] เพิ่มข้อมูลเวลา ถ้าเป็นรายชั่วโมง
-      if (durationType === "hourly") {
-        leaveData.startTime = startTimeStr;
-        leaveData.endTime = endTimeStr;
-      }
-
-      // --- 5.3 บันทึกลง Firestore ---
-      try {
-        // (ส่วน try/catch ... เหมือนเดิม)
-        await db.collection("leave_requests").add(leaveData);
-
-        showNotification("ยื่นใบลาสำเร็จ รอการอนุมัติ", "success");
-        closeLeaveModal(); // ปิด Modal เมื่อสำเร็จ
-      } catch (error) {
-        console.error("Error submitting leave request:", error);
-        showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-      } finally {
-        // (ส่วนคืนค่าปุ่ม ... เหมือนเดิม)
-        submitLeaveBtn.disabled = false;
-        submitLeaveBtn.textContent = "ส่งใบลา";
-      }
-    });
-  }
-
   // 3. เพิ่ม Event Listener หลัก (ใช้ Event Delegation)
   document
     .getElementById("cal-grid")
@@ -3546,128 +3313,6 @@ document.addEventListener("DOMContentLoaded", function () {
     editModal.classList.add("hidden");
   });
 
-  // [อัปเดต] โหลดรายการใบลา (กรองตามแผนก)
-  async function loadPendingLeaveRequests() {
-    const listContainer = document.getElementById("leave-approval-list");
-    let loadingMsg = document.getElementById("leave-loading-msg");
-
-    if (!listContainer) return;
-
-    // สร้าง loading ถ้าไม่มี
-    if (!loadingMsg) {
-      loadingMsg = document.createElement("p");
-      loadingMsg.id = "leave-loading-msg";
-      loadingMsg.className = "text-center text-gray-400 text-sm py-4";
-      listContainer.appendChild(loadingMsg);
-    }
-
-    loadingMsg.textContent = "กำลังโหลดรายการ...";
-    listContainer.innerHTML = "";
-    listContainer.appendChild(loadingMsg);
-
-    try {
-      // 1. ดึงข้อมูล User ทั้งหมดเพื่อเช็คแผนก
-      const userMap = new Map();
-      const usersSnapshot = await db.collection("users").get();
-      usersSnapshot.forEach((doc) => userMap.set(doc.id, doc.data()));
-
-      // 2. ดึงใบลาที่รออนุมัติ
-      const querySnapshot = await db
-        .collection("leave_requests")
-        .where("status", "==", "pending")
-        .get();
-
-      if (querySnapshot.empty) {
-        loadingMsg.textContent = "ไม่มีรายการรออนุมัติ";
-        return;
-      }
-
-      listContainer.innerHTML = ""; // เคลียร์ Loading
-
-      let hasItems = false; // ตัวนับว่ามีรายการของแผนกเราไหม
-
-      querySnapshot.forEach((doc) => {
-        const leave = doc.data();
-        const docId = doc.id;
-
-        // ดึงข้อมูล User ผู้ขอ
-        const user = userMap.get(leave.userId);
-        const userDept = user ? user.department || "Unassigned" : "Unknown";
-        const adminDept = currentUserData.department || "Unassigned";
-
-        // --- [LOGIC กรองแผนก] ---
-        // กฎ: แสดงก็ต่อเมื่อ (Admin เป็น HR/Management) หรือ (แผนกตรงกัน)
-        const isSuperAdmin = ["HR", "Management", "Admin"].includes(adminDept);
-        if (!isSuperAdmin && adminDept !== userDept) {
-          return; // ข้ามรายการที่ไม่ใช่แผนกเรา
-        }
-
-        hasItems = true;
-
-        const displayName = user ? user.fullName : leave.userName;
-        const displayPhoto = user ? user.profileImageUrl : leave.userPhoto;
-
-        // จัดการวันที่
-        const startDate = leave.startDate.toDate().toLocaleDateString("th-TH");
-        const endDate = leave.endDate.toDate().toLocaleDateString("th-TH");
-        let dateInfoText =
-          leave.durationType === "hourly" && leave.startTime
-            ? `${startDate} (${leave.startTime} - ${leave.endTime})`
-            : `${startDate} ถึง ${endDate}`;
-
-        // HTML การ์ด (เพิ่ม Badge แผนกมุมขวาบน)
-        const cardHTML = `
-            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative leave-request-card">
-                
-                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">
-                    ${userDept}
-                </span>
-
-                <div class="flex items-start gap-3">
-                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" 
-                        class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    
-                    <div>
-                        <p class="font-bold text-gray-800">${displayName}</p>
-                        <p class="text-sm font-medium text-sky-600 mb-1">
-                            ${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}
-                        </p>
-                        <div class="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded w-fit">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            ${dateInfoText}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">
-                    "${leave.reason}"
-                </div>
-
-                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <button data-id="${docId}" 
-                        class="reject-leave-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">
-                        ไม่อนุมัติ
-                    </button>
-                    <button data-id="${docId}" 
-                        class="approve-leave-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 shadow-sm transition">
-                        อนุมัติ (Approve)
-                    </button>
-                </div>
-            </div>
-            `;
-        listContainer.innerHTML += cardHTML;
-      });
-
-      if (!hasItems) {
-        loadingMsg.textContent = `ไม่มีรายการรออนุมัติของแผนก ${currentUserData.department || "-"}`;
-        listContainer.appendChild(loadingMsg);
-      }
-    } catch (error) {
-      console.error("Error loading leave requests:", error);
-      loadingMsg.textContent = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-    }
-  }
-
   // 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน
   // [ปรับปรุง] --- 2. ฟังก์ชันสำหรับโหลดรายชื่อพนักงาน ---
   // [FIXED] ฟังก์ชันโหลดรายชื่อพนักงาน แบบปลอดภัย (Safety Check)
@@ -3728,250 +3373,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     } catch (error) {
       console.error("Error loading users:", error);
-    }
-  }
-  
-
-  // [อัปเดต] โหลดรายการ OT (กรองตามแผนก)
-  async function loadPendingOtRequests() {
-    const listContainer = document.getElementById("ot-approval-list");
-    let loadingMsg = document.getElementById("ot-loading-msg");
-
-    if (!listContainer) return;
-
-    if (!loadingMsg) {
-      loadingMsg = document.createElement("p");
-      loadingMsg.id = "ot-loading-msg";
-      loadingMsg.className = "text-center text-gray-400 text-sm py-4";
-      listContainer.appendChild(loadingMsg);
-    }
-
-    loadingMsg.textContent = "กำลังโหลดรายการ...";
-    listContainer.innerHTML = "";
-    listContainer.appendChild(loadingMsg);
-
-    try {
-      const userMap = new Map();
-      const usersSnapshot = await db.collection("users").get();
-      usersSnapshot.forEach((doc) => userMap.set(doc.id, doc.data()));
-
-      const querySnapshot = await db
-        .collection("ot_requests")
-        .where("status", "==", "pending")
-        .get();
-
-      if (querySnapshot.empty) {
-        loadingMsg.textContent = "ไม่มีรายการรออนุมัติ";
-        return;
-      }
-
-      listContainer.innerHTML = "";
-      let hasItems = false;
-
-      querySnapshot.forEach((doc) => {
-        const ot = doc.data();
-        const docId = doc.id;
-
-        const user = userMap.get(ot.userId);
-        const userDept = user ? user.department || "Unassigned" : "Unknown";
-        const adminDept = currentUserData.department || "Unassigned";
-
-        // --- [LOGIC กรองแผนก] ---
-        const isSuperAdmin = ["HR", "Management", "Admin"].includes(adminDept);
-        if (!isSuperAdmin && adminDept !== userDept) {
-          return;
-        }
-
-        hasItems = true;
-
-        const displayName = user ? user.fullName : ot.userName;
-        const displayPhoto = user ? user.profileImageUrl : ot.userPhoto;
-        const otDate = ot.date.toDate().toLocaleDateString("th-TH");
-
-        let timeInfoText = "";
-        let otDurationBadge = "";
-
-        if (ot.startTime && ot.endTime) {
-          timeInfoText = `${ot.startTime} - ${ot.endTime}`;
-
-          const [startH, startM] = ot.startTime.split(":").map(Number);
-          const [endH, endM] = ot.endTime.split(":").map(Number);
-          const totalMinutes = endH * 60 + endM - (startH * 60 + startM);
-          const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
-
-          otDurationBadge = `<span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-md ml-1">${otDurationHours.toFixed(1)} ชม.</span>`;
-        }
-
-        const cardHTML = `
-            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative ot-request-card">
-                
-                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">
-                    ${userDept}
-                </span>
-
-                <div class="flex items-start gap-3">
-                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" 
-                        class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    <div>
-                        <p class="font-bold text-gray-800">${displayName}</p> 
-                        <div class="flex items-center gap-1 mb-1">
-                            <span class="text-sm font-medium text-orange-600">ขอ OT ${otDate}</span>
-                            ${otDurationBadge}
-                        </div>
-                        <p class="text-xs text-gray-500 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            เวลา: ${timeInfoText}
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">
-                    "${ot.reason || "-"}"
-                </div>
-                
-                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <button data-id="${docId}" 
-                        class="reject-ot-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">
-                        ไม่อนุมัติ
-                    </button>
-                    <button data-id="${docId}" 
-                        class="approve-ot-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 shadow-sm transition">
-                        อนุมัติ (Approve)
-                    </button>
-                </div>
-            </div>
-            `;
-        listContainer.innerHTML += cardHTML;
-      });
-
-      if (!hasItems) {
-        loadingMsg.textContent = `ไม่มีคำขอ OT ของแผนก ${currentUserData.department || "-"}`;
-        listContainer.appendChild(loadingMsg);
-      }
-    } catch (error) {
-      console.error("Error loading OT requests:", error);
-      loadingMsg.textContent = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-    }
-  }
-
-  // 4. ฟังก์ชัน "อนุมัติ/ไม่อนุมัติ" OT (เวอร์ชันแก้ไข: ป้องกัน NaN)
-  async function handleOtApproval(docId, newStatus, buttonElement) {
-    if (!docId) return;
-
-    const cardElement = buttonElement.closest(".ot-request-card");
-
-    if (cardElement) {
-      cardElement
-        .querySelectorAll("button")
-        .forEach((btn) => (btn.disabled = true));
-      cardElement.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-      cardElement.style.opacity = "0.5";
-    } else {
-      buttonElement.disabled = true;
-    }
-
-    try {
-      const otRequestRef = db.collection("ot_requests").doc(docId);
-      const otDoc = await otRequestRef.get();
-      if (!otDoc.exists) throw new Error("ไม่พบคำขอ OT");
-
-      const otData = otDoc.data();
-
-      // 1. อัปเดตเอกสาร ot_requests (เหมือนเดิม)
-      await otRequestRef.update({
-        status: newStatus,
-        approvedBy: auth.currentUser ? auth.currentUser.displayName : "Admin"
-      });
-
-      // 2. ถ้าสถานะเป็น "approved" ให้อัปเดต work_records ด้วย
-      if (newStatus === "approved") {
-        // [ ★ แก้ไข ★ ] ตรวจสอบว่ามีข้อมูลครบหรือไม่
-        if (otData.workRecordDocId && otData.startTime && otData.endTime) {
-          const workRecordRef = db
-            .collection("work_records")
-            .doc(otData.workRecordDocId);
-
-          const [startH, startM] = otData.startTime.split(":").map(Number);
-          const [endH, endM] = otData.endTime.split(":").map(Number);
-
-          // [ ★ แก้ไข ★ ] ตรวจสอบ NaN อีกชั้นก่อนคำนวณ
-          if (
-            !isNaN(startH) &&
-            !isNaN(startM) &&
-            !isNaN(endH) &&
-            !isNaN(endM)
-          ) {
-            const totalMinutes = endH * 60 + endM - (startH * 60 + startM);
-            const otDurationHours = Math.floor(totalMinutes / 30) * 0.5;
-
-            if (otDurationHours > 0) {
-              await workRecordRef.update({
-                "overtime.hours":
-                  firebase.firestore.FieldValue.increment(otDurationHours),
-              });
-            }
-          } else {
-            // ถ้าข้อมูลเป็น NaN (เช่น "abc".split(':') )
-            console.warn(
-              `ไม่สามารถคำนวณ OT สำหรับ ${docId} ได้ เพราะเวลา (Time) ผิดพลาด`,
-            );
-            showNotification(
-              `อนุมัติสำเร็จ (แต่คำนวณ OT ไม่ได้เพราะข้อมูลเวลาเสีย)`,
-              "warning",
-            );
-          }
-        } else {
-          // ถ้าข้อมูลไม่ครบ (เช่น startTime เป็น null)
-          console.warn(
-            `ไม่สามารถคำนวณ OT สำหรับ ${docId} ได้ เพราะข้อมูลไม่ครบ`,
-          );
-          showNotification(
-            `อนุมัติสำเร็จ (แต่คำนวณ OT ไม่ได้เพราะข้อมูลเก่า)`,
-            "warning",
-          );
-        }
-      }
-
-      if (newStatus === "rejected") {
-        showNotification(`ปฏิเสธคำขอ OT สำเร็จ`, "success");
-      } else {
-        showNotification(`อนุมัติ OT สำเร็จ`, "success");
-      }
-
-      // --- โค้ดส่วน UI (เหมือนเดิม) ---
-      if (cardElement) {
-        cardElement.style.opacity = "0";
-        cardElement.style.transform = "scale(0.95)";
-        setTimeout(() => {
-          cardElement.remove();
-          const listContainer = document.getElementById("ot-approval-list");
-          if (listContainer && listContainer.children.length === 0) {
-            let loadingMsg = document.getElementById("ot-loading-msg");
-            if (!loadingMsg) {
-              loadingMsg = document.createElement("p");
-              loadingMsg.id = "ot-loading-msg";
-              loadingMsg.className = "text-center text-gray-400 text-sm py-4";
-              listContainer.appendChild(loadingMsg);
-            }
-            loadingMsg.textContent = "ไม่มีรายการรออนุมัติ";
-          }
-        }, 300);
-      } else {
-        await loadPendingOtRequests();
-      }
-    } catch (error) {
-      console.error("Error updating OT status:", error);
-      showNotification("เกิดข้อผิดพลาดในการอัปเดต", "error");
-
-      if (cardElement) {
-        cardElement
-          .querySelectorAll("button")
-          .forEach((btn) => (btn.disabled = false));
-        cardElement.style.opacity = "1";
-        cardElement.style.transform = "scale(1)";
-      } else {
-        buttonElement.disabled = false;
-      }
     }
   }
 
@@ -5674,5 +5075,152 @@ document.addEventListener("DOMContentLoaded", function () {
             loadRoleManagement(); // ถ้ากดยกเลิก ให้โหลดตารางกลับเป็นค่าเดิม
         });
     };
+
+    // ==========================================
+    // 🌟 ผูก Event สำหรับส่งใบลาและรายงาน (Request Service)
+    // ==========================================
+    
+    // 1. ผูกปุ่มบันทึก Report
+    if (saveReportBtn) {
+        saveReportBtn.addEventListener("click", async () => {
+            if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
+            
+            const selectedDateStr = reportDateInput.value;
+            if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
+
+            const workType = workTypeSelectedText.textContent.trim();
+            const project = projectSelectedText.textContent.trim();
+            const durationText = durationSelectedText.textContent.trim();
+
+            if (workType.includes("เลือก") || project.includes("เลือก") || durationText.includes("เลือก")) {
+                return showNotification("กรุณากรอกข้อมูลให้ครบ", "warning");
+            }
+
+            let timeRange = durationText, hoursUsed = 8.0, saveStartTime = "08:30", saveEndTime = "17:30";
+
+            if (durationText === "SOME TIME") {
+                const startT = customTimeStartInput.value;
+                const endT = customTimeEndInput.value;
+                if (!startT || !endT) return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
+                
+                hoursUsed = parseFloat(((new Date(`2000-01-01T${endT}`) - new Date(`2000-01-01T${startT}`)) / 3600000).toFixed(2));
+                if (hoursUsed <= 0) return showNotification("เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม", "warning");
+                
+                timeRange = `SOME TIME (${startT} - ${endT})`;
+                saveStartTime = startT; saveEndTime = endT;
+            } else if (durationText.includes("HALF DAY")) {
+                if (durationText.includes("08:30")) { hoursUsed = 3.5; saveEndTime = "12:00"; timeRange = "HALF DAY (08:30 - 12:00)"; }
+                else { hoursUsed = 4.5; saveStartTime = "13:00"; timeRange = "HALF DAY (13:00 - 17:30)"; }
+            } else {
+                timeRange = "ALL (08:30 - 17:30)";
+            }
+
+            saveReportBtn.disabled = true;
+            saveReportBtn.textContent = "กำลังบันทึก...";
+
+            const reportData = { workType, project, duration: timeRange, hours: hoursUsed, startTime: saveStartTime, endTime: saveEndTime };
+            
+            const success = await submitDailyReport(currentUser.uid, selectedDateStr, reportData);
+            if (success) {
+                resetReportForm();
+                if (typeof loadSentReports === "function") loadSentReports();
+            }
+
+            saveReportBtn.disabled = false;
+            saveReportBtn.textContent = "Save Report";
+        });
+    }
+
+    // 2. ผูกปุ่มส่งใบลา
+    if (submitLeaveBtn) {
+        submitLeaveBtn.addEventListener("click", async () => {
+            if (!currentUser || !currentUserData) return showNotification("กรุณาเข้าสู่ระบบก่อนยื่นใบลา", "error");
+
+            const leaveType = leaveTypeSelect.value;
+            const startDateStr = leaveStartDate.value;
+            const reason = leaveReason.value.trim();
+            const durationType = leaveDurationType.value;
+            const endDateStr = leaveEndDate.value;
+            
+            if (!leaveType || !startDateStr || !reason) return showNotification("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+
+            let startDate = new Date(startDateStr);
+            let endDate = durationType === "hourly" ? new Date(startDateStr) : new Date(endDateStr);
+
+            if (durationType !== "hourly" && (!endDateStr || endDate < startDate)) {
+                return showNotification("วันที่สิ้นสุดไม่ถูกต้อง", "warning");
+            }
+
+            submitLeaveBtn.disabled = true;
+            submitLeaveBtn.textContent = "กำลังส่งเรื่อง...";
+
+            const leaveData = {
+                userId: currentUser.uid,
+                userName: currentUserData.fullName,
+                userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
+                department: currentUserData.department,
+                leaveType, reason, durationType,
+                startDate: firebase.firestore.Timestamp.fromDate(startDate),
+                endDate: firebase.firestore.Timestamp.fromDate(endDate),
+            };
+
+            if (durationType === "hourly") {
+                if (!leaveStartTime.value || !leaveEndTime.value) {
+                    submitLeaveBtn.disabled = false; submitLeaveBtn.textContent = "ส่งใบลา";
+                    return showNotification("กรุณาระบุเวลา", "warning");
+                }
+                leaveData.startTime = leaveStartTime.value;
+                leaveData.endTime = leaveEndTime.value;
+            }
+
+            const success = await submitLeaveRequest(leaveData);
+            if (success) closeLeaveModal();
+
+            submitLeaveBtn.disabled = false;
+            submitLeaveBtn.textContent = "ส่งใบลา";
+        });
+    }
+
+    // 3. ฟังก์ชันลบรายงาน (เชื่อมกับปุ่ม HTML เดิม)
+    window.deleteReportItem = (docId, reportId) => {
+        showConfirmDialog("คุณแน่ใจหรือไม่ที่จะลบรายงานนี้?", async () => {
+            const success = await deleteDailyReportItem(docId, reportId);
+            if (success && typeof loadSentReports === "function") loadSentReports();
+        });
+    };
+
+
+    // ==========================================
+    // 🌟 ผูก Event สำหรับหน้า Approvals Center (OT & Leave)
+    // ==========================================
+    
+    // โหลดข้อมูลเมื่อเปิดหน้า Approvals
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", (e) => {
+             const pageId = item.dataset.page;
+             if (pageId === "admin-approvals-page" && currentUserData && currentUserData.role === "admin") {
+                 if (typeof loadAllUsersForDropdown === "function") loadAllUsersForDropdown();
+                 loadPendingLeaveRequests(currentUserData); // ✨ โยน currentUserData เข้าไป
+                 loadPendingOtRequests(currentUserData);
+             }
+        });
+    });
+
+    // Event Delegation สำหรับปุ่มอนุมัติ OT
+    const otListContainer = document.getElementById("ot-approval-list");
+    if (otListContainer) {
+        otListContainer.addEventListener("click", (event) => {
+            const approveBtn = event.target.closest(".approve-ot-btn");
+            const rejectBtn = event.target.closest(".reject-ot-btn");
+
+            if (approveBtn) {
+                const docId = approveBtn.dataset.id;
+                if (docId) handleOtApproval(docId, "approved", approveBtn);
+            } else if (rejectBtn) {
+                const docId = rejectBtn.dataset.id;
+                if (docId) handleOtApproval(docId, "rejected", rejectBtn);
+            }
+        });
+    }
 
 });
