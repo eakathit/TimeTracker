@@ -1,6 +1,7 @@
 import { db, auth } from '../config/firebase-config.js';
 import { toLocalDateKey } from '../utils/dateHelper.js';
 import { showNotification, showConfirmDialog } from '../utils/uiHelper.js';
+import { calculateDistance, FACTORY_LOCATION } from './locationService.js';
 
 // ค่าคงที่สำหรับแปลงชื่อประเภทการลา
 const LEAVE_TYPE_MAP = {
@@ -387,7 +388,7 @@ const otReason = document.getElementById("ot-reason");
         const endDate = new Date(selectedDateStr);
         endDate.setHours(23, 59, 59, 999);
   
-        const filterType = typeFilterSelect ? typeFilterSelect.value : "all";
+      const filterType = window.currentAuditFilter || (typeFilterSelect ? typeFilterSelect.value : "all");
         const isFilterLate = lateFilterCheckbox
           ? lateFilterCheckbox.checked
           : false;
@@ -585,15 +586,6 @@ const otReason = document.getElementById("ot-reason");
         if (spinner) spinner.style.display = "none";
       }
     }
-  
-    // 3. เพิ่ม Event Listener (นำไปวางต่อท้ายไฟล์ หรือในฟังก์ชัน initializeApp)
-    const auditTypeFilter = document.getElementById("audit-type-filter");
-    const auditLateFilter = document.getElementById("audit-late-filter");
-  
-    if (auditTypeFilter)
-      auditTypeFilter.addEventListener("change", loadDailyAuditData);
-    if (auditLateFilter)
-      auditLateFilter.addEventListener("change", loadDailyAuditData);
   
     // --- ส่วน Export Daily Audit (แก้ไข: จัดเรียงคอลัมน์ใหม่ตามสั่ง) ---
     // --- ส่วน Export Daily Audit (แก้ไข: เพิ่มช่อง Regular Hrs กลับมาเพื่อเเยก 8.00 กับ 2.00) ---

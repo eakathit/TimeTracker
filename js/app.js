@@ -5,29 +5,82 @@ import {
   storage,
   messaging,
 } from "./config/firebase-config.js";
-import { 
-    FACTORY_LOCATION, ALLOWED_RADIUS_METERS, MAX_ACCEPTABLE_ACCURACY, 
-    latestPosition, setMockPosition, calculateDistance, 
-    startWatchingPosition, stopWatchingPosition 
-} from './services/locationService.js';
-import { 
-    currentDisplayDate, loadCalendarData, showCalendarDetails, 
-    handleCalendarDetailClick, loadCalendarRules, 
-    setupAdminCalendarControls, loadAndDisplayHolidays 
-} from './services/calendarService.js';
-import { 
-    handleGoogleLogin, handleLogout, saveUserProfile, 
-    loadRoleManagement, updateUserRole 
-} from './services/authService.js';
-import { toLocalISOString, toLocalDateKey, calculateWorkHours } from './utils/dateHelper.js';
+import {
+  FACTORY_LOCATION,
+  ALLOWED_RADIUS_METERS,
+  MAX_ACCEPTABLE_ACCURACY,
+  latestPosition,
+  setMockPosition,
+  calculateDistance,
+  startWatchingPosition,
+  stopWatchingPosition,
+} from "./services/locationService.js";
+import {
+  currentDisplayDate,
+  loadCalendarData,
+  showCalendarDetails,
+  handleCalendarDetailClick,
+  loadCalendarRules,
+  setupAdminCalendarControls,
+  loadAndDisplayHolidays,
+} from "./services/calendarService.js";
+import {
+  handleGoogleLogin,
+  handleLogout,
+  saveUserProfile,
+  loadRoleManagement,
+  updateUserRole,
+} from "./services/authService.js";
+import {
+  toLocalISOString,
+  toLocalDateKey,
+  calculateWorkHours,
+} from "./utils/dateHelper.js";
 import { showNotification, showConfirmDialog } from "./utils/uiHelper.js";
-import { loadPayrollSummary, exportPayrollSummaryToExcel } from './services/payrollService.js';
-import { loadWorkHistory, loadLeaveHistory, loadOtHistory, loadTimesheetSummary } from './services/historyService.js';
-import { loadAdminDashboardOverview, loadDailyAuditData, loadDailyLeaveNotifications, handleLeaveApproval } from './services/dashboardService.js';
-import { submitLeaveRequest, submitDailyReport, deleteDailyReportItem } from './services/requestService.js';
-import { loadPendingLeaveRequests, loadPendingOtRequests, handleOtApproval } from './services/approvalService.js';
-import { checkUserWorkStatus, proceedWithCheckin, handleCheckoutAction, setupOnsiteLeader, joinOnsiteRoom, loadScript, switchRole } from './services/attendanceService.js';
-import { loadTimelineData, loadTimesheetTable, loadEmployeeSummary, exportEmployeeSummaryToExcel, populateProjectOptions, fetchProjectData, exportProjectSummaryToExcelData } from './services/timesheetService.js';
+import {
+  loadPayrollSummary,
+  exportPayrollSummaryToExcel,
+} from "./services/payrollService.js";
+import {
+  loadWorkHistory,
+  loadLeaveHistory,
+  loadOtHistory,
+  loadTimesheetSummary,
+} from "./services/historyService.js";
+import {
+  loadAdminDashboardOverview,
+  loadDailyAuditData,
+  loadDailyLeaveNotifications,
+  handleLeaveApproval,
+} from "./services/dashboardService.js";
+import {
+  submitLeaveRequest,
+  submitDailyReport,
+  deleteDailyReportItem,
+} from "./services/requestService.js";
+import {
+  loadPendingLeaveRequests,
+  loadPendingOtRequests,
+  handleOtApproval,
+} from "./services/approvalService.js";
+import {
+  checkUserWorkStatus,
+  proceedWithCheckin,
+  handleCheckoutAction,
+  setupOnsiteLeader,
+  joinOnsiteRoom,
+  loadScript,
+  switchRole,
+} from "./services/attendanceService.js";
+import {
+  loadTimelineData,
+  loadTimesheetTable,
+  loadEmployeeSummary,
+  exportEmployeeSummaryToExcel,
+  populateProjectOptions,
+  fetchProjectData,
+  exportProjectSummaryToExcelData,
+} from "./services/timesheetService.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -221,7 +274,6 @@ document.addEventListener("DOMContentLoaded", function () {
     maternity: "ลาคลอด", // เพิ่มบรรทัดนี้
   };
 
-
   // --- UI Elements ---
   const loadingSpinner = document.getElementById("loading-spinner");
   const loginPage = document.getElementById("login-page");
@@ -351,8 +403,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Timeline & Timesheet Management Logic ---
   const timelineContainer = document.getElementById("timeline-list-container");
-  const tsTabBtns = document.querySelectorAll(".ts-tab-btn");
-  const tsTabContents = document.querySelectorAll(".ts-tab-content");
 
   let html5QrCode;
   let currentRoomId = null;
@@ -513,7 +563,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 loadPendingLeaveRequests();
               if (typeof loadPendingOtRequests === "function")
                 loadPendingLeaveRequests(currentUserData);
-                loadPendingOtRequests(currentUserData);
+              loadPendingOtRequests(currentUserData);
             };
           }
         }, 500);
@@ -1183,7 +1233,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
- 
+
   // 1. ตั้งค่าให้ Dropdown ใน Modal ทำงาน (เลือกแล้วเปลี่ยนข้อความ)
   const checkinDropdowns = [
     {
@@ -1258,7 +1308,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const checkinSpan = checkinBtn.querySelector("span");
       if (checkinSpan) checkinSpan.textContent = "Check In";
     });
-
 
   function updateProfilePage(userData) {
     const profilePic = document.getElementById("profile-page-pic");
@@ -1355,14 +1404,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 2. ตรวจสอบสิทธิ์ Admin (ถ้าเข้าหน้า Dashboard หรือ Timesheet)
       if (
-        (pageId === "admin-dashboard-page" || 
-        pageId === "timesheet-management-page" || 
-        pageId === "settings-page") && // ✨ เพิ่มหน้านี้เข้าไปด้วย
+        (pageId === "admin-dashboard-page" ||
+          pageId === "timesheet-management-page" ||
+          pageId === "settings-page") && // ✨ เพิ่มหน้านี้เข้าไปด้วย
         (!currentUserData || currentUserData.role !== "admin")
-        ) {
+      ) {
         alert("คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
         return;
-        }
+      }
 
       // 3. จัดการ Active Class (ไฮไลท์เมนู)
       navItems.forEach((n) => n.classList.remove("active"));
@@ -1399,6 +1448,13 @@ document.addEventListener("DOMContentLoaded", function () {
             loadPendingLeaveRequests();
           if (typeof loadPendingOtRequests === "function")
             loadPendingOtRequests();
+
+          // เพิ่มโค้ด 4 บรรทัดนี้ เพื่อสั่งให้โหลดข้อมูลตาราง Audit และ Timeline ครับ
+          if (pageId === "timesheet-management-page") {
+            if (typeof loadTimelineData === "function") loadTimelineData();
+            if (typeof loadDailyAuditData === "function")
+              loadDailyAuditData(currentUser, currentUserData);
+          }
 
           // ★★★ Safety Check สำหรับ Admin UI ★★★
           const summaryContainer = document.getElementById(
@@ -2041,7 +2097,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // [NEW FUNCTION] Load and display daily leave notifications
-  
 
   // ฟังก์ชันโหลดข้อมูลรายงานตามวันที่เลือก (ฉบับสมบูรณ์)
   // ฟังก์ชันโหลดข้อมูลรายงาน (ฉบับใช้ปุ่มสีฟ้าเดิม)
@@ -2127,15 +2182,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const roomQrContainer = document.getElementById("room-qr-container");
   const roomMembersList = document.getElementById("room-members-list");
 
-  // 5. เชื่อมต่อเมนู Sidebar ให้เปิดหน้านี้ และโหลดข้อมูล
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.addEventListener("click", (e) => {
-      if (item.dataset.page === "timesheet-management-page") {
-        loadTimelineData(); // โหลดข้อมูลทันทีเมื่อกดเข้ามา
-      }
-    });
-  });
-
   // 6. Logic สำหรับ Tab Timesheet (Summary) - Reusing existing function concept
   const tsSummaryLoadBtn = document.getElementById("ts-summary-load-btn");
   if (tsSummaryLoadBtn) {
@@ -2164,21 +2210,23 @@ document.addEventListener("DOMContentLoaded", function () {
     tsFilterEnd.value = date.toISOString().split("T")[0];
   }
 
-  // --- [NEW] Daily Audit Logic ---
+  // --- [NEW] Daily Audit Logic (แก้ไขแล้ว) ---
   const auditDatePicker = document.getElementById("audit-date-picker");
   const auditTableBody = document.getElementById("audit-table-body");
   const auditFilterBtns = document.querySelectorAll(".audit-filter-btn");
-  let currentAuditFilter = "all";
 
-  // ตั้งค่าเริ่มต้นเป็นวันนี้
+  // สร้างตัวแปร Global ไว้ให้ dashboardService มองเห็น
+  window.currentAuditFilter = "all";
+
   if (auditDatePicker) {
-    // ตั้งค่าวันที่ปัจจุบัน
+    // ตั้งค่าวันที่ปัจจุบัน (แต่ยังไม่สั่งดึงข้อมูลจนกว่าจะล็อกอินเสร็จ)
     auditDatePicker.value = new Date().toISOString().split("T")[0];
 
-    //  เมื่อมีการเปลี่ยนวันที่
-    auditDatePicker.addEventListener("change", () => loadDailyAuditData(currentUser, currentUserData));
-
-    loadDailyAuditData(currentUser, currentUserData);
+    // เมื่อมีการเปลี่ยนวันที่ด้วยตัวเอง
+    auditDatePicker.addEventListener("change", () => {
+      if (typeof loadDailyAuditData === "function")
+        loadDailyAuditData(currentUser, currentUserData);
+    });
   }
 
   // ผูกปุ่ม Filter
@@ -2191,14 +2239,14 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       btn.classList.remove("bg-gray-100", "text-gray-600");
       btn.classList.add("bg-sky-600", "text-white");
-
-      currentAuditFilter = btn.dataset.filter;
-      loadDailyAuditData(); // โหลดข้อมูลใหม่ตามฟิลเตอร์
+      // ★ 1. ใช้ window. เพื่อให้ Service ไฟล์อื่นมองเห็น
+      window.currentAuditFilter = btn.dataset.filter; 
+      // ★ 2. ส่ง currentUser และ currentUserData ไปด้วยเสมอ!
+      if (typeof loadDailyAuditData === "function") {
+          loadDailyAuditData(currentUser, currentUserData); 
+      }
     });
   });
-
-  
-  
 
   async function loadTimesheetSummary() {
     const userId = document.getElementById("summary-stat-user-select").value;
@@ -2527,12 +2575,10 @@ document.addEventListener("DOMContentLoaded", function () {
           .toDate()
           .toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
         const checkoutTime = record.checkOut
-          ? record.checkOut.timestamp
-              .toDate()
-              .toLocaleTimeString("th-TH", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+          ? record.checkOut.timestamp.toDate().toLocaleTimeString("th-TH", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "-";
         const reportInfo = report.workType
           ? `${report.workType} (${report.project || "N/A"})`
@@ -2572,514 +2618,775 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // ==========================================
+  // 🌟 ผูก Event ปุ่มในหน้า Payroll (เชื่อมไปที่ Service)
+  // ==========================================
+  const generatePayrollBtn = document.getElementById(
+    "generate-payroll-summary-btn",
+  );
+  if (generatePayrollBtn) {
+    generatePayrollBtn.addEventListener("click", loadPayrollSummary);
+  }
+
+  const exportPayrollBtn = document.getElementById(
+    "export-payroll-summary-btn",
+  );
+  if (exportPayrollBtn) {
+    exportPayrollBtn.addEventListener("click", async () => {
+      showNotification("กำลังเตรียมข้อมูล Excel...", "info");
+
+      // เช็คว่าโหลด Library Excel มาหรือยัง ถ้ายังให้โหลดอัตโนมัติ
+      if (typeof XLSX === "undefined") {
+        try {
+          const script = document.createElement("script");
+          script.src =
+            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+          script.onload = () => exportPayrollSummaryToExcel();
+          document.head.appendChild(script);
+        } catch (e) {
+          alert("โหลด Library ไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ต");
+        }
+      } else {
+        exportPayrollSummaryToExcel();
+      }
+    });
+  }
+
+  // ผูก Event ให้ช่องค้นหา/กรองแผนก (พิมพ์ปุ๊บ ค้นหาปั๊บ)
+  const payrollSearchInput = document.getElementById("payroll-search-name");
+  const payrollFilterDept = document.getElementById("payroll-filter-dept");
+
+  if (payrollSearchInput)
+    payrollSearchInput.addEventListener("input", loadPayrollSummary);
+  if (payrollFilterDept)
+    payrollFilterDept.addEventListener("change", loadPayrollSummary);
 
   // ==========================================
-    // 🌟 ผูก Event ปุ่มในหน้า Payroll (เชื่อมไปที่ Service)
-    // ==========================================
-    const generatePayrollBtn = document.getElementById("generate-payroll-summary-btn");
-    if (generatePayrollBtn) {
-        generatePayrollBtn.addEventListener("click", loadPayrollSummary);
+  // 🌟 ผูก Event สำหรับหน้า History (ประวัติและสถิติ) - แก้ปัญหาตัวแปรซ้ำ
+  // ==========================================
+
+  // ผูก Event แบบไม่สร้างตัวแปร (ใช้ ?. เพื่อเช็คว่ามีปุ่มนี้อยู่บนหน้าจอไหมก่อนผูก)
+  document
+    .getElementById("history-range-select")
+    ?.addEventListener("change", loadWorkHistory);
+  document
+    .getElementById("leave-history-search-btn")
+    ?.addEventListener("click", loadLeaveHistory);
+  document
+    .getElementById("ot-history-search-btn")
+    ?.addEventListener("click", loadOtHistory);
+
+  document
+    .getElementById("summary-stat-user-select")
+    ?.addEventListener("change", loadTimesheetSummary);
+  document
+    .getElementById("summary-stat-year-select")
+    ?.addEventListener("change", loadTimesheetSummary);
+
+  // ==========================================
+  // 🌟 ผูก Event สำหรับปฏิทินและแผนงาน
+  // ==========================================
+  document.getElementById("cal-prev-month")?.addEventListener("click", () => {
+    currentDisplayDate.setMonth(currentDisplayDate.getMonth() - 1);
+    loadCalendarData(currentDisplayDate);
+  });
+
+  document.getElementById("cal-next-month")?.addEventListener("click", () => {
+    currentDisplayDate.setMonth(currentDisplayDate.getMonth() + 1);
+    loadCalendarData(currentDisplayDate);
+  });
+
+  document
+    .getElementById("cal-grid")
+    ?.addEventListener("click", showCalendarDetails);
+  document
+    .getElementById("cal-details-container")
+    ?.addEventListener("click", handleCalendarDetailClick);
+
+  // ส่วนของ Admin เพิ่มกฎปฏิทิน
+  // ==========================================
+  // 🌟 ส่วนของ Admin เพิ่มกฎปฏิทิน (แก้ปัญหาปุ่มหน่วง)
+  // ==========================================
+  const handleAddCalendarRuleAdapter = async (type, btnElement) => {
+    const dateInput =
+      document.getElementById("admin-calendar-date-input") ||
+      document.getElementById("calendar-admin-date-input");
+    const dateStr = dateInput?.value;
+
+    if (!dateStr) return showNotification("กรุณาเลือกวันที่ก่อน", "warning");
+
+    // 🟢 1. เติมลูกเล่น Loading ทันทีที่กดปุ่ม เพื่อลดความรู้สึกหน่วง
+    const originalText = btnElement ? btnElement.innerHTML : "เพิ่ม";
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.innerHTML = `<span class="animate-spin inline-block h-4 w-4 border-b-2 border-white rounded-full mr-2"></span>กำลังบันทึก...`;
     }
 
-    const exportPayrollBtn = document.getElementById("export-payroll-summary-btn");
-    if (exportPayrollBtn) {
-        exportPayrollBtn.addEventListener("click", async () => {
-            showNotification("กำลังเตรียมข้อมูล Excel...", "info");
-            
-            // เช็คว่าโหลด Library Excel มาหรือยัง ถ้ายังให้โหลดอัตโนมัติ
-            if (typeof XLSX === "undefined") {
-                try {
-                    const script = document.createElement("script");
-                    script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-                    script.onload = () => exportPayrollSummaryToExcel();
-                    document.head.appendChild(script);
-                } catch (e) {
-                    alert("โหลด Library ไม่สำเร็จ กรุณาเช็คอินเทอร์เน็ต");
-                }
-            } else {
-                exportPayrollSummaryToExcel();
-            }
-        });
+    try {
+      // 2. บันทึกข้อมูล
+      await db
+        .collection("system_settings")
+        .doc("calendar_rules")
+        .set(
+          {
+            [type]: firebase.firestore.FieldValue.arrayUnion(dateStr),
+          },
+          { merge: true },
+        );
+
+      showNotification(`เพิ่มวันที่ ${dateStr} สำเร็จ`, "success");
+      if (dateInput) dateInput.value = "";
+
+      // 3. สั่งโหลด UI ใหม่
+      if (typeof loadAndDisplayHolidays === "function")
+        await loadAndDisplayHolidays();
+      if (typeof loadCalendarRules === "function") loadCalendarRules();
+      loadCalendarData(currentDisplayDate);
+
+      // 4. แอบเปิดกล่องรายการที่บันทึกไว้ให้อัตโนมัติ (ให้ Admin เห็นผลลัพธ์ทันที)
+      const listWrapper = document.getElementById("holiday-list-wrapper");
+      const toggleBtn = document.getElementById("toggle-holiday-list-btn");
+      if (listWrapper && listWrapper.classList.contains("hidden")) {
+        listWrapper.classList.remove("hidden");
+        if (toggleBtn) toggleBtn.textContent = "ซ่อนรายการที่บันทึกไว้";
+      }
+    } catch (error) {
+      console.error(error);
+      showNotification("เกิดข้อผิดพลาดในการเพิ่ม", "error");
+    } finally {
+      // 🔴 5. คืนค่าปุ่มกลับเป็นปกติ
+      if (btnElement) {
+        btnElement.disabled = false;
+        btnElement.innerHTML = originalText;
+      }
     }
+  };
 
-    
-    // ผูก Event ให้ช่องค้นหา/กรองแผนก (พิมพ์ปุ๊บ ค้นหาปั๊บ)
-    const payrollSearchInput = document.getElementById("payroll-search-name");
-    const payrollFilterDept = document.getElementById("payroll-filter-dept");
-    
-    if (payrollSearchInput) payrollSearchInput.addEventListener("input", loadPayrollSummary);
-    if (payrollFilterDept) payrollFilterDept.addEventListener("change", loadPayrollSummary);
-
-// ==========================================
-    // 🌟 ผูก Event สำหรับหน้า History (ประวัติและสถิติ) - แก้ปัญหาตัวแปรซ้ำ
-    // ==========================================
-    
-    // ผูก Event แบบไม่สร้างตัวแปร (ใช้ ?. เพื่อเช็คว่ามีปุ่มนี้อยู่บนหน้าจอไหมก่อนผูก)
-    document.getElementById("history-range-select")?.addEventListener("change", loadWorkHistory);
-    document.getElementById("leave-history-search-btn")?.addEventListener("click", loadLeaveHistory);
-    document.getElementById("ot-history-search-btn")?.addEventListener("click", loadOtHistory);
-
-    document.getElementById("summary-stat-user-select")?.addEventListener("change", loadTimesheetSummary);
-    document.getElementById("summary-stat-year-select")?.addEventListener("change", loadTimesheetSummary);
-
-    // ==========================================
-    // 🌟 ผูก Event สำหรับปฏิทินและแผนงาน
-    // ==========================================
-    document.getElementById("cal-prev-month")?.addEventListener("click", () => {
-        currentDisplayDate.setMonth(currentDisplayDate.getMonth() - 1);
-        loadCalendarData(currentDisplayDate);
+  // ผูก Event ให้ปุ่ม (ส่ง parameter ตัวปุ่ม this เข้าไปด้วย)
+  document
+    .getElementById("add-holiday-btn")
+    ?.addEventListener("click", function () {
+      handleAddCalendarRuleAdapter("holidays", this);
+    });
+  document
+    .getElementById("add-working-saturday-btn")
+    ?.addEventListener("click", function () {
+      handleAddCalendarRuleAdapter("workingSaturdays", this);
     });
 
-    document.getElementById("cal-next-month")?.addEventListener("click", () => {
-        currentDisplayDate.setMonth(currentDisplayDate.getMonth() + 1);
-        loadCalendarData(currentDisplayDate);
+  document
+    .getElementById("calendar-admin-add-holiday")
+    ?.addEventListener("click", function () {
+      handleAddCalendarRuleAdapter("holidays", this);
+    });
+  document
+    .getElementById("calendar-admin-add-worksat")
+    ?.addEventListener("click", function () {
+      handleAddCalendarRuleAdapter("workingSaturdays", this);
     });
 
-    document.getElementById("cal-grid")?.addEventListener("click", showCalendarDetails);
-    document.getElementById("cal-details-container")?.addEventListener("click", handleCalendarDetailClick);
-
-    // ส่วนของ Admin เพิ่มกฎปฏิทิน
-    // ==========================================
-    // 🌟 ส่วนของ Admin เพิ่มกฎปฏิทิน (แก้ปัญหาปุ่มหน่วง)
-    // ==========================================
-    const handleAddCalendarRuleAdapter = async (type, btnElement) => {
-        const dateInput = document.getElementById("admin-calendar-date-input") || document.getElementById("calendar-admin-date-input");
-        const dateStr = dateInput?.value;
-        
-        if (!dateStr) return showNotification("กรุณาเลือกวันที่ก่อน", "warning");
-
-        // 🟢 1. เติมลูกเล่น Loading ทันทีที่กดปุ่ม เพื่อลดความรู้สึกหน่วง
-        const originalText = btnElement ? btnElement.innerHTML : "เพิ่ม";
-        if (btnElement) {
-            btnElement.disabled = true;
-            btnElement.innerHTML = `<span class="animate-spin inline-block h-4 w-4 border-b-2 border-white rounded-full mr-2"></span>กำลังบันทึก...`;
-        }
-
+  // Event Delegation สำหรับลบกฎ (เผื่อมี UI เก่า)
+  document
+    .getElementById("admin-calendar-controls-card")
+    ?.addEventListener("click", async (e) => {
+      const deleteBtn = e.target.closest(".calendar-delete-btn");
+      if (deleteBtn) {
+        const date = deleteBtn.dataset.date;
+        const type = deleteBtn.dataset.type;
+        deleteBtn.disabled = true;
         try {
-            // 2. บันทึกข้อมูล
-            await db.collection("system_settings").doc("calendar_rules").set({
-                [type]: firebase.firestore.FieldValue.arrayUnion(dateStr)
-            }, { merge: true });
-            
-            showNotification(`เพิ่มวันที่ ${dateStr} สำเร็จ`, "success");
-            if (dateInput) dateInput.value = "";
-            
-            // 3. สั่งโหลด UI ใหม่
-            if (typeof loadAndDisplayHolidays === 'function') await loadAndDisplayHolidays();
-            if (typeof loadCalendarRules === 'function') loadCalendarRules();
-            loadCalendarData(currentDisplayDate);
-            
-            // 4. แอบเปิดกล่องรายการที่บันทึกไว้ให้อัตโนมัติ (ให้ Admin เห็นผลลัพธ์ทันที)
-            const listWrapper = document.getElementById("holiday-list-wrapper");
-            const toggleBtn = document.getElementById("toggle-holiday-list-btn");
-            if (listWrapper && listWrapper.classList.contains("hidden")) {
-                listWrapper.classList.remove("hidden");
-                if (toggleBtn) toggleBtn.textContent = "ซ่อนรายการที่บันทึกไว้";
-            }
-
+          await db
+            .collection("system_settings")
+            .doc("calendar_rules")
+            .update({
+              [type]: firebase.firestore.FieldValue.arrayRemove(date),
+            });
+          showNotification(`ลบวันที่ ${date} สำเร็จ`, "success");
+          if (typeof loadAndDisplayHolidays === "function")
+            loadAndDisplayHolidays();
+          if (typeof loadCalendarRules === "function") loadCalendarRules();
+          loadCalendarData(currentDisplayDate);
         } catch (error) {
-            console.error(error);
-            showNotification("เกิดข้อผิดพลาดในการเพิ่ม", "error");
-        } finally {
-            // 🔴 5. คืนค่าปุ่มกลับเป็นปกติ
-            if (btnElement) {
-                btnElement.disabled = false;
-                btnElement.innerHTML = originalText;
-            }
+          showNotification("เกิดข้อผิดพลาดในการลบ", "error");
         }
-    };
-
-    // ผูก Event ให้ปุ่ม (ส่ง parameter ตัวปุ่ม this เข้าไปด้วย)
-    document.getElementById("add-holiday-btn")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("holidays", this); });
-    document.getElementById("add-working-saturday-btn")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("workingSaturdays", this); });
-    
-    document.getElementById("calendar-admin-add-holiday")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("holidays", this); });
-    document.getElementById("calendar-admin-add-worksat")?.addEventListener("click", function() { handleAddCalendarRuleAdapter("workingSaturdays", this); });
-
-    // Event Delegation สำหรับลบกฎ (เผื่อมี UI เก่า)
-    document.getElementById("admin-calendar-controls-card")?.addEventListener("click", async (e) => {
-        const deleteBtn = e.target.closest(".calendar-delete-btn");
-        if (deleteBtn) {
-            const date = deleteBtn.dataset.date;
-            const type = deleteBtn.dataset.type;
-            deleteBtn.disabled = true;
-            try {
-                await db.collection("system_settings").doc("calendar_rules").update({
-                    [type]: firebase.firestore.FieldValue.arrayRemove(date)
-                });
-                showNotification(`ลบวันที่ ${date} สำเร็จ`, "success");
-                if (typeof loadAndDisplayHolidays === 'function') loadAndDisplayHolidays();
-                if (typeof loadCalendarRules === 'function') loadCalendarRules();
-                loadCalendarData(currentDisplayDate);
-            } catch (error) {
-                showNotification("เกิดข้อผิดพลาดในการลบ", "error");
-            }
-        }
+      }
     });
 
-    // เริ่มทำงานระบบเปิด/ปิด และลบรายการในปฏิทิน Admin
-    setupAdminCalendarControls();
+  // เริ่มทำงานระบบเปิด/ปิด และลบรายการในปฏิทิน Admin
+  setupAdminCalendarControls();
 
-    // ==========================================
-    // 🌟 ผูก Event สำหรับ Auth & Profile
-    // ==========================================
-    const googleLoginBtn = document.getElementById("google-login-btn");
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            handleGoogleLogin();
-        });
-    }
-
-    const logoutBtn = document.getElementById("logout-btn");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", handleLogout);
-    }
-
-    if (profileEditSaveBtn) {
-        profileEditSaveBtn.addEventListener("click", async () => {
-            profileEditSaveBtn.disabled = true;
-            profileEditSaveBtn.textContent = "กำลังบันทึก...";
-
-            try {
-                const newName = profileEditNameInput.value.trim();
-                const newDept = profileEditDeptInput.value.trim();
-                
-                // 1. โยนงานให้ authService ไปบันทึกใน DB
-                const updatedData = await saveUserProfile(currentUser?.uid, newName, newDept);
-                
-                // 2. อัปเดตตัวแปร Global ใน app.js และรีเฟรชหน้าจอ
-                currentUserData = { ...currentUserData, ...updatedData };
-                if (typeof updateProfilePage === "function") updateProfilePage(currentUserData);
-                
-                showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
-                closeProfileEditModal();
-            } catch (error) {
-                showNotification(error.message, "warning");
-            } finally {
-                profileEditSaveBtn.disabled = false;
-                profileEditSaveBtn.textContent = "บันทึก";
-            }
-        });
-    }
-
-    // เปิดทางให้ HTML (หน้า Admin Settings) สามารถเรียกใช้ฟังก์ชันอัปเดตสิทธิ์จาก dropdown ได้
-    window.updateUserRoleAdapter = (userId, newRole) => {
-        showConfirmDialog(`คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้เป็น ${newRole.toUpperCase()} ใช่หรือไม่?`, () => {
-            updateUserRole(userId, newRole);
-        }, () => {
-            loadRoleManagement(); // ถ้ากดยกเลิก ให้โหลดตารางกลับเป็นค่าเดิม
-        });
-    };
-
-    // ==========================================
-    // 🌟 ผูก Event สำหรับส่งใบลาและรายงาน (Request Service)
-    // ==========================================
-    
-    // 1. ผูกปุ่มบันทึก Report
-    if (saveReportBtn) {
-        saveReportBtn.addEventListener("click", async () => {
-            if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
-            
-            const selectedDateStr = reportDateInput.value;
-            if (!selectedDateStr) return showNotification("กรุณาเลือกวันที่", "warning");
-
-            const workType = workTypeSelectedText.textContent.trim();
-            const project = projectSelectedText.textContent.trim();
-            const durationText = durationSelectedText.textContent.trim();
-
-            if (workType.includes("เลือก") || project.includes("เลือก") || durationText.includes("เลือก")) {
-                return showNotification("กรุณากรอกข้อมูลให้ครบ", "warning");
-            }
-
-            let timeRange = durationText, hoursUsed = 8.0, saveStartTime = "08:30", saveEndTime = "17:30";
-
-            if (durationText === "SOME TIME") {
-                const startT = customTimeStartInput.value;
-                const endT = customTimeEndInput.value;
-                if (!startT || !endT) return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
-                
-                hoursUsed = parseFloat(((new Date(`2000-01-01T${endT}`) - new Date(`2000-01-01T${startT}`)) / 3600000).toFixed(2));
-                if (hoursUsed <= 0) return showNotification("เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม", "warning");
-                
-                timeRange = `SOME TIME (${startT} - ${endT})`;
-                saveStartTime = startT; saveEndTime = endT;
-            } else if (durationText.includes("HALF DAY")) {
-                if (durationText.includes("08:30")) { hoursUsed = 3.5; saveEndTime = "12:00"; timeRange = "HALF DAY (08:30 - 12:00)"; }
-                else { hoursUsed = 4.5; saveStartTime = "13:00"; timeRange = "HALF DAY (13:00 - 17:30)"; }
-            } else {
-                timeRange = "ALL (08:30 - 17:30)";
-            }
-
-            saveReportBtn.disabled = true;
-            saveReportBtn.textContent = "กำลังบันทึก...";
-
-            const reportData = { workType, project, duration: timeRange, hours: hoursUsed, startTime: saveStartTime, endTime: saveEndTime };
-            
-            const success = await submitDailyReport(currentUser.uid, selectedDateStr, reportData);
-            if (success) {
-                resetReportForm();
-                if (typeof loadSentReports === "function") loadSentReports();
-            }
-
-            saveReportBtn.disabled = false;
-            saveReportBtn.textContent = "Save Report";
-        });
-    }
-
-    // 2. ผูกปุ่มส่งใบลา
-    if (submitLeaveBtn) {
-        submitLeaveBtn.addEventListener("click", async () => {
-            if (!currentUser || !currentUserData) return showNotification("กรุณาเข้าสู่ระบบก่อนยื่นใบลา", "error");
-
-            const leaveType = leaveTypeSelect.value;
-            const startDateStr = leaveStartDate.value;
-            const reason = leaveReason.value.trim();
-            const durationType = leaveDurationType.value;
-            const endDateStr = leaveEndDate.value;
-            
-            if (!leaveType || !startDateStr || !reason) return showNotification("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
-
-            let startDate = new Date(startDateStr);
-            let endDate = durationType === "hourly" ? new Date(startDateStr) : new Date(endDateStr);
-
-            if (durationType !== "hourly" && (!endDateStr || endDate < startDate)) {
-                return showNotification("วันที่สิ้นสุดไม่ถูกต้อง", "warning");
-            }
-
-            submitLeaveBtn.disabled = true;
-            submitLeaveBtn.textContent = "กำลังส่งเรื่อง...";
-
-            const leaveData = {
-                userId: currentUser.uid,
-                userName: currentUserData.fullName,
-                userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-                department: currentUserData.department,
-                leaveType, reason, durationType,
-                startDate: firebase.firestore.Timestamp.fromDate(startDate),
-                endDate: firebase.firestore.Timestamp.fromDate(endDate),
-            };
-
-            if (durationType === "hourly") {
-                if (!leaveStartTime.value || !leaveEndTime.value) {
-                    submitLeaveBtn.disabled = false; submitLeaveBtn.textContent = "ส่งใบลา";
-                    return showNotification("กรุณาระบุเวลา", "warning");
-                }
-                leaveData.startTime = leaveStartTime.value;
-                leaveData.endTime = leaveEndTime.value;
-            }
-
-            const success = await submitLeaveRequest(leaveData);
-            if (success) closeLeaveModal();
-
-            submitLeaveBtn.disabled = false;
-            submitLeaveBtn.textContent = "ส่งใบลา";
-        });
-    }
-
-    // 3. ฟังก์ชันลบรายงาน (เชื่อมกับปุ่ม HTML เดิม)
-    window.deleteReportItem = (docId, reportId) => {
-        showConfirmDialog("คุณแน่ใจหรือไม่ที่จะลบรายงานนี้?", async () => {
-            const success = await deleteDailyReportItem(docId, reportId);
-            if (success && typeof loadSentReports === "function") loadSentReports();
-        });
-    };
-
-    // ==========================================
-    // 🌟 ผูก Event สำหรับหน้า Approvals Center (OT & Leave)
-    // ==========================================
-    
-    // โหลดข้อมูลเมื่อเปิดหน้า Approvals
-    document.querySelectorAll(".nav-item").forEach(item => {
-        item.addEventListener("click", (e) => {
-             const pageId = item.dataset.page;
-             if (pageId === "admin-approvals-page" && currentUserData && currentUserData.role === "admin") {
-                 if (typeof loadAllUsersForDropdown === "function") loadAllUsersForDropdown();
-                 loadPendingLeaveRequests(currentUserData); // ✨ โยน currentUserData เข้าไป
-                 loadPendingOtRequests(currentUserData);
-             }
-        });
+  // ==========================================
+  // 🌟 ผูก Event สำหรับ Auth & Profile
+  // ==========================================
+  const googleLoginBtn = document.getElementById("google-login-btn");
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleGoogleLogin();
     });
+  }
 
-    // Event Delegation สำหรับปุ่มอนุมัติ OT
-    const otListContainer = document.getElementById("ot-approval-list");
-    if (otListContainer) {
-        otListContainer.addEventListener("click", (event) => {
-            const approveBtn = event.target.closest(".approve-ot-btn");
-            const rejectBtn = event.target.closest(".reject-ot-btn");
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleLogout);
+  }
 
-            if (approveBtn) {
-                const docId = approveBtn.dataset.id;
-                if (docId) handleOtApproval(docId, "approved", approveBtn);
-            } else if (rejectBtn) {
-                const docId = rejectBtn.dataset.id;
-                if (docId) handleOtApproval(docId, "rejected", rejectBtn);
-            }
+  if (profileEditSaveBtn) {
+    profileEditSaveBtn.addEventListener("click", async () => {
+      profileEditSaveBtn.disabled = true;
+      profileEditSaveBtn.textContent = "กำลังบันทึก...";
+
+      try {
+        const newName = profileEditNameInput.value.trim();
+        const newDept = profileEditDeptInput.value.trim();
+
+        // 1. โยนงานให้ authService ไปบันทึกใน DB
+        const updatedData = await saveUserProfile(
+          currentUser?.uid,
+          newName,
+          newDept,
+        );
+
+        // 2. อัปเดตตัวแปร Global ใน app.js และรีเฟรชหน้าจอ
+        currentUserData = { ...currentUserData, ...updatedData };
+        if (typeof updateProfilePage === "function")
+          updateProfilePage(currentUserData);
+
+        showNotification("บันทึกโปรไฟล์สำเร็จ!", "success");
+        closeProfileEditModal();
+      } catch (error) {
+        showNotification(error.message, "warning");
+      } finally {
+        profileEditSaveBtn.disabled = false;
+        profileEditSaveBtn.textContent = "บันทึก";
+      }
+    });
+  }
+
+  // เปิดทางให้ HTML (หน้า Admin Settings) สามารถเรียกใช้ฟังก์ชันอัปเดตสิทธิ์จาก dropdown ได้
+  window.updateUserRoleAdapter = (userId, newRole) => {
+    showConfirmDialog(
+      `คุณต้องการเปลี่ยนสิทธิ์ผู้ใช้เป็น ${newRole.toUpperCase()} ใช่หรือไม่?`,
+      () => {
+        updateUserRole(userId, newRole);
+      },
+      () => {
+        loadRoleManagement(); // ถ้ากดยกเลิก ให้โหลดตารางกลับเป็นค่าเดิม
+      },
+    );
+  };
+
+  // ==========================================
+  // 🌟 ผูก Event สำหรับส่งใบลาและรายงาน (Request Service)
+  // ==========================================
+
+  // 1. ผูกปุ่มบันทึก Report
+  if (saveReportBtn) {
+    saveReportBtn.addEventListener("click", async () => {
+      if (!currentUser) return showNotification("กรุณาเข้าสู่ระบบ", "error");
+
+      const selectedDateStr = reportDateInput.value;
+      if (!selectedDateStr)
+        return showNotification("กรุณาเลือกวันที่", "warning");
+
+      const workType = workTypeSelectedText.textContent.trim();
+      const project = projectSelectedText.textContent.trim();
+      const durationText = durationSelectedText.textContent.trim();
+
+      if (
+        workType.includes("เลือก") ||
+        project.includes("เลือก") ||
+        durationText.includes("เลือก")
+      ) {
+        return showNotification("กรุณากรอกข้อมูลให้ครบ", "warning");
+      }
+
+      let timeRange = durationText,
+        hoursUsed = 8.0,
+        saveStartTime = "08:30",
+        saveEndTime = "17:30";
+
+      if (durationText === "SOME TIME") {
+        const startT = customTimeStartInput.value;
+        const endT = customTimeEndInput.value;
+        if (!startT || !endT)
+          return showNotification("กรุณากรอกเวลาเริ่มต้นและสิ้นสุด", "warning");
+
+        hoursUsed = parseFloat(
+          (
+            (new Date(`2000-01-01T${endT}`) -
+              new Date(`2000-01-01T${startT}`)) /
+            3600000
+          ).toFixed(2),
+        );
+        if (hoursUsed <= 0)
+          return showNotification("เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม", "warning");
+
+        timeRange = `SOME TIME (${startT} - ${endT})`;
+        saveStartTime = startT;
+        saveEndTime = endT;
+      } else if (durationText.includes("HALF DAY")) {
+        if (durationText.includes("08:30")) {
+          hoursUsed = 3.5;
+          saveEndTime = "12:00";
+          timeRange = "HALF DAY (08:30 - 12:00)";
+        } else {
+          hoursUsed = 4.5;
+          saveStartTime = "13:00";
+          timeRange = "HALF DAY (13:00 - 17:30)";
+        }
+      } else {
+        timeRange = "ALL (08:30 - 17:30)";
+      }
+
+      saveReportBtn.disabled = true;
+      saveReportBtn.textContent = "กำลังบันทึก...";
+
+      const reportData = {
+        workType,
+        project,
+        duration: timeRange,
+        hours: hoursUsed,
+        startTime: saveStartTime,
+        endTime: saveEndTime,
+      };
+
+      const success = await submitDailyReport(
+        currentUser.uid,
+        selectedDateStr,
+        reportData,
+      );
+      if (success) {
+        resetReportForm();
+        if (typeof loadSentReports === "function") loadSentReports();
+      }
+
+      saveReportBtn.disabled = false;
+      saveReportBtn.textContent = "Save Report";
+    });
+  }
+
+  // 2. ผูกปุ่มส่งใบลา
+  if (submitLeaveBtn) {
+    submitLeaveBtn.addEventListener("click", async () => {
+      if (!currentUser || !currentUserData)
+        return showNotification("กรุณาเข้าสู่ระบบก่อนยื่นใบลา", "error");
+
+      const leaveType = leaveTypeSelect.value;
+      const startDateStr = leaveStartDate.value;
+      const reason = leaveReason.value.trim();
+      const durationType = leaveDurationType.value;
+      const endDateStr = leaveEndDate.value;
+
+      if (!leaveType || !startDateStr || !reason)
+        return showNotification("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+
+      let startDate = new Date(startDateStr);
+      let endDate =
+        durationType === "hourly"
+          ? new Date(startDateStr)
+          : new Date(endDateStr);
+
+      if (durationType !== "hourly" && (!endDateStr || endDate < startDate)) {
+        return showNotification("วันที่สิ้นสุดไม่ถูกต้อง", "warning");
+      }
+
+      submitLeaveBtn.disabled = true;
+      submitLeaveBtn.textContent = "กำลังส่งเรื่อง...";
+
+      const leaveData = {
+        userId: currentUser.uid,
+        userName: currentUserData.fullName,
+        userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
+        department: currentUserData.department,
+        leaveType,
+        reason,
+        durationType,
+        startDate: firebase.firestore.Timestamp.fromDate(startDate),
+        endDate: firebase.firestore.Timestamp.fromDate(endDate),
+      };
+
+      if (durationType === "hourly") {
+        if (!leaveStartTime.value || !leaveEndTime.value) {
+          submitLeaveBtn.disabled = false;
+          submitLeaveBtn.textContent = "ส่งใบลา";
+          return showNotification("กรุณาระบุเวลา", "warning");
+        }
+        leaveData.startTime = leaveStartTime.value;
+        leaveData.endTime = leaveEndTime.value;
+      }
+
+      const success = await submitLeaveRequest(leaveData);
+      if (success) closeLeaveModal();
+
+      submitLeaveBtn.disabled = false;
+      submitLeaveBtn.textContent = "ส่งใบลา";
+    });
+  }
+
+  // 3. ฟังก์ชันลบรายงาน (เชื่อมกับปุ่ม HTML เดิม)
+  window.deleteReportItem = (docId, reportId) => {
+    showConfirmDialog("คุณแน่ใจหรือไม่ที่จะลบรายงานนี้?", async () => {
+      const success = await deleteDailyReportItem(docId, reportId);
+      if (success && typeof loadSentReports === "function") loadSentReports();
+    });
+  };
+
+  // ==========================================
+  // 🌟 ผูก Event สำหรับหน้า Approvals Center (OT & Leave)
+  // ==========================================
+
+  // โหลดข้อมูลเมื่อเปิดหน้า Approvals
+  document.querySelectorAll(".nav-item").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      const pageId = item.dataset.page;
+      if (
+        pageId === "admin-approvals-page" &&
+        currentUserData &&
+        currentUserData.role === "admin"
+      ) {
+        if (typeof loadAllUsersForDropdown === "function")
+          loadAllUsersForDropdown();
+        loadPendingLeaveRequests(currentUserData); // ✨ โยน currentUserData เข้าไป
+        loadPendingOtRequests(currentUserData);
+      }
+    });
+  });
+
+  // Event Delegation สำหรับปุ่มอนุมัติ OT
+  const otListContainer = document.getElementById("ot-approval-list");
+  if (otListContainer) {
+    otListContainer.addEventListener("click", (event) => {
+      const approveBtn = event.target.closest(".approve-ot-btn");
+      const rejectBtn = event.target.closest(".reject-ot-btn");
+
+      if (approveBtn) {
+        const docId = approveBtn.dataset.id;
+        if (docId) handleOtApproval(docId, "approved", approveBtn);
+      } else if (rejectBtn) {
+        const docId = rejectBtn.dataset.id;
+        if (docId) handleOtApproval(docId, "rejected", rejectBtn);
+      }
+    });
+  }
+
+  // 🌟 ผูก Event สำหรับ Check-in & On-site Group (Attendance Service)
+  // ==========================================
+  const confirmCheckinBtn = document.getElementById("confirm-checkin-btn");
+  if (confirmCheckinBtn) {
+    confirmCheckinBtn.addEventListener("click", async () => {
+      const workType = document
+        .getElementById("checkin-work-type-text")
+        .textContent.trim();
+      const project = document
+        .getElementById("checkin-project-text")
+        .textContent.trim();
+      let duration = document
+        .getElementById("checkin-duration-text")
+        .textContent.trim();
+
+      if (
+        workType.includes("เลือก") ||
+        project.includes("เลือก") ||
+        duration.includes("เลือก")
+      ) {
+        return showNotification("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
+      }
+
+      let hoursUsed = 0,
+        saveStartTime = "",
+        saveEndTime = "";
+      if (duration === "SOME TIME") {
+        const startT = document.getElementById("checkin-start-time").value;
+        const endT = document.getElementById("checkin-end-time").value;
+        if (!startT || !endT)
+          return showNotification("กรุณาระบุเวลาเริ่มและสิ้นสุด", "warning");
+        const diffHrs =
+          (new Date(`2000-01-01T${endT}`) - new Date(`2000-01-01T${startT}`)) /
+          3600000;
+        if (diffHrs <= 0)
+          return showNotification(
+            "เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น",
+            "warning",
+          );
+        hoursUsed = parseFloat(diffHrs.toFixed(2));
+        duration = `SOME TIME (${startT} - ${endT})`;
+        saveStartTime = startT;
+        saveEndTime = endT;
+      } else if (duration.includes("HALF DAY")) {
+        if (duration.includes("08:30")) {
+          hoursUsed = 3.5;
+          saveStartTime = "08:30";
+          saveEndTime = "12:00";
+          duration = "HALF DAY (08:30 - 12:00)";
+        } else {
+          hoursUsed = 4.5;
+          saveStartTime = "13:00";
+          saveEndTime = "17:30";
+          duration = "HALF DAY (13:00 - 17:30)";
+        }
+      } else {
+        hoursUsed = 8.0;
+        saveStartTime = "08:30";
+        saveEndTime = "17:30";
+        duration = "ALL (08:30 - 17:30)";
+      }
+
+      document.getElementById("checkin-report-modal").classList.add("hidden");
+      await proceedWithCheckin("in_factory", {
+        workType,
+        project,
+        duration,
+        hours: hoursUsed,
+        startTime: saveStartTime,
+        endTime: saveEndTime,
+      });
+    });
+  }
+
+  const mainCheckinBtn = document.getElementById("checkin-btn");
+  if (mainCheckinBtn) {
+    mainCheckinBtn.addEventListener("click", async () => {
+      const isLocalhost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      if (isLocalhost)
+        setMockPosition({
+          coords: {
+            latitude: FACTORY_LOCATION.latitude,
+            longitude: FACTORY_LOCATION.longitude,
+            accuracy: 10,
+          },
         });
-    }
-    
-    // 🌟 ผูก Event สำหรับ Check-in & On-site Group (Attendance Service)
-    // ==========================================
-    const confirmCheckinBtn = document.getElementById('confirm-checkin-btn');
-    if (confirmCheckinBtn) {
-        confirmCheckinBtn.addEventListener('click', async () => {
-            const workType = document.getElementById('checkin-work-type-text').textContent.trim();
-            const project = document.getElementById('checkin-project-text').textContent.trim();
-            let duration = document.getElementById('checkin-duration-text').textContent.trim();
 
-            if (workType.includes('เลือก') || project.includes('เลือก') || duration.includes('เลือก')) {
-                return showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
-            }
+      if (!latestPosition)
+        return showNotification(
+          "กำลังรอสัญญาณ GPS กรุณารอสักครู่...",
+          "warning",
+        );
 
-            let hoursUsed = 0, saveStartTime = "", saveEndTime = "";
-            if (duration === 'SOME TIME') {
-                const startT = document.getElementById('checkin-start-time').value;
-                const endT = document.getElementById('checkin-end-time').value;
-                if (!startT || !endT) return showNotification('กรุณาระบุเวลาเริ่มและสิ้นสุด', 'warning');
-                const diffHrs = (new Date(`2000-01-01T${endT}`) - new Date(`2000-01-01T${startT}`)) / 3600000;
-                if (diffHrs <= 0) return showNotification('เวลาสิ้นสุดต้องมากกว่าเวลาเริ่มต้น', 'warning');
-                hoursUsed = parseFloat(diffHrs.toFixed(2));
-                duration = `SOME TIME (${startT} - ${endT})`;
-                saveStartTime = startT; saveEndTime = endT;
-            } else if (duration.includes('HALF DAY')) {
-                if (duration.includes('08:30')) { hoursUsed = 3.5; saveStartTime = "08:30"; saveEndTime = "12:00"; duration = "HALF DAY (08:30 - 12:00)"; } 
-                else { hoursUsed = 4.5; saveStartTime = "13:00"; saveEndTime = "17:30"; duration = "HALF DAY (13:00 - 17:30)"; }
-            } else {
-                hoursUsed = 8.0; saveStartTime = "08:30"; saveEndTime = "17:30"; duration = "ALL (08:30 - 17:30)";
-            }
+      let distance = calculateDistance(
+        latestPosition.coords.latitude,
+        latestPosition.coords.longitude,
+        FACTORY_LOCATION.latitude,
+        FACTORY_LOCATION.longitude,
+      );
+      if (isLocalhost) distance = 0;
 
-            document.getElementById('checkin-report-modal').classList.add('hidden');
-            await proceedWithCheckin('in_factory', { workType, project, duration, hours: hoursUsed, startTime: saveStartTime, endTime: saveEndTime });
+      if (distance > ALLOWED_RADIUS_METERS) {
+        showNotification(`อยู่นอกพื้นที่ (${distance.toFixed(0)} ม.)`, "error");
+        return;
+      }
+      document
+        .getElementById("checkin-report-modal")
+        .classList.remove("hidden");
+    });
+  }
+
+  if (checkoutBtn) checkoutBtn.addEventListener("click", handleCheckoutAction);
+
+  const createRoomBtn = document.getElementById("create-room-btn");
+  if (createRoomBtn) {
+    createRoomBtn.addEventListener("click", async () => {
+      const project = document.getElementById("room-project-input").value;
+      const locationName = document.getElementById("room-location-input").value;
+      if (!project || !locationName)
+        return alert("กรุณากรอกชื่อโครงการและสถานที่");
+
+      createRoomBtn.disabled = true;
+      createRoomBtn.textContent = "กำลังสร้างห้อง...";
+      try {
+        if (typeof QRCode === "undefined")
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
+          );
+        const roomId = await setupOnsiteLeader(
+          project,
+          locationName,
+          currentUserData,
+        );
+        if (roomId) {
+          document.getElementById("qrcode").innerHTML = "";
+          new QRCode(document.getElementById("qrcode"), {
+            text: roomId,
+            width: 180,
+            height: 180,
+          });
+          createRoomBtn.classList.add("hidden");
+          document
+            .getElementById("room-qr-container")
+            .classList.remove("hidden");
+        }
+      } finally {
+        createRoomBtn.disabled = false;
+        createRoomBtn.textContent = "สร้างห้อง Check-in";
+      }
+    });
+  }
+
+  const startScanBtn = document.getElementById("start-scan-btn");
+  if (startScanBtn) {
+    startScanBtn.addEventListener("click", async () => {
+      try {
+        await loadScript("https://unpkg.com/html5-qrcode");
+      } catch (e) {
+        return alert("โหลดกล้องไม่สำเร็จ");
+      }
+
+      const html5QrCode = new Html5Qrcode("reader");
+      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        html5QrCode
+          .stop()
+          .then(() => {
+            document.getElementById("reader").classList.add("hidden");
+            document.getElementById("scan-status").textContent =
+              "สแกนสำเร็จ! กำลังตรวจสอบ...";
+            joinOnsiteRoom(decodedText, currentUserData);
+          })
+          .catch((err) => console.log("Stop failed ", err));
+      };
+      document.getElementById("reader").classList.remove("hidden");
+      html5QrCode
+        .start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          qrCodeSuccessCallback,
+        )
+        .catch((err) => alert("เปิดกล้องไม่ได้: " + err));
+    });
+  }
+
+  // ==========================================
+  // 🌟 ผูก Event สำหรับระบบตารางเวลาและสรุปข้อมูล (Timesheet Service)
+  // ==========================================
+
+  // 1. Timeline (หน้า Audit หลัก)
+  const refreshTimelineBtn = document.getElementById("refresh-timeline-btn");
+  const timelineDatePicker = document.getElementById("timeline-date-picker");
+  if (refreshTimelineBtn)
+    refreshTimelineBtn.addEventListener("click", loadTimelineData);
+  if (timelineDatePicker)
+    timelineDatePicker.addEventListener("change", loadTimelineData);
+
+  // ==========================================
+  // 🌟 1.5 ระบบเปลี่ยน Tab ในหน้า Timesheet Management (เพิ่มกลับเข้ามา)
+  // ==========================================
+  const tsTabBtns = document.querySelectorAll(".ts-tab-btn");
+  const tsTabContents = document.querySelectorAll(".ts-tab-content");
+
+  if (tsTabBtns.length > 0) {
+    tsTabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // 1. ล้างสไตล์ Active ของปุ่มทั้งหมด (เปลี่ยนเป็นสีเทา)
+        tsTabBtns.forEach((b) => {
+          b.classList.remove("border-sky-600", "text-sky-600");
+          b.classList.add(
+            "border-transparent",
+            "text-gray-500",
+            "hover:text-gray-700",
+            "hover:border-gray-300",
+          );
         });
-    }
 
-    const mainCheckinBtn = document.getElementById('checkin-btn');
-    if (mainCheckinBtn) {
-        mainCheckinBtn.addEventListener('click', async () => {
-            const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-            if (isLocalhost) setMockPosition({ coords: { latitude: FACTORY_LOCATION.latitude, longitude: FACTORY_LOCATION.longitude, accuracy: 10 } });
+        // 2. ซ่อนเนื้อหา (Content) ของทุก Tab
+        tsTabContents.forEach((c) => c.classList.add("hidden"));
 
-            if (!latestPosition) return showNotification("กำลังรอสัญญาณ GPS กรุณารอสักครู่...", "warning");
+        // 3. ไฮไลท์ปุ่มที่ถูกคลิก (เปลี่ยนเป็นสีฟ้า)
+        btn.classList.remove(
+          "border-transparent",
+          "text-gray-500",
+          "hover:text-gray-700",
+          "hover:border-gray-300",
+        );
+        btn.classList.add("border-sky-600", "text-sky-600");
 
-            let distance = calculateDistance(latestPosition.coords.latitude, latestPosition.coords.longitude, FACTORY_LOCATION.latitude, FACTORY_LOCATION.longitude);
-            if (isLocalhost) distance = 0; 
+        // 4. แสดงเนื้อหาเป้าหมาย
+        const targetId = btn.dataset.target;
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) {
+          targetContent.classList.remove("hidden");
+        }
+        if (targetId === "tab-audit" || targetId === "ts-audit-content") {
+          if (typeof loadDailyAuditData === "function")
+            loadDailyAuditData(currentUser, currentUserData);
+          if (typeof loadTimelineData === "function") loadTimelineData();
+        }
+      });
+    });
+  }
 
-            if (distance > ALLOWED_RADIUS_METERS) {
-                showNotification(`อยู่นอกพื้นที่ (${distance.toFixed(0)} ม.)`, 'error');
-                return;
-            }
-            document.getElementById('checkin-report-modal').classList.remove('hidden');
-        });
-    }
+  // 2. Timesheet Table (ตารางเวลาเข้า-ออก)
+  const tsApplyBtn = document.getElementById("ts-apply-filter-btn");
+  const timesheetTabBtn = document.querySelector(
+    '.ts-tab-btn[data-target="ts-timesheet-content"]',
+  );
+  if (tsApplyBtn) tsApplyBtn.addEventListener("click", loadTimesheetTable);
+  if (timesheetTabBtn)
+    timesheetTabBtn.addEventListener("click", loadTimesheetTable);
 
-    if (checkoutBtn) checkoutBtn.addEventListener('click', handleCheckoutAction);
+  // 3. Employee Summary (หน้าสรุปเวลาพนักงาน)
+  const applySummaryFiltersBtn = document.getElementById(
+    "apply-summary-filters-btn",
+  );
+  const exportEmployeeSummaryBtn = document.getElementById(
+    "export-employee-summary-btn",
+  );
+  if (applySummaryFiltersBtn)
+    applySummaryFiltersBtn.addEventListener("click", () =>
+      loadEmployeeSummary(1),
+    );
+  if (exportEmployeeSummaryBtn) {
+    exportEmployeeSummaryBtn.addEventListener("click", async () => {
+      showNotification("กำลังเตรียมข้อมูล Excel...", "info");
+      if (typeof XLSX === "undefined") {
+        try {
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+          );
+        } catch (e) {
+          return alert("โหลด Excel Library ไม่สำเร็จ");
+        }
+      }
+      exportEmployeeSummaryToExcel();
+    });
+  }
 
-    const createRoomBtn = document.getElementById("create-room-btn");
-    if (createRoomBtn) {
-        createRoomBtn.addEventListener("click", async () => {
-            const project = document.getElementById("room-project-input").value;
-            const locationName = document.getElementById("room-location-input").value;
-            if (!project || !locationName) return alert("กรุณากรอกชื่อโครงการและสถานที่");
-            
-            createRoomBtn.disabled = true; createRoomBtn.textContent = "กำลังสร้างห้อง...";
-            try {
-                if (typeof QRCode === "undefined") await loadScript("https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js");
-                const roomId = await setupOnsiteLeader(project, locationName, currentUserData);
-                if (roomId) {
-                    document.getElementById("qrcode").innerHTML = "";
-                    new QRCode(document.getElementById("qrcode"), { text: roomId, width: 180, height: 180 });
-                    createRoomBtn.classList.add("hidden");
-                    document.getElementById("room-qr-container").classList.remove("hidden");
-                }
-            } finally {
-                createRoomBtn.disabled = false; createRoomBtn.textContent = "สร้างห้อง Check-in";
-            }
-        });
-    }
+  // 4. Project Summary (หน้าสรุปโปรเจกต์)
+  const projectSelect = document.getElementById("project-summary-select");
+  const monthInput = document.getElementById("project-summary-month");
+  const exportProjectBtn = document.getElementById(
+    "export-project-summary-btn",
+  );
 
-    const startScanBtn = document.getElementById("start-scan-btn");
-    if (startScanBtn) {
-        startScanBtn.addEventListener("click", async () => {
-            try { await loadScript("https://unpkg.com/html5-qrcode"); } 
-            catch (e) { return alert("โหลดกล้องไม่สำเร็จ"); }
-            
-            const html5QrCode = new Html5Qrcode("reader");
-            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-                html5QrCode.stop().then(() => {
-                    document.getElementById("reader").classList.add("hidden");
-                    document.getElementById("scan-status").textContent = "สแกนสำเร็จ! กำลังตรวจสอบ...";
-                    joinOnsiteRoom(decodedText, currentUserData);
-                }).catch(err => console.log("Stop failed ", err));
-            };
-            document.getElementById("reader").classList.remove("hidden");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, qrCodeSuccessCallback).catch(err => alert("เปิดกล้องไม่ได้: " + err));
-        });
-    }
+  // ตั้งค่าเดือนเริ่มต้น
+  if (monthInput && !monthInput.value) {
+    const now = new Date();
+    monthInput.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+  }
 
-    // ==========================================
-    // 🌟 ผูก Event สำหรับระบบตารางเวลาและสรุปข้อมูล (Timesheet Service)
-    // ==========================================
+  // โหลดรายชื่อ Project ทันทีที่เข้าแอป
+  populateProjectOptions();
 
-    // 1. Timeline (หน้า Audit หลัก)
-    const refreshTimelineBtn = document.getElementById("refresh-timeline-btn");
-    const timelineDatePicker = document.getElementById("timeline-date-picker");
-    if (refreshTimelineBtn) refreshTimelineBtn.addEventListener("click", loadTimelineData);
-    if (timelineDatePicker) timelineDatePicker.addEventListener("change", loadTimelineData);
-
-    // 2. Timesheet Table (ตารางเวลาเข้า-ออก)
-    const tsApplyBtn = document.getElementById("ts-apply-filter-btn");
-    const timesheetTabBtn = document.querySelector('.ts-tab-btn[data-target="ts-timesheet-content"]');
-    if (tsApplyBtn) tsApplyBtn.addEventListener("click", loadTimesheetTable);
-    if (timesheetTabBtn) timesheetTabBtn.addEventListener("click", loadTimesheetTable);
-
-    // 3. Employee Summary (หน้าสรุปเวลาพนักงาน)
-    const applySummaryFiltersBtn = document.getElementById("apply-summary-filters-btn");
-    const exportEmployeeSummaryBtn = document.getElementById("export-employee-summary-btn");
-    if (applySummaryFiltersBtn) applySummaryFiltersBtn.addEventListener("click", () => loadEmployeeSummary(1));
-    if (exportEmployeeSummaryBtn) {
-        exportEmployeeSummaryBtn.addEventListener("click", async () => {
-            showNotification("กำลังเตรียมข้อมูล Excel...", "info");
-            if (typeof XLSX === "undefined") {
-                try { await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"); } 
-                catch (e) { return alert("โหลด Excel Library ไม่สำเร็จ"); }
-            }
-            exportEmployeeSummaryToExcel();
-        });
-    }
-
-    // 4. Project Summary (หน้าสรุปโปรเจกต์)
-    const projectSelect = document.getElementById("project-summary-select");
-    const monthInput = document.getElementById("project-summary-month");
-    const exportProjectBtn = document.getElementById("export-project-summary-btn");
-    
-    // ตั้งค่าเดือนเริ่มต้น
-    if (monthInput && !monthInput.value) {
-        const now = new Date();
-        monthInput.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-    }
-
-    // โหลดรายชื่อ Project ทันทีที่เข้าแอป
-    populateProjectOptions();
-
-    if (projectSelect) projectSelect.addEventListener("change", fetchProjectData);
-    if (monthInput) monthInput.addEventListener("change", fetchProjectData);
-    if (exportProjectBtn) {
-        exportProjectBtn.addEventListener("click", async () => {
-            const originalText = exportProjectBtn.innerHTML;
-            exportProjectBtn.innerHTML = "Preparing...";
-            exportProjectBtn.disabled = true;
-            try {
-                if (typeof XLSX === "undefined") {
-                    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
-                }
-                await exportProjectSummaryToExcelData();
-            } catch (e) {
-                alert("เกิดข้อผิดพลาดในการโหลด Excel Module");
-            } finally {
-                exportProjectBtn.innerHTML = originalText;
-                exportProjectBtn.disabled = false;
-            }
-        });
-    }
-
+  if (projectSelect) projectSelect.addEventListener("change", fetchProjectData);
+  if (monthInput) monthInput.addEventListener("change", fetchProjectData);
+  if (exportProjectBtn) {
+    exportProjectBtn.addEventListener("click", async () => {
+      const originalText = exportProjectBtn.innerHTML;
+      exportProjectBtn.innerHTML = "Preparing...";
+      exportProjectBtn.disabled = true;
+      try {
+        if (typeof XLSX === "undefined") {
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+          );
+        }
+        await exportProjectSummaryToExcelData();
+      } catch (e) {
+        alert("เกิดข้อผิดพลาดในการโหลด Excel Module");
+      } finally {
+        exportProjectBtn.innerHTML = originalText;
+        exportProjectBtn.disabled = false;
+      }
+    });
+  }
 });
