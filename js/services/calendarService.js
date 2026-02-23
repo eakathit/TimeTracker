@@ -240,11 +240,11 @@ export async function loadCalendarRules() {
 }
 
 // 5. โหลดและแสดงวันหยุดในกล่องจัดการปฏิทิน
+// 5. โหลดและแสดงวันหยุดในกล่องจัดการปฏิทิน
 export async function loadAndDisplayHolidays() {
     const holidayContainer = document.getElementById("holiday-list-display");
     const worksatContainer = document.getElementById("worksat-list-display");
     
-    // ถ้าหน้าเว็บไม่มีกล่องนี้เลย ค่อยหยุดทำงาน
     if (!holidayContainer && !worksatContainer) return; 
 
     try {
@@ -255,20 +255,35 @@ export async function loadAndDisplayHolidays() {
             workingSaturdays = doc.data().workingSaturdays || [];
         }
 
-        const createItemHTML = (dateStr, type) => `
-            <div class="flex justify-between items-center p-2 rounded-lg ${type === 'holidays' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'} text-sm font-medium mb-1">
-                <span>${dateStr}</span>
-                <button class="calendar-delete-item-btn p-0.5 hover:bg-black/10 rounded" data-date="${dateStr}" data-type="${type}">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd"></path></svg>
-                </button>
-            </div>
-        `;
+        const createItemHTML = (dateStr, type) => {
+            // แปลงวันที่เป็นรูปแบบภาษาไทยสวยๆ
+            const [y, m, d] = dateStr.split('-');
+            const thaiDate = new Date(y, m-1, d).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+            
+            if (type === 'holidays') {
+                return `
+                <div class="holiday-item">
+                  <span>🔴 ${thaiDate}</span>
+                  <button class="del-btn calendar-delete-item-btn" data-date="${dateStr}" data-type="${type}" title="ลบ">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>`;
+            } else {
+                return `
+                <div class="worksat-item">
+                  <span>🟢 ${thaiDate}</span>
+                  <button class="del-btn calendar-delete-item-btn" data-date="${dateStr}" data-type="${type}" title="ลบ">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>`;
+            }
+        };
 
         if (holidayContainer) {
-            holidayContainer.innerHTML = holidays.length ? holidays.sort().map(d => createItemHTML(d, "holidays")).join("") : '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+            holidayContainer.innerHTML = holidays.length ? holidays.sort().map(d => createItemHTML(d, "holidays")).join("") : '<p class="text-xs text-center text-gray-400 mt-4">ยังไม่มีข้อมูล</p>';
         }
         if (worksatContainer) {
-            worksatContainer.innerHTML = workingSaturdays.length ? workingSaturdays.sort().map(d => createItemHTML(d, "workingSaturdays")).join("") : '<p class="text-xs text-center text-gray-400">ยังไม่มีข้อมูล</p>';
+            worksatContainer.innerHTML = workingSaturdays.length ? workingSaturdays.sort().map(d => createItemHTML(d, "workingSaturdays")).join("") : '<p class="text-xs text-center text-gray-400 mt-4">ยังไม่มีข้อมูล</p>';
         }
     } catch (error) {
         console.error("Error display holidays:", error);
@@ -304,15 +319,17 @@ export function setupAdminCalendarControls() {
     }
 
     if (toggleBtn && listWrapper) {
-        // คืน Event เดิมให้ปุ่มกด ซ่อน/แสดง
+        // คืน Event เดิมให้ปุ่มกด ซ่อน/แสดง พร้อมปรับแต่ง Empty State
         toggleBtn.addEventListener("click", () => {
+            const emptyState = document.getElementById("list-empty-state");
+
             if (listWrapper.classList.contains("hidden")) {
                 loadAndDisplayHolidays(); // สั่งดึงข้อมูลทุกครั้งที่เปิด
                 listWrapper.classList.remove("hidden");
-                toggleBtn.textContent = "ซ่อนรายการที่บันทึกไว้";
+                if(emptyState) emptyState.classList.add("hidden");
             } else {
                 listWrapper.classList.add("hidden");
-                toggleBtn.textContent = "แสดงรายการที่บันทึกไว้";
+                if(emptyState) emptyState.classList.remove("hidden");
             }
         });
     }
