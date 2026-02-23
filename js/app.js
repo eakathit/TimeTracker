@@ -2152,7 +2152,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // --- Timesheet Table Logic ---
-
   // 1. ตั้งค่าเริ่มต้น
   const tsFilterStart = document.getElementById("ts-filter-start");
   const tsFilterEnd = document.getElementById("ts-filter-end");
@@ -2164,7 +2163,7 @@ document.addEventListener("DOMContentLoaded", function () {
     tsFilterStart.value = firstDay.toISOString().split("T")[0];
     tsFilterEnd.value = date.toISOString().split("T")[0];
   }
-  
+
   // --- [NEW] Daily Audit Logic ---
   const auditDatePicker = document.getElementById("audit-date-picker");
   const auditTableBody = document.getElementById("audit-table-body");
@@ -2919,7 +2918,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
     
-    // ==========================================
     // 🌟 ผูก Event สำหรับ Check-in & On-site Group (Attendance Service)
     // ==========================================
     const confirmCheckinBtn = document.getElementById('confirm-checkin-btn');
