@@ -240,7 +240,6 @@ export async function loadCalendarRules() {
 }
 
 // 5. โหลดและแสดงวันหยุดในกล่องจัดการปฏิทิน
-// 5. โหลดและแสดงวันหยุดในกล่องจัดการปฏิทิน
 export async function loadAndDisplayHolidays() {
     const holidayContainer = document.getElementById("holiday-list-display");
     const worksatContainer = document.getElementById("worksat-list-display");
