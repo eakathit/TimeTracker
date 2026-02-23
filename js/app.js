@@ -2164,8 +2164,8 @@ document.addEventListener("DOMContentLoaded", function () {
     tsFilterStart.value = firstDay.toISOString().split("T")[0];
     tsFilterEnd.value = date.toISOString().split("T")[0];
   }
+  
   // --- [NEW] Daily Audit Logic ---
-
   const auditDatePicker = document.getElementById("audit-date-picker");
   const auditTableBody = document.getElementById("audit-table-body");
   const auditFilterBtns = document.querySelectorAll(".audit-filter-btn");
