@@ -255,3 +255,37 @@ export function setupWorkTypeSelection() {
         });
     });
 }
+
+// ==========================================
+// 5. ระบบ Settings Tabs (เมนูตั้งค่าแนวนอน)
+// ==========================================
+export function setupSettingsTabs() {
+    const tabBtns = document.querySelectorAll(".settings-tab-btn");
+    const tabContents = document.querySelectorAll(".settings-tab-content");
+
+    if (tabBtns.length === 0) return;
+
+    tabBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            // 1. ล้างสถานะปุ่มทั้งหมด (เปลี่ยนเป็นสีเทา)
+            tabBtns.forEach((b) => {
+                b.classList.remove("text-sky-600", "font-bold", "border-sky-600");
+                b.classList.add("text-gray-500", "font-medium", "border-transparent");
+            });
+
+            // 2. ซ่อนเนื้อหาทั้งหมด
+            tabContents.forEach((c) => c.classList.add("hidden"));
+
+            // 3. ไฮไลท์ปุ่มที่ถูกคลิก (สีฟ้า)
+            btn.classList.remove("text-gray-500", "font-medium", "border-transparent");
+            btn.classList.add("text-sky-600", "font-bold", "border-sky-600");
+
+            // 4. แสดงเนื้อหาเป้าหมาย
+            const targetId = btn.dataset.target;
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.classList.remove("hidden");
+            }
+        });
+    });
+}

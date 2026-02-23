@@ -88,7 +88,7 @@ import {
 import { loadSentReports, searchRecordForEdit, saveEditedRecord } from './services/recordService.js';
 import { 
     initTheme, setupThemeToggle, 
-    populateDropdownOptions, initializeControls, setupWorkTypeSelection 
+    populateDropdownOptions, initializeControls, setupWorkTypeSelection, setupSettingsTabs
 } from './services/uiService.js';
 window.populateDropdownOptions = populateDropdownOptions;
 window.loadSentReports = loadSentReports;
@@ -114,6 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initTheme();
   setupThemeToggle();
   setupWorkTypeSelection();
+  setupSettingsTabs();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
@@ -2541,5 +2542,5 @@ document.addEventListener("DOMContentLoaded", function () {
     // ผูก Event ให้ปุ่มสลับหน้า On-site (Member / Leader)
     document.getElementById("role-member-btn")?.addEventListener("click", () => switchRole("member"));
     document.getElementById("role-leader-btn")?.addEventListener("click", () => switchRole("leader"));
-    
+
 });
