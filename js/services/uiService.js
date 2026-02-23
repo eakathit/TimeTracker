@@ -256,8 +256,7 @@ export function setupWorkTypeSelection() {
     });
 }
 
-// ==========================================
-// 5. ระบบ Settings Tabs (เมนูตั้งค่าแนวนอน)
+// 5. ระบบ Settings Tabs (Modern Pill UI & Animation)
 // ==========================================
 export function setupSettingsTabs() {
     const tabBtns = document.querySelectorAll(".settings-tab-btn");
@@ -267,24 +266,32 @@ export function setupSettingsTabs() {
 
     tabBtns.forEach((btn) => {
         btn.addEventListener("click", () => {
-            // 1. ล้างสถานะปุ่มทั้งหมด (เปลี่ยนเป็นสีเทา)
+            // 1. ล้างสถานะปุ่มทั้งหมด (เปลี่ยนกลับเป็นสีเทา)
             tabBtns.forEach((b) => {
-                b.classList.remove("text-sky-600", "font-bold", "border-sky-600");
-                b.classList.add("text-gray-500", "font-medium", "border-transparent");
+                b.classList.remove("bg-sky-50", "text-sky-600", "font-semibold", "shadow-sm", "border-sky-100");
+                b.classList.add("text-gray-500", "font-medium", "hover:bg-gray-100", "hover:text-gray-700", "border-transparent");
             });
 
-            // 2. ซ่อนเนื้อหาทั้งหมด
-            tabContents.forEach((c) => c.classList.add("hidden"));
+            // 2. ซ่อนและลบ Animation ออกจากเนื้อหาทั้งหมด
+            tabContents.forEach((c) => {
+                c.classList.add("hidden");
+                c.classList.remove("animate-tab"); // เคลียร์คลาส Animation ออกก่อน
+            });
 
-            // 3. ไฮไลท์ปุ่มที่ถูกคลิก (สีฟ้า)
-            btn.classList.remove("text-gray-500", "font-medium", "border-transparent");
-            btn.classList.add("text-sky-600", "font-bold", "border-sky-600");
+            // 3. ไฮไลท์ปุ่มที่ถูกคลิก (เปลี่ยนเป็นสีฟ้าทรงแคปซูล)
+            btn.classList.remove("text-gray-500", "font-medium", "hover:bg-gray-100", "hover:text-gray-700", "border-transparent");
+            btn.classList.add("bg-sky-50", "text-sky-600", "font-semibold", "shadow-sm", "border-sky-100");
 
-            // 4. แสดงเนื้อหาเป้าหมาย
+            // 4. แสดงเนื้อหาเป้าหมาย พร้อมทริกเกอร์ Animation ใหม่
             const targetId = btn.dataset.target;
             const targetContent = document.getElementById(targetId);
             if (targetContent) {
                 targetContent.classList.remove("hidden");
+                
+                // เทคนิค: บังคับให้เบราว์เซอร์รีเฟรช 1 รอบ (Reflow) เพื่อให้ Animation เล่นซ้ำทุกครั้งที่กด
+                void targetContent.offsetWidth; 
+                
+                targetContent.classList.add("animate-tab"); // เติมคลาส Animation เล่นแสง
             }
         });
     });
