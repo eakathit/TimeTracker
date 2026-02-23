@@ -81,6 +81,12 @@ import {
   fetchProjectData,
   exportProjectSummaryToExcelData,
 } from "./services/timesheetService.js";
+import { 
+    initializeNotifications, saveFCMToken, 
+    setupNotificationToggle, bindManualNotifyButton 
+} from './services/notificationService.js';
+import { loadSentReports, searchRecordForEdit, saveEditedRecord } from './services/recordService.js';
+window.loadSentReports = loadSentReports;
 
 document.addEventListener("DOMContentLoaded", function () {
   const loadScript = (src) => {
@@ -97,6 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
       document.head.appendChild(script);
     });
   };
+
+  initializeNotifications();
+  bindManualNotifyButton();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
@@ -121,158 +130,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   }
-
-  // เพิ่มโค้ดนี้เพื่อให้แจ้งเตือนเด้งตอนเปิดเว็บอยู่
-  if (messaging) {
-    messaging.onMessage((payload) => {
-      console.log("ได้รับข้อความขณะเปิดแอป: ", payload);
-
-      const title = payload.notification.title;
-      const body = payload.notification.body;
-
-      // 1. แสดงในแอป (Toast เดิมของคุณ)
-      showNotification(title + ": " + body, "info");
-
-      // 2. สั่งให้ระบบเด้งแถบแจ้งเตือนบนหน้าจอ (System Banner)
-      // หมายเหตุ: iOS ในโหมด PWA อาจจะไม่เด้งซ้ำถ้าเปิดหน้าจออยู่ แต่ในคอมและ Android จะเด้งครับ
-      if (Notification.permission === "granted") {
-        new Notification(title, {
-          body: body,
-          icon: "/icons/icon-192.png", // ใส่ path ไอคอนของคุณ
-        });
-      }
-    });
-  }
-
-  async function setupNotifications() {
-    try {
-      // 1. ตรวจสอบว่าเบราว์เซอร์รองรับ Firebase Messaging หรือไม่ (ป้องกัน Error บน iOS/Safari รุ่นเก่า)
-      const isSupported = await firebase.messaging.isSupported();
-      if (!isSupported) {
-        console.log("FCM ไม่รองรับบนเบราว์เซอร์นี้");
-        return;
-      }
-
-      const messaging = firebase.messaging();
-
-      // 2. ขอสิทธิ์แจ้งเตือนจากผู้ใช้
-      const permission = await Notification.requestPermission();
-
-      if (permission === "granted") {
-        console.log("ได้รับอนุญาตให้แจ้งเตือนเรียบร้อย");
-
-        // 3. ลงทะเบียน Service Worker (ไฟล์ firebase-messaging-sw.js ต้องอยู่ที่ root)
-        const registration = await navigator.serviceWorker.register(
-          "/firebase-messaging-sw.js",
-        );
-
-        // 4. รับ Token (VAPID Key ต้องตรงกับใน Firebase Console ของคุณ)
-        const currentToken = await messaging.getToken({
-          vapidKey:
-            "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s", // <--- ตรวจสอบรหัสนี้ให้ตรงกับใน Console
-          serviceWorkerRegistration: registration,
-        });
-
-        if (currentToken) {
-          console.log("FCM Token:", currentToken);
-          await saveFCMToken(currentToken);
-        } else {
-          console.warn(
-            "ไม่สามารถสร้าง Token ได้ กรุณาตรวจสอบการตั้งค่า Firebase",
-          );
-        }
-      } else if (permission === "denied") {
-        console.warn("ผู้ใช้ปฏิเสธการแจ้งเตือน");
-      }
-    } catch (err) {
-      console.error("เกิดข้อผิดพลาดในการตั้งค่า Notification:", err);
-    }
-  }
-
-  // ฟังก์ชันสำหรับขอ Token และบันทึกลง Database
-  async function saveFCMToken() {
-    if (!messaging || !currentUser) return;
-
-    try {
-      if (Notification.permission === "granted") {
-        // ★ แก้ไข: เรียกหา Service Worker ตัวหลัก (sw.js) ที่กำลังทำงานอยู่
-        const registration = await navigator.serviceWorker.ready;
-
-        const token = await messaging.getToken({
-          vapidKey:
-            "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s",
-          serviceWorkerRegistration: registration, // ส่ง sw.js เข้าไป
-        });
-
-        if (token) {
-          console.log("FCM Token Updated:", token);
-          await db.collection("users").doc(currentUser.uid).update({
-            fcmToken: token,
-            tokenUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error auto-saving token:", error);
-    }
-  }
-
-  // ฟังก์ชันตรวจสอบปุ่ม
-  function checkNotificationStatus() {
-    const btn = document.getElementById("enable-notify-btn");
-    if (!btn) return;
-
-    if (Notification.permission === "granted") {
-      btn.classList.add("hidden"); // อนุญาตแล้ว ซ่อนปุ่ม
-    } else if (Notification.permission === "denied") {
-      btn.classList.remove("hidden");
-      btn.classList.replace("bg-indigo-500", "bg-gray-400");
-      btn.disabled = true;
-      btn.querySelector("span").textContent = "ถูกปิดกั้นการแจ้งเตือน";
-    } else {
-      btn.classList.remove("hidden"); // ยังไม่เลือก โชว์ปุ่ม
-    }
-  }
-
-  // ผูก Event ปุ่มกด
-  const notifyBtn = document.getElementById("enable-notify-btn");
-  if (notifyBtn) {
-    notifyBtn.addEventListener("click", async () => {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          const registration = await navigator.serviceWorker.ready; // ★ เพิ่มบรรทัดนี้
-
-          const token = await messaging.getToken({
-            vapidKey:
-              "BE54Oa8UjJ0PUlUKsN879Qu27UdEyEMpq91Zd_VZeez403fM2xRAspp3XeUTl2iLSh90ip0uRXONGncKOIgw37s",
-            serviceWorkerRegistration: registration, // ★ ใส่เพิ่ม
-          });
-
-          if (token) {
-            console.log("Token:", token);
-            // บันทึกลง Firestore
-            if (currentUser) {
-              await db.collection("users").doc(currentUser.uid).update({
-                fcmToken: token,
-              });
-            }
-          }
-          checkNotificationStatus(); // อัปเดตปุ่ม
-        }
-      } catch (error) {
-        console.error("Notify Error:", error);
-        alert("เกิดข้อผิดพลาด: " + error.message);
-      }
-    });
-  }
-
-  const LEAVE_TYPE_MAP = {
-    annual: "ลาพักร้อน",
-    sick: "ลาป่วย",
-    personal: "ลากิจ",
-    maternity: "ลาคลอด", // เพิ่มบรรทัดนี้
-  };
 
   // --- UI Elements ---
   const loadingSpinner = document.getElementById("loading-spinner");
@@ -665,6 +522,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
+    // 5. จัดการปุ่ม Toggle แจ้งเตือน (เรียกใช้จาก Service)
+    setupNotificationToggle(userData);
     // --------------------------------------------------------
     // 6. เตรียมแสดงผล (UI State & Navigation)
     // --------------------------------------------------------
@@ -1122,31 +981,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
 
-    const adminSearchResultsContainer = document.getElementById(
-      "search-results-container",
-    );
-    if (adminSearchResultsContainer) {
-      adminSearchResultsContainer.addEventListener("click", (e) => {
-        // ตรวจสอบว่าปุ่มที่คลิก (หรือแม่ของมัน) คือปุ่ม "แก้ไข" หรือไม่
-        const editBtn = e.target.closest(".edit-record-btn");
-        // ตรวจสอบว่าปุ่มที่คลิก (หรือแม่ของมัน) คือปุ่ม "เพิ่ม" หรือไม่
-        const addBtn = e.target.closest(".add-record-btn");
-
-        if (editBtn) {
-          // ถ้าใช่ปุ่ม "แก้ไข"
-          e.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้น
-          const docId = editBtn.dataset.docId;
-          openEditModal(docId, null, null); // เรียก Modal โดยใช้ docId
-        } else if (addBtn) {
-          // ถ้าใช่ปุ่ม "เพิ่ม"
-          e.preventDefault(); // ป้องกันพฤติกรรมเริ่มต้น
-          const userId = addBtn.dataset.userId;
-          const dateStr = addBtn.dataset.dateStr;
-          openEditModal(null, userId, dateStr); // เรียก Modal โดยใช้ userId และ date
-        }
-      });
-    }
-
     const leaveHistorySearchBtn = document.getElementById(
       "leave-history-search-btn",
     );
@@ -1542,81 +1376,6 @@ document.addEventListener("DOMContentLoaded", function () {
     customTimeEndInput.value = "";
   }
 
-  async function loadSentReports() {
-    // 1. ตรวจสอบความพร้อมของข้อมูล (ป้องกัน Console Error)
-    if (!currentUser || !currentUser.uid || !currentUserData) {
-      return; // หยุดทำงานถ้าข้อมูล User ยังไม่พร้อม
-    }
-
-    const container = document.getElementById("sent-reports-container");
-    if (!container) return;
-
-    // 2. ระบุวันที่ (ถ้าไม่มีให้ใช้วันที่ปัจจุบัน)
-    const selectedDate = reportDateInput.value || toLocalDateKey(new Date());
-    const docId = `${currentUser.uid}_${selectedDate}`;
-
-    // แสดง Loading สั้นๆ
-    container.innerHTML = `
-        <div class="flex justify-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-500"></div>
-        </div>
-    `;
-
-    try {
-      // 3. ดึงข้อมูลจาก work_records
-      const doc = await db.collection("work_records").doc(docId).get();
-      let htmlContent = "";
-
-      if (doc.exists) {
-        const data = doc.data();
-        // ตรวจสอบทั้งอาเรย์ใหม่ (reports) และฟิลด์เก่า (report) เพื่อความยืดหยุ่น
-        const reportsArray = data.reports || (data.report ? [data.report] : []);
-
-        if (reportsArray.length > 0) {
-          reportsArray.forEach((item, index) => {
-            // แปลง object เป็น string เพื่อใช้ใน function ลบ
-            const itemData = JSON.stringify(item).replace(/"/g, "&quot;");
-
-            htmlContent += `
-                        <div class="card !p-4 border-l-4 border-sky-400 mb-3 shadow-sm bg-white relative group">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="bg-sky-100 text-sky-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                                    No.${index + 1}
-                                </span>
-                                <button class="delete-report-btn text-gray-300 hover:text-red-500 transition-colors" 
-                                        onclick="deleteReportItem('${docId}', ${item.id || index})">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <h4 class="font-bold text-gray-800 text-base">${item.workType}</h4>
-                            <div class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-600">
-                                <div class="flex items-center">
-                                    <span class="w-16 text-gray-400">Project:</span>
-                                    <span class="font-medium text-gray-700">${item.project}</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span class="w-16 text-gray-400">Period:</span>
-                                    <span class="font-medium text-gray-700">${item.duration}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-          });
-        } else {
-          htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
-        }
-      } else {
-        htmlContent = `<div class="text-center py-8 text-gray-400 text-sm">ยังไม่มีรายงานสำหรับวันนี้</div>`;
-      }
-      container.innerHTML = htmlContent;
-    } catch (error) {
-      console.error("Error loading reports:", error);
-      container.innerHTML = `<div class="text-center py-8 text-red-400 text-sm">โหลดข้อมูลไม่สำเร็จ</div>`;
-    }
-  }
-
   // ฟังก์ชันเสริมแสดงสถานะไม่มีข้อมูลให้ดูสวยงาม
   function showEmptyState() {
     return `
@@ -1772,156 +1531,6 @@ document.addEventListener("DOMContentLoaded", function () {
   document
     .getElementById("cal-details-container")
     .addEventListener("click", handleCalendarDetailClick);
-
-  // --- จบส่วนโค้ด Details ---
-
-  saveEditBtn.addEventListener("click", async () => {
-    const docId = editDocIdInput.value;
-    const checkinStr = editCheckinTimeInput.value;
-    const checkoutStr = editCheckoutTimeInput.value;
-
-    if (!docId || !checkinStr) {
-      alert("ข้อมูล ID หรือ เวลา Check-in ไม่ถูกต้อง");
-      return;
-    }
-
-    saveEditBtn.disabled = true;
-    saveEditBtn.textContent = "กำลังบันทึก...";
-
-    try {
-      // ดึง userId และ dateKey จาก docId
-      const [userId, dateKey] = docId.split("_");
-      const baseDate = new Date(dateKey + "T00:00:00"); // ใช้วันที่จาก docId เป็นหลัก
-
-      // --- 1. รวบรวมข้อมูล Report ---
-      const workType = editModalWorkTypeSelectedText.textContent;
-      const project = editModalProjectSelectedText.textContent;
-      let duration = editModalDurationSelectedText.textContent;
-
-      if (duration === "SOME TIME") {
-        const startTime = editModalCustomTimeStartInput.value;
-        const endTime = editModalCustomTimeEndInput.value;
-
-        if (startTime && endTime) {
-          // บันทึกรูปแบบเวลา เช่น "09:00 - 11:00"
-          duration = `${startTime} - ${endTime}`;
-        } else {
-          // 1. เปลี่ยนข้อความเป็นภาษาอังกฤษ เพื่อไม่ให้ UI กลับเป็นไทย
-          duration = "SOME TIME (Incomplete)";
-
-          // 2. (แนะนำ) เพิ่มการแจ้งเตือนให้ผู้ใช้กรอกเวลาให้ครบ และหยุดการทำงานไม่ให้บันทึก
-          if (typeof showNotification === "function") {
-            showNotification(
-              "Please select both start and end times.",
-              "warning",
-            );
-          } else {
-            alert("Please select both start and end times.");
-          }
-          return; // หยุดการทำงานของฟังก์ชันบันทึกทันทีเพื่อให้ผู้ใช้ไปแก้เวลาก่อน
-        }
-      }
-
-      const reportData = {
-        workType: workType.includes("...") ? null : workType,
-        project: project.includes("...") ? null : project,
-        duration: duration.includes("...") ? null : duration,
-        submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      // --- 2. ตรวจสอบว่าเป็นการ "เพิ่มใหม่" หรือ "แก้ไข" ---
-      const workRecordRef = db.collection("work_records").doc(docId);
-      const doc = await workRecordRef.get();
-      let isCreatingNew = !doc.exists;
-
-      let dataToSave = {};
-      const checkinTimestamp = firebase.firestore.Timestamp.fromDate(
-        new Date(checkinStr),
-      );
-      const checkoutTimestamp = checkoutStr
-        ? firebase.firestore.Timestamp.fromDate(new Date(checkoutStr))
-        : null;
-
-      if (isCreatingNew) {
-        // --- 3A. Logic สำหรับ "การสร้างใหม่" (Add) ---
-        dataToSave = {
-          userId: userId,
-          date: firebase.firestore.Timestamp.fromDate(baseDate), // ใช้วันที่ที่เลือก
-          checkIn: {
-            timestamp: checkinTimestamp,
-            location: null, // Admin add, no location
-            accuracy: null,
-            workType: "in_factory", // Default for admin
-            onSiteDetails: editOnsiteDetailsInput.value || null,
-            photoUrl: null,
-          },
-          checkOut: checkoutTimestamp
-            ? {
-                timestamp: checkoutTimestamp,
-                location: null,
-              }
-            : null,
-          status: checkoutTimestamp ? "completed" : "checked_in",
-          report: reportData.workType ? reportData : null, // เพิ่ม report ถ้ามีการกรอก
-          overtime: null, // ต้องคำนวณ
-        };
-
-        // คำนวณ OT ถ้าสถานะเป็น completed
-        if (dataToSave.status === "completed") {
-          const { regularWorkHours, overtimeHours } = calculateWorkHours(
-            new Date(checkinStr),
-            new Date(checkoutStr),
-          );
-          dataToSave.overtime = { hours: overtimeHours };
-        }
-
-        // ใช้ .set() สำหรับการสร้างเอกสารใหม่
-        await workRecordRef.set(dataToSave);
-      } else {
-        // --- 3B. Logic สำหรับ "การแก้ไข" (Edit) ---
-        const existingRecord = doc.data();
-
-        // ใช้ .update() เพื่อ merge ข้อมูล, ป้องกันข้อมูลเดิม (เช่น location) หาย
-        dataToSave = {
-          "checkIn.timestamp": checkinTimestamp,
-          "checkIn.onSiteDetails": editOnsiteDetailsInput.value || null, // อัปเดต onSiteDetails
-          checkOut: checkoutTimestamp
-            ? {
-                timestamp: checkoutTimestamp,
-                location: existingRecord.checkOut?.location || null, // ใช้ location เดิมถ้ามี
-              }
-            : null,
-          status: checkoutTimestamp ? "completed" : "checked_in",
-          report: reportData.workType ? reportData : existingRecord.report, // อัปเดต report
-        };
-
-        // คำนวณ OT ถ้าสถานะเป็น completed
-        if (dataToSave.status === "completed") {
-          const { regularWorkHours, overtimeHours } = calculateWorkHours(
-            new Date(checkinStr),
-            new Date(checkoutStr),
-          );
-          dataToSave["overtime"] = { hours: overtimeHours }; // อัปเดต field overtime
-        } else {
-          dataToSave["overtime"] = null; // ล้างค่า OT ถ้า check-out ถูกลบ
-        }
-
-        // ใช้ .update() สำหรับการแก้ไขเอกสารเดิม
-        await workRecordRef.update(dataToSave);
-      }
-
-      // --- 4. Success ---
-      showNotification("บันทึกข้อมูลสำเร็จ!", "success");
-      editModal.classList.add("hidden");
-      searchRecordBtn.click(); // กดค้นหาอีกครั้งเพื่อรีเฟรชข้อมูลที่แสดง
-    } catch (error) {
-      console.error("Error saving record:", error);
-      showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
-    } finally {
-      saveEditBtn.disabled = false;
-      saveEditBtn.textContent = "บันทึกการแก้ไข";
-    }
-  });
 
   // เพิ่ม Event Listener ให้ปุ่ม Cancel (โค้ดนี้น่าจะมีอยู่แล้ว)
   cancelEditBtn.addEventListener("click", () => {
@@ -2210,43 +1819,31 @@ document.addEventListener("DOMContentLoaded", function () {
     tsFilterEnd.value = date.toISOString().split("T")[0];
   }
 
-  // --- [NEW] Daily Audit Logic (แก้ไขแล้ว) ---
+  // --- [NEW] Daily Audit Logic (แก้ไขให้ตรงกับ UI Dropdown) ---
   const auditDatePicker = document.getElementById("audit-date-picker");
   const auditTableBody = document.getElementById("audit-table-body");
-  const auditFilterBtns = document.querySelectorAll(".audit-filter-btn");
 
-  // สร้างตัวแปร Global ไว้ให้ dashboardService มองเห็น
-  window.currentAuditFilter = "all";
-
+  // 1. จัดการวันที่และโหลดข้อมูล
   if (auditDatePicker) {
-    // ตั้งค่าวันที่ปัจจุบัน (แต่ยังไม่สั่งดึงข้อมูลจนกว่าจะล็อกอินเสร็จ)
+    // ตั้งค่าวันที่ปัจจุบัน
     auditDatePicker.value = new Date().toISOString().split("T")[0];
 
-    // เมื่อมีการเปลี่ยนวันที่ด้วยตัวเอง
+    // เมื่อมีการเปลี่ยนวันที่
     auditDatePicker.addEventListener("change", () => {
-      if (typeof loadDailyAuditData === "function")
-        loadDailyAuditData(currentUser, currentUserData);
+        if (typeof loadDailyAuditData === "function") loadDailyAuditData(currentUser, currentUserData);
     });
   }
-
-  // ผูกปุ่ม Filter
-  auditFilterBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      // เปลี่ยนสีปุ่ม
-      auditFilterBtns.forEach((b) => {
-        b.classList.remove("bg-sky-600", "text-white");
-        b.classList.add("bg-gray-100", "text-gray-600");
+  // 2. ★ ผูก Event ให้ Dropdown ตัวกรองประเภทงาน ★
+  const auditTypeFilterDropdown = document.getElementById("audit-type-filter");
+  if (auditTypeFilterDropdown) {
+      auditTypeFilterDropdown.addEventListener("change", () => {
+          // สั่งโหลดตารางใหม่ทุกครั้งที่เปลี่ยน Dropdown
+          if (typeof loadDailyAuditData === "function") {
+              loadDailyAuditData(currentUser, currentUserData);
+          }
       });
-      btn.classList.remove("bg-gray-100", "text-gray-600");
-      btn.classList.add("bg-sky-600", "text-white");
-      // ★ 1. ใช้ window. เพื่อให้ Service ไฟล์อื่นมองเห็น
-      window.currentAuditFilter = btn.dataset.filter; 
-      // ★ 2. ส่ง currentUser และ currentUserData ไปด้วยเสมอ!
-      if (typeof loadDailyAuditData === "function") {
-          loadDailyAuditData(currentUser, currentUserData); 
-      }
-    });
-  });
+  }
+
 
   async function loadTimesheetSummary() {
     const userId = document.getElementById("summary-stat-user-select").value;
@@ -2546,77 +2143,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // เรียกใช้งานทันทีเมื่อโหลดหน้าเว็บ
   initTheme();
-
-  // 3. [เพิ่ม] ฟังก์ชันสำหรับค้นหาข้อมูลเมื่อคลิกปุ่ม
-  searchRecordBtn.addEventListener("click", async () => {
-    const userId = editUserSelect.value;
-    const dateStr = editDateSelect.value; // YYYY-MM-DD
-
-    if (!userId || !dateStr) {
-      searchResultsContainer.innerHTML =
-        '<p class="text-sm text-center text-red-500 py-2">กรุณาเลือกพนักงานและวันที่</p>';
-      return;
-    }
-
-    searchResultsContainer.innerHTML =
-      '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
-
-    try {
-      const docId = `${userId}_${dateStr}`;
-      const workRecordRef = db.collection("work_records").doc(docId);
-      const doc = await workRecordRef.get();
-
-      if (doc.exists) {
-        // --- กรณีพบข้อมูล (เหมือนเดิม) ---
-        const record = doc.data();
-        const report = record.report || {};
-
-        const checkinTime = record.checkIn.timestamp
-          .toDate()
-          .toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-        const checkoutTime = record.checkOut
-          ? record.checkOut.timestamp.toDate().toLocaleTimeString("th-TH", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "-";
-        const reportInfo = report.workType
-          ? `${report.workType} (${report.project || "N/A"})`
-          : "ยังไม่ส่งรายงาน";
-
-        searchResultsContainer.innerHTML = `
-                                <div class="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-                                    <div class="flex justify-between items-start">
-                                        <p class="font-semibold text-gray-800">ข้อมูลที่พบ</p>
-                                        <button data-doc-id="${doc.id}" class="edit-record-btn text-sm bg-sky-100 text-sky-700 font-semibold px-3 py-1 rounded-lg hover:bg-sky-200">
-                                            แก้ไข
-                                        </button>
-                                    </div>
-                                    <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                                        <div><span class="text-gray-500">เข้า:</span> <span class="font-semibold text-green-600">${checkinTime}</span></div>
-                                        <div><span class="text-gray-500">ออก:</span> <span class="font-semibold text-red-500">${checkoutTime}</span></div>
-                                        <div class="col-span-2 mt-1"><span class="text-gray-500">รายงาน:</span> <span class="font-medium text-gray-700">${reportInfo}</span></div>
-                                    </div>
-                                </div>
-                            `;
-      } else {
-        // --- [แก้ไข] กรณีไม่พบข้อมูล -> แสดงปุ่ม "เพิ่ม" ---
-        searchResultsContainer.innerHTML = `
-                                <p class="text-sm text-center text-yellow-600 py-2">ไม่พบข้อมูลการลงเวลาสำหรับผู้ใช้และวันที่ที่เลือก</p>
-                                <button 
-                                    data-user-id="${userId}" 
-                                    data-date-str="${dateStr}" 
-                                    class="add-record-btn mt-2 w-full btn-primary py-2 text-sm">
-                                    + เพิ่มข้อมูลสำหรับวันนี้
-                                </button>
-                            `;
-      }
-    } catch (error) {
-      console.error("Error searching record:", error);
-      searchResultsContainer.innerHTML =
-        '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการค้นหา</p>';
-    }
-  });
 
   // ==========================================
   // 🌟 ผูก Event ปุ่มในหน้า Payroll (เชื่อมไปที่ Service)
@@ -3389,4 +2915,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  // ==========================================
+    // 🌟 ผูก Event สำหรับระบบ Report & Record Editor
+    // ==========================================
+    document.getElementById("report-date-input")?.addEventListener("change", loadSentReports);
+    document.getElementById("search-record-btn")?.addEventListener("click", searchRecordForEdit);
+    document.getElementById("save-edit-btn")?.addEventListener("click", saveEditedRecord);
+
 });

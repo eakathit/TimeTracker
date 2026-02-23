@@ -1257,7 +1257,9 @@ const otReason = document.getElementById("ot-reason");
 
   // ฟังก์ชันเปิด Modal ขอ OT (ฝั่ง User) (เวอร์ชันแก้ไข: ใช้วิธี format วันที่/เวลา ที่ปลอดภัยกว่า)
   const openOtModal = async () => {
-    if (!currentUser) return;
+    const user = auth.currentUser; 
+    if (!user) return;             
+
     const today = toLocalDateKey(new Date());
     const docId = `${user.uid}_${today}`;
 
@@ -1304,21 +1306,18 @@ const otReason = document.getElementById("ot-reason");
   cancelOtBtn.addEventListener("click", closeOtModal);
   otOverlay.addEventListener("click", closeOtModal);
 
-  // Event Listener สำหรับปุ่ม "ส่งคำขอ OT" (เวอร์ชันแก้ไข: ตรวจสอบทุกช่อง)
+  // Event Listener สำหรับปุ่ม "ส่งคำขอ OT" 
   submitOtBtn.addEventListener("click", async () => {
-    if (!user || !currentUserData) return;
+    const user = auth.currentUser; // ✨ 1. ดึงข้อมูลผู้ใช้ปัจจุบัน
+    if (!user) return showNotification("กรุณาเข้าสู่ระบบ", "error");
 
     const startTimeStr = otStartTime.value;
     const endTimeStr = otEndTime.value;
     const reason = otReason.value.trim();
     const dateStr = otRequestDate.value;
 
-    // [ ★ แก้ไข ★ ] ตรวจสอบทุกช่อง (date, start, end, reason)
     if (!dateStr || !startTimeStr || !endTimeStr || !reason) {
-      showNotification(
-        "กรุณากรอกข้อมูล วันที่, เวลาเริ่มต้น, เวลาสิ้นสุด และเหตุผล",
-        "warning",
-      );
+      showNotification("กรุณากรอกข้อมูล วันที่, เวลาเริ่มต้น, เวลาสิ้นสุด และเหตุผล", "warning");
       return;
     }
 
@@ -1331,26 +1330,30 @@ const otReason = document.getElementById("ot-reason");
     submitOtBtn.textContent = "กำลังส่ง...";
 
     try {
+      // ✨ 2. ดึงข้อมูลโปรไฟล์ล่าสุดของพนักงานจาก Database สดๆ
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      const currentUserData = userDoc.exists ? userDoc.data() : {};
+
       // สร้าง Collection ใหม่สำหรับเก็บคำขอ OT
       const otRequestData = {
-        userId: currentUser.uid,
-        userName: currentUserData.fullName,
-        userPhoto: currentUserData.profileImageUrl || currentUser.photoURL,
-        department: currentUserData.department,
+        userId: user.uid, // ✨ 3. ใช้ user.uid
+        userName: currentUserData.fullName || user.displayName || "Unknown",
+        userPhoto: currentUserData.profileImageUrl || user.photoURL || "https://placehold.co/100x100",
+        department: currentUserData.department || "-",
         date: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
         startTime: startTimeStr,
         endTime: endTimeStr,
         reason: reason,
         status: "pending",
         submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        workRecordDocId: `${currentUser.uid}_${dateStr}`, // อ้างอิงถึงเอกสาร Check-in
+        workRecordDocId: `${user.uid}_${dateStr}`,
       };
 
       await db.collection("ot_requests").add(otRequestData);
 
       showNotification("ส่งคำขอ OT สำเร็จ!", "success");
       closeOtModal();
-      requestOtBtn.classList.add("hidden"); // ซ่อนปุ่มหลังจากส่งสำเร็จ
+      requestOtBtn.classList.add("hidden"); 
     } catch (error) {
       console.error("Error submitting OT request:", error);
       showNotification("เกิดข้อผิดพลาด: " + error.message, "error");
