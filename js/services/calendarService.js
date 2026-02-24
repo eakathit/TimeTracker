@@ -263,35 +263,36 @@ export async function loadAndDisplayHolidays() {
             
             if (type === 'holidays') {
                 return `
-                <div class="flex items-center justify-between p-3 bg-white border border-red-100 rounded-xl shadow-sm hover:shadow-md hover:border-red-200 transition-all group">
+                <div class="flex items-center justify-between p-3 border border-red-200 rounded-xl shadow-sm hover:shadow-md hover:border-red-300 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-red-50 flex flex-col items-center justify-center text-red-600 border border-red-100">
+                        <div class="w-10 h-10 rounded-lg bg-red-100 flex flex-col items-center justify-center text-red-600 border border-red-200">
                             <span class="text-[10px] font-bold uppercase">${dayName}</span>
                             <span class="text-sm font-bold leading-none">${d}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-gray-700">${thaiDate}</p>
+                            <p class="text-sm font-bold text-gray-800">${thaiDate}</p>
                             <p class="text-[10px] text-red-500 font-medium">Holiday</p>
                         </div>
                     </div>
-                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
+                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>`;
             } else {
+                // เปลี่ยนพื้นหลังเป็นสีเขียว (bg-green-50) ให้เข้ากับปุ่มเพิ่มเสาร์ทำงาน
                 return `
-                <div class="flex items-center justify-between p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group">
+                <div class="flex items-center justify-between p-3 border border-green-200 rounded-xl shadow-sm hover:shadow-md hover:border-green-300 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex flex-col items-center justify-center text-emerald-600 border border-emerald-100">
+                        <div class="w-10 h-10 rounded-lg bg-green-100 flex flex-col items-center justify-center text-green-700 border border-green-200">
                             <span class="text-[10px] font-bold uppercase">${dayName}</span>
                             <span class="text-sm font-bold leading-none">${d}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-gray-700">${thaiDate}</p>
-                            <p class="text-[10px] text-emerald-500 font-medium">Work Day</p>
+                            <p class="text-sm font-bold text-gray-800">${thaiDate}</p>
+                            <p class="text-[10px] text-green-600 font-medium">Working Saturday</p>
                         </div>
                     </div>
-                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
+                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>`;
