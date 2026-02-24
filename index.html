@@ -1237,85 +1237,89 @@
                 </div>
 
                 <div id="tab-project" class="ts-tab-content hidden space-y-6 animate-fade-in">
-                    <div class="card">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-lg text-gray-800">Project Summary</h3>
-                            <button id="export-project-summary-btn"
-                                class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Export Project Report
-                            </button>
-                        </div>
+    
+    <div class="card">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-lg text-gray-800">Project Summary</h3>
+            <button id="export-project-summary-btn"
+                class="text-sm bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Project Report
+            </button>
+        </div>
 
-                        <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 mb-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Report Month</label>
-                                    <input type="month" id="project-summary-month"
-                                        class="w-full mt-1 p-2.5 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Project</label>
-                                    <select id="project-summary-select"
-                                        class="w-full mt-1 p-2.5 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none">
-                                        <option value="">กำลังโหลดรายชื่อโครงการ...</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="project-summary-results" class="mt-4 max-h-96 overflow-y-auto">
-                            <p class="text-sm text-center text-gray-400 py-10">Please select a month and project to view
-                                data</p>
-                        </div>
-                        
-                        <div id="project-report-tracking-section" class="mt-6 pt-6 border-t border-gray-100 hidden animate-fade-in">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                                <div>
-                                    <h4 class="font-bold text-gray-800 flex items-center gap-2 text-lg">
-                                        <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        สถานะการส่ง Daily Report
-                                    </h4>
-                                    <p class="text-xs text-gray-500 mt-1">เทียบจำนวนวันที่เข้างานกับจำนวนวันที่กรอก Report</p>
-                                </div>
-                                
-                                <div class="relative w-full sm:w-64">
-                                    <input type="text" id="project-employee-search" placeholder="ค้นหาชื่อพนักงาน..." 
-                                        class="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl shadow-md focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm transition-shadow">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left border-collapse">
-                                        <thead class="bg-sky-50 border-b border-sky-100 text-xs uppercase text-sky-800 font-bold tracking-wider">
-                                            <tr>
-                                                <th class="px-6 py-4 text-left">พนักงาน</th>
-                                                <th class="px-4 py-4 text-center">มาทำงาน (วัน)</th>
-                                                <th class="px-4 py-4 text-center">ส่ง Report (ครั้ง)</th>
-                                                <th class="px-6 py-4 text-left">ความคืบหน้า</th>
-                                                <th class="px-4 py-4 text-center">สถานะ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="project-report-tracking-body" class="divide-y divide-gray-100 text-sm text-gray-700">
-                                            </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+        <div class="p-4 bg-purple-50 rounded-xl border border-purple-100 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Report Month</label>
+                    <input type="month" id="project-summary-month"
+                        class="w-full mt-1 p-2.5 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none">
                 </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700">Project</label>
+                    <select id="project-summary-select"
+                        class="w-full mt-1 p-2.5 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none">
+                        <option value="">กำลังโหลดรายชื่อโครงการ...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="project-summary-results" class="mt-4 max-h-96 overflow-y-auto">
+            <p class="text-sm text-center text-gray-400 py-10">Please select a month and project to view data</p>
+        </div>
+    </div>
+
+   <div class="card">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div class="flex-1">
+                <h3 class="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    สถานะการส่ง Daily Report รายเดือน
+                </h3>
+                <p class="text-xs text-gray-500 mt-1">สรุปจำนวนวันที่เข้างานเทียบกับจำนวนวันที่ส่งรายงาน</p>
+            </div>
+            
+            <div class="flex flex-row items-center w-full md:w-auto gap-2 sm:gap-3">
+                <div class="w-1/2 md:w-48">
+                    <select id="project-employee-search" 
+                        class="w-full p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm font-medium text-gray-700 transition-shadow">
+                        <option value="">พนักงานทั้งหมด</option>
+                    </select>
+                </div>
+
+                <div class="w-1/2 md:w-40">
+                    <input type="month" id="report-tracking-month" 
+                        class="w-full p-2.5 bg-sky-50 border border-sky-200 rounded-xl shadow-sm focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm font-medium text-sky-800 transition-shadow">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-sky-50 border-b border-sky-100 text-xs uppercase text-sky-800 font-bold tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4 text-left">พนักงาน</th>
+                            <th class="px-4 py-4 text-center">มาทำงาน (วัน)</th>
+                            <th class="px-4 py-4 text-center">ส่ง Report (ครั้ง)</th>
+                            <th class="px-6 py-4 text-left">ความคืบหน้า</th>
+                            <th class="px-4 py-4 text-center">สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="project-report-tracking-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">กรุณาเลือกเดือนเพื่อดูข้อมูล</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
                 
                 <div id="tab-payroll" class="ts-tab-content hidden space-y-6 animate-fade-in">
                     <div class="card">

@@ -517,9 +517,6 @@ export async function fetchProjectData() {
 
         resultsContainer.innerHTML = matchCount === 0 ? '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลโปรเจกต์ที่เลือกในเดือนนี้</p>' : resultsHTML + "</div>";
 
-        // *** เรียกใช้ฟังก์ชันสร้างตาราง Tracking ตรงนี้ ***
-        await renderReportTracking(querySnapshot, selectedProject, usersMap);
-
     } catch (error) { 
         console.error("Error:", error); 
         resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; 
@@ -527,112 +524,157 @@ export async function fetchProjectData() {
 }
 
 // ==========================================
-// ฟังก์ชันใหม่: สร้างตารางสถานะการส่ง Report
+// ฟังก์ชันใหม่: ดึงข้อมูลสถานะ Daily Report รายเดือน (แยกอิสระ)
 // ==========================================
-async function renderReportTracking(recordsSnapshot, projectId, usersMap) {
-    const trackingSection = document.getElementById('project-report-tracking-section');
+export async function fetchReportTrackingData() {
+    const monthInput = document.getElementById("report-tracking-month");
     const tbody = document.getElementById('project-report-tracking-body');
     
-    if (!trackingSection || !tbody) return;
+    if (!monthInput || !tbody) return;
 
-    const employeeStats = {};
-
-    // Grouping Data นับจำนวนวันทำงานและการส่งรายงาน
-    recordsSnapshot.forEach(doc => {
-        const data = doc.data();
-        const uid = data.userId;
-        
-        if (!employeeStats[uid]) {
-            employeeStats[uid] = { 
-                name: usersMap[uid] || uid, 
-                daysWorked: 0, 
-                reportsSubmitted: 0 
-            };
-        }
-
-        // เช็คว่าวันนี้นับเป็นวันทำงาน (มีการ Check-in)
-        if (data.checkIn) {
-            employeeStats[uid].daysWorked += 1;
-        }
-
-        // เช็คว่ามีการส่ง Report และมี Project ที่ตรงกับที่เลือก
-        const reports = data.reports || (data.report ? [data.report] : []);
-        const hasMatchingReport = reports.some(r => !projectId || projectId === 'all' || r.project === projectId);
-        
-        if (hasMatchingReport) {
-            employeeStats[uid].reportsSubmitted += 1;
-        }
-    });
-
-    // Render HTML ลงตาราง
-    tbody.innerHTML = '';
-    const uids = Object.keys(employeeStats);
-
-    if (uids.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">ไม่พบข้อมูลการทำงานในรอบเดือนนี้</td></tr>`;
-        trackingSection.classList.remove('hidden');
+    const selectedMonth = monthInput.value;
+    if (!selectedMonth) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">กรุณาเลือกเดือนเพื่อดูข้อมูล</td></tr>';
         return;
     }
 
-    // วนลูปสร้างแถวตาราง และจัดเรียงตามชื่อตัวอักษร
-    uids.sort((a, b) => employeeStats[a].name.localeCompare(employeeStats[b].name)).forEach(uid => {
-        const stat = employeeStats[uid];
-        // คำนวณเปอร์เซ็นต์
-        const percent = stat.daysWorked > 0 ? Math.round((stat.reportsSubmitted / stat.daysWorked) * 100) : 0;
-        
-        // กำหนดสีสถานะตาม % การส่ง
-        let statusBadge = '';
-        let progressColor = '';
-        
-        if (percent >= 100) {
-            statusBadge = `<span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold tracking-wide">ครบถ้วน</span>`;
-            progressColor = 'bg-green-500';
-        } else if (percent >= 70) {
-            statusBadge = `<span class="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold tracking-wide">รออัปเดต</span>`;
-            progressColor = 'bg-orange-400';
-        } else {
-            statusBadge = `<span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold tracking-wide">ขาดส่งเยอะ</span>`;
-            progressColor = 'bg-red-500';
+    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-sky-500">กำลังโหลดข้อมูลสถานะ Report...</td></tr>';
+
+    const [yearNum, monthNum] = selectedMonth.split("-").map(Number);
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+
+    try {
+        // ดึงข้อมูลพนักงานและประวัติการทำงานในเดือนที่เลือกมาพร้อมกัน
+        const [usersSnapshot, recordsSnapshot] = await Promise.all([
+            db.collection("users").get(),
+            db.collection("work_records")
+                .where("date", ">=", startDate)
+                .where("date", "<=", endDate)
+                .get()
+        ]);
+
+        const usersMap = {};
+        usersSnapshot.forEach(doc => {
+            usersMap[doc.id] = doc.data().fullName || 'Unknown User';
+        });
+
+        const employeeStats = {};
+
+        recordsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const uid = data.userId;
+            
+            if (!employeeStats[uid]) {
+                employeeStats[uid] = { 
+                    name: usersMap[uid] || uid, 
+                    daysWorked: 0, 
+                    reportsSubmitted: 0 
+                };
+            }
+
+            // ถือว่ามาทำงานถ้ามีข้อมูล checkIn
+            if (data.checkIn) employeeStats[uid].daysWorked += 1;
+
+            // เช็คว่าวันนั้นส่ง Report อย่างน้อย 1 ครั้งหรือไม่ (นับภาพรวม ไม่แยกโปรเจกต์)
+            const reports = data.reports || (data.report ? [data.report] : []);
+            if (reports.length > 0) {
+                employeeStats[uid].reportsSubmitted += 1;
+            }
+        });
+
+        tbody.innerHTML = '';
+        const uids = Object.keys(employeeStats);
+
+        if (uids.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">ไม่พบข้อมูลการทำงานในรอบเดือนนี้</td></tr>`;
+            return;
         }
 
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-sky-50/50 transition-colors employee-track-row border-b border-gray-100 last:border-0';
-        tr.innerHTML = `
-            <td class="px-6 py-4 font-semibold text-gray-800">${stat.name}</td>
-            <td class="px-4 py-4 text-center text-gray-600 font-medium">${stat.daysWorked}</td>
-            <td class="px-4 py-4 text-center font-bold ${stat.reportsSubmitted > 0 ? 'text-sky-600' : 'text-gray-400'}">${stat.reportsSubmitted}</td>
-            <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-full bg-gray-100 rounded-full h-2 shadow-inner">
-                        <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(percent, 100)}%"></div>
+        // Render HTML
+        uids.sort((a, b) => employeeStats[a].name.localeCompare(employeeStats[b].name)).forEach(uid => {
+            const stat = employeeStats[uid];
+            const percent = stat.daysWorked > 0 ? Math.round((stat.reportsSubmitted / stat.daysWorked) * 100) : 0;
+            
+            let statusBadge = '';
+            let progressColor = '';
+            
+            if (percent >= 100) {
+                statusBadge = `<span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold tracking-wide">ครบถ้วน</span>`;
+                progressColor = 'bg-green-500';
+            } else if (percent >= 70) {
+                statusBadge = `<span class="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold tracking-wide">รออัปเดต</span>`;
+                progressColor = 'bg-orange-400';
+            } else {
+                statusBadge = `<span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold tracking-wide">ขาดส่งเยอะ</span>`;
+                progressColor = 'bg-red-500';
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-sky-50/50 transition-colors employee-track-row border-b border-gray-100 last:border-0';
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-semibold text-gray-800">${stat.name}</td>
+                <td class="px-4 py-4 text-center text-gray-600 font-medium">${stat.daysWorked}</td>
+                <td class="px-4 py-4 text-center font-bold ${stat.reportsSubmitted > 0 ? 'text-sky-600' : 'text-gray-400'}">${stat.reportsSubmitted}</td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                            <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(percent, 100)}%"></div>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-500 w-9 text-right">${percent}%</span>
                     </div>
-                    <span class="text-xs font-semibold text-gray-500 w-9 text-right">${percent}%</span>
-                </div>
-            </td>
-            <td class="px-4 py-4 text-center">${statusBadge}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    trackingSection.classList.remove('hidden');
-
-    // ----------------------------------------------------
-    // ระบบค้นหาพนักงานในตาราง Tracking
-    // ----------------------------------------------------
-    const searchInput = document.getElementById('project-employee-search');
-    if (searchInput) {
-        // ล้าง Event เดิมด้วยการ Clone Node (ป้องกันการทำงานซ้อนทับเวลาเลือกเดือนใหม่)
-        const newSearchInput = searchInput.cloneNode(true);
-        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-        
-        newSearchInput.addEventListener('input', (e) => {
-            const filter = e.target.value.toLowerCase();
-            const rows = tbody.querySelectorAll('.employee-track-row');
-            rows.forEach(row => {
-                const name = row.cells[0].textContent.toLowerCase();
-                row.style.display = name.includes(filter) ? '' : 'none';
-            });
+                </td>
+                <td class="px-4 py-4 text-center">${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
         });
+
+        // เปิดใช้งานระบบค้นหาของกล่องนี้
+        const searchSelect = document.getElementById('project-employee-search');
+        if (searchSelect) {
+            // ดึงค่าที่เลือกไว้เดิม (ถ้ามีการเลือกค้างไว้ตอนเปลี่ยนเดือน)
+            const currentValue = searchSelect.value;
+            
+            // เติมรายชื่อพนักงานลงใน Dropdown (ทำแค่ครั้งเดียวตอนที่ยังว่าง)
+            if (searchSelect.options.length <= 1) {
+                // ดึงชื่อทั้งหมดมาเรียงตามตัวอักษร A-Z / ก-ฮ
+                const sortedNames = Object.values(usersMap).sort((a, b) => a.localeCompare(b));
+                sortedNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name.toLowerCase();
+                    option.textContent = name;
+                    searchSelect.appendChild(option);
+                });
+            }
+
+            // ใช้การ Clone Node ป้องกัน Event ซ้ำซ้อน
+            const newSearchSelect = searchSelect.cloneNode(true);
+            searchSelect.parentNode.replaceChild(newSearchSelect, searchSelect);
+            
+            // คืนค่า Dropdown ให้กลับไปเป็นตัวเลือกก่อนหน้านี้
+            newSearchSelect.value = currentValue;
+
+            // ฟังก์ชันสำหรับกรองข้อมูลเมื่อเปลี่ยนตัวเลือก
+            const applyFilter = () => {
+                const filter = newSearchSelect.value.toLowerCase();
+                const rows = tbody.querySelectorAll('.employee-track-row');
+                rows.forEach(row => {
+                    const name = row.cells[0].textContent.toLowerCase();
+                    // ตรวจสอบแบบจับคู่พอดี (Exact match) หรือถ้าว่างให้แสดงทั้งหมด
+                    row.style.display = (filter === "" || name === filter) ? '' : 'none';
+                });
+            };
+
+            // ประมวลผล Filter ทันทีเผื่อมีการเลือกพนักงานค้างไว้ก่อนหน้า
+            applyFilter();
+
+            // จับ Event เมื่อผู้ใช้เลือกพนักงานจาก Dropdown
+            newSearchSelect.addEventListener('change', applyFilter);
+        }
+
+    } catch (error) {
+        console.error("Error loading tracking data:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
     }
 }
 

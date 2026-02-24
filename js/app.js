@@ -79,6 +79,7 @@ import {
   exportEmployeeSummaryToExcel,
   populateProjectOptions,
   fetchProjectData,
+  fetchReportTrackingData,
   exportProjectSummaryToExcelData,
 } from "./services/timesheetService.js";
 import { 
@@ -2544,4 +2545,17 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("role-member-btn")?.addEventListener("click", () => switchRole("member"));
     document.getElementById("role-leader-btn")?.addEventListener("click", () => switchRole("leader"));
 
-});
+    // 1. ตั้งค่าเดือนเริ่มต้นให้กล่อง Tracking และโหลดข้อมูลครั้งแรก
+    const reportTrackingMonth = document.getElementById('report-tracking-month');
+    if (reportTrackingMonth) {
+        const now = new Date();
+        reportTrackingMonth.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
+        
+        // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้ามา
+        fetchReportTrackingData();
+        
+        // 2. เมื่อผู้ใช้เปลี่ยนเดือนในกล่อง Tracking ให้โหลดข้อมูลใหม่
+        reportTrackingMonth.addEventListener('change', fetchReportTrackingData);
+    }
+
+}); 
