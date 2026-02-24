@@ -886,3 +886,96 @@
 [data-theme="dark"] .ot-request-card .bg-white {
     background-color: #1F2937 !important;
 }
+
+
+/* =========================================
+   Login Page Custom Styles (Pure CSS แบบชัวร์ 100%)
+/* =========================================
+   Login Page Custom Styles (Pure CSS แบบชัวร์ 100%)
+   ========================================= */
+.custom-login-card {
+    background-color: #ffffff;
+    border-radius: 1.5rem; /* ทำกรอบโค้งมน */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid #E5E7EB;
+}
+
+.login-header-gradient {
+    /* พื้นหลังไล่สี ฟ้า ไป น้ำเงิน */
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: white;
+}
+
+.login-logo-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    /* กล่องไอคอนแบบกระจกฝ้า */
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 0.5rem;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.login-company-text {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+    letter-spacing: 0.05em;
+}
+
+.login-body {
+    background-color: #ffffff;
+}
+
+.custom-btn-google {
+    border-radius: 1rem; /* ทำให้ปุ่มกดมนรับกับขอบการ์ด */
+    cursor: pointer;
+}
+
+.custom-btn-google:hover {
+    background-color: #F9FAFB;
+    border-color: #38bdf8;
+    color: #0284c7;
+}
+
+.login-footer-bar {
+    background-color: #F9FAFB;
+    border-top: 1px solid #F3F4F6;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    font-weight: bold;
+}
+
+/* รองรับโหมดมืด (Dark Mode) สำหรับหน้า Login */
+[data-theme="dark"] .custom-login-card {
+    background-color: #1F2937;
+    border-color: #374151;
+}
+[data-theme="dark"] .login-body {
+    background-color: #1F2937;
+}
+[data-theme="dark"] .login-footer-bar {
+    background-color: #111827;
+    border-color: #374151;
+}
+[data-theme="dark"] .custom-btn-google {
+    background-color: #374151;
+    color: #F9FAFB;
+    border-color: #4B5563;
+}
+[data-theme="dark"] .custom-btn-google:hover {
+    background-color: #4B5563;
+    border-color: #38bdf8;
+}
