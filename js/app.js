@@ -2563,6 +2563,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 1. ตั้งค่าเดือนเริ่มต้นให้กล่อง Tracking และโหลดข้อมูลครั้งแรก
     const reportTrackingMonth = document.getElementById('report-tracking-month');
+    const refreshTrackingBtn = document.getElementById('refresh-report-tracking-btn'); // [เพิ่มใหม่] ตัวแปรปุ่ม
+    
     if (reportTrackingMonth) {
         const now = new Date();
         reportTrackingMonth.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
@@ -2571,4 +2573,21 @@ document.addEventListener("DOMContentLoaded", function () {
         reportTrackingMonth.addEventListener('change', fetchReportTrackingData);
     }
 
-}); 
+    // [เพิ่มใหม่] 3. ผูก Event Click ให้ปุ่มอัปเดตข้อมูล
+    if (refreshTrackingBtn) {
+        refreshTrackingBtn.addEventListener('click', () => {
+            const icon = refreshTrackingBtn.querySelector('svg');
+            
+            // เพิ่ม Class animate-spin เพื่อให้ไอคอนหมุนระหว่างรอโหลด
+            if (icon) icon.classList.add('animate-spin', 'text-sky-600');
+            
+            // เนื่องจาก fetchReportTrackingData เป็น Async ฟังก์ชัน เราจึงใช้ .finally() เพื่อหยุดหมุนตอนโหลดเสร็จได้เลย
+            fetchReportTrackingData().finally(() => {
+                if (icon) icon.classList.remove('animate-spin', 'text-sky-600');
+            });
+        });
+    }
+
+
+    
+});
