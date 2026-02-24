@@ -459,15 +459,27 @@ export async function populateProjectOptions() {
     } catch (error) { console.error("Error populating project summary dropdown:", error); }
 }
 
+// ==========================================
+// 4. Project Summary (สรุปรายโปรเจกต์)
+// ==========================================
+
+// ... (ฟังก์ชัน populateProjectOptions คงเดิมไว้) ...
+
 export async function fetchProjectData() {
     const projectSelect = document.getElementById("project-summary-select");
     const monthInput = document.getElementById("project-summary-month");
     const resultsContainer = document.getElementById("project-summary-results");
+    const trackingSection = document.getElementById("project-report-tracking-section");
     
     if (!projectSelect || !monthInput || !resultsContainer) return;
     const selectedProject = projectSelect.value, selectedMonth = monthInput.value;
 
-    if (!selectedProject || !selectedMonth) { resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>'; return; }
+    if (!selectedProject || !selectedMonth) { 
+        resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-400 py-2">กรุณาเลือกเดือนและโครงการ</p>'; 
+        if (trackingSection) trackingSection.classList.add('hidden'); // ซ่อนตารางถ้าไม่ได้เลือก
+        return; 
+    }
+    
     resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">กำลังค้นหาข้อมูล...</p>';
 
     const [yearNum, monthNum] = selectedMonth.split("-").map(Number);
@@ -475,10 +487,16 @@ export async function fetchProjectData() {
 
     try {
         const querySnapshot = await db.collection("work_records").where("date", ">=", startDate).where("date", "<=", endDate).get();
-        if (querySnapshot.empty) { resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลในเดือนนี้</p>'; return; }
+        
+        if (querySnapshot.empty) { 
+            resultsContainer.innerHTML = '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลในเดือนนี้</p>'; 
+            if (trackingSection) trackingSection.classList.add('hidden'); // ซ่อนตารางถ้าไม่มีข้อมูล
+            return; 
+        }
 
         const usersSnapshot = await db.collection("users").get();
-        const usersMap = {}; usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data().fullName);
+        const usersMap = {}; 
+        usersSnapshot.forEach(doc => usersMap[doc.id] = doc.data().fullName);
 
         let resultsHTML = `<div class="flex justify-between items-center mb-3"><h4 class="font-semibold text-gray-800">Showing results for : ${selectedProject}</h4></div><div class="space-y-3">`;
         let matchCount = 0;
@@ -498,7 +516,124 @@ export async function fetchProjectData() {
         });
 
         resultsContainer.innerHTML = matchCount === 0 ? '<p class="text-sm text-center text-gray-500 py-2">ไม่พบข้อมูลโปรเจกต์ที่เลือกในเดือนนี้</p>' : resultsHTML + "</div>";
-    } catch (error) { console.error("Error:", error); resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; }
+
+        // *** เรียกใช้ฟังก์ชันสร้างตาราง Tracking ตรงนี้ ***
+        await renderReportTracking(querySnapshot, selectedProject, usersMap);
+
+    } catch (error) { 
+        console.error("Error:", error); 
+        resultsContainer.innerHTML = '<p class="text-sm text-center text-red-500 py-2">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>'; 
+    }
+}
+
+// ==========================================
+// ฟังก์ชันใหม่: สร้างตารางสถานะการส่ง Report
+// ==========================================
+async function renderReportTracking(recordsSnapshot, projectId, usersMap) {
+    const trackingSection = document.getElementById('project-report-tracking-section');
+    const tbody = document.getElementById('project-report-tracking-body');
+    
+    if (!trackingSection || !tbody) return;
+
+    const employeeStats = {};
+
+    // Grouping Data นับจำนวนวันทำงานและการส่งรายงาน
+    recordsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const uid = data.userId;
+        
+        if (!employeeStats[uid]) {
+            employeeStats[uid] = { 
+                name: usersMap[uid] || uid, 
+                daysWorked: 0, 
+                reportsSubmitted: 0 
+            };
+        }
+
+        // เช็คว่าวันนี้นับเป็นวันทำงาน (มีการ Check-in)
+        if (data.checkIn) {
+            employeeStats[uid].daysWorked += 1;
+        }
+
+        // เช็คว่ามีการส่ง Report และมี Project ที่ตรงกับที่เลือก
+        const reports = data.reports || (data.report ? [data.report] : []);
+        const hasMatchingReport = reports.some(r => !projectId || projectId === 'all' || r.project === projectId);
+        
+        if (hasMatchingReport) {
+            employeeStats[uid].reportsSubmitted += 1;
+        }
+    });
+
+    // Render HTML ลงตาราง
+    tbody.innerHTML = '';
+    const uids = Object.keys(employeeStats);
+
+    if (uids.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">ไม่พบข้อมูลการทำงานในรอบเดือนนี้</td></tr>`;
+        trackingSection.classList.remove('hidden');
+        return;
+    }
+
+    // วนลูปสร้างแถวตาราง และจัดเรียงตามชื่อตัวอักษร
+    uids.sort((a, b) => employeeStats[a].name.localeCompare(employeeStats[b].name)).forEach(uid => {
+        const stat = employeeStats[uid];
+        // คำนวณเปอร์เซ็นต์
+        const percent = stat.daysWorked > 0 ? Math.round((stat.reportsSubmitted / stat.daysWorked) * 100) : 0;
+        
+        // กำหนดสีสถานะตาม % การส่ง
+        let statusBadge = '';
+        let progressColor = '';
+        
+        if (percent >= 100) {
+            statusBadge = `<span class="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold tracking-wide">ครบถ้วน</span>`;
+            progressColor = 'bg-green-500';
+        } else if (percent >= 70) {
+            statusBadge = `<span class="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-[10px] font-bold tracking-wide">รออัปเดต</span>`;
+            progressColor = 'bg-orange-400';
+        } else {
+            statusBadge = `<span class="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold tracking-wide">ขาดส่งเยอะ</span>`;
+            progressColor = 'bg-red-500';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-sky-50/50 transition-colors employee-track-row border-b border-gray-100 last:border-0';
+        tr.innerHTML = `
+            <td class="px-6 py-4 font-semibold text-gray-800">${stat.name}</td>
+            <td class="px-4 py-4 text-center text-gray-600 font-medium">${stat.daysWorked}</td>
+            <td class="px-4 py-4 text-center font-bold ${stat.reportsSubmitted > 0 ? 'text-sky-600' : 'text-gray-400'}">${stat.reportsSubmitted}</td>
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                        <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${Math.min(percent, 100)}%"></div>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-500 w-9 text-right">${percent}%</span>
+                </div>
+            </td>
+            <td class="px-4 py-4 text-center">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    trackingSection.classList.remove('hidden');
+
+    // ----------------------------------------------------
+    // ระบบค้นหาพนักงานในตาราง Tracking
+    // ----------------------------------------------------
+    const searchInput = document.getElementById('project-employee-search');
+    if (searchInput) {
+        // ล้าง Event เดิมด้วยการ Clone Node (ป้องกันการทำงานซ้อนทับเวลาเลือกเดือนใหม่)
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+        
+        newSearchInput.addEventListener('input', (e) => {
+            const filter = e.target.value.toLowerCase();
+            const rows = tbody.querySelectorAll('.employee-track-row');
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                row.style.display = name.includes(filter) ? '' : 'none';
+            });
+        });
+    }
 }
 
 export async function exportProjectSummaryToExcelData() {
@@ -539,3 +674,4 @@ export async function exportProjectSummaryToExcelData() {
         XLSX.writeFile(wb, `Report_${selectedProject}_${selectedMonth}.xlsx`);
     } catch (error) { console.error("Export Error:", error); alert("เกิดข้อผิดพลาดในการ Export: " + error.message); }
 }
+

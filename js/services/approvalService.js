@@ -62,23 +62,38 @@ export async function loadPendingLeaveRequests(currentUserData) {
                 : `${startDate} ถึง ${endDate}`;
 
             const cardHTML = `
-            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative leave-request-card">
-                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">${userDept}</span>
-                <div class="flex items-start gap-3">
-                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    <div>
-                        <p class="font-bold text-gray-800">${displayName}</p>
-                        <p class="text-sm font-medium text-sky-600 mb-1">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
-                        <div class="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded w-fit">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 mb-4 relative leave-request-card group">
+                <span class="absolute top-5 right-5 px-2.5 py-1 bg-sky-50 text-sky-600 text-[10px] font-bold uppercase rounded-md border border-sky-100 tracking-wider">
+                    ${userDept}
+                </span>
+                
+                <div class="flex items-start gap-4">
+                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0 mt-1">
+                    <div class="flex-1 pr-12">
+                        <h4 class="font-bold text-gray-800 text-base leading-tight">${displayName}</h4>
+                        <p class="text-sm font-semibold text-blue-600 mt-1 mb-2">${LEAVE_TYPE_MAP[leave.leaveType] || leave.leaveType}</p>
+                        
+                        <div class="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-1.5 rounded-lg font-medium">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             ${dateInfoText}
                         </div>
                     </div>
                 </div>
-                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">"${leave.reason}"</div>
-                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <button data-id="${docId}" class="reject-leave-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">ไม่อนุมัติ</button>
-                    <button data-id="${docId}" class="approve-leave-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 shadow-sm transition">อนุมัติ (Approve)</button>
+
+                <div class="mt-4 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-xl border border-gray-100 relative">
+                    <span class="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-gray-400">เหตุผล</span>
+                    <span class="italic">"${leave.reason || "ไม่ได้ระบุเหตุผล"}"</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
+                    <button data-id="${docId}" class="reject-leave-btn flex-1 md:flex-none flex items-center justify-center gap-1.5 text-sm font-bold text-red-500 px-4 py-2.5 rounded-xl border border-red-100 bg-white hover:bg-red-50 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        ไม่อนุมัติ
+                    </button>
+                    <button data-id="${docId}" class="approve-leave-btn flex-[2] md:flex-none flex items-center justify-center gap-1.5 text-sm font-bold text-white px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        อนุมัติ
+                    </button>
                 </div>
             </div>`;
             listContainer.innerHTML += cardHTML;
@@ -153,25 +168,44 @@ export async function loadPendingOtRequests(currentUserData) {
             }
 
             const cardHTML = `
-            <div class="bg-white shadow-sm rounded-xl p-4 border border-gray-200 mb-4 relative ot-request-card">
-                <span class="absolute top-4 right-4 px-2 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase rounded-lg border border-gray-200">${userDept}</span>
-                <div class="flex items-start gap-3">
-                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    <div>
-                        <p class="font-bold text-gray-800">${displayName}</p> 
-                        <div class="flex items-center gap-1 mb-1">
-                            <span class="text-sm font-medium text-orange-600">ขอ OT ${otDate}</span>${otDurationBadge}
+            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 mb-4 relative ot-request-card group">
+                <span class="absolute top-5 right-5 px-2.5 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold uppercase rounded-md border border-orange-100 tracking-wider">
+                    ${userDept}
+                </span>
+                
+                <div class="flex items-start gap-4">
+                    <img src="${displayPhoto || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0 mt-1">
+                    <div class="flex-1 pr-12">
+                        <h4 class="font-bold text-gray-800 text-base leading-tight">${displayName}</h4>
+                        
+                        <div class="flex flex-wrap items-center gap-2 mt-2 mb-2">
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-100 px-2 py-1 rounded-md">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                วันที่ ${otDate}
+                            </span>
+                            ${otDurationBadge}
                         </div>
-                        <p class="text-xs text-gray-500 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            เวลา: ${timeInfoText}
+                        
+                        <p class="text-xs text-gray-500 font-medium bg-gray-50 px-2.5 py-1 rounded-md w-fit border border-gray-100">
+                            เวลา: <span class="text-gray-700">${timeInfoText}</span>
                         </p>
                     </div>
                 </div>
-                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 italic">"${ot.reason || "-"}"</div>
-                <div class="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <button data-id="${docId}" class="reject-ot-btn flex-1 text-sm font-medium text-red-600 px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 transition">ไม่อนุมัติ</button>
-                    <button data-id="${docId}" class="approve-ot-btn flex-[2] text-sm font-medium text-white px-3 py-2 rounded-lg bg-green-500 hover:bg-green-600 shadow-sm transition">อนุมัติ (Approve)</button>
+
+                <div class="mt-4 text-sm text-gray-600 bg-gray-50/80 p-3 rounded-xl border border-gray-100 relative">
+                    <span class="absolute -top-2.5 left-3 bg-white px-1 text-[10px] font-bold text-gray-400">รายละเอียดงาน</span>
+                    <span class="italic">"${ot.reason || "ไม่ได้ระบุเหตุผล"}"</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-50">
+                    <button data-id="${docId}" class="reject-ot-btn flex-1 md:flex-none flex items-center justify-center gap-1.5 text-sm font-bold text-red-500 px-4 py-2.5 rounded-xl border border-red-100 bg-white hover:bg-red-50 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        ไม่อนุมัติ
+                    </button>
+                    <button data-id="${docId}" class="approve-ot-btn flex-[2] md:flex-none flex items-center justify-center gap-1.5 text-sm font-bold text-white px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-md shadow-orange-500/20 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        อนุมัติ
+                    </button>
                 </div>
             </div>`;
             listContainer.innerHTML += cardHTML;

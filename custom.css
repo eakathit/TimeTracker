@@ -820,3 +820,70 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: #94a3b8; /* สีเทาเข้มขึ้นตอนเอาเมาส์ชี้ */
 }
+
+/* =========================================
+   Approvals Center - Card Enhancements
+   ========================================= */
+
+/* ทำให้ปุ่มมี Feedback ตอนกด (Scale down) */
+.active\:scale-95:active {
+    transform: scale(0.95);
+}
+
+/* Scrollbar สำหรับกล่องรายการคำขอให้อ่านง่ายขึ้น */
+#leave-approval-list, #ot-approval-list {
+    max-height: 550px; /* จำกัดความสูงไม่ให้ล้นจอจนต้อง Scroll ทั้งหน้าบน PC */
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+    padding-bottom: 20px;
+}
+
+/* Custom Scrollbar เล็กๆ สวยๆ */
+#leave-approval-list::-webkit-scrollbar,
+#ot-approval-list::-webkit-scrollbar {
+    width: 6px;
+}
+#leave-approval-list::-webkit-scrollbar-track,
+#ot-approval-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+#leave-approval-list::-webkit-scrollbar-thumb,
+#ot-approval-list::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 20px;
+}
+#leave-approval-list::-webkit-scrollbar-thumb:hover,
+#ot-approval-list::-webkit-scrollbar-thumb:hover {
+    background-color: #cbd5e1;
+}
+
+/* Loading State Animation */
+@keyframes skeleton-loading {
+    0% { background-color: #f3f4f6; }
+    50% { background-color: #e5e7eb; }
+    100% { background-color: #f3f4f6; }
+}
+.skeleton-box {
+    animation: skeleton-loading 1.5s infinite ease-in-out;
+    border-radius: 8px;
+}
+
+/* การรองรับ Dark Mode สำหรับ Card ใหม่ที่เพิ่งเติมเข้าไป */
+[data-theme="dark"] .leave-request-card,
+[data-theme="dark"] .ot-request-card {
+    background-color: #1F2937 !important;
+    border-color: #374151 !important;
+}
+[data-theme="dark"] .leave-request-card .bg-gray-50\/80,
+[data-theme="dark"] .ot-request-card .bg-gray-50\/80,
+[data-theme="dark"] .leave-request-card .bg-gray-50,
+[data-theme="dark"] .ot-request-card .bg-gray-50 {
+    background-color: #111827 !important;
+    border-color: #374151 !important;
+}
+[data-theme="dark"] .leave-request-card .bg-white,
+[data-theme="dark"] .ot-request-card .bg-white {
+    background-color: #1F2937 !important;
+}
+

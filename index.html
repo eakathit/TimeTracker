@@ -601,8 +601,8 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                                <div class="p-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                                    <svg class="w-8 h-8 text-sky-500" fill="none" viewBox="0 0 24 24"
+                                <div class="p-2.5 bg-white rounded-xl shadow-sm border border-gray-100">
+                                    <svg class="w-7 h-7 text-sky-500" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -618,250 +618,167 @@
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                        <div
-                            class="card bg-white border-0 rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-shadow duration-300">
-                            <div
-                                class="p-5 bg-gradient-to-r from-blue-500 to-sky-500 flex justify-between items-center text-white">
+                        <div class="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-all duration-300">
+                            <div class="p-5 bg-sky-50/50 border-b border-sky-100 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
-                                    <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    <div class="p-2.5 bg-white rounded-xl shadow-sm text-sky-500 border border-sky-50">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                                             </path>
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-lg leading-tight">Leave Management</h3>
-                                        <p class="text-blue-100 text-xs opacity-90">จัดการการลา</p>
+                                        <h3 class="font-bold text-lg text-gray-800 leading-tight">Leave Management</h3>
+                                        <p class="text-sky-600 text-xs font-medium mt-0.5">จัดการการลา</p>
                                     </div>
                                 </div>
                                 <span id="leave-badge-count"
-                                    class="hidden px-3 py-1 bg-white text-blue-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
+                                    class="hidden px-3 py-1 bg-white border border-sky-200 text-sky-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
                             </div>
 
-                            <div class="px-5 pt-5">
-                                <nav id="leave-tab-nav" class="flex p-1 space-x-1 bg-gray-100 rounded-xl"
-                                    aria-label="Tabs">
+                            <div class="px-5 pt-5 pb-2">
+                                <nav id="leave-tab-nav" class="flex p-1.5 space-x-1 bg-gray-50 rounded-xl border border-gray-100" aria-label="Tabs">
                                     <a href="#" data-target="leave-pending-content"
-                                        class="leave-tab-btn flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white text-blue-600 transition-all duration-200">
+                                        class="leave-tab-btn flex-1 py-2 text-sm font-bold text-center rounded-lg shadow-sm bg-white text-sky-600 border border-gray-200/50 transition-all duration-200">
                                         รออนุมัติ
                                     </a>
                                     <a href="#" data-target="leave-history-content"
-                                        class="leave-tab-btn flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200">
+                                        class="leave-tab-btn flex-1 py-2 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all duration-200">
                                         ประวัติ / ค้นหา
                                     </a>
                                 </nav>
                             </div>
 
                             <div class="flex-1 p-5 bg-gray-50/30">
-
                                 <div id="leave-pending-content" class="leave-tab-content space-y-4">
                                     <div id="leave-approval-list" class="space-y-3">
-                                        <p id="leave-loading-msg"
-                                            class="text-center text-gray-400 text-sm py-20 flex flex-col items-center">
-                                            <svg class="w-10 h-10 mb-3 text-gray-300 animate-spin"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                    stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>
-                                            กำลังโหลดข้อมูล...
-                                        </p>
-                                    </div>
+                                        </div>
                                 </div>
 
                                 <div id="leave-history-content" class="leave-tab-content hidden space-y-4">
                                     <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="space-y-1">
-                                                <label
-                                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
+                                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
                                                 <div class="relative">
                                                     <select id="leave-history-status-filter"
-                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-sky-500 focus:border-sky-500 block p-2.5 outline-none transition-all">
                                                         <option value="">ทั้งหมด (All)</option>
                                                         <option value="pending">รออนุมัติ</option>
                                                         <option value="approved">อนุมัติแล้ว</option>
                                                         <option value="rejected">ไม่อนุมัติ</option>
                                                     </select>
-                                                    <div
-                                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                        </svg>
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="space-y-1">
-                                                <label
-                                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
+                                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
                                                 <div class="relative">
                                                     <select id="leave-history-user-filter"
-                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-sky-500 focus:border-sky-500 block p-2.5 outline-none transition-all">
                                                         <option value="">ทุกคน (All Staff)</option>
                                                     </select>
-                                                    <div
-                                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                        </svg>
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <button id="leave-history-search-btn"
-                                            class="w-full py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white text-sm font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold rounded-xl shadow-sm transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                             </svg>
                                             ค้นหาประวัติ
                                         </button>
                                     </div>
-
-                                    <div id="leave-history-list" class="space-y-3 pb-4">
-                                        <div
-                                            class="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
-                                            <svg class="w-16 h-16 mb-2 text-gray-200" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
-                                                </path>
-                                            </svg>
-                                            <span class="text-sm">เลือกเงื่อนไขและกดค้นหา</span>
-                                        </div>
-                                    </div>
+                                    <div id="leave-history-list" class="space-y-3 pb-4"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div
-                            class="card bg-white border-0 rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-shadow duration-300">
-                            <div
-                                class="p-5 bg-gradient-to-r from-orange-500 to-amber-500 flex justify-between items-center text-white">
+                        <div class="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden flex flex-col min-h-[500px] transition-all duration-300">
+                            <div class="p-5 bg-orange-50/50 border-b border-orange-100 flex justify-between items-center">
                                 <div class="flex items-center gap-3">
-                                    <div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    <div class="p-2.5 bg-white rounded-xl shadow-sm text-orange-500 border border-orange-50">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                     </div>
                                     <div>
-                                        <h3 class="font-bold text-lg leading-tight">OT Management</h3>
-                                        <p class="text-orange-100 text-xs opacity-90">จัดการล่วงเวลา</p>
+                                        <h3 class="font-bold text-lg text-gray-800 leading-tight">OT Management</h3>
+                                        <p class="text-orange-600 text-xs font-medium mt-0.5">จัดการล่วงเวลา</p>
                                     </div>
                                 </div>
                                 <span id="ot-badge-count"
-                                    class="hidden px-3 py-1 bg-white text-orange-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
+                                    class="hidden px-3 py-1 bg-white border border-orange-200 text-orange-600 text-xs font-bold rounded-full shadow-sm animate-pulse">0</span>
                             </div>
 
-                            <div class="px-5 pt-5">
-                                <nav id="ot-tab-nav" class="flex p-1 space-x-1 bg-gray-100 rounded-xl"
-                                    aria-label="Tabs">
+                            <div class="px-5 pt-5 pb-2">
+                                <nav id="ot-tab-nav" class="flex p-1.5 space-x-1 bg-gray-50 rounded-xl border border-gray-100" aria-label="Tabs">
                                     <a href="#" data-target="ot-pending-content"
-                                        class="ot-tab-btn flex-1 py-2.5 text-sm font-semibold text-center rounded-lg shadow bg-white text-orange-600 transition-all duration-200">
+                                        class="ot-tab-btn flex-1 py-2 text-sm font-bold text-center rounded-lg shadow-sm bg-white text-orange-600 border border-gray-200/50 transition-all duration-200">
                                         รออนุมัติ
                                     </a>
                                     <a href="#" data-target="ot-history-content"
-                                        class="ot-tab-btn flex-1 py-2.5 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all duration-200">
+                                        class="ot-tab-btn flex-1 py-2 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all duration-200">
                                         ประวัติ / ค้นหา
                                     </a>
                                 </nav>
                             </div>
 
                             <div class="flex-1 p-5 bg-gray-50/30">
-
                                 <div id="ot-pending-content" class="ot-tab-content space-y-4">
                                     <div id="ot-approval-list" class="space-y-3">
-                                        <p id="ot-loading-msg"
-                                            class="text-center text-gray-400 text-sm py-20 flex flex-col items-center">
-                                            <svg class="w-10 h-10 mb-3 text-gray-300 animate-spin"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                    stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>
-                                            กำลังโหลดข้อมูล...
-                                        </p>
-                                    </div>
+                                        </div>
                                 </div>
 
                                 <div id="ot-history-content" class="ot-tab-content hidden space-y-4">
                                     <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="space-y-1">
-                                                <label
-                                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
+                                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">สถานะ</label>
                                                 <div class="relative">
                                                     <select id="ot-history-status-filter"
-                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5 outline-none transition-all">
                                                         <option value="">ทั้งหมด (All)</option>
                                                         <option value="pending">รออนุมัติ</option>
                                                         <option value="approved">อนุมัติแล้ว</option>
                                                         <option value="rejected">ไม่อนุมัติ</option>
                                                     </select>
-                                                    <div
-                                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                        </svg>
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="space-y-1">
-                                                <label
-                                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
+                                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">พนักงาน</label>
                                                 <div class="relative">
                                                     <select id="ot-history-user-filter"
-                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                                                        class="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-orange-500 focus:border-orange-500 block p-2.5 outline-none transition-all">
                                                         <option value="">ทุกคน (All Staff)</option>
                                                     </select>
-                                                    <div
-                                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                        </svg>
+                                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <button id="ot-history-search-btn"
-                                            class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white text-sm font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold rounded-xl shadow-sm transform active:scale-95 transition-all flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                             </svg>
                                             ค้นหาประวัติ
                                         </button>
                                     </div>
-
-                                    <div id="ot-history-list" class="space-y-3 pb-4">
-                                        <div
-                                            class="flex flex-col items-center justify-center py-12 text-gray-400 opacity-60">
-                                            <svg class="w-16 h-16 mb-2 text-gray-200" fill="none" viewBox="0 0 24 24"
-                                                stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <span class="text-sm">เลือกเงื่อนไขและกดค้นหา</span>
-                                        </div>
-                                    </div>
+                                    <div id="ot-history-list" class="space-y-3 pb-4"></div>
                                 </div>
                             </div>
                         </div>
@@ -1354,9 +1271,52 @@
                             <p class="text-sm text-center text-gray-400 py-10">Please select a month and project to view
                                 data</p>
                         </div>
+                        
+                        <div id="project-report-tracking-section" class="mt-6 pt-6 border-t border-gray-100 hidden animate-fade-in">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 flex items-center gap-2 text-lg">
+                                        <svg class="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        สถานะการส่ง Daily Report
+                                    </h4>
+                                    <p class="text-xs text-gray-500 mt-1">เทียบจำนวนวันที่เข้างานกับจำนวนวันที่กรอก Report</p>
+                                </div>
+                                
+                                <div class="relative w-full sm:w-64">
+                                    <input type="text" id="project-employee-search" placeholder="ค้นหาชื่อพนักงาน..." 
+                                        class="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl shadow-md focus:ring-2 focus:ring-sky-400 focus:outline-none text-sm transition-shadow">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead class="bg-sky-50 border-b border-sky-100 text-xs uppercase text-sky-800 font-bold tracking-wider">
+                                            <tr>
+                                                <th class="px-6 py-4 text-left">พนักงาน</th>
+                                                <th class="px-4 py-4 text-center">มาทำงาน (วัน)</th>
+                                                <th class="px-4 py-4 text-center">ส่ง Report (ครั้ง)</th>
+                                                <th class="px-6 py-4 text-left">ความคืบหน้า</th>
+                                                <th class="px-4 py-4 text-center">สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="project-report-tracking-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-
+                
                 <div id="tab-payroll" class="ts-tab-content hidden space-y-6 animate-fade-in">
                     <div class="card">
                         <div class="flex justify-between items-center mb-4">

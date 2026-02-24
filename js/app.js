@@ -563,7 +563,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // 8. โหลดข้อมูลเบื้องหลัง (Background Data)
     // --------------------------------------------------------
     try {
-      await Promise.all([checkUserWorkStatus(), populateDropdownOptions()]);
+      await Promise.all([
+          checkUserWorkStatus(), 
+          populateDropdownOptions(),
+          populateProjectOptions() // <--- ✅ เพิ่มคำสั่งนี้เข้าไปที่นี่แทน
+      ]);
       console.log("Background data loaded successfully");
     } catch (error) {
       console.error("Error loading background data:", error);
@@ -2505,9 +2509,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const now = new Date();
     monthInput.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
   }
-
-  // โหลดรายชื่อ Project ทันทีที่เข้าแอป
-  populateProjectOptions();
 
   if (projectSelect) projectSelect.addEventListener("change", fetchProjectData);
   if (monthInput) monthInput.addEventListener("change", fetchProjectData);
