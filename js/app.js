@@ -2588,6 +2588,64 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-
+    // ==========================================
+    // 🌟 ผูก Event สำหรับระบบ Tab ในหน้า Approvals Center (Leave & OT)
+    // ==========================================
     
+    // 1. สำหรับ Tab การลา (Leave)
+    const leaveTabBtns = document.querySelectorAll(".leave-tab-btn");
+    const leaveTabContents = document.querySelectorAll(".leave-tab-content");
+
+    if (leaveTabBtns.length > 0) {
+        leaveTabBtns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                // 1. Reset สไตล์ปุ่ม Leave ทั้งหมดให้เป็นสถานะ "ไม่ได้เลือก"
+                leaveTabBtns.forEach(b => {
+                    b.className = "leave-tab-btn flex-1 py-2 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all duration-200";
+                });
+                
+                // 2. ซ่อนเนื้อหา Leave ทั้งหมด
+                leaveTabContents.forEach(c => c.classList.add("hidden"));
+
+                // 3. ไฮไลท์ปุ่มที่ถูกคลิก (เปลี่ยนสีและเพิ่มเงา)
+                btn.className = "leave-tab-btn flex-1 py-2 text-sm font-bold text-center rounded-lg shadow-sm bg-white text-sky-600 border border-gray-200/50 transition-all duration-200";
+                
+                // 4. แสดงเนื้อหาเป้าหมายตาม data-target
+                const targetId = btn.dataset.target;
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) targetContent.classList.remove("hidden");
+            });
+        });
+    }
+
+    // 2. สำหรับ Tab ล่วงเวลา (OT)
+    const otTabBtns = document.querySelectorAll(".ot-tab-btn");
+    const otTabContents = document.querySelectorAll(".ot-tab-content");
+
+    if (otTabBtns.length > 0) {
+        otTabBtns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                // 1. Reset สไตล์ปุ่ม OT ทั้งหมดให้เป็นสถานะ "ไม่ได้เลือก"
+                otTabBtns.forEach(b => {
+                    b.className = "ot-tab-btn flex-1 py-2 text-sm font-medium text-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 transition-all duration-200";
+                });
+                
+                // 2. ซ่อนเนื้อหา OT ทั้งหมด
+                otTabContents.forEach(c => c.classList.add("hidden"));
+
+                // 3. ไฮไลท์ปุ่มที่ถูกคลิก (ใช้สีส้มสำหรับ OT)
+                btn.className = "ot-tab-btn flex-1 py-2 text-sm font-bold text-center rounded-lg shadow-sm bg-white text-orange-600 border border-gray-200/50 transition-all duration-200";
+                
+                // 4. แสดงเนื้อหาเป้าหมายตาม data-target
+                const targetId = btn.dataset.target;
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) targetContent.classList.remove("hidden");
+            });
+        });
+    }
+
 });
