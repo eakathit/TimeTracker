@@ -61,7 +61,7 @@ export async function loadRoleManagement() {
     const listContainer = document.getElementById("role-management-list");
     if (!listContainer) return;
 
-    listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 text-sm">กำลังโหลดข้อมูล...</td></tr>';
+    listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-400 text-sm"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto mb-2"></div>กำลังโหลดข้อมูล...</td></tr>';
 
     try {
         const usersSnapshot = await db.collection("users").orderBy("fullName").get();
@@ -71,13 +71,17 @@ export async function loadRoleManagement() {
             const user = doc.data();
             const userId = doc.id;
             const currentRole = user.role || "user";
+            
+            // ป้องกัน Error หากชื่อมีเครื่องหมายคำพูด
+            const safeName = (user.fullName || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+            const safeDept = (user.department || "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
             html += `
-            <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100">
+            <tr class="hover:bg-gray-50/50 transition-colors border-b border-gray-100 group">
                 <td class="px-4 py-3">
                     <div class="flex items-center gap-3">
                         <img src="${user.profileImageUrl || "https://placehold.co/100x100/E2E8F0/475569?text=User"}" 
-                             class="w-8 h-8 rounded-full object-cover border border-gray-100 shadow-sm">
+                             class="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm">
                         <div class="min-w-0">
                             <p class="text-sm font-bold text-gray-800 truncate">${user.fullName || "Unknown"}</p>
                             <p class="text-[10px] text-gray-400 truncate">${user.department || "Unassigned"}</p>
@@ -85,25 +89,45 @@ export async function loadRoleManagement() {
                     </div>
                 </td>
                 <td class="px-2 py-3 text-center">
-                    <span class="inline-flex items-center justify-center rounded-full text-[9px] font-bold uppercase tracking-wide ${currentRole === "admin" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}" 
-                          style="padding: 2px 8px;">
+                    <span class="inline-flex items-center justify-center rounded-lg text-[10px] font-bold uppercase tracking-wide ${currentRole === "admin" ? "bg-indigo-50 text-indigo-600 border border-indigo-100" : "bg-gray-50 text-gray-500 border border-gray-200"}" 
+                          style="padding: 4px 10px;">
                         ${currentRole}
                     </span>
                 </td>
                 <td class="px-4 py-3 text-right">
-                    <select onchange="window.updateUserRoleAdapter('${userId}', this.value)"
-                        class="text-[11px] font-medium border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer shadow-sm">
-                        <option value="user" ${currentRole === "user" ? "selected" : ""}>Set as User</option>
-                        <option value="admin" ${currentRole === "admin" ? "selected" : ""}>Set as Admin</option>
-                    </select>
+                    <button onclick="window.openAdminUserEditModal('${userId}', '${safeName}', '${safeDept}', '${currentRole}')"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl text-xs font-bold transition-all shadow-sm border border-gray-200 hover:border-indigo-200 active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg>
+                        แก้ไข
+                    </button>
                 </td>
             </tr>
             `;
         });
+        
         listContainer.innerHTML = html || '<tr><td colspan="3" class="text-center py-4 text-gray-500">ไม่พบผู้ใช้งาน</td></tr>';
+
     } catch (error) {
         console.error("Error loading roles:", error);
         listContainer.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500 text-sm">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+    }
+}
+
+// 5. [ใหม่] ฟังก์ชันบันทึกการแก้ไขข้อมูลผู้ใช้งานโดย Admin
+export async function saveAdminUserEdit(userId, newName, newDept, newRole) {
+    try {
+        await db.collection("users").doc(userId).update({ 
+            fullName: newName,
+            department: newDept,
+            role: newRole 
+        });
+        showNotification(`อัปเดตข้อมูล ${newName} สำเร็จ`, "success");
+        loadRoleManagement(); // โหลดตารางใหม่
+        return true;
+    } catch (error) {
+        console.error("Error updating user:", error);
+        showNotification("ไม่สามารถอัปเดตข้อมูลได้: " + error.message, "error");
+        return false;
     }
 }
 

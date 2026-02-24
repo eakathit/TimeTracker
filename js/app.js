@@ -30,6 +30,7 @@ import {
   saveUserProfile,
   loadRoleManagement,
   updateUserRole,
+  saveAdminUserEdit
 } from "./services/authService.js";
 import {
   toLocalISOString,
@@ -2645,6 +2646,91 @@ document.addEventListener("DOMContentLoaded", function () {
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) targetContent.classList.remove("hidden");
             });
+        });
+    }
+
+    // ==========================================
+    // 🌟 ระบบควบคุม Modal แก้ไขผู้ใช้งานของแอดมิน (Admin User Edit Modal)
+    // ==========================================
+    
+    // 1. ฟังก์ชันเปิด Modal (อัปเดตใหม่ ป้องกัน Error และช่วย Debug)
+    window.openAdminUserEditModal = function(userId, name, dept, role) {
+        // ดึง Elements ต่างๆ มารอก่อน
+        const idInput = document.getElementById("admin-edit-user-id");
+        const nameInput = document.getElementById("admin-edit-user-name");
+        const deptSelect = document.getElementById("admin-edit-user-dept");
+        const roleSelect = document.getElementById("admin-edit-user-role");
+        const modal = document.getElementById("admin-user-edit-modal");
+
+        // แจ้งเตือนใน Console ถ้าหาช่องไหนไม่เจอ (ช่วยให้เรารู้ทันทีว่าก๊อป HTML มาขาดตรงไหน)
+        if (!idInput) console.error("🚨 ไม่พบ ID: admin-edit-user-id ในไฟล์ HTML");
+        if (!nameInput) console.error("🚨 ไม่พบ ID: admin-edit-user-name ในไฟล์ HTML");
+        if (!deptSelect) console.error("🚨 ไม่พบ ID: admin-edit-user-dept ในไฟล์ HTML");
+        if (!roleSelect) console.error("🚨 ไม่พบ ID: admin-edit-user-role ในไฟล์ HTML");
+        if (!modal) console.error("🚨 ไม่พบ ID: admin-user-edit-modal ในไฟล์ HTML");
+
+        // เติมข้อมูลลงฟอร์ม (เช็คก่อนว่ามี Element จริงๆ ค่อยใส่ค่า)
+        if (idInput) idInput.value = userId;
+        if (nameInput) nameInput.value = name;
+        
+        if (deptSelect) {
+            if(dept && dept !== "Unassigned") {
+                const optionExists = Array.from(deptSelect.options).some(opt => opt.value === dept);
+                if (!optionExists) {
+                    const newOption = document.createElement("option");
+                    newOption.value = dept;
+                    newOption.textContent = dept;
+                    deptSelect.appendChild(newOption);
+                }
+                deptSelect.value = dept;
+            } else {
+                deptSelect.value = "";
+            }
+        }
+        
+        if (roleSelect) roleSelect.value = role;
+
+        // เปิด Modal
+        if (modal) modal.classList.remove("hidden");
+    };
+
+    // 2. ฟังก์ชันปิด Modal
+    const closeAdminUserEditModal = () => {
+        document.getElementById("admin-user-edit-modal").classList.add("hidden");
+    };
+
+    // 3. ผูก Event Listener ปิด Modal
+    document.getElementById("admin-edit-user-cancel")?.addEventListener("click", closeAdminUserEditModal);
+    document.getElementById("admin-user-edit-overlay")?.addEventListener("click", closeAdminUserEditModal);
+
+    // 4. ผูก Event กดปุ่ม "บันทึกการเปลี่ยนแปลง"
+    const adminUserEditSaveBtn = document.getElementById("admin-edit-user-save");
+    if (adminUserEditSaveBtn) {
+        adminUserEditSaveBtn.addEventListener("click", async () => {
+            const userId = document.getElementById("admin-edit-user-id").value;
+            const newName = document.getElementById("admin-edit-user-name").value.trim();
+            const newDept = document.getElementById("admin-edit-user-dept").value;
+            const newRole = document.getElementById("admin-edit-user-role").value;
+
+            if (!newName) {
+                return showNotification("กรุณากรอกชื่อ-สกุล", "warning");
+            }
+
+            // เปลี่ยนสถานะปุ่ม
+            const originalText = adminUserEditSaveBtn.innerHTML;
+            adminUserEditSaveBtn.innerHTML = "กำลังบันทึก...";
+            adminUserEditSaveBtn.disabled = true;
+
+            // เรียก API (Firebase)
+            const success = await saveAdminUserEdit(userId, newName, newDept, newRole);
+            
+            if (success) {
+                closeAdminUserEditModal();
+            }
+
+            // คืนค่าปุ่ม
+            adminUserEditSaveBtn.innerHTML = originalText;
+            adminUserEditSaveBtn.disabled = false;
         });
     }
 
