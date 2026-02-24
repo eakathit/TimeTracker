@@ -117,6 +117,16 @@ document.addEventListener("DOMContentLoaded", function () {
   setupWorkTypeSelection();
   setupSettingsTabs();
 
+  document.body.addEventListener('click', function (e) {
+      // ค้นหาว่าสิ่งที่ถูกคลิกคือแท็ก <a> หรืออยู่ข้างในแท็ก <a> หรือไม่
+      const anchor = e.target.closest('a');
+      
+      // ถ้าใช่ และลิงก์นั้นมีค่า href เป็น "#" ให้ยกเลิกการทำงานดั้งเดิมของมัน
+      if (anchor && anchor.getAttribute('href') === '#') {
+          e.preventDefault();
+      }
+  });
+  
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       // 1. ลงทะเบียน sw.js (โค้ดเดิมของคุณ)
@@ -809,14 +819,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // 2. ปุ่ม Cancel (ปิด Modal)
   document
     .getElementById("cancel-checkin-modal-btn")
-    .addEventListener("click", () => {
+    .addEventListener("click", async () => {
+      // 1. ซ่อนหน้าต่าง Popup
       document.getElementById("checkin-report-modal").classList.add("hidden");
-      // เปิดปุ่ม Check-in กลับมาให้กดใหม่ได้
-      checkinBtn.disabled = false;
-      const checkinSpan = checkinBtn.querySelector("span");
-      if (checkinSpan) checkinSpan.textContent = "Check In";
+      
+      // 2. แจ้งเตือนผู้ใช้
+      if (typeof showNotification === "function") {
+          showNotification("ข้ามการกรอกรายงาน กำลังลงเวลาเข้างาน...", "info");
+      }
+      
+      // 3. สั่ง Check-in เข้า Database ทันที (ส่งค่า report เป็น null)
+      if (typeof proceedWithCheckin === "function") {
+          await proceedWithCheckin("in_factory", null);
+      }
     });
-
   function updateProfilePage(userData) {
     const profilePic = document.getElementById("profile-page-pic");
     const profileName = document.getElementById("profile-page-name");
@@ -2041,9 +2057,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const durationText = durationSelectedText.textContent.trim();
 
       if (
-        workType.includes("เลือก") ||
-        project.includes("เลือก") ||
-        durationText.includes("เลือก")
+        workType.includes("เลือก") || workType.includes("Select") ||
+        project.includes("เลือก") || project.includes("Select") ||
+        durationText.includes("เลือก") || durationText.includes("Select")
       ) {
         return showNotification("กรุณากรอกข้อมูลให้ครบ", "warning");
       }
@@ -2233,9 +2249,9 @@ document.addEventListener("DOMContentLoaded", function () {
         .textContent.trim();
 
       if (
-        workType.includes("เลือก") ||
-        project.includes("เลือก") ||
-        duration.includes("เลือก")
+        workType.includes("เลือก") || workType.includes("Select") ||
+        project.includes("เลือก") || project.includes("Select") ||
+        duration.includes("เลือก") || duration.includes("Select")
       ) {
         return showNotification("กรุณากรอกข้อมูลให้ครบถ้วน", "warning");
       }
@@ -2550,9 +2566,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (reportTrackingMonth) {
         const now = new Date();
         reportTrackingMonth.value = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`;
-        
-        // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้ามา
-        fetchReportTrackingData();
         
         // 2. เมื่อผู้ใช้เปลี่ยนเดือนในกล่อง Tracking ให้โหลดข้อมูลใหม่
         reportTrackingMonth.addEventListener('change', fetchReportTrackingData);

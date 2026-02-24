@@ -8,17 +8,27 @@ let controlsInitialized = false;
 // 1. ระบบ Theme (โหมดมืด / สว่าง)
 // ==========================================
 export function initTheme() {
+    const userTheme = localStorage.getItem("theme");
     const darkModeToggle = document.getElementById("dark-mode-toggle");
-    const savedTheme = localStorage.getItem("theme");
+    const darkModeStatus = document.getElementById("dark-mode-status");
 
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-        document.documentElement.setAttribute("data-theme", "dark");
+    // บังคับให้เป็น Light Mode ยกเว้นว่าผู้ใช้เคยกดปุ่มเปิด Dark Mode ค้างไว้เอง
+    if (userTheme === "dark") {
+        document.documentElement.classList.add("dark");
         if (darkModeToggle) darkModeToggle.checked = true;
-        updateDarkModeStatus(true);
+        if (darkModeStatus) darkModeStatus.textContent = "เปิดใช้งาน";
     } else {
-        document.documentElement.setAttribute("data-theme", "light");
+        // ค่า Default: ปิด Dark Mode
+        document.documentElement.classList.remove("dark");
+        
+        // ถ้าไม่เคยตั้งค่ามาก่อน ให้บันทึกลง Cache เลยว่าเป็น Light Mode
+        if (!userTheme) {
+            localStorage.setItem("theme", "light");
+        }
+        
+        // อัปเดตสถานะปุ่มในหน้า Profile
         if (darkModeToggle) darkModeToggle.checked = false;
-        updateDarkModeStatus(false);
+        if (darkModeStatus) darkModeStatus.textContent = "ปิดใช้งาน";
     }
 }
 
