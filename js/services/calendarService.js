@@ -255,34 +255,61 @@ export async function loadAndDisplayHolidays() {
         }
 
         const createItemHTML = (dateStr, type) => {
-            // แปลงวันที่เป็นรูปแบบภาษาไทยสวยๆ
+            // แปลงวันที่เป็นรูปแบบภาษาไทย
             const [y, m, d] = dateStr.split('-');
-            const thaiDate = new Date(y, m-1, d).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+            const dateObj = new Date(y, m - 1, d);
+            const thaiDate = dateObj.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+            const dayName = dateObj.toLocaleDateString('th-TH', { weekday: 'short' });
             
             if (type === 'holidays') {
                 return `
-                <div class="holiday-item">
-                  <span>🔴 ${thaiDate}</span>
-                  <button class="del-btn calendar-delete-item-btn" data-date="${dateStr}" data-type="${type}" title="ลบ">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
+                <div class="flex items-center justify-between p-3 bg-white border border-red-100 rounded-xl shadow-sm hover:shadow-md hover:border-red-200 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-red-50 flex flex-col items-center justify-center text-red-600 border border-red-100">
+                            <span class="text-[10px] font-bold uppercase">${dayName}</span>
+                            <span class="text-sm font-bold leading-none">${d}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">${thaiDate}</p>
+                            <p class="text-[10px] text-red-500 font-medium">Holiday</p>
+                        </div>
+                    </div>
+                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                 </div>`;
             } else {
                 return `
-                <div class="worksat-item">
-                  <span>🟢 ${thaiDate}</span>
-                  <button class="del-btn calendar-delete-item-btn" data-date="${dateStr}" data-type="${type}" title="ลบ">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
+                <div class="flex items-center justify-between p-3 bg-white border border-emerald-100 rounded-xl shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex flex-col items-center justify-center text-emerald-600 border border-emerald-100">
+                            <span class="text-[10px] font-bold uppercase">${dayName}</span>
+                            <span class="text-sm font-bold leading-none">${d}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-700">${thaiDate}</p>
+                            <p class="text-[10px] text-emerald-500 font-medium">Work Day</p>
+                        </div>
+                    </div>
+                    <button class="calendar-delete-item-btn p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" data-date="${dateStr}" data-type="${type}" title="ลบรายการ">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
                 </div>`;
             }
         };
 
+        const emptyStateHTML = `
+            <div class="flex flex-col items-center justify-center h-full py-8 text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
+                <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-xs font-medium">ยังไม่มีข้อมูล</p>
+            </div>
+        `;
+
         if (holidayContainer) {
-            holidayContainer.innerHTML = holidays.length ? holidays.sort().map(d => createItemHTML(d, "holidays")).join("") : '<p class="text-xs text-center text-gray-400 mt-4">ยังไม่มีข้อมูล</p>';
+            holidayContainer.innerHTML = holidays.length ? holidays.sort().map(d => createItemHTML(d, "holidays")).join("") : emptyStateHTML;
         }
         if (worksatContainer) {
-            worksatContainer.innerHTML = workingSaturdays.length ? workingSaturdays.sort().map(d => createItemHTML(d, "workingSaturdays")).join("") : '<p class="text-xs text-center text-gray-400 mt-4">ยังไม่มีข้อมูล</p>';
+            worksatContainer.innerHTML = workingSaturdays.length ? workingSaturdays.sort().map(d => createItemHTML(d, "workingSaturdays")).join("") : emptyStateHTML;
         }
     } catch (error) {
         console.error("Error display holidays:", error);
